@@ -127,7 +127,7 @@ export default function ContractorSignupPage() {
           <ArrowLeft className="h-3 w-3" />
           Back
         </Link>
-        <CardTitle className="text-2xl font-bold text-blue-600">
+        <CardTitle className="text-2xl font-black text-[#404145]">
           Professional Sign Up
         </CardTitle>
         <CardDescription>
@@ -218,7 +218,7 @@ export default function ContractorSignupPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
             size="lg"
           >
             {loading && <Loader2 className="animate-spin" />}
@@ -226,7 +226,7 @@ export default function ContractorSignupPage() {
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+            <Link href="/login" className="font-semibold text-[#1dbf73] hover:underline">
               Sign In
             </Link>
           </p>

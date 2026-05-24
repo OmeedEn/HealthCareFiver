@@ -67,13 +67,13 @@ function ContractorDashboard({ profile }: { profile: Record<string, unknown> | n
   return (
     <div className="space-y-6">
       {completionPct < 100 && (
-        <Card className="border-blue-200 bg-blue-50">
+        <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-blue-700">
+            <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
               <AlertCircle className="h-5 w-5" />
               Complete Your Profile
             </CardTitle>
-            <CardDescription className="text-blue-600">
+            <CardDescription className="font-semibold text-[#0f8f56]">
               Your profile is {completionPct}% complete. A complete profile helps you
               get matched with more jobs.
             </CardDescription>
@@ -81,7 +81,7 @@ function ContractorDashboard({ profile }: { profile: Record<string, unknown> | n
           <CardContent>
             <Link
               href="/dashboard/settings"
-              className="text-sm font-medium text-blue-600 hover:underline"
+              className="text-sm font-black text-[#1dbf73] hover:underline"
             >
               Go to Profile Settings &rarr;
             </Link>
@@ -122,20 +122,20 @@ function ContractorDashboard({ profile }: { profile: Record<string, unknown> | n
 function FacilityDashboard() {
   return (
     <div className="space-y-6">
-      <Card className="border-blue-200 bg-blue-50">
+      <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
+          <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
             <PlusCircle className="h-5 w-5" />
             Post Your First Job
           </CardTitle>
-          <CardDescription className="text-blue-600">
+          <CardDescription className="font-semibold text-[#0f8f56]">
             Start finding qualified healthcare professionals for your facility.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Link
             href="/dashboard/post-job"
-            className="text-sm font-medium text-blue-600 hover:underline"
+            className="text-sm font-black text-[#1dbf73] hover:underline"
           >
             Post a Job &rarr;
           </Link>

@@ -75,14 +75,14 @@ export function JobCard({
   const postedDate = job.published_at || job.created_at
 
   return (
-    <Card className="relative transition-shadow hover:shadow-md">
+    <Card className="relative rounded-md border-[#e4e5e7] bg-white transition hover:border-[#1dbf73] hover:shadow-lg">
       <Link href={`${linkPrefix}/${job.id}`} className="absolute inset-0 z-0" />
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <CardTitle className="line-clamp-1">{job.title}</CardTitle>
+            <CardTitle className="line-clamp-1 text-[#404145]">{job.title}</CardTitle>
             {job.facility_name && (
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="mt-0.5 text-sm font-semibold text-[#74767e]">
                 {job.facility_name}
               </p>
             )}

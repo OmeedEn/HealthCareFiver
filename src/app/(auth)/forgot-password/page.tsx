@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
     return (
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73]">
             <Mail className="h-7 w-7" />
           </div>
           <CardTitle className="text-xl">Check Your Email</CardTitle>
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
           <ArrowLeft className="h-3 w-3" />
           Back to Sign In
         </Link>
-        <CardTitle className="text-2xl font-bold text-blue-600">
+        <CardTitle className="text-2xl font-black text-[#404145]">
           Reset Password
         </CardTitle>
         <CardDescription>
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
             size="lg"
           >
             {loading && <Loader2 className="animate-spin" />}

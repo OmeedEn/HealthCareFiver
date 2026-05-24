@@ -42,7 +42,7 @@ export function Header({ userName, userEmail }: HeaderProps) {
 
   return (
     <>
-      <header className="flex h-14 items-center gap-4 border-b bg-white px-4 md:px-6">
+      <header className="flex h-14 items-center gap-4 border-b border-[#e4e5e7] bg-white px-4 md:px-6">
         <Button
           variant="ghost"
           size="icon"
@@ -65,7 +65,7 @@ export function Header({ userName, userEmail }: HeaderProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="flex items-center gap-2 rounded-lg p-1 hover:bg-gray-100 outline-none"
+            className="flex items-center gap-2 rounded-md p-1 outline-none hover:bg-[#f5f5f5]"
           >
             <Avatar size="sm">
               <AvatarFallback>{initials}</AvatarFallback>

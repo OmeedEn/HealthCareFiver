@@ -98,8 +98,8 @@ function NavLinks({
             onClick={onClick}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-blue-50 text-blue-600'
-                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                ? 'bg-[#e8faf1] text-[#1dbf73]'
+                : 'text-[#62646a] hover:bg-[#f5f5f5] hover:text-[#404145]'
             }`}
           >
             <Icon className="h-4 w-4" />
@@ -141,10 +141,12 @@ export function Sidebar({ role, userName, userEmail, open, onOpenChange }: Sideb
   const sidebarContent = (
     <>
       <div className="flex h-16 items-center gap-2 px-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#1dbf73] text-sm font-black text-white">
           H
         </div>
-        <span className="text-lg font-bold text-blue-600">HealthGig</span>
+        <span className="text-lg font-black tracking-tight text-[#404145]">
+          HealthGig<span className="text-[#1dbf73]">.</span>
+        </span>
       </div>
       <Separator />
       <NavLinks items={navItems} pathname={pathname} onClick={() => onOpenChange?.(false)} />
@@ -161,7 +163,7 @@ export function Sidebar({ role, userName, userEmail, open, onOpenChange }: Sideb
         </div>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-2 text-gray-700"
+          className="w-full justify-start gap-2 text-[#62646a]"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
@@ -174,7 +176,7 @@ export function Sidebar({ role, userName, userEmail, open, onOpenChange }: Sideb
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:bg-white">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-[#e4e5e7] md:bg-white">
         {sidebarContent}
       </aside>
 

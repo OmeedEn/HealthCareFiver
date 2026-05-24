@@ -37,7 +37,7 @@ export default async function DashboardLayout({
         : user.email ?? 'User'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
       <Sidebar role={role} userName={displayName} userEmail={user.email ?? ''} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header userName={displayName} userEmail={user.email ?? ''} />

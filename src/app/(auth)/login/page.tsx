@@ -47,7 +47,7 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold text-blue-600">
+        <CardTitle className="text-2xl font-black text-[#404145]">
           Welcome Back
         </CardTitle>
         <CardDescription>
@@ -81,7 +81,7 @@ export default function LoginPage() {
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm font-semibold text-[#1dbf73] hover:underline"
             >
               Forgot password?
             </Link>
@@ -91,7 +91,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
             size="lg"
           >
             {loading && <Loader2 className="animate-spin" />}
@@ -99,7 +99,7 @@ export default function LoginPage() {
           </Button>
           <p className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+            <Link href="/signup" className="font-semibold text-[#1dbf73] hover:underline">
               Sign Up
             </Link>
           </p>
