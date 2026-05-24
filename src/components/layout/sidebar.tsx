@@ -1,0 +1,192 @@
+'use client'
+
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
+import { toast } from 'sonner'
+import {
+  LayoutDashboard,
+  Briefcase,
+  ShieldCheck,
+  FileText,
+  CreditCard,
+  MessageSquare,
+  Settings,
+  PlusCircle,
+  Search,
+  Users,
+  AlertTriangle,
+  BarChart3,
+  LogOut,
+} from 'lucide-react'
+
+type NavItem = {
+  label: string
+  href: string
+  icon: React.ElementType
+}
+
+const CONTRACTOR_NAV: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
+  { label: 'My Credentials', href: '/dashboard/credentials', icon: ShieldCheck },
+  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
+  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+]
+
+const FACILITY_NAV: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Post a Job', href: '/dashboard/post-job', icon: PlusCircle },
+  { label: 'My Jobs', href: '/dashboard/jobs', icon: Briefcase },
+  { label: 'Find Contractors', href: '/dashboard/find-contractors', icon: Search },
+  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
+  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+]
+
+const ADMIN_NAV: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Users', href: '/dashboard/users', icon: Users },
+  { label: 'Credentials', href: '/dashboard/credentials', icon: ShieldCheck },
+  { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
+  { label: 'Disputes', href: '/dashboard/disputes', icon: AlertTriangle },
+  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+  { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+]
+
+function getNavItems(role: string): NavItem[] {
+  switch (role) {
+    case 'facility':
+      return FACILITY_NAV
+    case 'admin':
+      return ADMIN_NAV
+    default:
+      return CONTRACTOR_NAV
+  }
+}
+
+function NavLinks({
+  items,
+  pathname,
+  onClick,
+}: {
+  items: NavItem[]
+  pathname: string
+  onClick?: () => void
+}) {
+  return (
+    <nav className="flex-1 space-y-1 px-3 py-4">
+      {items.map((item) => {
+        const isActive = pathname === item.href
+        const Icon = item.icon
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onClick}
+            className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {item.label}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
+
+interface SidebarProps {
+  role: 'contractor' | 'facility' | 'admin'
+  userName: string
+  userEmail: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function Sidebar({ role, userName, userEmail, open, onOpenChange }: SidebarProps) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const navItems = getNavItems(role)
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    toast.success('Signed out')
+    router.push('/login')
+  }
+
+  const initials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  const sidebarContent = (
+    <>
+      <div className="flex h-16 items-center gap-2 px-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">
+          H
+        </div>
+        <span className="text-lg font-bold text-blue-600">HealthGig</span>
+      </div>
+      <Separator />
+      <NavLinks items={navItems} pathname={pathname} onClick={() => onOpenChange?.(false)} />
+      <Separator />
+      <div className="p-3 space-y-2">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <Avatar size="sm">
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{userName}</p>
+            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-2 text-gray-700"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </Button>
+      </div>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:bg-white">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile sidebar */}
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="left" showCloseButton className="w-64 p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          {sidebarContent}
+        </SheetContent>
+      </Sheet>
+    </>
+  )
+}
