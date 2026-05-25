@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -134,6 +135,16 @@ export default function FacilityNewJobPage() {
     }
 
     setLoading(true)
+
+    if (isDemoMode()) {
+      toast.success(
+        status === 'open'
+          ? 'Job published successfully! (demo mode)'
+          : 'Draft saved successfully! (demo mode)'
+      )
+      router.push('/facility/jobs')
+      return
+    }
 
     try {
       const supabase = createClient()

@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +17,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 
 interface ContractorProfile {
   id: string
@@ -50,33 +50,41 @@ interface ContractorProfile {
 }
 
 export default async function ContractorProfilePage() {
-  const supabase = await createClient()
+  let profile: ContractorProfile
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (isDemoMode()) {
+    profile = DEMO_CONTRACTOR as unknown as ContractorProfile
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
-  if (!user) {
-    redirect('/login')
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    const { data: contractor } = await supabase
+      .from('contractor_profiles')
+      .select('*, profiles(*)')
+      .eq('id', user.id)
+      .single()
+
+    if (!contractor) {
+      redirect('/contractor/profile/edit')
+    }
+
+    profile = contractor as unknown as ContractorProfile
   }
 
-  const { data: contractor } = await supabase
-    .from('contractor_profiles')
-    .select('*, profiles(*)')
-    .eq('id', user.id)
-    .single()
-
-  if (!contractor) {
-    redirect('/contractor/profile/edit')
-  }
-
-  const profile = contractor as unknown as ContractorProfile
   const completionPct = profile.profile_completion_pct ?? 0
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Profile</h1>
+        <h1 className="text-2xl font-bold text-[#404145]">My Profile</h1>
         <Button render={<Link href="/contractor/profile/edit" />}>
           <Pencil className="size-4" data-icon="inline-start" />
           Edit Profile
@@ -105,41 +113,42 @@ export default async function ContractorProfilePage() {
       )}
 
       {/* Main Profile Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-start gap-4">
-            <Avatar size="lg" className="size-16">
+      <Card className="overflow-hidden">
+        <div className="h-24 bg-gradient-to-r from-[#1dbf73]/20 via-[#1dbf73]/10 to-transparent" />
+        <CardHeader className="-mt-12 px-6">
+          <div className="flex items-end gap-5">
+            <Avatar size="lg" className="size-20 border-4 border-white shadow-md">
               {profile.profiles?.avatar_url && (
                 <AvatarImage
                   src={profile.profiles.avatar_url}
                   alt={`${profile.first_name} ${profile.last_name}`}
                 />
               )}
-              <AvatarFallback className="text-lg">
+              <AvatarFallback className="text-xl bg-[#1dbf73]/10 text-[#1dbf73]">
                 {getInitials(profile.first_name, profile.last_name)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-bold text-[#404145]">
                   {profile.first_name} {profile.last_name}
                 </h2>
-                <Badge variant={profile.is_available ? 'default' : 'secondary'}>
+                <Badge variant={profile.is_available ? 'default' : 'secondary'} className={profile.is_available ? 'bg-[#1dbf73] hover:bg-[#19a463]' : ''}>
                   {profile.is_available ? 'Available' : 'Unavailable'}
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-[#62646a]">
                 {CONTRACTOR_TYPE_LABELS[profile.contractor_type] ?? profile.contractor_type}
               </p>
               {profile.headline && (
-                <p className="mt-1 text-sm">{profile.headline}</p>
+                <p className="mt-1 text-sm text-[#404145]">{profile.headline}</p>
               )}
               {profile.average_rating != null && (
                 <div className="mt-2 flex items-center gap-1 text-sm">
                   <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium">{profile.average_rating.toFixed(1)}</span>
+                  <span className="font-medium text-[#404145]">{profile.average_rating.toFixed(1)}</span>
                   {profile.total_reviews != null && (
-                    <span className="text-muted-foreground">
+                    <span className="text-[#62646a]">
                       ({profile.total_reviews} {profile.total_reviews === 1 ? 'review' : 'reviews'})
                     </span>
                   )}

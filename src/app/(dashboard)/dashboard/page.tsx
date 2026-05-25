@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import {
   Card,
   CardContent,
@@ -18,47 +17,62 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import Link from 'next/link'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
+  let role = 'contractor'
+  let firstName = 'there'
+  let profile: Record<string, unknown> | null = null
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (isDemoMode()) {
+    firstName = DEMO_CONTRACTOR.first_name
+    role = 'contractor'
+    profile = {
+      profile_completion_pct: 85,
+    }
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
-  if (!user) {
-    redirect('/login')
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    profile = profileData
+    role = (profileData?.role ?? user.user_metadata?.role ?? 'contractor') as string
+    firstName =
+      profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  const role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as string
-  const firstName =
-    profile?.first_name ?? user.user_metadata?.first_name ?? 'there'
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-[#404145]">
           Welcome back, {firstName}!
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-[#62646a]">
           Here&apos;s an overview of your {role === 'facility' ? 'facility' : 'professional'} dashboard.
         </p>
       </div>
 
-      {role === 'contractor' && <ContractorDashboard profile={profile} />}
+      {role === 'contractor' && <ContractorDashboard profile={profile} isDemo={isDemoMode()} />}
       {role === 'facility' && <FacilityDashboard />}
       {role === 'admin' && <AdminDashboard />}
     </div>
   )
 }
 
-function ContractorDashboard({ profile }: { profile: Record<string, unknown> | null }) {
+function ContractorDashboard({ profile, isDemo }: { profile: Record<string, unknown> | null; isDemo: boolean }) {
   const completionPct =
     typeof profile?.profile_completion_pct === 'number'
       ? profile.profile_completion_pct
@@ -92,25 +106,25 @@ function ContractorDashboard({ profile }: { profile: Record<string, unknown> | n
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Job Matches"
-          value="--"
+          value={isDemo ? '24' : '--'}
           description="New matches this week"
           icon={Briefcase}
         />
         <StatCard
           title="Credentials"
-          value="--"
+          value={isDemo ? '5' : '--'}
           description="Active credentials"
           icon={ShieldCheck}
         />
         <StatCard
           title="Active Contracts"
-          value="--"
+          value={isDemo ? '1' : '--'}
           description="Currently working"
           icon={FileText}
         />
         <StatCard
           title="Earnings"
-          value="--"
+          value={isDemo ? '$1,697.40' : '--'}
           description="This month"
           icon={CreditCard}
         />
@@ -215,16 +229,18 @@ function StatCard({
   icon: React.ElementType
 }) {
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-sm font-medium text-[#62646a]">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
+          <Icon className="size-4 text-[#1dbf73]" />
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className="text-2xl font-bold text-[#404145]">{value}</div>
+        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
       </CardContent>
     </Card>
   )

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_PAYMENTS } from '@/lib/demo/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StripeConnectButton } from '@/components/payments/stripe-connect-button'
 import { PaymentHistory } from '@/components/payments/payment-history'
@@ -38,6 +39,26 @@ export default function ContractorPaymentsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (isDemoMode()) {
+      const demoPayments = (DEMO_PAYMENTS as unknown as Payment[])
+      setPayments(demoPayments)
+      setIsOnboarded(true)
+
+      const totalEarned = demoPayments
+        .filter((p) => p.status === 'released')
+        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+      const pending = demoPayments
+        .filter((p) => p.status === 'pending' || p.status === 'processing')
+        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+      const inEscrow = demoPayments
+        .filter((p) => p.status === 'in_escrow')
+        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+
+      setSummary({ totalEarned, pending, inEscrow })
+      setLoading(false)
+      return
+    }
+
     async function fetchData() {
       const supabase = createClient()
       const {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -93,6 +94,34 @@ export default function ContractorProfileEditPage() {
 
   useEffect(() => {
     async function loadProfile() {
+      if (isDemoMode()) {
+        const data = DEMO_CONTRACTOR
+        setFormData({
+          first_name: data.first_name ?? '',
+          last_name: data.last_name ?? '',
+          contractor_type: data.contractor_type ?? '',
+          headline: data.headline ?? '',
+          bio: data.bio ?? '',
+          specialties: Array.isArray(data.specialties)
+            ? data.specialties.join(', ')
+            : '',
+          years_of_experience: data.years_of_experience?.toString() ?? '',
+          hourly_rate_min: data.hourly_rate_min?.toString() ?? '',
+          hourly_rate_max: data.hourly_rate_max?.toString() ?? '',
+          npi_number: data.npi_number ?? '',
+          state_license_number: data.state_license_number ?? '',
+          license_state: data.license_state ?? '',
+          city: data.city ?? '',
+          state: data.state ?? '',
+          zip_code: data.zip_code ?? '',
+          willing_to_travel: data.willing_to_travel ?? false,
+          travel_radius_miles: data.travel_radius_miles?.toString() ?? '',
+          is_available: data.is_available ?? true,
+        })
+        setLoading(false)
+        return
+      }
+
       const supabase = createClient()
       const {
         data: { user },
@@ -161,6 +190,12 @@ export default function ContractorProfileEditPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+
+    if (isDemoMode()) {
+      toast.success('Profile updated successfully! (demo mode)')
+      router.push('/contractor/profile')
+      return
+    }
 
     try {
       const supabase = createClient()

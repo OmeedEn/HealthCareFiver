@@ -4,17 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
@@ -27,6 +21,12 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    if (isDemoMode()) {
+      toast.success('Welcome to HealthGig demo!')
+      router.push('/dashboard')
+      return
+    }
 
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
@@ -45,66 +45,74 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-black text-[#404145]">
-          Welcome Back
-        </CardTitle>
-        <CardDescription>
-          Sign in to your HealthGig account
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex justify-end">
+    <div>
+      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+        Welcome back
+      </h1>
+      <p className="mt-1.5 text-sm text-[#62646a]">
+        Sign in to your HealthGig account to continue
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-semibold text-[#404145]">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-semibold text-[#404145]">
+              Password
+            </Label>
             <Link
               href="/forgot-password"
-              className="text-sm font-semibold text-[#1dbf73] hover:underline"
+              className="text-xs font-semibold text-[#1dbf73] hover:underline"
             >
               Forgot password?
             </Link>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
-            size="lg"
-          >
-            {loading && <Loader2 className="animate-spin" />}
-            Sign In
-          </Button>
-          <p className="text-sm text-muted-foreground text-center">
-            Don&apos;t have an account?{' '}
-            <Link href="/signup" className="font-semibold text-[#1dbf73] hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </CardFooter>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+        >
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Sign In
+        </Button>
       </form>
-    </Card>
+
+      <Separator className="my-6" />
+
+      <p className="text-center text-sm text-[#62646a]">
+        Don&apos;t have an account?{' '}
+        <Link
+          href="/signup"
+          className="font-bold text-[#1dbf73] hover:underline"
+        >
+          Create one free
+        </Link>
+      </p>
+    </div>
   )
 }

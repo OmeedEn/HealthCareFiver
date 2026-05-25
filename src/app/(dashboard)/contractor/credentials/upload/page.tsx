@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -39,6 +40,12 @@ export default function CredentialUploadPage() {
     }
 
     setSaving(true)
+
+    if (isDemoMode()) {
+      toast.success('Credential uploaded successfully! (demo mode)')
+      router.push('/contractor/credentials')
+      return
+    }
 
     try {
       const supabase = createClient()

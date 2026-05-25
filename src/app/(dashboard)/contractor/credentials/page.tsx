@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,6 +8,7 @@ import { CredentialCard } from '@/components/contractor/credential-card'
 import type { CredentialData } from '@/components/contractor/credential-card'
 import { CREDENTIAL_TYPE_LABELS } from '@/lib/utils/constants'
 import { Plus, ShieldCheck, Clock, AlertTriangle, FileX } from 'lucide-react'
+import { isDemoMode, DEMO_CREDENTIALS, DEMO_REQUIRED_CREDENTIALS } from '@/lib/demo/data'
 
 interface RequiredCredential {
   id: string
@@ -18,41 +18,49 @@ interface RequiredCredential {
 }
 
 export default async function ContractorCredentialsPage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  // Fetch contractor profile to know their type
-  const { data: contractor } = await supabase
-    .from('contractor_profiles')
-    .select('contractor_type')
-    .eq('id', user.id)
-    .single()
-
-  // Fetch all credentials
-  const { data: credentialsData } = await supabase
-    .from('credentials')
-    .select('*')
-    .eq('contractor_id', user.id)
-    .order('created_at', { ascending: false })
-
-  const credentials = (credentialsData ?? []) as unknown as CredentialData[]
-
-  // Fetch required credentials for this contractor type
+  let credentials: CredentialData[] = []
   let requiredCredentials: RequiredCredential[] = []
-  if (contractor?.contractor_type) {
-    const { data: reqData } = await supabase
-      .from('required_credentials')
-      .select('*')
-      .eq('contractor_type', contractor.contractor_type)
 
-    requiredCredentials = (reqData ?? []) as unknown as RequiredCredential[]
+  if (isDemoMode()) {
+    credentials = DEMO_CREDENTIALS as unknown as CredentialData[]
+    requiredCredentials = DEMO_REQUIRED_CREDENTIALS as unknown as RequiredCredential[]
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    // Fetch contractor profile to know their type
+    const { data: contractor } = await supabase
+      .from('contractor_profiles')
+      .select('contractor_type')
+      .eq('id', user.id)
+      .single()
+
+    // Fetch all credentials
+    const { data: credentialsData } = await supabase
+      .from('credentials')
+      .select('*')
+      .eq('contractor_id', user.id)
+      .order('created_at', { ascending: false })
+
+    credentials = (credentialsData ?? []) as unknown as CredentialData[]
+
+    // Fetch required credentials for this contractor type
+    if (contractor?.contractor_type) {
+      const { data: reqData } = await supabase
+        .from('required_credentials')
+        .select('*')
+        .eq('contractor_type', contractor.contractor_type)
+
+      requiredCredentials = (reqData ?? []) as unknown as RequiredCredential[]
+    }
   }
 
   // Group credentials by status

@@ -1,67 +1,61 @@
 import Link from 'next/link'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Stethoscope, Building2, ArrowLeft } from 'lucide-react'
+import { Stethoscope, Building2, ArrowRight } from 'lucide-react'
 
 export default function SignupPage() {
   return (
-    <div className="w-full max-w-2xl space-y-8">
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-black text-[#404145]">Join HealthGig</h1>
-        <p className="text-muted-foreground">
-          Choose how you want to get started
-        </p>
-      </div>
+    <div>
+      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+        Join HealthGig
+      </h1>
+      <p className="mt-1.5 text-sm text-[#62646a]">
+        Choose how you want to get started
+      </p>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Link href="/signup/contractor" className="group">
-          <Card className="h-full cursor-pointer rounded-md transition-all hover:ring-2 hover:ring-[#1dbf73] hover:shadow-lg">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73] group-hover:bg-[#d9f5e8]">
-                <Stethoscope className="h-7 w-7" />
-              </div>
-              <CardTitle className="text-lg">Healthcare Professional</CardTitle>
-              <CardDescription>
-                Find shifts, manage credentials, and grow your career
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <span className="text-sm font-semibold text-[#1dbf73] group-hover:underline">
-                Get Started &rarr;
-              </span>
-            </CardContent>
-          </Card>
+      <div className="mt-8 space-y-3">
+        <Link
+          href="/signup/contractor"
+          className="group flex items-center gap-4 rounded-xl border border-[#e4e5e7] bg-white p-5 transition-all hover:border-[#1dbf73] hover:shadow-md"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73] transition-colors group-hover:bg-[#1dbf73] group-hover:text-white">
+            <Stethoscope className="h-7 w-7" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-[#404145]">
+              Healthcare Professional
+            </p>
+            <p className="mt-0.5 text-sm text-[#62646a]">
+              Find shifts, manage credentials, and grow your career
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-[#95979d] transition-transform group-hover:translate-x-1 group-hover:text-[#1dbf73]" />
         </Link>
 
-        <Link href="/signup/facility" className="group">
-          <Card className="h-full cursor-pointer rounded-md transition-all hover:ring-2 hover:ring-[#1dbf73] hover:shadow-lg">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73] group-hover:bg-[#d9f5e8]">
-                <Building2 className="h-7 w-7" />
-              </div>
-              <CardTitle className="text-lg">Healthcare Facility</CardTitle>
-              <CardDescription>
-                Post jobs, find qualified professionals, and manage staffing
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <span className="text-sm font-semibold text-[#1dbf73] group-hover:underline">
-                Get Started &rarr;
-              </span>
-            </CardContent>
-          </Card>
+        <Link
+          href="/signup/facility"
+          className="group flex items-center gap-4 rounded-xl border border-[#e4e5e7] bg-white p-5 transition-all hover:border-[#1dbf73] hover:shadow-md"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73] transition-colors group-hover:bg-[#1dbf73] group-hover:text-white">
+            <Building2 className="h-7 w-7" />
+          </div>
+          <div className="flex-1">
+            <p className="font-bold text-[#404145]">
+              Healthcare Facility
+            </p>
+            <p className="mt-0.5 text-sm text-[#62646a]">
+              Post jobs, find professionals, and manage staffing
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 text-[#95979d] transition-transform group-hover:translate-x-1 group-hover:text-[#1dbf73]" />
         </Link>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">
-        <Link href="/login" className="inline-flex items-center gap-1 font-semibold text-[#1dbf73] hover:underline">
-          <ArrowLeft className="h-3 w-3" />
-          Already have an account? Sign in
+      <p className="mt-6 text-center text-sm text-[#62646a]">
+        Already have an account?{' '}
+        <Link
+          href="/login"
+          className="font-bold text-[#1dbf73] hover:underline"
+        >
+          Sign in
         </Link>
       </p>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -54,6 +55,19 @@ export function TimesheetForm({
     }
 
     setSubmitting(true)
+
+    if (isDemoMode()) {
+      toast.success('Timesheet submitted successfully. (demo mode)')
+      setShiftDate('')
+      setClockIn('')
+      setClockOut('')
+      setBreakMinutes('0')
+      setNotes('')
+      setSubmitting(false)
+      onSuccess?.()
+      return
+    }
+
     try {
       const supabase = createClient()
       const { error } = await supabase.from('timesheets').insert({

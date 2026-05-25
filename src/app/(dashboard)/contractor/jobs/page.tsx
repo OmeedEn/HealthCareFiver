@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_JOBS } from '@/lib/demo/data'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +34,55 @@ export default function ContractorJobsPage() {
 
   const fetchJobs = useCallback(
     async (pageNum: number, append = false) => {
+      if (isDemoMode()) {
+        // In demo mode, do client-side filtering against DEMO_JOBS
+        const demoJobs: JobCardData[] = (DEMO_JOBS as Record<string, unknown>[]).map((job) => {
+          const facility = job.facility as { facility_name: string } | null
+          return {
+            id: job.id as string,
+            title: job.title as string,
+            facility_name: facility?.facility_name ?? null,
+            city: job.city as string | null,
+            state: job.state as string | null,
+            pay_rate_min: job.pay_rate_min as number | null,
+            pay_rate_max: job.pay_rate_max as number | null,
+            pay_rate_type: job.pay_rate_type as string | null,
+            job_type: job.job_type as string | null,
+            shift_type: job.shift_type as string | null,
+            urgency: job.urgency as string | null,
+            published_at: job.published_at as string | null,
+            created_at: job.created_at as string,
+            total_applicants: job.total_applicants as number | null,
+            is_remote: job.is_remote as boolean | null,
+          }
+        })
+
+        let filtered = demoJobs
+        if (filters.search.trim()) {
+          const q = filters.search.trim().toLowerCase()
+          filtered = filtered.filter(
+            (j) =>
+              j.title.toLowerCase().includes(q) ||
+              (j.facility_name?.toLowerCase().includes(q) ?? false)
+          )
+        }
+        if (filters.job_type) {
+          filtered = filtered.filter((j) => j.job_type === filters.job_type)
+        }
+        if (filters.shift_type) {
+          filtered = filtered.filter((j) => j.shift_type === filters.shift_type)
+        }
+        if (filters.state) {
+          filtered = filtered.filter((j) => j.state === filters.state)
+        }
+
+        setJobs(filtered)
+        setHasMore(false)
+        setLoading(false)
+        setLoadingMore(false)
+        return
+      }
+
       if (pageNum === 0) setLoading(true)
       else setLoadingMore(true)
 
@@ -151,6 +201,7 @@ export default function ContractorJobsPage() {
 
   // Load saved jobs
   useEffect(() => {
+    if (isDemoMode()) return
     const loadSaved = async () => {
       const supabase = createClient()
       const {
@@ -183,6 +234,21 @@ export default function ContractorJobsPage() {
   }
 
   const handleSave = async (jobId: string) => {
+    if (isDemoMode()) {
+      if (savedJobIds.has(jobId)) {
+        setSavedJobIds((prev) => {
+          const next = new Set(prev)
+          next.delete(jobId)
+          return next
+        })
+        toast.success('Job removed from saved.')
+      } else {
+        setSavedJobIds((prev) => new Set(prev).add(jobId))
+        toast.success('Job saved!')
+      }
+      return
+    }
+
     const supabase = createClient()
     const {
       data: { user },

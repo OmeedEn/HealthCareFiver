@@ -1,46 +1,59 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  let role: 'contractor' | 'facility' | 'admin' = 'contractor'
+  let displayName = 'User'
+  let userEmail = ''
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (isDemoMode()) {
+    displayName = `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`
+    userEmail = DEMO_CONTRACTOR.email
+    role = 'contractor'
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
-  if (!user) {
-    redirect('/login')
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
+      | 'contractor'
+      | 'facility'
+      | 'admin'
+
+    displayName =
+      profile?.first_name && profile?.last_name
+        ? `${profile.first_name} ${profile.last_name}`
+        : user.user_metadata?.first_name
+          ? `${user.user_metadata.first_name} ${user.user_metadata.last_name ?? ''}`
+          : user.email ?? 'User'
+
+    userEmail = user.email ?? ''
   }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
-
-  const role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
-    | 'contractor'
-    | 'facility'
-    | 'admin'
-
-  const displayName =
-    profile?.first_name && profile?.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : user.user_metadata?.first_name
-        ? `${user.user_metadata.first_name} ${user.user_metadata.last_name ?? ''}`
-        : user.email ?? 'User'
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
-      <Sidebar role={role} userName={displayName} userEmail={user.email ?? ''} />
+      <Sidebar role={role} userName={displayName} userEmail={userEmail} />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header userName={displayName} userEmail={user.email ?? ''} />
+        <Header userName={displayName} userEmail={userEmail} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>

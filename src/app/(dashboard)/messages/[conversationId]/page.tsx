@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_MESSAGES, DEMO_CONVERSATIONS, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import {
   MessageThread,
@@ -94,13 +95,34 @@ export default function ConversationPage() {
   }, [conversationId])
 
   useEffect(() => {
+    if (isDemoMode()) {
+      setCurrentUserId(DEMO_CONTRACTOR.id)
+      // Find matching conversation for the other user info
+      const convo = (DEMO_CONVERSATIONS as Record<string, unknown>[]).find(
+        (c) => c.id === conversationId
+      )
+      if (convo) {
+        const other = convo.other_user as OtherUser | undefined
+        if (other) {
+          setOtherUser(other)
+        }
+      }
+      // Filter messages for this conversation
+      const convoMessages = (DEMO_MESSAGES as unknown as MessageItem[]).filter(
+        (m) => m.conversation_id === conversationId
+      )
+      setMessages(convoMessages)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     fetchMessages().finally(() => setLoading(false))
-  }, [fetchMessages])
+  }, [fetchMessages, conversationId])
 
   // Subscribe to realtime messages
   useEffect(() => {
-    if (!currentUserId) return
+    if (!currentUserId || isDemoMode()) return
 
     const supabase = createClient()
     const channel = supabase
@@ -140,6 +162,19 @@ export default function ConversationPage() {
 
   const handleSend = async (content: string) => {
     if (!currentUserId) return
+
+    if (isDemoMode()) {
+      const newMsg: MessageItem = {
+        id: `demo-msg-${Date.now()}`,
+        conversation_id: conversationId,
+        sender_id: currentUserId,
+        content,
+        created_at: new Date().toISOString(),
+        read_at: null,
+      }
+      setMessages((prev) => [...prev, newMsg])
+      return
+    }
 
     const supabase = createClient()
     const { error } = await supabase.from('messages').insert({

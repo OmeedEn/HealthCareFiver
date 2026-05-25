@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import {
   ContractCard,
   type ContractCardData,
 } from '@/components/contracts/contract-card'
 import { ContractsTabs } from './contracts-tabs'
+import { isDemoMode, DEMO_CONTRACTS } from '@/lib/demo/data'
 
 interface ContractRow {
   id: string
@@ -21,24 +21,41 @@ interface ContractRow {
 }
 
 export default async function ContractorContractsPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let allContracts: ContractRow[] = []
 
-  if (!user) {
-    redirect('/login')
+  if (isDemoMode()) {
+    allContracts = DEMO_CONTRACTS.map((c) => ({
+      id: c.id,
+      title: c.title,
+      status: c.status,
+      rate_amount: c.agreed_rate,
+      rate_type: c.rate_type,
+      start_date: c.start_date,
+      end_date: c.end_date ?? null,
+      created_at: c.created_at,
+      facility_profiles: c.facility ? { facility_name: c.facility.facility_name } : null,
+    }))
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    const { data: contracts } = await supabase
+      .from('contracts')
+      .select(
+        'id, title, status, rate_amount, rate_type, start_date, end_date, created_at, facility_profiles!inner(facility_name)'
+      )
+      .eq('contractor_id', user.id)
+      .order('created_at', { ascending: false })
+
+    allContracts = (contracts ?? []) as unknown as ContractRow[]
   }
-
-  const { data: contracts } = await supabase
-    .from('contracts')
-    .select(
-      'id, title, status, rate_amount, rate_type, start_date, end_date, created_at, facility_profiles!inner(facility_name)'
-    )
-    .eq('contractor_id', user.id)
-    .order('created_at', { ascending: false })
-
-  const allContracts = (contracts ?? []) as unknown as ContractRow[]
 
   const tabCounts = {
     all: allContracts.length,
@@ -57,58 +74,49 @@ export default async function ContractorContractsPage() {
         </p>
       </div>
 
-      <ContractsTabs tabCounts={tabCounts}>
-        {(tab: string) => {
-          let filtered: ContractRow[]
-          if (tab === 'active') {
-            filtered = allContracts.filter(
-              (c) =>
-                c.status === 'active' ||
-                c.status === 'pending_contractor' ||
-                c.status === 'pending_facility'
-            )
-          } else if (tab === 'completed') {
-            filtered = allContracts.filter((c) => c.status === 'completed')
-          } else {
-            filtered = allContracts
-          }
+      <ContractsTabs
+        tabCounts={tabCounts}
+        activeContent={<ContractList contracts={allContracts.filter(c => c.status === 'active' || c.status === 'pending_contractor' || c.status === 'pending_facility')} />}
+        completedContent={<ContractList contracts={allContracts.filter(c => c.status === 'completed')} />}
+        allContent={<ContractList contracts={allContracts} />}
+      />
+    </div>
+  )
+}
 
-          if (filtered.length === 0) {
-            return (
-              <div className="py-12 text-center">
-                <p className="text-muted-foreground">No contracts found.</p>
-              </div>
-            )
-          }
+function ContractList({ contracts }: { contracts: ContractRow[] }) {
+  if (contracts.length === 0) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">No contracts found.</p>
+      </div>
+    )
+  }
 
-          return (
-            <div className="space-y-3">
-              {filtered.map((contract) => {
-                const cardData: ContractCardData = {
-                  id: contract.id,
-                  title: contract.title,
-                  status: contract.status,
-                  rate_amount: contract.rate_amount,
-                  rate_type: contract.rate_type,
-                  start_date: contract.start_date,
-                  end_date: contract.end_date,
-                  created_at: contract.created_at,
-                }
-                return (
-                  <ContractCard
-                    key={contract.id}
-                    contract={cardData}
-                    counterpartyName={
-                      contract.facility_profiles?.facility_name ?? 'Unknown'
-                    }
-                    userRole="contractor"
-                  />
-                )
-              })}
-            </div>
-          )
-        }}
-      </ContractsTabs>
+  return (
+    <div className="space-y-3">
+      {contracts.map((contract) => {
+        const cardData: ContractCardData = {
+          id: contract.id,
+          title: contract.title,
+          status: contract.status,
+          rate_amount: contract.rate_amount,
+          rate_type: contract.rate_type,
+          start_date: contract.start_date,
+          end_date: contract.end_date,
+          created_at: contract.created_at,
+        }
+        return (
+          <ContractCard
+            key={contract.id}
+            contract={cardData}
+            counterpartyName={
+              contract.facility_profiles?.facility_name ?? 'Unknown'
+            }
+            userRole="contractor"
+          />
+        )
+      })}
     </div>
   )
 }

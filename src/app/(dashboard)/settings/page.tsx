@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -55,10 +56,19 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const supabase = createClient()
-
   useEffect(() => {
     async function fetchSettings() {
+      if (isDemoMode()) {
+        setProfile({
+          email: DEMO_CONTRACTOR.email,
+          phone: '(310) 555-0142',
+          avatar_url: '',
+        })
+        setLoading(false)
+        return
+      }
+
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -90,11 +100,17 @@ export default function SettingsPage() {
     }
 
     fetchSettings()
-  }, [supabase])
+  }, [])
+
+  function getSupabase() {
+    return createClient()
+  }
 
   async function handleProfileSave() {
+    if (isDemoMode()) { toast.success('Profile updated (demo)'); return }
     setSaving(true)
     try {
+      const supabase = getSupabase()
       const { error } = await supabase.auth.updateUser({
         email: profile.email || undefined,
         phone: profile.phone || undefined,
@@ -112,8 +128,10 @@ export default function SettingsPage() {
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (isDemoMode()) { toast.success('Avatar updated (demo)'); return }
 
     try {
+      const supabase = getSupabase()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -144,8 +162,10 @@ export default function SettingsPage() {
   }
 
   async function handlePreferencesSave() {
+    if (isDemoMode()) { toast.success('Preferences updated (demo)'); return }
     setSaving(true)
     try {
+      const supabase = getSupabase()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -177,8 +197,10 @@ export default function SettingsPage() {
       return
     }
 
+    if (isDemoMode()) { toast.success('Password changed (demo)'); return }
     setSaving(true)
     try {
+      const supabase = getSupabase()
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       })

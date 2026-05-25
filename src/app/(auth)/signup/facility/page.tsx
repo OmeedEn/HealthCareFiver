@@ -1,18 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -21,7 +17,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { Loader2, ArrowLeft, CheckCircle } from 'lucide-react'
+import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { US_STATES } from '@/lib/utils/constants'
 
 const FACILITY_TYPES = [
   { value: 'hospital', label: 'Hospital' },
@@ -40,61 +37,8 @@ const FACILITY_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
-const US_STATES = [
-  { value: 'AL', label: 'Alabama' },
-  { value: 'AK', label: 'Alaska' },
-  { value: 'AZ', label: 'Arizona' },
-  { value: 'AR', label: 'Arkansas' },
-  { value: 'CA', label: 'California' },
-  { value: 'CO', label: 'Colorado' },
-  { value: 'CT', label: 'Connecticut' },
-  { value: 'DE', label: 'Delaware' },
-  { value: 'DC', label: 'District of Columbia' },
-  { value: 'FL', label: 'Florida' },
-  { value: 'GA', label: 'Georgia' },
-  { value: 'HI', label: 'Hawaii' },
-  { value: 'ID', label: 'Idaho' },
-  { value: 'IL', label: 'Illinois' },
-  { value: 'IN', label: 'Indiana' },
-  { value: 'IA', label: 'Iowa' },
-  { value: 'KS', label: 'Kansas' },
-  { value: 'KY', label: 'Kentucky' },
-  { value: 'LA', label: 'Louisiana' },
-  { value: 'ME', label: 'Maine' },
-  { value: 'MD', label: 'Maryland' },
-  { value: 'MA', label: 'Massachusetts' },
-  { value: 'MI', label: 'Michigan' },
-  { value: 'MN', label: 'Minnesota' },
-  { value: 'MS', label: 'Mississippi' },
-  { value: 'MO', label: 'Missouri' },
-  { value: 'MT', label: 'Montana' },
-  { value: 'NE', label: 'Nebraska' },
-  { value: 'NV', label: 'Nevada' },
-  { value: 'NH', label: 'New Hampshire' },
-  { value: 'NJ', label: 'New Jersey' },
-  { value: 'NM', label: 'New Mexico' },
-  { value: 'NY', label: 'New York' },
-  { value: 'NC', label: 'North Carolina' },
-  { value: 'ND', label: 'North Dakota' },
-  { value: 'OH', label: 'Ohio' },
-  { value: 'OK', label: 'Oklahoma' },
-  { value: 'OR', label: 'Oregon' },
-  { value: 'PA', label: 'Pennsylvania' },
-  { value: 'RI', label: 'Rhode Island' },
-  { value: 'SC', label: 'South Carolina' },
-  { value: 'SD', label: 'South Dakota' },
-  { value: 'TN', label: 'Tennessee' },
-  { value: 'TX', label: 'Texas' },
-  { value: 'UT', label: 'Utah' },
-  { value: 'VT', label: 'Vermont' },
-  { value: 'VA', label: 'Virginia' },
-  { value: 'WA', label: 'Washington' },
-  { value: 'WV', label: 'West Virginia' },
-  { value: 'WI', label: 'Wisconsin' },
-  { value: 'WY', label: 'Wyoming' },
-]
-
 export default function FacilitySignupPage() {
+  const router = useRouter()
   const [facilityName, setFacilityName] = useState('')
   const [facilityType, setFacilityType] = useState('')
   const [contactName, setContactName] = useState('')
@@ -127,6 +71,12 @@ export default function FacilitySignupPage() {
 
     setLoading(true)
 
+    if (isDemoMode()) {
+      toast.success('Welcome to HealthGig demo!')
+      router.push('/dashboard')
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email,
@@ -155,63 +105,68 @@ export default function FacilitySignupPage() {
 
   if (success) {
     return (
-      <Card className="w-full max-w-md text-center">
-        <CardHeader>
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600">
-            <CheckCircle className="h-7 w-7" />
-          </div>
-          <CardTitle className="text-xl">Check Your Email</CardTitle>
-          <CardDescription>
-            We&apos;ve sent a confirmation link to <strong>{email}</strong>.
-            Click the link to activate your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/login">
-            <Button variant="outline" className="w-full">
-              Back to Sign In
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e8faf1]">
+          <CheckCircle2 className="h-8 w-8 text-[#1dbf73]" />
+        </div>
+        <h2 className="mt-4 text-xl font-black text-[#404145]">
+          Check your email
+        </h2>
+        <p className="mt-2 text-sm text-[#62646a]">
+          We&apos;ve sent a confirmation link to <strong>{email}</strong>.
+          <br />
+          Click the link to activate your account.
+        </p>
+        <Link href="/login">
+          <Button
+            variant="outline"
+            className="mt-6 h-11 w-full font-semibold"
+          >
+            Back to Sign In
+          </Button>
+        </Link>
+      </div>
     )
   }
 
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader>
-        <Link
-          href="/signup"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Back
-        </Link>
-        <CardTitle className="text-2xl font-black text-[#404145]">
-          Facility Sign Up
-        </CardTitle>
-        <CardDescription>
-          Create your healthcare facility account
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="facilityName">Facility Name</Label>
+    <div>
+      <Link
+        href="/signup"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back
+      </Link>
+
+      <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">
+        Register your facility
+      </h1>
+      <p className="mt-1.5 text-sm text-[#62646a]">
+        Create your healthcare facility account
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              Facility name
+            </Label>
             <Input
-              id="facilityName"
               placeholder="Your facility name"
               value={facilityName}
               onChange={(e) => setFacilityName(e.target.value)}
               required
+              className="h-11"
             />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="facilityType">Facility Type</Label>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              Facility type
+            </Label>
             <Select value={facilityType} onValueChange={(v) => setFacilityType(v ?? '')}>
-              <SelectTrigger id="facilityType" className="w-full">
-                <SelectValue placeholder="Select facility type" />
+              <SelectTrigger className="h-11 w-full">
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
                 {FACILITY_TYPES.map((type) => (
@@ -222,116 +177,133 @@ export default function FacilitySignupPage() {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contactName">Contact Name</Label>
-            <Input
-              id="contactName"
-              placeholder="Full name of primary contact"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="facility@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-4">
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                placeholder="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
-              <Select value={state} onValueChange={(v) => setState(v ?? '')}>
-                <SelectTrigger id="state" className="w-full">
-                  <SelectValue placeholder="State" />
-                </SelectTrigger>
-                <SelectContent>
-                  {US_STATES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="zipCode">ZIP Code</Label>
-              <Input
-                id="zipCode"
-                placeholder="ZIP"
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
-                required
-                pattern="[0-9]{5}"
-                maxLength={5}
-              />
-            </div>
-          </div>
-        </CardContent>
-
-        <div className="px-4 pb-4 space-y-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
-            size="lg"
-          >
-            {loading && <Loader2 className="animate-spin" />}
-            Create Account
-          </Button>
-          <p className="text-sm text-muted-foreground text-center">
-            Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-[#1dbf73] hover:underline">
-              Sign In
-            </Link>
-          </p>
         </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold text-[#404145]">
+            Contact name
+          </Label>
+          <Input
+            placeholder="Full name of primary contact"
+            value={contactName}
+            onChange={(e) => setContactName(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold text-[#404145]">
+            Email address
+          </Label>
+          <Input
+            type="email"
+            placeholder="facility@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              Password
+            </Label>
+            <Input
+              type="password"
+              placeholder="Min 6 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              Confirm password
+            </Label>
+            <Input
+              type="password"
+              placeholder="Repeat password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={6}
+              className="h-11"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              City
+            </Label>
+            <Input
+              placeholder="City"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              required
+              className="h-11"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              State
+            </Label>
+            <Select value={state} onValueChange={(v) => setState(v ?? '')}>
+              <SelectTrigger className="h-11 w-full">
+                <SelectValue placeholder="State" />
+              </SelectTrigger>
+              <SelectContent>
+                {US_STATES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold text-[#404145]">
+              ZIP code
+            </Label>
+            <Input
+              placeholder="ZIP"
+              value={zipCode}
+              onChange={(e) => setZipCode(e.target.value)}
+              required
+              pattern="[0-9]{5}"
+              maxLength={5}
+              className="h-11"
+            />
+          </div>
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+        >
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Create Account
+        </Button>
       </form>
-    </Card>
+
+      <Separator className="my-6" />
+
+      <p className="text-center text-sm text-[#62646a]">
+        Already have an account?{' '}
+        <Link
+          href="/login"
+          className="font-bold text-[#1dbf73] hover:underline"
+        >
+          Sign in
+        </Link>
+      </p>
+    </div>
   )
 }

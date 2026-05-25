@@ -3,18 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Loader2, ArrowLeft, Mail } from 'lucide-react'
+import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -24,6 +19,13 @@ export default function ForgotPasswordPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
+
+    if (isDemoMode()) {
+      toast.success('Password reset email sent (demo mode)')
+      setSent(true)
+      setLoading(false)
+      return
+    }
 
     const supabase = createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -41,71 +43,83 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <Card className="w-full max-w-md text-center">
-        <CardHeader>
-          <div className="mx-auto mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73]">
-            <Mail className="h-7 w-7" />
-          </div>
-          <CardTitle className="text-xl">Check Your Email</CardTitle>
-          <CardDescription>
-            If an account exists for <strong>{email}</strong>, we&apos;ve sent password
-            reset instructions.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Link href="/login">
-            <Button variant="outline" className="w-full">
-              Back to Sign In
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e8faf1]">
+          <CheckCircle2 className="h-8 w-8 text-[#1dbf73]" />
+        </div>
+        <h2 className="mt-4 text-xl font-black text-[#404145]">
+          Check your email
+        </h2>
+        <p className="mt-2 text-sm text-[#62646a]">
+          If an account exists for <strong>{email}</strong>, we&apos;ve sent
+          password reset instructions.
+        </p>
+        <Link href="/login">
+          <Button
+            variant="outline"
+            className="mt-6 h-11 w-full font-semibold"
+          >
+            Back to Sign In
+          </Button>
+        </Link>
+      </div>
     )
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
+    <div>
+      <Link
+        href="/login"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Sign In
+      </Link>
+
+      <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">
+        Reset your password
+      </h1>
+      <p className="mt-1.5 text-sm text-[#62646a]">
+        Enter your email and we&apos;ll send you a link to reset your password
+      </p>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-semibold text-[#404145]">
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          disabled={loading}
+          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+        >
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Send Reset Link
+        </Button>
+      </form>
+
+      <Separator className="my-6" />
+
+      <p className="text-center text-sm text-[#62646a]">
+        Remember your password?{' '}
         <Link
           href="/login"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
+          className="font-bold text-[#1dbf73] hover:underline"
         >
-          <ArrowLeft className="h-3 w-3" />
-          Back to Sign In
+          Sign in
         </Link>
-        <CardTitle className="text-2xl font-black text-[#404145]">
-          Reset Password
-        </CardTitle>
-        <CardDescription>
-          Enter your email and we&apos;ll send you a link to reset your password
-        </CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-        </CardContent>
-        <div className="px-4 pb-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#1dbf73] text-white hover:bg-[#19a463]"
-            size="lg"
-          >
-            {loading && <Loader2 className="animate-spin" />}
-            Send Reset Link
-          </Button>
-        </div>
-      </form>
-    </Card>
+      </p>
+    </div>
   )
 }

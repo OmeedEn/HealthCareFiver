@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_AVAILABILITY } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -49,13 +50,19 @@ export default function AvailabilityPage() {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const supabase = createClient()
+  const isDemo = isDemoMode()
 
   useEffect(() => {
+    if (isDemo) {
+      setSlots(DEMO_AVAILABILITY as unknown as AvailabilitySlot[])
+      setLoading(false)
+      return
+    }
     fetchAvailability()
-  }, [])
+  }, [isDemo])
 
   async function fetchAvailability() {
+    const supabase = createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -74,6 +81,24 @@ export default function AvailabilityPage() {
   }
 
   async function addSlot() {
+    if (isDemo) {
+      const newSlot: AvailabilitySlot = {
+        id: `demo-${Date.now()}`,
+        day_of_week: 1,
+        start_date: null,
+        end_date: null,
+        start_time: '08:00',
+        end_time: '17:00',
+        is_recurring: true,
+        is_blocked: false,
+        notes: null,
+      }
+      setSlots([...slots, newSlot])
+      toast.success('Availability slot added')
+      return
+    }
+
+    const supabase = createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -106,6 +131,14 @@ export default function AvailabilityPage() {
     id: string,
     updates: Partial<AvailabilitySlot>
   ) {
+    if (isDemo) {
+      setSlots(
+        slots.map((s) => (s.id === id ? { ...s, ...updates } : s))
+      )
+      return
+    }
+
+    const supabase = createClient()
     const { error } = await supabase
       .from('contractor_availability')
       .update(updates)
@@ -121,6 +154,13 @@ export default function AvailabilityPage() {
   }
 
   async function deleteSlot(id: string) {
+    if (isDemo) {
+      setSlots(slots.filter((s) => s.id !== id))
+      toast.success('Slot removed')
+      return
+    }
+
+    const supabase = createClient()
     const { error } = await supabase
       .from('contractor_availability')
       .delete()
@@ -308,6 +348,23 @@ export default function AvailabilityPage() {
             variant="outline"
             className="mt-4"
             onClick={async () => {
+              if (isDemo) {
+                const newSlot: AvailabilitySlot = {
+                  id: `demo-block-${Date.now()}`,
+                  day_of_week: null,
+                  start_date: new Date().toISOString().split('T')[0],
+                  end_date: new Date().toISOString().split('T')[0],
+                  start_time: null,
+                  end_time: null,
+                  is_recurring: false,
+                  is_blocked: true,
+                  notes: null,
+                }
+                setSlots([...slots, newSlot])
+                return
+              }
+
+              const supabase = createClient()
               const {
                 data: { user },
               } = await supabase.auth.getUser()

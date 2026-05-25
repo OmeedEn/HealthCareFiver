@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
 
@@ -36,6 +37,17 @@ export function JobApplicationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+
+    if (isDemoMode()) {
+      toast.success('Application submitted successfully! (demo mode)')
+      setOpen(false)
+      setCoverLetter('')
+      setProposedRate('')
+      setAvailableStartDate('')
+      setLoading(false)
+      onSuccess?.()
+      return
+    }
 
     try {
       const supabase = createClient()

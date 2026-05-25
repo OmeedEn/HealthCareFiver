@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,14 +44,24 @@ export default function FindContractorsPage() {
   const [stateFilter, setStateFilter] = useState('')
   const [availableOnly, setAvailableOnly] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
-  const supabase = createClient()
 
   useEffect(() => {
     fetchContractors()
   }, [contractorType, stateFilter, availableOnly])
 
   async function fetchContractors() {
+    if (isDemoMode()) {
+      setContractors([{
+        ...DEMO_CONTRACTOR,
+        profiles: { avatar_url: null },
+      }] as unknown as ContractorProfile[])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
     let query = supabase
       .from('contractor_profiles')
       .select('*, profiles!inner(avatar_url)')

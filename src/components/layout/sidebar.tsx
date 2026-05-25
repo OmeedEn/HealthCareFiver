@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -27,6 +28,8 @@ import {
   AlertTriangle,
   BarChart3,
   LogOut,
+  Crown,
+  GraduationCap,
 } from 'lucide-react'
 
 type NavItem = {
@@ -42,6 +45,8 @@ const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Events', href: '/events', icon: GraduationCap },
+  { label: 'Membership', href: '/membership', icon: Crown },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
@@ -53,6 +58,7 @@ const FACILITY_NAV: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
   { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Events', href: '/events', icon: GraduationCap },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ]
 
@@ -64,6 +70,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Disputes', href: '/dashboard/disputes', icon: AlertTriangle },
   { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
   { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+  { label: 'Events', href: '/events', icon: GraduationCap },
 ]
 
 function getNavItems(role: string): NavItem[] {
@@ -125,6 +132,11 @@ export function Sidebar({ role, userName, userEmail, open, onOpenChange }: Sideb
   const navItems = getNavItems(role)
 
   async function handleLogout() {
+    if (isDemoMode()) {
+      toast.success('Signed out')
+      router.push('/')
+      return
+    }
     const supabase = createClient()
     await supabase.auth.signOut()
     toast.success('Signed out')

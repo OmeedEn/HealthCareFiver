@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
 
@@ -47,6 +48,12 @@ export function ApplicantActions({
   const handleAction = async (newStatus: string) => {
     setLoading(true)
     try {
+      if (isDemoMode()) {
+        toast.success(`Application status updated to "${newStatus}". (demo mode)`)
+        router.refresh()
+        setLoading(false)
+        return
+      }
       const supabase = createClient()
       const { error } = await supabase
         .from('job_applications')

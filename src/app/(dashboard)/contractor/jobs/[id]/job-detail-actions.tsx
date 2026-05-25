@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { JobApplicationForm } from '@/components/jobs/job-application-form'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { toast } from 'sonner'
 import { BookmarkIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -39,6 +40,12 @@ export function JobDetailActions({
   const router = useRouter()
 
   const handleSave = async () => {
+    if (isDemoMode()) {
+      setSaved(!saved)
+      toast.success(saved ? 'Job removed from saved. (demo mode)' : 'Job saved! (demo mode)')
+      return
+    }
+
     const supabase = createClient()
     const {
       data: { user },

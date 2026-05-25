@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_NOTIFICATIONS } from '@/lib/demo/data'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatRelativeTime } from '@/lib/utils/format'
@@ -37,9 +38,17 @@ const typeIcons: Record<string, React.ReactNode> = {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const isDemo = isDemoMode()
 
   useEffect(() => {
+    if (isDemo) {
+      setNotifications(DEMO_NOTIFICATIONS as unknown as Notification[])
+      setLoading(false)
+      return
+    }
+
+    const supabase = createClient()
+
     async function fetchNotifications() {
       const {
         data: { user },
@@ -74,9 +83,17 @@ export default function NotificationsPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [supabase])
+  }, [isDemo])
 
   async function markAsRead(id: string) {
+    if (isDemo) {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      )
+      return
+    }
+
+    const supabase = createClient()
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
@@ -93,6 +110,15 @@ export default function NotificationsPage() {
     const unreadIds = notifications.filter((n) => !n.is_read).map((n) => n.id)
     if (unreadIds.length === 0) return
 
+    if (isDemo) {
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true }))
+      )
+      toast.success('All notifications marked as read')
+      return
+    }
+
+    const supabase = createClient()
     const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })

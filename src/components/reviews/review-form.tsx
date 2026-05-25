@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,6 +54,22 @@ export function ReviewForm({ contractId, revieweeId, onSuccess }: ReviewFormProp
     }
 
     setSubmitting(true)
+
+    if (isDemoMode()) {
+      toast.success('Review submitted successfully (demo mode)')
+      setRating(0)
+      setTitle('')
+      setContent('')
+      setCategoryRatings({
+        professionalism: 0,
+        communication: 0,
+        skill: 0,
+        punctuality: 0,
+      })
+      setSubmitting(false)
+      onSuccess?.()
+      return
+    }
 
     try {
       const supabase = createClient()

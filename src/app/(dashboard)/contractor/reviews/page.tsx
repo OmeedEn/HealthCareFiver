@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ReviewCard, type ReviewData } from '@/components/reviews/review-card'
 import { StarRating } from '@/components/reviews/star-rating'
 import { Star, MessageSquare } from 'lucide-react'
+import { isDemoMode, DEMO_REVIEWS } from '@/lib/demo/data'
 
 interface ReviewRow {
   id: string
@@ -19,40 +19,56 @@ interface ReviewRow {
 }
 
 export default async function ContractorReviewsPage() {
-  const supabase = await createClient()
+  let reviews: ReviewData[] = []
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  if (isDemoMode()) {
+    reviews = DEMO_REVIEWS.map((r: Record<string, unknown>) => ({
+      id: r.id as string,
+      rating: r.rating as number,
+      title: r.title as string,
+      content: r.content as string,
+      reviewer_first_name: (r.reviewer as Record<string, string>)?.first_name ?? 'Anonymous',
+      reviewer_last_name: (r.reviewer as Record<string, string>)?.last_name ?? '',
+      created_at: r.created_at as string,
+      category_ratings: r.category_ratings as Record<string, number> | undefined,
+    }))
+  } else {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
 
-  if (!user) {
-    redirect('/login')
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      redirect('/login')
+    }
+
+    const { data: reviewData } = await supabase
+      .from('reviews')
+      .select('id, rating, title, content, category_ratings, created_at, profiles!reviewer_id(first_name, last_name)')
+      .eq('reviewee_id', user.id)
+      .order('created_at', { ascending: false })
+
+    const reviewRows = (reviewData ?? []) as unknown as ReviewRow[]
+
+    reviews = reviewRows.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      title: r.title,
+      content: r.content,
+      reviewer_first_name: r.profiles?.first_name ?? 'Anonymous',
+      reviewer_last_name: r.profiles?.last_name ?? '',
+      created_at: r.created_at,
+      category_ratings: r.category_ratings ?? undefined,
+    }))
   }
 
-  const { data: reviewData } = await supabase
-    .from('reviews')
-    .select('id, rating, title, content, category_ratings, created_at, profiles!reviewer_id(first_name, last_name)')
-    .eq('reviewee_id', user.id)
-    .order('created_at', { ascending: false })
-
-  const reviewRows = (reviewData ?? []) as unknown as ReviewRow[]
-
-  const totalReviews = reviewRows.length
+  const totalReviews = reviews.length
   const averageRating =
     totalReviews > 0
-      ? reviewRows.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
       : 0
-
-  const reviews: ReviewData[] = reviewRows.map((r) => ({
-    id: r.id,
-    rating: r.rating,
-    title: r.title,
-    content: r.content,
-    reviewer_first_name: r.profiles?.first_name ?? 'Anonymous',
-    reviewer_last_name: r.profiles?.last_name ?? '',
-    created_at: r.created_at,
-    category_ratings: r.category_ratings ?? undefined,
-  }))
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

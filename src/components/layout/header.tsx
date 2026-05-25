@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +35,11 @@ export function Header({ userName, userEmail }: HeaderProps) {
     .slice(0, 2)
 
   async function handleLogout() {
+    if (isDemoMode()) {
+      toast.success('Signed out')
+      router.push('/')
+      return
+    }
     const supabase = createClient()
     await supabase.auth.signOut()
     toast.success('Signed out')

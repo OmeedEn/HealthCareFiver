@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_CONVERSATIONS, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import {
   ConversationList,
@@ -81,13 +82,20 @@ export default function MessagesPage() {
   }, [])
 
   useEffect(() => {
+    if (isDemoMode()) {
+      setCurrentUserId(DEMO_CONTRACTOR.id)
+      setConversations(DEMO_CONVERSATIONS as unknown as ConversationItem[])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     fetchConversations().finally(() => setLoading(false))
   }, [fetchConversations])
 
   // Subscribe to realtime updates on conversations table
   useEffect(() => {
-    if (!currentUserId) return
+    if (!currentUserId || isDemoMode()) return
 
     const supabase = createClient()
     const channel = supabase

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 interface ContractsTabsProps {
@@ -9,14 +9,19 @@ interface ContractsTabsProps {
     active: number
     completed: number
   }
-  children: (tab: string) => ReactNode
+  activeContent: ReactNode
+  completedContent: ReactNode
+  allContent: ReactNode
 }
 
-export function ContractsTabs({ tabCounts, children }: ContractsTabsProps) {
-  const [tab, setTab] = useState('active')
-
+export function ContractsTabs({
+  tabCounts,
+  activeContent,
+  completedContent,
+  allContent,
+}: ContractsTabsProps) {
   return (
-    <Tabs value={tab} onValueChange={(v) => setTab(v as string)}>
+    <Tabs defaultValue="active">
       <TabsList>
         <TabsTrigger value="active">
           Active ({tabCounts.active})
@@ -28,7 +33,9 @@ export function ContractsTabs({ tabCounts, children }: ContractsTabsProps) {
           All ({tabCounts.all})
         </TabsTrigger>
       </TabsList>
-      <TabsContent value={tab}>{children(tab)}</TabsContent>
+      <TabsContent value="active">{activeContent}</TabsContent>
+      <TabsContent value="completed">{completedContent}</TabsContent>
+      <TabsContent value="all">{allContent}</TabsContent>
     </Tabs>
   )
 }

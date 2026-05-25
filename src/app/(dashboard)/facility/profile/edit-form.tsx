@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -74,6 +75,13 @@ export function FacilityProfileEditForm({ facility }: FacilityProfileEditFormPro
     }
 
     setSaving(true)
+
+    if (isDemoMode()) {
+      toast.success('Facility profile saved! (demo mode)')
+      setEditing(false)
+      setSaving(false)
+      return
+    }
 
     try {
       const supabase = createClient()

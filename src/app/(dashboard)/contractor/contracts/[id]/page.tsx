@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { isDemoMode, DEMO_CONTRACTS } from '@/lib/demo/data'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -86,6 +87,32 @@ export default function ContractorContractDetailPage() {
   const [accepting, setAccepting] = useState(false)
 
   const fetchData = useCallback(async () => {
+    if (isDemoMode()) {
+      const demoContract = DEMO_CONTRACTS.find((c) => c.id === contractId)
+      if (demoContract) {
+        setContract({
+          id: demoContract.id,
+          title: demoContract.title,
+          description: demoContract.description ?? null,
+          status: demoContract.status,
+          rate_amount: demoContract.agreed_rate ?? null,
+          rate_type: demoContract.rate_type ?? null,
+          terms: null,
+          schedule: null,
+          start_date: demoContract.start_date ?? null,
+          end_date: demoContract.end_date ?? null,
+          contractor_id: demoContract.contractor_id,
+          facility_id: demoContract.facility_id,
+          created_at: demoContract.created_at,
+          facility_profiles: demoContract.facility
+            ? { facility_name: demoContract.facility.facility_name }
+            : null,
+        })
+      }
+      setTimesheets([])
+      return
+    }
+
     const supabase = createClient()
 
     const { data: contractData, error } = await supabase
@@ -121,6 +148,11 @@ export default function ContractorContractDetailPage() {
     if (!contract) return
     setAccepting(true)
     try {
+      if (isDemoMode()) {
+        toast.success('Contract accepted! (demo mode)')
+        setContract((prev) => prev ? { ...prev, status: 'active' } : prev)
+        return
+      }
       const supabase = createClient()
       const { error } = await supabase
         .from('contracts')
