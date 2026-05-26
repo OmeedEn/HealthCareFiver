@@ -10,6 +10,27 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // Check if this is a contractor who hasn't subscribed yet
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, subscription_status')
+          .eq('id', user.id)
+          .single()
+
+        // Contractors need an active subscription to use the platform
+        if (
+          profile?.role === 'contractor' &&
+          profile.subscription_status !== 'active'
+        ) {
+          return NextResponse.redirect(`${origin}/subscribe`)
+        }
+      }
+
       return NextResponse.redirect(`${origin}/dashboard`)
     }
   }

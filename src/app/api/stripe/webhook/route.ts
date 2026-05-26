@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -88,6 +89,85 @@ export async function POST(request: NextRequest) {
             failedIntent.last_payment_error?.message || 'Payment failed',
         })
         .eq('stripe_payment_intent_id', failedIntent.id)
+      break
+    }
+
+    // ── Subscription lifecycle events ──────────────────────
+    case 'checkout.session.completed': {
+      const session = event.data.object
+      if (session.mode === 'subscription' && session.subscription) {
+        const userId = session.metadata?.userId
+        if (userId) {
+          // Fetch subscription to get period end
+          const { getStripe } = await import('@/lib/stripe/client')
+          const subscription = await getStripe().subscriptions.retrieve(
+            session.subscription as string
+          ) as Stripe.Subscription
+          const periodEnd = subscription.items.data[0]?.current_period_end
+          await supabase
+            .from('profiles')
+            .update({
+              subscription_status: 'active',
+              stripe_subscription_id: subscription.id,
+              subscription_price_id: subscription.items.data[0]?.price.id,
+              ...(periodEnd
+                ? {
+                    subscription_current_period_end: new Date(
+                      periodEnd * 1000
+                    ).toISOString(),
+                  }
+                : {}),
+            })
+            .eq('id', userId)
+        }
+      }
+      break
+    }
+
+    case 'customer.subscription.updated': {
+      const subscription = event.data.object as Stripe.Subscription
+      const userId = subscription.metadata?.userId
+      if (userId) {
+        const statusMap: Record<string, string> = {
+          active: 'active',
+          trialing: 'trialing',
+          past_due: 'past_due',
+          canceled: 'canceled',
+          unpaid: 'past_due',
+          incomplete: 'inactive',
+          incomplete_expired: 'inactive',
+          paused: 'inactive',
+        }
+        const periodEnd = subscription.items.data[0]?.current_period_end
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_status: statusMap[subscription.status] || 'inactive',
+            ...(periodEnd
+              ? {
+                  subscription_current_period_end: new Date(
+                    periodEnd * 1000
+                  ).toISOString(),
+                }
+              : {}),
+          })
+          .eq('id', userId)
+      }
+      break
+    }
+
+    case 'customer.subscription.deleted': {
+      const deletedSub = event.data.object
+      const userId = deletedSub.metadata?.userId
+      if (userId) {
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_status: 'canceled',
+            stripe_subscription_id: null,
+          })
+          .eq('id', userId)
+      }
       break
     }
 

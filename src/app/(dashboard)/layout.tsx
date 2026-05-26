@@ -31,13 +31,18 @@ export default async function DashboardLayout({
     const { data: profile } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
       | 'contractor'
       | 'facility'
       | 'admin'
+
+    // Contractors must have an active subscription to access the dashboard
+    if (role === 'contractor' && profile?.subscription_status !== 'active') {
+      redirect('/subscribe')
+    }
 
     displayName =
       profile?.first_name && profile?.last_name
