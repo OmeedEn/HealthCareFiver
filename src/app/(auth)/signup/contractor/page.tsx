@@ -137,42 +137,58 @@ export default function ContractorSignupPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="signup-first-name"
+              className="text-sm font-semibold text-[#404145]"
+            >
               First name
             </Label>
             <Input
+              id="signup-first-name"
               placeholder="Sarah"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
+              autoComplete="given-name"
               className="h-11"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="signup-last-name"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Last name
             </Label>
             <Input
+              id="signup-last-name"
               placeholder="Johnson"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
+              autoComplete="family-name"
               className="h-11"
             />
           </div>
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-[#404145]">
+          <Label
+            htmlFor="signup-profession"
+            className="text-sm font-semibold text-[#404145]"
+          >
             Profession
           </Label>
           <Select
             value={contractorType}
             onValueChange={(v) => setContractorType(v ?? '')}
           >
-            <SelectTrigger className="h-11 w-full">
+            <SelectTrigger
+              id="signup-profession"
+              className="h-11 w-full"
+            >
               <SelectValue placeholder="Select your profession" />
             </SelectTrigger>
             <SelectContent>
@@ -186,45 +202,60 @@ export default function ContractorSignupPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-[#404145]">
+          <Label
+            htmlFor="signup-email"
+            className="text-sm font-semibold text-[#404145]"
+          >
             Email address
           </Label>
           <Input
+            id="signup-email"
             type="email"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             className="h-11"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="signup-password"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Password
             </Label>
             <Input
+              id="signup-password"
               type="password"
               placeholder="Min 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              autoComplete="new-password"
               className="h-11"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="signup-confirm-password"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Confirm
             </Label>
             <Input
+              id="signup-confirm-password"
               type="password"
               placeholder="Repeat password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={8}
+              autoComplete="new-password"
               className="h-11"
             />
           </div>

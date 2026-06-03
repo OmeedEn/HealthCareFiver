@@ -21,14 +21,39 @@ interface OtherUser {
   avatar_url: string | null
 }
 
+function getDemoInitialState(conversationId: string) {
+  const convo = (DEMO_CONVERSATIONS as Record<string, unknown>[]).find(
+    (c) => c.id === conversationId
+  )
+  const other = convo?.other_user as OtherUser | undefined
+  const convoMessages = (DEMO_MESSAGES as unknown as MessageItem[]).filter(
+    (m) => m.conversation_id === conversationId
+  )
+  return {
+    messages: convoMessages,
+    otherUser: other ?? null,
+  }
+}
+
 export default function ConversationPage() {
   const params = useParams()
   const conversationId = params.conversationId as string
+  const isDemo = isDemoMode()
 
-  const [messages, setMessages] = useState<MessageItem[]>([])
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [otherUser, setOtherUser] = useState<OtherUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const initialDemo = isDemo
+    ? getDemoInitialState(conversationId)
+    : { messages: [], otherUser: null }
+
+  const [messages, setMessages] = useState<MessageItem[]>(
+    () => initialDemo.messages
+  )
+  const [currentUserId, setCurrentUserId] = useState<string | null>(
+    isDemo ? DEMO_CONTRACTOR.id : null
+  )
+  const [otherUser, setOtherUser] = useState<OtherUser | null>(
+    initialDemo.otherUser
+  )
+  const [loading, setLoading] = useState(!isDemo)
 
   const fetchMessages = useCallback(async () => {
     const supabase = createClient()
@@ -95,34 +120,20 @@ export default function ConversationPage() {
   }, [conversationId])
 
   useEffect(() => {
-    if (isDemoMode()) {
-      setCurrentUserId(DEMO_CONTRACTOR.id)
-      // Find matching conversation for the other user info
-      const convo = (DEMO_CONVERSATIONS as Record<string, unknown>[]).find(
-        (c) => c.id === conversationId
-      )
-      if (convo) {
-        const other = convo.other_user as OtherUser | undefined
-        if (other) {
-          setOtherUser(other)
-        }
-      }
-      // Filter messages for this conversation
-      const convoMessages = (DEMO_MESSAGES as unknown as MessageItem[]).filter(
-        (m) => m.conversation_id === conversationId
-      )
-      setMessages(convoMessages)
-      setLoading(false)
-      return
-    }
+    if (isDemo) return
 
-    setLoading(true)
-    fetchMessages().finally(() => setLoading(false))
-  }, [fetchMessages, conversationId])
+    let cancelled = false
+    fetchMessages().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isDemo, fetchMessages])
 
   // Subscribe to realtime messages
   useEffect(() => {
-    if (!currentUserId || isDemoMode()) return
+    if (!currentUserId || isDemo) return
 
     const supabase = createClient()
     const channel = supabase
@@ -158,7 +169,7 @@ export default function ConversationPage() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [conversationId, currentUserId])
+  }, [conversationId, currentUserId, isDemo])
 
   const handleSend = async (content: string) => {
     if (!currentUserId) return

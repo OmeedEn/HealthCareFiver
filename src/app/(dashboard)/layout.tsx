@@ -56,10 +56,22 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
+      <a
+        href="#dashboard-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#0f4c3a] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Skip to main content
+      </a>
       <Sidebar role={role} userName={displayName} userEmail={userEmail} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header userName={displayName} userEmail={userEmail} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+        <main
+          id="dashboard-main"
+          tabIndex={-1}
+          className="flex-1 overflow-y-auto p-4 md:p-6"
+        >
+          {children}
+        </main>
       </div>
     </div>
   )

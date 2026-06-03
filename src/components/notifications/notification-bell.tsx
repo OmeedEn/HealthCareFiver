@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_NOTIFICATIONS } from '@/lib/demo/data'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -34,16 +33,19 @@ const typeIcons: Record<string, React.ReactNode> = {
 }
 
 export function NotificationBell() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const isDemo = isDemoMode()
+  const initialDemoNotifs = isDemo
+    ? (DEMO_NOTIFICATIONS.slice(0, 5) as unknown as Notification[])
+    : []
+  const [notifications, setNotifications] = useState<Notification[]>(
+    () => initialDemoNotifs
+  )
+  const [unreadCount, setUnreadCount] = useState(() =>
+    initialDemoNotifs.filter((n) => !n.is_read).length
+  )
 
   useEffect(() => {
-    if (isDemoMode()) {
-      const demoNotifs = DEMO_NOTIFICATIONS.slice(0, 5) as unknown as Notification[]
-      setNotifications(demoNotifs)
-      setUnreadCount(demoNotifs.filter((n) => !n.is_read).length)
-      return
-    }
+    if (isDemo) return
 
     const supabase = createClient()
 
@@ -105,10 +107,10 @@ export function NotificationBell() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [isDemo])
 
   function markAsRead(id: string) {
-    if (!isDemoMode()) {
+    if (!isDemo) {
       const supabase = createClient()
       supabase.from('notifications').update({ is_read: true }).eq('id', id)
     }

@@ -7,12 +7,10 @@ import {
   Star,
   SlidersHorizontal,
   MapPin,
-  X,
   ChevronDown,
   Menu,
 } from 'lucide-react'
 import { DEMO_PROVIDERS } from '@/lib/demo/data'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Sheet,
@@ -616,7 +614,7 @@ export default function FindCarePage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         {/* ── Page Heading ── */}
-        <h1 className="font-heading text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl">
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl md:text-4xl">
           Find Healthcare Professionals
         </h1>
 
@@ -624,8 +622,12 @@ export default function FindCarePage() {
         <div className="mt-6 flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9ca3af]" />
+            <label htmlFor="find-care-search" className="sr-only">
+              Search providers
+            </label>
             <input
-              type="text"
+              id="find-care-search"
+              type="search"
               placeholder="Search by specialty, name, or condition..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -676,8 +678,10 @@ export default function FindCarePage() {
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition ${
+                aria-pressed={activeCategory === cat}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73] focus-visible:ring-offset-2 ${
                   activeCategory === cat
                     ? 'bg-[#0f4c3a] text-white'
                     : 'bg-white text-[#374151] border border-[#e5e7eb] hover:border-[#1dbf73] hover:text-[#1dbf73]'
@@ -740,7 +744,7 @@ export default function FindCarePage() {
 
             {/* Results grid or empty state */}
             {filteredProviders.length > 0 ? (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {filteredProviders.map((provider) => (
                   <ProviderCard key={provider.id} provider={provider} />
                 ))}

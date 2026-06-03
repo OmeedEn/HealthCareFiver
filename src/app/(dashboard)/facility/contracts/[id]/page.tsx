@@ -72,45 +72,45 @@ const STATUS_LABEL: Record<string, string> = {
   terminated: 'Terminated',
 }
 
+function demoContractToDetail(contractId: string): ContractDetail | null {
+  const demoContract = DEMO_CONTRACTS.find((c) => c.id === contractId)
+  if (!demoContract) return null
+  return {
+    id: demoContract.id,
+    title: demoContract.title,
+    description: demoContract.description ?? null,
+    status: demoContract.status,
+    rate_amount: demoContract.agreed_rate ?? null,
+    rate_type: demoContract.rate_type ?? null,
+    terms: null,
+    schedule: null,
+    start_date: demoContract.start_date ?? null,
+    end_date: demoContract.end_date ?? null,
+    contractor_id: demoContract.contractor_id,
+    facility_id: demoContract.facility_id,
+    created_at: demoContract.created_at,
+    contractor_profiles: demoContract.contractor
+      ? {
+          first_name: demoContract.contractor.first_name,
+          last_name: demoContract.contractor.last_name,
+        }
+      : null,
+  }
+}
+
 export default function FacilityContractDetailPage() {
   const params = useParams()
   const contractId = params.id as string
+  const isDemo = isDemoMode()
 
-  const [contract, setContract] = useState<ContractDetail | null>(null)
+  const [contract, setContract] = useState<ContractDetail | null>(() =>
+    isDemo ? demoContractToDetail(contractId) : null
+  )
   const [timesheets, setTimesheets] = useState<TimesheetItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!isDemo)
   const [accepting, setAccepting] = useState(false)
 
   const fetchData = useCallback(async () => {
-    if (isDemoMode()) {
-      const demoContract = DEMO_CONTRACTS.find((c) => c.id === contractId)
-      if (demoContract) {
-        setContract({
-          id: demoContract.id,
-          title: demoContract.title,
-          description: demoContract.description ?? null,
-          status: demoContract.status,
-          rate_amount: demoContract.agreed_rate ?? null,
-          rate_type: demoContract.rate_type ?? null,
-          terms: null,
-          schedule: null,
-          start_date: demoContract.start_date ?? null,
-          end_date: demoContract.end_date ?? null,
-          contractor_id: demoContract.contractor_id,
-          facility_id: demoContract.facility_id,
-          created_at: demoContract.created_at,
-          contractor_profiles: demoContract.contractor
-            ? {
-                first_name: demoContract.contractor.first_name,
-                last_name: demoContract.contractor.last_name,
-              }
-            : null,
-        })
-      }
-      setTimesheets([])
-      return
-    }
-
     const supabase = createClient()
 
     const { data: contractData, error } = await supabase
@@ -138,9 +138,16 @@ export default function FacilityContractDetailPage() {
   }, [contractId])
 
   useEffect(() => {
-    setLoading(true)
-    fetchData().finally(() => setLoading(false))
-  }, [fetchData])
+    if (isDemo) return
+
+    let cancelled = false
+    fetchData().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isDemo, fetchData])
 
   const handleAccept = async () => {
     if (!contract) return

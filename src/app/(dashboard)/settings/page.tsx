@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
@@ -289,10 +290,13 @@ export default function SettingsPage() {
                   onChange={handleAvatarUpload}
                 />
                 {profile.avatar_url && (
-                  <img
+                  <Image
                     src={profile.avatar_url}
                     alt="Avatar"
+                    width={64}
+                    height={64}
                     className="mt-2 size-16 rounded-full object-cover"
+                    unoptimized
                   />
                 )}
               </div>

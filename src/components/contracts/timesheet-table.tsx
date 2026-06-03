@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { formatDate, formatDateTime } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
 import { CheckIcon, XIcon } from 'lucide-react'
 
 export interface TimesheetItem {

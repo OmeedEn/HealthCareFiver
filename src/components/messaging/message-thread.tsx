@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { formatDate, formatDateTime, getInitials } from '@/lib/utils/format'
+import { formatDate, getInitials } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
 
 export interface MessageItem {

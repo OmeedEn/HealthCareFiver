@@ -12,9 +12,14 @@ import { MessageSquarePlusIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function MessagesPage() {
-  const [conversations, setConversations] = useState<ConversationItem[]>([])
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const isDemo = isDemoMode()
+  const [conversations, setConversations] = useState<ConversationItem[]>(() =>
+    isDemo ? (DEMO_CONVERSATIONS as unknown as ConversationItem[]) : []
+  )
+  const [currentUserId, setCurrentUserId] = useState<string | null>(
+    isDemo ? DEMO_CONTRACTOR.id : null
+  )
+  const [loading, setLoading] = useState(!isDemo)
 
   const fetchConversations = useCallback(async () => {
     const supabase = createClient()
@@ -82,16 +87,16 @@ export default function MessagesPage() {
   }, [])
 
   useEffect(() => {
-    if (isDemoMode()) {
-      setCurrentUserId(DEMO_CONTRACTOR.id)
-      setConversations(DEMO_CONVERSATIONS as unknown as ConversationItem[])
-      setLoading(false)
-      return
-    }
+    if (isDemo) return
 
-    setLoading(true)
-    fetchConversations().finally(() => setLoading(false))
-  }, [fetchConversations])
+    let cancelled = false
+    fetchConversations().finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [isDemo, fetchConversations])
 
   // Subscribe to realtime updates on conversations table
   useEffect(() => {

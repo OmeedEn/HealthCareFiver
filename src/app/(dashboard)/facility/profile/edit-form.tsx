@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { FACILITY_TYPE_LABELS, US_STATES } from '@/lib/utils/constants'
 import { toast } from 'sonner'
 import { Loader2, Save, Pencil, X } from 'lucide-react'

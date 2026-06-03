@@ -36,7 +36,7 @@ const ACTIONS: Record<string, { label: string; newStatus: string; variant: 'defa
 export function ApplicantActions({
   applicationId,
   currentStatus,
-  jobId,
+  jobId: _jobId,
 }: ApplicantActionsProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()

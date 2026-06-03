@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -45,11 +45,7 @@ export default function FindContractorsPage() {
   const [availableOnly, setAvailableOnly] = useState(true)
   const [showFilters, setShowFilters] = useState(false)
 
-  useEffect(() => {
-    fetchContractors()
-  }, [contractorType, stateFilter, availableOnly])
-
-  async function fetchContractors() {
+  const fetchContractors = useCallback(async () => {
     if (isDemoMode()) {
       setContractors([{
         ...DEMO_CONTRACTOR,
@@ -86,7 +82,11 @@ export default function FindContractorsPage() {
       setContractors(data as unknown as ContractorProfile[])
     }
     setLoading(false)
-  }
+  }, [contractorType, stateFilter, availableOnly, searchQuery])
+
+  useEffect(() => {
+    fetchContractors()
+  }, [fetchContractors])
 
   function handleSearch() {
     fetchContractors()

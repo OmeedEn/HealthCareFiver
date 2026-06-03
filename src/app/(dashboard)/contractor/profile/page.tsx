@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
 import { formatCurrency, getInitials } from '@/lib/utils/format'
@@ -14,8 +14,6 @@ import {
   Clock,
   Car,
   Pencil,
-  CheckCircle,
-  XCircle,
 } from 'lucide-react'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 

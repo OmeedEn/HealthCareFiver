@@ -36,16 +36,14 @@ const typeIcons: Record<string, React.ReactNode> = {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
   const isDemo = isDemoMode()
+  const [notifications, setNotifications] = useState<Notification[]>(() =>
+    isDemo ? (DEMO_NOTIFICATIONS as unknown as Notification[]) : []
+  )
+  const [loading, setLoading] = useState(!isDemo)
 
   useEffect(() => {
-    if (isDemo) {
-      setNotifications(DEMO_NOTIFICATIONS as unknown as Notification[])
-      setLoading(false)
-      return
-    }
+    if (isDemo) return
 
     const supabase = createClient()
 

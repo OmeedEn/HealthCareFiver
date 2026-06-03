@@ -47,38 +47,42 @@ interface AvailabilitySlot {
 }
 
 export default function AvailabilityPage() {
-  const [slots, setSlots] = useState<AvailabilitySlot[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const isDemo = isDemoMode()
+  const [slots, setSlots] = useState<AvailabilitySlot[]>(() =>
+    isDemo ? (DEMO_AVAILABILITY as unknown as AvailabilitySlot[]) : []
+  )
+  const [loading, setLoading] = useState(!isDemo)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (isDemo) {
-      setSlots(DEMO_AVAILABILITY as unknown as AvailabilitySlot[])
+    if (isDemo) return
+
+    let cancelled = false
+    async function fetchAvailability() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user || cancelled) return
+
+      const { data, error } = await supabase
+        .from('contractor_availability')
+        .select('*')
+        .eq('contractor_id', user.id)
+        .order('day_of_week', { ascending: true })
+
+      if (cancelled) return
+      if (!error && data) {
+        setSlots(data as AvailabilitySlot[])
+      }
       setLoading(false)
-      return
     }
+
     fetchAvailability()
-  }, [isDemo])
-
-  async function fetchAvailability() {
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data, error } = await supabase
-      .from('contractor_availability')
-      .select('*')
-      .eq('contractor_id', user.id)
-      .order('day_of_week', { ascending: true })
-
-    if (!error && data) {
-      setSlots(data as AvailabilitySlot[])
+    return () => {
+      cancelled = true
     }
-    setLoading(false)
-  }
+  }, [isDemo])
 
   async function addSlot() {
     if (isDemo) {

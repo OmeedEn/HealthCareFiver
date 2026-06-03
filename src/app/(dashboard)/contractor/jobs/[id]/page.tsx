@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils/format'
@@ -17,7 +16,6 @@ import {
   MapPinIcon,
   DollarSignIcon,
   CalendarIcon,
-  ClockIcon,
   UsersIcon,
   BriefcaseIcon,
   BuildingIcon,

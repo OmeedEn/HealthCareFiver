@@ -9,20 +9,19 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyTable = {
-  Row: Record<string, any>
-  Insert: Record<string, any>
-  Update: Record<string, any>
-  Relationships: any[]
+  Row: Record<string, Json>
+  Insert: Record<string, Json>
+  Update: Record<string, Json>
+  Relationships: unknown[]
 }
 
 export type Database = {
   public: {
     Tables: Record<string, AnyTable>
     Views: Record<string, AnyTable>
-    Functions: Record<string, any>
-    Enums: Record<string, any>
-    CompositeTypes: Record<string, any>
+    Functions: Record<string, unknown>
+    Enums: Record<string, unknown>
+    CompositeTypes: Record<string, unknown>
   }
 }

@@ -6,15 +6,13 @@ import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card'
-import { formatDate, formatRelativeTime } from '@/lib/utils/format'
+import { formatRelativeTime } from '@/lib/utils/format'
 import {
   CONTRACTOR_TYPE_LABELS,
   JOB_TYPE_LABELS,
 } from '@/lib/utils/constants'
-import { PlusIcon, UsersIcon, EyeIcon, PencilIcon, XCircleIcon } from 'lucide-react'
+import { PlusIcon, UsersIcon, EyeIcon, PencilIcon } from 'lucide-react'
 import { FacilityJobsTabs } from './facility-jobs-tabs'
 
 interface FacilityJob {
@@ -50,7 +48,7 @@ export default async function FacilityJobsPage() {
     redirect('/login')
   }
 
-  const { data: jobs, error } = await supabase
+  const { data: jobs } = await supabase
     .from('jobs')
     .select(
       'id, title, status, contractor_type, job_type, total_applicants, positions_available, positions_filled, published_at, created_at, urgency'

@@ -31,6 +31,13 @@ export default function ContractorJobsPage() {
   const [page, setPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [savedJobIds, setSavedJobIds] = useState<Set<string>>(new Set())
+  const [filtersForCurrentPage, setFiltersForCurrentPage] =
+    useState<JobFilters>(defaultFilters)
+
+  if (filters !== filtersForCurrentPage) {
+    setFiltersForCurrentPage(filters)
+    setPage(0)
+  }
 
   const fetchJobs = useCallback(
     async (pageNum: number, append = false) => {
@@ -221,9 +228,8 @@ export default function ContractorJobsPage() {
     loadSaved()
   }, [])
 
-  // Fetch jobs when filters change
+  // Fetch jobs when filters change (page reset handled during render).
   useEffect(() => {
-    setPage(0)
     fetchJobs(0)
   }, [fetchJobs])
 
@@ -297,9 +303,18 @@ export default function ContractorJobsPage() {
         <form
           onSubmit={handleSearchSubmit}
           className="relative flex-1"
+          role="search"
         >
-          <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <label htmlFor="contractor-job-search" className="sr-only">
+            Search jobs
+          </label>
+          <SearchIcon
+            aria-hidden="true"
+            className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          />
           <Input
+            id="contractor-job-search"
+            type="search"
             placeholder="Search jobs by title, description, specialty..."
             className="pl-9"
             value={filters.search}
@@ -314,7 +329,10 @@ export default function ContractorJobsPage() {
             value={filters.sort}
             onValueChange={(v) => setFilters((f) => ({ ...f, sort: v ?? '' }))}
           >
-            <SelectTrigger className="w-40">
+            <SelectTrigger
+              className="w-40"
+              aria-label="Sort jobs by"
+            >
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>

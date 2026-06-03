@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -47,32 +47,38 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  const fetchUsers = useCallback(
-    async (searchTerm: string) => {
-      setLoading(true)
+  useEffect(() => {
+    let cancelled = false
 
+    async function fetchUsers() {
       let query = supabase
         .from('profiles')
         .select('user_id, first_name, last_name, email, role, status, created_at')
         .order('created_at', { ascending: false })
         .limit(100)
 
-      if (searchTerm.trim()) {
+      if (search.trim()) {
         query = query.or(
-          `first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
+          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`
         )
       }
 
       const { data } = await query
+      if (cancelled) return
       setUsers((data ?? []) as unknown as UserRow[])
       setLoading(false)
-    },
-    [supabase]
-  )
+    }
 
-  useEffect(() => {
-    fetchUsers(search)
-  }, [fetchUsers, search])
+    fetchUsers()
+    return () => {
+      cancelled = true
+    }
+  }, [supabase, search])
+
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    setLoading(true)
+  }
 
   async function handleStatusChange(userId: string, newStatus: string) {
     const { error } = await supabase
@@ -124,7 +130,7 @@ export default function AdminUsersPage() {
             <Input
               placeholder="Search by name or email..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-9"
             />
           </div>

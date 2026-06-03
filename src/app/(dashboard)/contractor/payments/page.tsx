@@ -28,36 +28,33 @@ interface SummaryData {
   inEscrow: number
 }
 
+function computeSummary(payments: Payment[]): SummaryData {
+  const totalEarned = payments
+    .filter((p) => p.status === 'released')
+    .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+  const pending = payments
+    .filter((p) => p.status === 'pending' || p.status === 'processing')
+    .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+  const inEscrow = payments
+    .filter((p) => p.status === 'in_escrow')
+    .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
+  return { totalEarned, pending, inEscrow }
+}
+
 export default function ContractorPaymentsPage() {
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [summary, setSummary] = useState<SummaryData>({
-    totalEarned: 0,
-    pending: 0,
-    inEscrow: 0,
-  })
-  const [isOnboarded, setIsOnboarded] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const isDemo = isDemoMode()
+  const initialDemoPayments = isDemo
+    ? (DEMO_PAYMENTS as unknown as Payment[])
+    : []
+  const [payments, setPayments] = useState<Payment[]>(() => initialDemoPayments)
+  const [summary, setSummary] = useState<SummaryData>(() =>
+    isDemo ? computeSummary(initialDemoPayments) : { totalEarned: 0, pending: 0, inEscrow: 0 }
+  )
+  const [isOnboarded, setIsOnboarded] = useState(isDemo)
+  const [loading, setLoading] = useState(!isDemo)
 
   useEffect(() => {
-    if (isDemoMode()) {
-      const demoPayments = (DEMO_PAYMENTS as unknown as Payment[])
-      setPayments(demoPayments)
-      setIsOnboarded(true)
-
-      const totalEarned = demoPayments
-        .filter((p) => p.status === 'released')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-      const pending = demoPayments
-        .filter((p) => p.status === 'pending' || p.status === 'processing')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-      const inEscrow = demoPayments
-        .filter((p) => p.status === 'in_escrow')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-
-      setSummary({ totalEarned, pending, inEscrow })
-      setLoading(false)
-      return
-    }
+    if (isDemo) return
 
     async function fetchData() {
       const supabase = createClient()
@@ -85,23 +82,12 @@ export default function ContractorPaymentsPage() {
       const fetchedPayments = (paymentData ?? []) as unknown as Payment[]
       setPayments(fetchedPayments)
 
-      // Calculate summary
-      const totalEarned = fetchedPayments
-        .filter((p) => p.status === 'released')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-      const pending = fetchedPayments
-        .filter((p) => p.status === 'pending' || p.status === 'processing')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-      const inEscrow = fetchedPayments
-        .filter((p) => p.status === 'in_escrow')
-        .reduce((sum, p) => sum + (p.net_amount ?? 0), 0)
-
-      setSummary({ totalEarned, pending, inEscrow })
+      setSummary(computeSummary(fetchedPayments))
       setLoading(false)
     }
 
     fetchData()
-  }, [])
+  }, [isDemo])
 
   if (loading) {
     return (

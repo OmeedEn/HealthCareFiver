@@ -147,25 +147,33 @@ export default function FacilitySignupPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-name"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Facility name
             </Label>
             <Input
+              id="facility-name"
               placeholder="Your facility name"
               value={facilityName}
               onChange={(e) => setFacilityName(e.target.value)}
               required
+              autoComplete="organization"
               className="h-11"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-type"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Facility type
             </Label>
             <Select value={facilityType} onValueChange={(v) => setFacilityType(v ?? '')}>
-              <SelectTrigger className="h-11 w-full">
+              <SelectTrigger id="facility-type" className="h-11 w-full">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
@@ -180,82 +188,110 @@ export default function FacilitySignupPage() {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-[#404145]">
+          <Label
+            htmlFor="facility-contact-name"
+            className="text-sm font-semibold text-[#404145]"
+          >
             Contact name
           </Label>
           <Input
+            id="facility-contact-name"
             placeholder="Full name of primary contact"
             value={contactName}
             onChange={(e) => setContactName(e.target.value)}
             required
+            autoComplete="name"
             className="h-11"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold text-[#404145]">
+          <Label
+            htmlFor="facility-email"
+            className="text-sm font-semibold text-[#404145]"
+          >
             Email address
           </Label>
           <Input
+            id="facility-email"
             type="email"
             placeholder="facility@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             className="h-11"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-password"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Password
             </Label>
             <Input
+              id="facility-password"
               type="password"
               placeholder="Min 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="h-11"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-confirm-password"
+              className="text-sm font-semibold text-[#404145]"
+            >
               Confirm password
             </Label>
             <Input
+              id="facility-confirm-password"
               type="password"
               placeholder="Repeat password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete="new-password"
               className="h-11"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="col-span-2 space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-city"
+              className="text-sm font-semibold text-[#404145]"
+            >
               City
             </Label>
             <Input
+              id="facility-city"
               placeholder="City"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               required
+              autoComplete="address-level2"
               className="h-11"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-state"
+              className="text-sm font-semibold text-[#404145]"
+            >
               State
             </Label>
             <Select value={state} onValueChange={(v) => setState(v ?? '')}>
-              <SelectTrigger className="h-11 w-full">
+              <SelectTrigger id="facility-state" className="h-11 w-full">
                 <SelectValue placeholder="State" />
               </SelectTrigger>
               <SelectContent>
@@ -268,16 +304,21 @@ export default function FacilitySignupPage() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label className="text-sm font-semibold text-[#404145]">
+            <Label
+              htmlFor="facility-zip"
+              className="text-sm font-semibold text-[#404145]"
+            >
               ZIP code
             </Label>
             <Input
+              id="facility-zip"
               placeholder="ZIP"
               value={zipCode}
               onChange={(e) => setZipCode(e.target.value)}
               required
               pattern="[0-9]{5}"
               maxLength={5}
+              autoComplete="postal-code"
               className="h-11"
             />
           </div>

@@ -9,6 +9,7 @@
  * Uses the existing Stripe client from src/lib/stripe/client.ts.
  */
 
+import type Stripe from 'stripe'
 import { getStripe } from './client'
 
 // ---------------------------------------------------------------------------
@@ -169,15 +170,15 @@ export async function calculateTax(
     },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jurisdictions: TaxJurisdiction[] = (
-    (calculation as any).tax_breakdown || []
-  ).map((b: any) => ({
-    name: b.jurisdiction?.display_name ?? 'Tax',
-    rate: Number(b.rate ?? 0),
-    amount: b.amount ?? 0,
-    level: (b.jurisdiction?.level ?? 'state') as TaxJurisdiction['level'],
-  }))
+  type TaxBreakdownItem = NonNullable<Stripe.Tax.Calculation['tax_breakdown']>[number]
+  const jurisdictions: TaxJurisdiction[] = (calculation.tax_breakdown ?? []).map(
+    (b: TaxBreakdownItem) => ({
+      name: b.tax_rate_details?.tax_type ?? 'Tax',
+      rate: Number(b.tax_rate_details?.percentage_decimal ?? 0),
+      amount: b.amount ?? 0,
+      level: 'state' as TaxJurisdiction['level'],
+    })
+  )
 
   return {
     taxAmount: calculation.tax_amount_exclusive,
@@ -226,13 +227,15 @@ export async function createTaxRegistration(
 
   const stripe = getStripe()
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type UsRegistrationType = NonNullable<
+    NonNullable<Stripe.Tax.RegistrationCreateParams['country_options']['us']>['type']
+  >
   const registration = await stripe.tax.registrations.create({
     country: request.country,
     country_options: {
       us: {
         state: request.state!,
-        type: request.type as any,
+        type: request.type as UsRegistrationType,
       },
     },
     active_from: 'now',
