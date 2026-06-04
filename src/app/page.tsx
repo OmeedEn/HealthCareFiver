@@ -19,6 +19,7 @@ import {
   Users,
   Wind,
 } from 'lucide-react'
+import { HeroSearch } from '@/components/marketing/hero-search'
 
 /* ───────────────────── Data ───────────────────── */
 
@@ -342,22 +343,7 @@ export default function LandingPage() {
 
               {/* Search Bar */}
               <div className="mx-auto mt-10 max-w-2xl">
-                <div className="rounded-2xl bg-white p-2 shadow-xl shadow-black/10">
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <div className="flex min-h-12 flex-1 items-center gap-3 px-4 text-[#6b7280]">
-                      <Search className="h-5 w-5 shrink-0" />
-                      <span className="text-sm sm:text-base">
-                        Try &ldquo;ICU nurse&rdquo;, &ldquo;CNA night shift&rdquo;, or &ldquo;respiratory therapist&rdquo;
-                      </span>
-                    </div>
-                    <Link
-                      href="/find-care"
-                      className="inline-flex h-12 items-center justify-center rounded-xl bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463]"
-                    >
-                      Search
-                    </Link>
-                  </div>
-                </div>
+                <HeroSearch />
               </div>
 
               {/* Popular pills */}
@@ -366,7 +352,7 @@ export default function LandingPage() {
                 {popularCategories.map((cat) => (
                   <Link
                     key={cat}
-                    href="/signup"
+                    href={`/find-care?q=${encodeURIComponent(cat)}`}
                     className="rounded-full border border-white/20 px-3.5 py-1.5 font-medium text-white/80 transition hover:border-[#1dbf73] hover:bg-[#1dbf73]/10 hover:text-white"
                   >
                     {cat}

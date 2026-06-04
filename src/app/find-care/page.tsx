@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { Suspense, useState, useMemo } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import {
   Search,
   Star,
@@ -393,9 +394,11 @@ function FiltersPanel({
 
 /* ────────────────────── Main Page ────────────────────── */
 
-export default function FindCarePage() {
+function FindCarePageContent() {
+  const searchParams = useSearchParams()
+  const initialQuery = searchParams?.get('q') ?? ''
   // Search & filter state
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [activeCategory, setActiveCategory] = useState('All')
   const [sessionType, setSessionType] = useState('all')
   const [rateMin, setRateMin] = useState('')
@@ -779,5 +782,13 @@ export default function FindCarePage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function FindCarePage() {
+  return (
+    <Suspense fallback={null}>
+      <FindCarePageContent />
+    </Suspense>
   )
 }
