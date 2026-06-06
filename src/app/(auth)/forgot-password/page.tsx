@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,15 +26,18 @@ export default function ForgotPasswordPage() {
       return
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/callback`,
-    })
-
-    if (error) {
-      toast.error(error.message)
-      setLoading(false)
-      return
+    try {
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          redirectTo: `${window.location.origin}/callback`,
+        }),
+      })
+    } catch (err) {
+      // Treat network errors as success too — never reveal account existence.
+      console.error('Forgot-password request failed:', err)
     }
 
     setSent(true)

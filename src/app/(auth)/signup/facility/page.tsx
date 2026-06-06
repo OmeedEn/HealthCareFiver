@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,6 +58,11 @@ export default function FacilitySignupPage() {
       return
     }
 
+    if (password.length < 8) {
+      toast.error('Password must be at least 8 characters')
+      return
+    }
+
     if (!facilityType) {
       toast.error('Please select a facility type')
       return
@@ -77,25 +81,30 @@ export default function FacilitySignupPage() {
       return
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           role: 'facility',
-          facility_name: facilityName,
+          email: email.trim().toLowerCase(),
+          password,
+          facility_name: facilityName.trim(),
           facility_type: facilityType,
-          contact_name: contactName,
-          city,
+          contact_name: contactName.trim(),
+          city: city.trim(),
           state,
-          zip_code: zipCode,
-        },
-      },
-    })
-
-    if (error) {
-      toast.error(error.message)
+          zip_code: zipCode.trim(),
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        toast.error(body.error || 'Could not create account')
+        setLoading(false)
+        return
+      }
+    } catch {
+      toast.error('Network error — please try again')
       setLoading(false)
       return
     }
@@ -235,11 +244,11 @@ export default function FacilitySignupPage() {
             <Input
               id="facility-password"
               type="password"
-              placeholder="Min 6 characters"
+              placeholder="Min 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               className="h-11"
             />
@@ -258,7 +267,7 @@ export default function FacilitySignupPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
               autoComplete="new-password"
               className="h-11"
             />

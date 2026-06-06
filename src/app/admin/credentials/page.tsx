@@ -34,7 +34,7 @@ interface PendingCredential {
   name: string
   document_url: string | null
   created_at: string
-  profiles: {
+  contractor_profiles: {
     first_name: string
     last_name: string
   } | null
@@ -54,7 +54,7 @@ export default function AdminCredentialsPage() {
       const { data } = await supabase
         .from('credentials')
         .select(
-          'id, contractor_id, credential_type, name, document_url, created_at, profiles!contractor_id(first_name, last_name)'
+          'id, contractor_id, credential_type, name, document_url, created_at, contractor_profiles!contractor_id(first_name, last_name)'
         )
         .eq('status', 'pending_review')
         .order('created_at', { ascending: true })
@@ -166,8 +166,8 @@ export default function AdminCredentialsPage() {
                 {credentials.map((credential) => (
                   <TableRow key={credential.id}>
                     <TableCell className="font-medium">
-                      {credential.profiles?.first_name ?? ''}{' '}
-                      {credential.profiles?.last_name ?? ''}
+                      {credential.contractor_profiles?.first_name ?? ''}{' '}
+                      {credential.contractor_profiles?.last_name ?? ''}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">

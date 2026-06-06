@@ -23,21 +23,34 @@ export async function POST() {
     return NextResponse.json({ error: 'Already onboarded' }, { status: 400 })
   }
 
-  let connectAccountId = profile?.stripe_connect_id
+  try {
+    let connectAccountId = profile?.stripe_connect_id
 
-  // Create Connect account if doesn't exist
-  if (!connectAccountId) {
-    const account = await createConnectAccount(user.email!, user.id)
-    connectAccountId = account.id
+    if (!connectAccountId) {
+      const account = await createConnectAccount(user.email!, user.id)
+      connectAccountId = account.id
 
-    await supabase
-      .from('profiles')
-      .update({ stripe_connect_id: account.id })
-      .eq('id', user.id)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ stripe_connect_id: account.id })
+        .eq('id', user.id)
+      if (updateError) {
+        console.error('Failed to persist Stripe Connect id:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to save Stripe Connect account' },
+          { status: 500 }
+        )
+      }
+    }
+
+    const accountLink = await createAccountLink(connectAccountId)
+
+    return NextResponse.json({ url: accountLink.url })
+  } catch (err) {
+    console.error('Stripe Connect onboarding failed:', err)
+    return NextResponse.json(
+      { error: 'Failed to start Stripe Connect onboarding' },
+      { status: 500 }
+    )
   }
-
-  // Create onboarding link
-  const accountLink = await createAccountLink(connectAccountId)
-
-  return NextResponse.json({ url: accountLink.url })
 }

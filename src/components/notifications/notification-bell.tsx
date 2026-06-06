@@ -110,14 +110,28 @@ export function NotificationBell() {
   }, [isDemo])
 
   function markAsRead(id: string) {
-    if (!isDemo) {
-      const supabase = createClient()
-      supabase.from('notifications').update({ is_read: true }).eq('id', id)
-    }
+    // Optimistic local update; revert on server failure to keep the badge honest.
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     )
     setUnreadCount((prev) => Math.max(0, prev - 1))
+
+    if (isDemo) return
+
+    const supabase = createClient()
+    void supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id)
+      .then(({ error }) => {
+        if (error) {
+          console.error('Failed to mark notification as read:', error)
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === id ? { ...n, is_read: false } : n))
+          )
+          setUnreadCount((prev) => prev + 1)
+        }
+      })
   }
 
   return (

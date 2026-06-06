@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -26,46 +26,84 @@ import { toast } from 'sonner'
 import { Search, MoreHorizontal, Loader2 } from 'lucide-react'
 
 interface UserRow {
-  user_id: string
-  first_name: string | null
-  last_name: string | null
+  id: string
   email: string | null
   role: string
-  status: string | null
+  is_active: boolean
   created_at: string
+  display_name: string
 }
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
   admin: 'default',
   contractor: 'secondary',
   facility: 'outline',
+  staffing_agency: 'outline',
 }
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     let cancelled = false
 
     async function fetchUsers() {
-      let query = supabase
+      const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, first_name, last_name, email, role, status, created_at')
+        .select('id, email, role, is_active, created_at')
         .order('created_at', { ascending: false })
         .limit(100)
 
-      if (search.trim()) {
-        query = query.or(
-          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`
-        )
+      if (cancelled || !profiles) {
+        setLoading(false)
+        return
       }
 
-      const { data } = await query
-      if (cancelled) return
-      setUsers((data ?? []) as unknown as UserRow[])
+      const ids = profiles.map((p) => p.id)
+      const [contractors, facilities] = await Promise.all([
+        supabase
+          .from('contractor_profiles')
+          .select('id, first_name, last_name')
+          .in('id', ids),
+        supabase
+          .from('facility_profiles')
+          .select('id, facility_name')
+          .in('id', ids),
+      ])
+
+      const nameMap = new Map<string, string>()
+      for (const row of contractors.data ?? []) {
+        nameMap.set(
+          row.id,
+          `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim() || '—'
+        )
+      }
+      for (const row of facilities.data ?? []) {
+        if (!nameMap.has(row.id)) nameMap.set(row.id, row.facility_name ?? '—')
+      }
+
+      const rows: UserRow[] = profiles.map((p) => ({
+        id: p.id,
+        email: p.email,
+        role: p.role,
+        is_active: p.is_active,
+        created_at: p.created_at,
+        display_name: nameMap.get(p.id) ?? '—',
+      }))
+
+      const term = search.trim().toLowerCase()
+      const filtered = term
+        ? rows.filter(
+            (r) =>
+              r.display_name.toLowerCase().includes(term) ||
+              (r.email ?? '').toLowerCase().includes(term)
+          )
+        : rows
+
+      setUsers(filtered)
       setLoading(false)
     }
 
@@ -76,23 +114,23 @@ export default function AdminUsersPage() {
   }, [supabase, search])
 
   function handleSearchChange(value: string) {
-    setSearch(value)
     setLoading(true)
+    setSearch(value)
   }
 
-  async function handleStatusChange(userId: string, newStatus: string) {
+  async function handleStatusChange(userId: string, nextActive: boolean) {
     const { error } = await supabase
       .from('profiles')
-      .update({ status: newStatus })
-      .eq('user_id', userId)
+      .update({ is_active: nextActive })
+      .eq('id', userId)
 
     if (error) {
       toast.error('Failed to update user status')
     } else {
-      toast.success(`User ${newStatus === 'active' ? 'activated' : 'deactivated'}`)
+      toast.success(`User ${nextActive ? 'activated' : 'deactivated'}`)
       setUsers((prev) =>
         prev.map((u) =>
-          u.user_id === userId ? { ...u, status: newStatus } : u
+          u.id === userId ? { ...u, is_active: nextActive } : u
         )
       )
     }
@@ -102,16 +140,14 @@ export default function AdminUsersPage() {
     const { error } = await supabase
       .from('profiles')
       .update({ role: newRole })
-      .eq('user_id', userId)
+      .eq('id', userId)
 
     if (error) {
       toast.error('Failed to update user role')
     } else {
       toast.success(`User role updated to ${newRole}`)
       setUsers((prev) =>
-        prev.map((u) =>
-          u.user_id === userId ? { ...u, role: newRole } : u
-        )
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
       )
     }
   }
@@ -157,9 +193,9 @@ export default function AdminUsersPage() {
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <TableRow key={user.user_id}>
+                  <TableRow key={user.id}>
                     <TableCell className="font-medium">
-                      {user.first_name ?? ''} {user.last_name ?? ''}
+                      {user.display_name}
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
@@ -169,16 +205,14 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          user.status === 'active' ? 'default' : 'secondary'
-                        }
+                        variant={user.is_active ? 'default' : 'secondary'}
                         className={
-                          user.status === 'active'
+                          user.is_active
                             ? 'bg-green-100 text-green-800'
                             : ''
                         }
                       >
-                        {user.status ?? 'unknown'}
+                        {user.is_active ? 'active' : 'inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(user.created_at)}</TableCell>
@@ -192,31 +226,18 @@ export default function AdminUsersPage() {
                           <MoreHorizontal className="size-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              window.open(
-                                `/admin/users/${user.user_id}`,
-                                '_self'
-                              )
-                            }
-                          >
-                            View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {user.status === 'active' ? (
+                          {user.is_active ? (
                             <DropdownMenuItem
                               variant="destructive"
                               onClick={() =>
-                                handleStatusChange(user.user_id, 'inactive')
+                                handleStatusChange(user.id, false)
                               }
                             >
                               Deactivate
                             </DropdownMenuItem>
                           ) : (
                             <DropdownMenuItem
-                              onClick={() =>
-                                handleStatusChange(user.user_id, 'active')
-                              }
+                              onClick={() => handleStatusChange(user.id, true)}
                             >
                               Activate
                             </DropdownMenuItem>
@@ -227,9 +248,7 @@ export default function AdminUsersPage() {
                             .map((role) => (
                               <DropdownMenuItem
                                 key={role}
-                                onClick={() =>
-                                  handleRoleChange(user.user_id, role)
-                                }
+                                onClick={() => handleRoleChange(user.id, role)}
                               >
                                 Set as {role}
                               </DropdownMenuItem>

@@ -82,6 +82,49 @@ export function ReviewForm({ contractId, revieweeId, onSuccess }: ReviewFormProp
         return
       }
 
+      // Confirm the reviewer is actually a party on this completed contract,
+      // and the other party is the one being reviewed. RLS enforces this too,
+      // but checking first lets us show a useful error instead of a 403.
+      const { data: contract, error: contractError } = await supabase
+        .from('contracts')
+        .select('contractor_id, facility_id, status')
+        .eq('id', contractId)
+        .maybeSingle()
+
+      if (contractError || !contract) {
+        toast.error('Contract not found')
+        return
+      }
+
+      if (contract.status !== 'completed') {
+        toast.error('You can only review completed contracts')
+        return
+      }
+
+      const isParty =
+        contract.contractor_id === user.id || contract.facility_id === user.id
+      const otherParty =
+        contract.contractor_id === user.id
+          ? contract.facility_id
+          : contract.contractor_id
+
+      if (!isParty || otherParty !== revieweeId) {
+        toast.error('You are not authorized to review this contract')
+        return
+      }
+
+      const { data: existingReview } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('contract_id', contractId)
+        .eq('reviewer_id', user.id)
+        .maybeSingle()
+
+      if (existingReview) {
+        toast.error('You have already reviewed this contract')
+        return
+      }
+
       const { error } = await supabase.from('reviews').insert({
         contract_id: contractId,
         reviewer_id: user.id,

@@ -11,7 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Loader2, User, Bell, Shield } from 'lucide-react'
+import { Loader2, User, Bell, Shield, AlertTriangle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
+const ALLOWED_AVATAR_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 interface ProfileData {
   email: string
@@ -44,6 +48,7 @@ const preferenceLabels: Record<keyof NotificationPreferences, string> = {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<ProfileData>({
@@ -51,11 +56,13 @@ export default function SettingsPage() {
     phone: '',
     avatar_url: '',
   })
+  const [originalEmail, setOriginalEmail] = useState('')
   const [preferences, setPreferences] =
     useState<NotificationPreferences>(defaultPreferences)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function fetchSettings() {
@@ -80,6 +87,7 @@ export default function SettingsPage() {
         phone: user.phone ?? '',
         avatar_url: user.user_metadata?.avatar_url ?? '',
       })
+      setOriginalEmail(user.email ?? '')
 
       const { data: prefData } = await supabase
         .from('notification_preferences')
@@ -112,13 +120,20 @@ export default function SettingsPage() {
     setSaving(true)
     try {
       const supabase = getSupabase()
+      const normalizedEmail = profile.email.trim().toLowerCase()
       const { error } = await supabase.auth.updateUser({
-        email: profile.email || undefined,
-        phone: profile.phone || undefined,
+        email: normalizedEmail || undefined,
+        phone: profile.phone.trim() || undefined,
       })
 
       if (error) throw error
-      toast.success('Profile updated successfully')
+      if (normalizedEmail !== originalEmail) {
+        toast.success(
+          'Profile updated. Check your inbox to confirm the new email.'
+        )
+      } else {
+        toast.success('Profile updated successfully')
+      }
     } catch {
       toast.error('Failed to update profile')
     } finally {
@@ -129,6 +144,16 @@ export default function SettingsPage() {
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (!ALLOWED_AVATAR_MIME.includes(file.type)) {
+      toast.error('Avatar must be a JPG, PNG, WebP, or GIF')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('Avatar must be 5 MB or smaller')
+      e.target.value = ''
+      return
+    }
     if (isDemoMode()) { toast.success('Avatar updated (demo)'); return }
 
     try {
@@ -188,6 +213,11 @@ export default function SettingsPage() {
   async function handlePasswordChange(e: React.FormEvent) {
     e.preventDefault()
 
+    if (!currentPassword) {
+      toast.error('Please enter your current password')
+      return
+    }
+
     if (newPassword !== confirmPassword) {
       toast.error('Passwords do not match')
       return
@@ -202,6 +232,26 @@ export default function SettingsPage() {
     setSaving(true)
     try {
       const supabase = getSupabase()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user?.email) {
+        toast.error('You must be signed in to change your password')
+        return
+      }
+
+      // Verify the user actually knows the current password before changing it.
+      // Without this, a hijacked session can rotate the password and lock out
+      // the legitimate owner.
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      })
+      if (reauthError) {
+        toast.error('Current password is incorrect')
+        return
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       })
@@ -216,6 +266,37 @@ export default function SettingsPage() {
       toast.error('Failed to update password')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleAccountDelete() {
+    const confirmed = window.confirm(
+      'This permanently deletes your HealthGig account and all related data. This cannot be undone. Continue?'
+    )
+    if (!confirmed) return
+
+    if (isDemoMode()) {
+      toast.success('Account deleted (demo)')
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/auth/delete-account', { method: 'POST' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || 'Failed to delete account')
+      }
+      const supabase = getSupabase()
+      await supabase.auth.signOut()
+      toast.success('Account deleted')
+      router.push('/')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete account'
+      toast.error(message)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -415,6 +496,35 @@ export default function SettingsPage() {
                   Update Password
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          <Card className="mt-6 border-destructive/40">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="size-4" />
+                Delete Account
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all data we hold about you,
+                including contracts, payments history, messages, and reviews.
+                Active subscriptions will be canceled. This cannot be undone.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={handleAccountDelete}
+                disabled={deleting}
+              >
+                {deleting && (
+                  <Loader2
+                    className="size-4 animate-spin"
+                    data-icon="inline-start"
+                  />
+                )}
+                Delete My Account
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

@@ -65,12 +65,12 @@ export default function ContractorPaymentsPage() {
 
       // Check Stripe onboarding status
       const { data: profile } = await supabase
-        .from('contractor_profiles')
-        .select('stripe_account_id, stripe_onboarded')
+        .from('profiles')
+        .select('stripe_connect_id, stripe_connect_onboarded')
         .eq('id', user.id)
         .single()
 
-      setIsOnboarded(!!profile?.stripe_onboarded)
+      setIsOnboarded(!!profile?.stripe_connect_onboarded)
 
       // Fetch payments
       const { data: paymentData } = await supabase

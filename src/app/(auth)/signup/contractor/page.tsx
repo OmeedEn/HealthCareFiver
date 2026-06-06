@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -70,22 +69,27 @@ export default function ContractorSignupPage() {
       return
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           role: 'contractor',
-          first_name: firstName,
-          last_name: lastName,
+          email: email.trim().toLowerCase(),
+          password,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
           contractor_type: contractorType,
-        },
-      },
-    })
-
-    if (error) {
-      toast.error(error.message)
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        toast.error(body.error || 'Could not create account')
+        setLoading(false)
+        return
+      }
+    } catch {
+      toast.error('Network error — please try again')
       setLoading(false)
       return
     }

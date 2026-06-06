@@ -31,19 +31,16 @@ interface Dispute {
   id: string
   reason: string
   status: string
-  resolution_notes: string | null
+  resolution: string | null
   created_at: string
-  contracts: {
-    title: string
-  } | null
-  opened_by_profile: {
-    first_name: string
-    last_name: string
-  } | null
-  against_profile: {
-    first_name: string
-    last_name: string
-  } | null
+  contracts: { title: string } | null
+  opened_by: string
+  against: string
+}
+
+interface DisplayDispute extends Dispute {
+  opened_by_name: string
+  against_name: string
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -53,12 +50,42 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   dismissed: { label: 'Dismissed', className: 'bg-gray-100 text-gray-800' },
 }
 
+async function loadNames(
+  supabase: ReturnType<typeof createClient>,
+  ids: string[]
+): Promise<Map<string, string>> {
+  const unique = Array.from(new Set(ids)).filter(Boolean)
+  if (unique.length === 0) return new Map()
+
+  const [contractors, facilities] = await Promise.all([
+    supabase
+      .from('contractor_profiles')
+      .select('id, first_name, last_name')
+      .in('id', unique),
+    supabase
+      .from('facility_profiles')
+      .select('id, facility_name')
+      .in('id', unique),
+  ])
+
+  const names = new Map<string, string>()
+  for (const row of contractors.data ?? []) {
+    names.set(row.id, `${row.first_name ?? ''} ${row.last_name ?? ''}`.trim())
+  }
+  for (const row of facilities.data ?? []) {
+    if (!names.has(row.id)) names.set(row.id, row.facility_name ?? '')
+  }
+  return names
+}
+
 export default function AdminDisputesPage() {
-  const [disputes, setDisputes] = useState<Dispute[]>([])
+  const [disputes, setDisputes] = useState<DisplayDispute[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false)
-  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null)
+  const [selectedDispute, setSelectedDispute] = useState<DisplayDispute | null>(
+    null
+  )
   const [resolutionNotes, setResolutionNotes] = useState('')
   const supabase = createClient()
 
@@ -67,11 +94,23 @@ export default function AdminDisputesPage() {
       const { data } = await supabase
         .from('disputes')
         .select(
-          'id, reason, status, resolution_notes, created_at, contracts(title), opened_by_profile:profiles!opened_by(first_name, last_name), against_profile:profiles!against_user_id(first_name, last_name)'
+          'id, reason, status, resolution, created_at, opened_by, against, contracts(title)'
         )
         .order('created_at', { ascending: false })
 
-      setDisputes((data ?? []) as unknown as Dispute[])
+      const rows = (data ?? []) as unknown as Dispute[]
+      const names = await loadNames(
+        supabase,
+        rows.flatMap((d) => [d.opened_by, d.against])
+      )
+
+      setDisputes(
+        rows.map((d) => ({
+          ...d,
+          opened_by_name: names.get(d.opened_by) ?? '—',
+          against_name: names.get(d.against) ?? '—',
+        }))
+      )
       setLoading(false)
     }
 
@@ -96,7 +135,7 @@ export default function AdminDisputesPage() {
     }
   }
 
-  function openResolveDialog(dispute: Dispute) {
+  function openResolveDialog(dispute: DisplayDispute) {
     setSelectedDispute(dispute)
     setResolutionNotes('')
     setResolveDialogOpen(true)
@@ -107,11 +146,12 @@ export default function AdminDisputesPage() {
 
     setProcessing(true)
     try {
+      const notes = resolutionNotes.trim() || null
       const { error } = await supabase
         .from('disputes')
         .update({
           status: 'resolved',
-          resolution_notes: resolutionNotes.trim() || null,
+          resolution: notes,
           resolved_at: new Date().toISOString(),
         })
         .eq('id', selectedDispute.id)
@@ -121,11 +161,7 @@ export default function AdminDisputesPage() {
       setDisputes((prev) =>
         prev.map((d) =>
           d.id === selectedDispute.id
-            ? {
-                ...d,
-                status: 'resolved',
-                resolution_notes: resolutionNotes.trim() || null,
-              }
+            ? { ...d, status: 'resolved', resolution: notes }
             : d
         )
       )
@@ -184,14 +220,8 @@ export default function AdminDisputesPage() {
                       <TableCell className="font-medium">
                         {dispute.contracts?.title ?? 'N/A'}
                       </TableCell>
-                      <TableCell>
-                        {dispute.opened_by_profile?.first_name ?? ''}{' '}
-                        {dispute.opened_by_profile?.last_name ?? ''}
-                      </TableCell>
-                      <TableCell>
-                        {dispute.against_profile?.first_name ?? ''}{' '}
-                        {dispute.against_profile?.last_name ?? ''}
-                      </TableCell>
+                      <TableCell>{dispute.opened_by_name}</TableCell>
+                      <TableCell>{dispute.against_name}</TableCell>
                       <TableCell className="max-w-[200px] truncate">
                         {dispute.reason}
                       </TableCell>

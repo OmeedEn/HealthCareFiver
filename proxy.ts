@@ -22,7 +22,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = isPublicRoute(pathname)
 
-  if (isPublic && !getSupabaseConfig()) {
+  // Demo mode (no Supabase configured): every page renders mocked data; let
+  // the request through instead of bouncing to /login.
+  if (!getSupabaseConfig()) {
     return NextResponse.next({ request })
   }
 

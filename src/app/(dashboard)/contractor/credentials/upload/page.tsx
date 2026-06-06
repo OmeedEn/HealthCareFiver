@@ -20,6 +20,15 @@ import { CREDENTIAL_TYPE_LABELS } from '@/lib/utils/constants'
 import { toast } from 'sonner'
 import { Loader2, Upload, ArrowLeft } from 'lucide-react'
 
+const MAX_CREDENTIAL_BYTES = 10 * 1024 * 1024
+const ALLOWED_CREDENTIAL_MIME = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+]
+
 export default function CredentialUploadPage() {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
@@ -31,12 +40,44 @@ export default function CredentialUploadPage() {
   const [expirationDate, setExpirationDate] = useState('')
   const [file, setFile] = useState<File | null>(null)
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = e.target.files?.[0] ?? null
+    if (!selected) {
+      setFile(null)
+      return
+    }
+    if (!ALLOWED_CREDENTIAL_MIME.includes(selected.type)) {
+      toast.error('File must be a PDF, JPG, PNG, GIF, or WebP')
+      e.target.value = ''
+      setFile(null)
+      return
+    }
+    if (selected.size > MAX_CREDENTIAL_BYTES) {
+      toast.error('File must be 10 MB or smaller')
+      e.target.value = ''
+      setFile(null)
+      return
+    }
+    setFile(selected)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!credentialType || !name) {
       toast.error('Please fill in the required fields.')
       return
+    }
+
+    if (file) {
+      if (!ALLOWED_CREDENTIAL_MIME.includes(file.type)) {
+        toast.error('File must be a PDF, JPG, PNG, GIF, or WebP')
+        return
+      }
+      if (file.size > MAX_CREDENTIAL_BYTES) {
+        toast.error('File must be 10 MB or smaller')
+        return
+      }
     }
 
     setSaving(true)
@@ -206,7 +247,7 @@ export default function CredentialUploadPage() {
                 id="document"
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={handleFileSelect}
               />
               <p className="text-xs text-muted-foreground">
                 Upload a PDF or image of your credential. Max file size: 10MB.

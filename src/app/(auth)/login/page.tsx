@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,36 +11,56 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
+// Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
+function safeRedirect(target: string | null): string {
+  if (!target) return '/dashboard'
+  if (!target.startsWith('/') || target.startsWith('//')) return '/dashboard'
+  return target
+}
+
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = safeRedirect(searchParams.get('redirectTo'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (loading) return
     setLoading(true)
 
     if (isDemoMode()) {
       toast.success('Welcome to HealthGig demo!')
-      router.push('/dashboard')
+      router.push(redirectTo)
       return
     }
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      toast.error(error.message)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        toast.error(body.error || 'Could not sign in')
+        setLoading(false)
+        return
+      }
+    } catch {
+      toast.error('Network error — please try again')
       setLoading(false)
       return
     }
 
     toast.success('Signed in successfully')
-    router.push('/dashboard')
+    router.push(redirectTo)
+    router.refresh()
   }
 
   return (
