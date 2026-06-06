@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
@@ -19,6 +19,27 @@ function safeRedirect(target: string | null): string {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFormFallback />}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginFormFallback() {
+  return (
+    <div>
+      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+        Welcome back
+      </h1>
+      <p className="mt-1.5 text-sm text-[#62646a]">
+        Sign in to your HealthGig account to continue
+      </p>
+    </div>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = safeRedirect(searchParams.get('redirectTo'))
