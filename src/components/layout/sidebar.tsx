@@ -26,7 +26,6 @@ import {
   Search,
   Users,
   AlertTriangle,
-  BarChart3,
   LogOut,
   Crown,
   GraduationCap,
