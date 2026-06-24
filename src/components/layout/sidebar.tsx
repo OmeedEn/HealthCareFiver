@@ -40,37 +40,38 @@ type NavItem = {
 
 const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
-  { label: 'My Credentials', href: '/dashboard/credentials', icon: ShieldCheck },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Jobs', href: '/contractor/jobs', icon: Briefcase },
+  { label: 'My Credentials', href: '/contractor/credentials', icon: ShieldCheck },
+  { label: 'Contracts', href: '/contractor/contracts', icon: FileText },
+  { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: GraduationCap },
   { label: 'Membership', href: '/membership', icon: Crown },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 const FACILITY_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Post a Job', href: '/dashboard/post-job', icon: PlusCircle },
-  { label: 'My Jobs', href: '/dashboard/jobs', icon: Briefcase },
-  { label: 'Find Contractors', href: '/dashboard/find-contractors', icon: Search },
-  { label: 'Contracts', href: '/dashboard/contracts', icon: FileText },
-  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { label: 'Messages', href: '/dashboard/messages', icon: MessageSquare },
+  { label: 'Post a Job', href: '/facility/jobs/new', icon: PlusCircle },
+  { label: 'My Jobs', href: '/facility/jobs', icon: Briefcase },
+  { label: 'Find Contractors', href: '/facility/contractors', icon: Search },
+  { label: 'Contracts', href: '/facility/contracts', icon: FileText },
+  { label: 'Payments', href: '/facility/payments', icon: CreditCard },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: GraduationCap },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
+// Admin nav matches what exists under src/app/admin today. Jobs/Payments/Reports
+// items previously listed here had no backing routes — removed rather than left
+// as 404s. Add them back when the corresponding admin pages ship.
 const ADMIN_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Users', href: '/dashboard/users', icon: Users },
-  { label: 'Credentials', href: '/dashboard/credentials', icon: ShieldCheck },
-  { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
-  { label: 'Disputes', href: '/dashboard/disputes', icon: AlertTriangle },
-  { label: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { label: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
+  { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Credentials', href: '/admin/credentials', icon: ShieldCheck },
+  { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Events', href: '/events', icon: GraduationCap },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 function getNavItems(role: string): NavItem[] {
