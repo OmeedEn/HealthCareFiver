@@ -19,11 +19,12 @@ import { Menu, Bell, User, Settings, LogOut } from 'lucide-react'
 import { Sidebar } from './sidebar'
 
 interface HeaderProps {
+  role: 'contractor' | 'facility' | 'admin'
   userName: string
   userEmail: string
 }
 
-export function Header({ userName, userEmail }: HeaderProps) {
+export function Header({ role, userName, userEmail }: HeaderProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -104,11 +105,12 @@ export function Header({ userName, userEmail }: HeaderProps) {
         </DropdownMenu>
       </header>
 
-      {/* Mobile sidebar controlled by header */}
+      {/* Mobile sidebar drawer, controlled by the hamburger button above */}
       <Sidebar
-        role="contractor"
+        role={role}
         userName={userName}
         userEmail={userEmail}
+        variant="mobile"
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
       />

@@ -122,11 +122,12 @@ interface SidebarProps {
   role: 'contractor' | 'facility' | 'admin'
   userName: string
   userEmail: string
+  variant: 'desktop' | 'mobile'
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-export function Sidebar({ role, userName, userEmail, open, onOpenChange }: SidebarProps) {
+export function Sidebar({ role, userName, userEmail, variant, open, onOpenChange }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const navItems = getNavItems(role)
@@ -185,22 +186,22 @@ export function Sidebar({ role, userName, userEmail, open, onOpenChange }: Sideb
     </>
   )
 
-  return (
-    <>
-      {/* Desktop sidebar */}
+  if (variant === 'desktop') {
+    return (
       <aside className="hidden md:flex md:w-64 md:flex-col md:border-r md:border-[#e4e5e7] md:bg-white">
         {sidebarContent}
       </aside>
+    )
+  }
 
-      {/* Mobile sidebar */}
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" showCloseButton className="w-64 p-0">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Navigation</SheetTitle>
-          </SheetHeader>
-          {sidebarContent}
-        </SheetContent>
-      </Sheet>
-    </>
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" showCloseButton className="w-64 p-0">
+        <SheetHeader className="sr-only">
+          <SheetTitle>Navigation</SheetTitle>
+        </SheetHeader>
+        {sidebarContent}
+      </SheetContent>
+    </Sheet>
   )
 }
