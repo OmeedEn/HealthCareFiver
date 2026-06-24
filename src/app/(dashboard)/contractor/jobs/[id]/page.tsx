@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { isDemoMode, DEMO_JOBS } from '@/lib/demo/data'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils/format'
@@ -72,55 +73,74 @@ export default async function ContractorJobDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
 
-  const { data: job, error } = await supabase
-    .from('jobs')
-    .select(
-      '*, facility_profiles(id, facility_name, facility_type, city, state, average_rating)'
-    )
-    .eq('id', id)
-    .single()
-
-  if (error || !job) {
-    notFound()
-  }
-
-  const typedJob = job as unknown as JobDetail
-
-  // Check if user has already applied
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  let typedJob: JobDetail
   let existingApplication: {
     id: string
     status: string
     created_at: string
   } | null = null
-
-  if (user) {
-    const { data } = await supabase
-      .from('job_applications')
-      .select('id, status, created_at')
-      .eq('job_id', id)
-      .eq('contractor_id', user.id)
-      .maybeSingle()
-
-    existingApplication = data
-  }
-
-  // Check if job is saved
   let isSaved = false
-  if (user) {
-    const { data } = await supabase
-      .from('saved_jobs')
-      .select('job_id')
-      .eq('job_id', id)
-      .eq('contractor_id', user.id)
-      .maybeSingle()
 
-    isSaved = !!data
+  if (isDemoMode()) {
+    const demoJob = DEMO_JOBS.find((j) => j.id === id)
+    if (!demoJob) notFound()
+    // Demo fixtures use a flat `facility` object; the page (and JobDetail
+    // type) expect `facility_profiles` with the same fields plus id +
+    // facility_type. Coerce shape; required_certifications doesn't exist on
+    // the fixtures.
+    typedJob = {
+      ...demoJob,
+      required_certifications: null,
+      facility_profiles: demoJob.facility
+        ? {
+            id: demoJob.facility_id,
+            facility_name: demoJob.facility.facility_name,
+            facility_type: null,
+            city: demoJob.facility.city,
+            state: demoJob.facility.state,
+            average_rating: demoJob.facility.average_rating,
+          }
+        : null,
+    } as unknown as JobDetail
+  } else {
+    const supabase = await createClient()
+
+    const { data: job, error } = await supabase
+      .from('jobs')
+      .select(
+        '*, facility_profiles(id, facility_name, facility_type, city, state, average_rating)'
+      )
+      .eq('id', id)
+      .single()
+
+    if (error || !job) {
+      notFound()
+    }
+
+    typedJob = job as unknown as JobDetail
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (user) {
+      const { data } = await supabase
+        .from('job_applications')
+        .select('id, status, created_at')
+        .eq('job_id', id)
+        .eq('contractor_id', user.id)
+        .maybeSingle()
+      existingApplication = data
+
+      const { data: saved } = await supabase
+        .from('saved_jobs')
+        .select('job_id')
+        .eq('job_id', id)
+        .eq('contractor_id', user.id)
+        .maybeSingle()
+      isSaved = !!saved
+    }
   }
 
   const facility = typedJob.facility_profiles
