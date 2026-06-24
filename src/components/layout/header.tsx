@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +14,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import { Menu, Bell, User, Settings, LogOut } from 'lucide-react'
+import { Menu, User, Settings, LogOut } from 'lucide-react'
 import { Sidebar } from './sidebar'
+import { NotificationsBell } from './notifications-bell'
 
 interface HeaderProps {
   role: 'contractor' | 'facility' | 'admin'
@@ -62,13 +62,7 @@ export function Header({ role, userName, userEmail }: HeaderProps) {
 
         <div className="flex-1" />
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
-            3
-          </Badge>
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <NotificationsBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger
