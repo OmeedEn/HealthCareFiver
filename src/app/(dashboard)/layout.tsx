@@ -62,9 +62,14 @@ export default async function DashboardLayout({
       >
         Skip to main content
       </a>
-      <Sidebar role={role} userName={displayName} userEmail={userEmail} />
+      <Sidebar
+        role={role}
+        userName={displayName}
+        userEmail={userEmail}
+        variant="desktop"
+      />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header userName={displayName} userEmail={userEmail} />
+        <Header role={role} userName={displayName} userEmail={userEmail} />
         <main
           id="dashboard-main"
           tabIndex={-1}

@@ -94,7 +94,7 @@ function ContractorDashboard({ profile, isDemo }: { profile: Record<string, unkn
           </CardHeader>
           <CardContent>
             <Link
-              href="/dashboard/settings"
+              href="/settings"
               className="text-sm font-black text-[#1dbf73] hover:underline"
             >
               Go to Profile Settings &rarr;
@@ -148,7 +148,7 @@ function FacilityDashboard() {
         </CardHeader>
         <CardContent>
           <Link
-            href="/dashboard/post-job"
+            href="/facility/jobs/new"
             className="text-sm font-black text-[#1dbf73] hover:underline"
           >
             Post a Job &rarr;
