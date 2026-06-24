@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_JOBS } from '@/lib/demo/data'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -18,7 +19,7 @@ import {
   defaultFilters,
   type JobFilters,
 } from '@/components/jobs/job-search-filters'
-import { SearchIcon, Loader2Icon } from 'lucide-react'
+import { SearchIcon, Loader2, BriefcaseIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 const PAGE_SIZE = 12
@@ -292,57 +293,61 @@ export default function ContractorJobsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Find Jobs</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold text-[#404145]">Find Jobs</h1>
+        <p className="text-[#62646a]">
           Browse and search open healthcare positions
         </p>
       </div>
 
       {/* Search bar and sort */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <form
-          onSubmit={handleSearchSubmit}
-          className="relative flex-1"
-          role="search"
-        >
-          <label htmlFor="contractor-job-search" className="sr-only">
-            Search jobs
-          </label>
-          <SearchIcon
-            aria-hidden="true"
-            className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-          />
-          <Input
-            id="contractor-job-search"
-            type="search"
-            placeholder="Search jobs by title, description, specialty..."
-            className="pl-9"
-            value={filters.search}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, search: e.target.value }))
-            }
-          />
-        </form>
-        <div className="flex items-center gap-2">
-          <JobSearchFilters filters={filters} onFilterChange={setFilters} />
-          <Select
-            value={filters.sort}
-            onValueChange={(v) => setFilters((f) => ({ ...f, sort: v ?? '' }))}
-          >
-            <SelectTrigger
-              className="w-40"
-              aria-label="Sort jobs by"
+      <Card>
+        <CardContent>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative flex-1"
+              role="search"
             >
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="pay_high">Highest Pay</SelectItem>
-              <SelectItem value="urgency">Most Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+              <label htmlFor="contractor-job-search" className="sr-only">
+                Search jobs
+              </label>
+              <SearchIcon
+                aria-hidden="true"
+                className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+              />
+              <Input
+                id="contractor-job-search"
+                type="search"
+                placeholder="Search jobs by title, description, specialty..."
+                className="pl-9"
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, search: e.target.value }))
+                }
+              />
+            </form>
+            <div className="flex items-center gap-2">
+              <JobSearchFilters filters={filters} onFilterChange={setFilters} />
+              <Select
+                value={filters.sort}
+                onValueChange={(v) => setFilters((f) => ({ ...f, sort: v ?? '' }))}
+              >
+                <SelectTrigger
+                  className="w-40"
+                  aria-label="Sort jobs by"
+                >
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="pay_high">Highest Pay</SelectItem>
+                  <SelectItem value="urgency">Most Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex gap-6">
         {/* Desktop filter sidebar */}
@@ -352,15 +357,24 @@ export default function ContractorJobsPage() {
         <div className="min-w-0 flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+              <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
             </div>
           ) : jobs.length === 0 ? (
-            <div className="py-20 text-center">
-              <p className="text-lg font-medium">No jobs found</p>
-              <p className="mt-1 text-muted-foreground">
-                Try adjusting your search or filters.
-              </p>
-            </div>
+            <Card>
+              <CardContent>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+                    <BriefcaseIcon className="size-6 text-[#1dbf73]" />
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-[#404145]">
+                    No jobs found
+                  </h3>
+                  <p className="mt-1 text-sm text-[#62646a]">
+                    Try adjusting your search or filters.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -382,7 +396,7 @@ export default function ContractorJobsPage() {
                     disabled={loadingMore}
                   >
                     {loadingMore && (
-                      <Loader2Icon className="size-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin text-[#1dbf73]" />
                     )}
                     Load More
                   </Button>

@@ -3,8 +3,13 @@ import Link from 'next/link'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
 import { formatCurrency, getInitials } from '@/lib/utils/format'
 import {
@@ -14,6 +19,10 @@ import {
   Clock,
   Car,
   Pencil,
+  AlertCircle,
+  CircleDollarSign,
+  CalendarCheck,
+  IdCard,
 } from 'lucide-react'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 
@@ -78,180 +87,308 @@ export default async function ContractorProfilePage() {
   }
 
   const completionPct = profile.profile_completion_pct ?? 0
+  const credentialLabel =
+    CONTRACTOR_TYPE_LABELS[profile.contractor_type] ?? profile.contractor_type
+  const locationStr = [profile.city, profile.state].filter(Boolean).join(', ')
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#404145]">My Profile</h1>
-        <Button render={<Link href="/contractor/profile/edit" />}>
-          <Pencil className="size-4" data-icon="inline-start" />
-          Edit Profile
-        </Button>
-      </div>
-
-      {/* Profile Completion */}
+    <div className="space-y-6">
+      {/* Profile completion alert */}
       {completionPct < 100 && (
-        <Card>
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="font-medium">Profile Completion</span>
-              <span className="text-muted-foreground">{completionPct}%</span>
-            </div>
-            <div className="h-2 w-full rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary transition-all"
-                style={{ width: `${completionPct}%` }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Complete your profile to increase visibility to facilities.
-            </p>
+        <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
+              <AlertCircle className="h-5 w-5" />
+              Complete Your Profile
+            </CardTitle>
+            <CardDescription className="font-semibold text-[#0f8f56]">
+              Your profile is {completionPct}% complete. A complete profile helps
+              you get matched with more jobs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Link
+              href="/contractor/profile/edit"
+              className="text-sm font-black text-[#1dbf73] hover:underline"
+            >
+              Complete profile &rarr;
+            </Link>
           </CardContent>
         </Card>
       )}
 
-      {/* Main Profile Card */}
-      <Card className="overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-[#1dbf73]/20 via-[#1dbf73]/10 to-transparent" />
-        <CardHeader className="-mt-12 px-6">
-          <div className="flex items-end gap-5">
-            <Avatar size="lg" className="size-20 border-4 border-white shadow-md">
-              {profile.profiles?.avatar_url && (
-                <AvatarImage
-                  src={profile.profiles.avatar_url}
-                  alt={`${profile.first_name} ${profile.last_name}`}
-                />
-              )}
-              <AvatarFallback className="text-xl bg-[#1dbf73]/10 text-[#1dbf73]">
-                {getInitials(profile.first_name, profile.last_name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0 pb-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold text-[#404145]">
-                  {profile.first_name} {profile.last_name}
-                </h2>
-                <Badge variant={profile.is_available ? 'default' : 'secondary'} className={profile.is_available ? 'bg-[#1dbf73] hover:bg-[#19a463]' : ''}>
-                  {profile.is_available ? 'Available' : 'Unavailable'}
-                </Badge>
-              </div>
-              <p className="text-sm text-[#62646a]">
-                {CONTRACTOR_TYPE_LABELS[profile.contractor_type] ?? profile.contractor_type}
-              </p>
-              {profile.headline && (
-                <p className="mt-1 text-sm text-[#404145]">{profile.headline}</p>
-              )}
-              {profile.average_rating != null && (
-                <div className="mt-2 flex items-center gap-1 text-sm">
-                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-medium text-[#404145]">{profile.average_rating.toFixed(1)}</span>
-                  {profile.total_reviews != null && (
-                    <span className="text-[#62646a]">
-                      ({profile.total_reviews} {profile.total_reviews === 1 ? 'review' : 'reviews'})
+      {/* Hero card */}
+      <Card>
+        <CardContent>
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <Avatar size="lg" className="size-24">
+                {profile.profiles?.avatar_url && (
+                  <AvatarImage
+                    src={profile.profiles.avatar_url}
+                    alt={`${profile.first_name} ${profile.last_name}`}
+                  />
+                )}
+                <AvatarFallback className="bg-[#e8faf1] text-2xl font-semibold text-[#0f8f56]">
+                  {getInitials(profile.first_name, profile.last_name)}
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold text-[#404145]">
+                    {profile.first_name} {profile.last_name}
+                  </h1>
+                  <Badge
+                    variant="outline"
+                    className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                  >
+                    {credentialLabel}
+                  </Badge>
+                </div>
+
+                <p className="text-sm text-[#62646a]">
+                  {locationStr ? (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-4" />
+                      {locationStr}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="size-4" />
+                      Location not set
                     </span>
                   )}
-                </div>
-              )}
+                </p>
+
+                {profile.headline && (
+                  <p className="text-sm text-[#404145]">{profile.headline}</p>
+                )}
+
+                {profile.average_rating != null && (
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
+                    <span className="font-medium text-[#404145]">
+                      {profile.average_rating.toFixed(1)}
+                    </span>
+                    {profile.total_reviews != null && (
+                      <span className="text-[#62646a]">
+                        ({profile.total_reviews}{' '}
+                        {profile.total_reviews === 1 ? 'review' : 'reviews'})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </CardHeader>
 
-        {profile.specialties && profile.specialties.length > 0 && (
-          <CardContent>
-            <h3 className="text-sm font-medium mb-2">Specialties</h3>
-            <div className="flex flex-wrap gap-1.5">
-              {profile.specialties.map((s) => (
-                <Badge key={s} variant="secondary">
-                  {s}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        )}
-
-        {profile.bio && (
-          <CardContent>
-            <h3 className="text-sm font-medium mb-2">About</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {profile.bio}
-            </p>
-          </CardContent>
-        )}
-
-        <Separator />
-
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {profile.years_of_experience != null && (
-              <div className="flex items-center gap-2 text-sm">
-                <Briefcase className="size-4 text-muted-foreground" />
-                <span>
-                  {profile.years_of_experience}{' '}
-                  {profile.years_of_experience === 1 ? 'year' : 'years'} of experience
-                </span>
-              </div>
-            )}
-            {profile.hourly_rate_min != null && profile.hourly_rate_max != null && (
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="size-4 text-muted-foreground" />
-                <span>
-                  {formatCurrency(profile.hourly_rate_min)} -{' '}
-                  {formatCurrency(profile.hourly_rate_max)}/hr
-                </span>
-              </div>
-            )}
-            {(profile.city || profile.state) && (
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin className="size-4 text-muted-foreground" />
-                <span>
-                  {[profile.city, profile.state, profile.zip_code]
-                    .filter(Boolean)
-                    .join(', ')}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 text-sm">
-              <Car className="size-4 text-muted-foreground" />
-              {profile.willing_to_travel ? (
-                <span>
-                  Willing to travel
-                  {profile.travel_radius_miles
-                    ? ` (${profile.travel_radius_miles} mi radius)`
-                    : ''}
-                </span>
-              ) : (
-                <span>Local only</span>
-              )}
+            <div className="shrink-0">
+              <Button
+                className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                render={<Link href="/contractor/profile/edit" />}
+              >
+                <Pencil className="size-4" data-icon="inline-start" />
+                Edit Profile
+              </Button>
             </div>
           </div>
         </CardContent>
+      </Card>
 
-        {(profile.npi_number || profile.state_license_number) && (
-          <>
-            <Separator />
-            <CardContent>
-              <h3 className="text-sm font-medium mb-3">License Information</h3>
-              <div className="grid gap-4 sm:grid-cols-2 text-sm">
+      {/* Main grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left column */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Bio */}
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="text-lg font-semibold text-[#404145]">About</h2>
+              {profile.bio ? (
+                <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                  {profile.bio}
+                </p>
+              ) : (
+                <p className="text-sm text-[#6b7280]">
+                  Tell facilities a little about your background and what makes
+                  you a great fit.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Specialties */}
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="text-lg font-semibold text-[#404145]">
+                Specialties
+              </h2>
+              {profile.specialties && profile.specialties.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.specialties.map((s) => (
+                    <Badge key={s} variant="outline">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[#6b7280]">
+                  No specialties added yet.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Experience */}
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="text-lg font-semibold text-[#404145]">
+                Experience
+              </h2>
+              <div className="flex items-center gap-3 text-sm">
+                <Briefcase className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Years of experience</span>
+                <span className="ml-auto font-medium text-[#404145]">
+                  {profile.years_of_experience != null
+                    ? `${profile.years_of_experience} ${
+                        profile.years_of_experience === 1 ? 'year' : 'years'
+                      }`
+                    : 'Not set'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <Car className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Travel</span>
+                <span className="ml-auto font-medium text-[#404145]">
+                  {profile.willing_to_travel
+                    ? profile.travel_radius_miles
+                      ? `Up to ${profile.travel_radius_miles} mi`
+                      : 'Willing to travel'
+                    : 'Local only'}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* License info */}
+          {(profile.npi_number || profile.state_license_number) && (
+            <Card>
+              <CardContent className="space-y-3">
+                <h2 className="text-lg font-semibold text-[#404145]">
+                  License Information
+                </h2>
                 {profile.npi_number && (
-                  <div>
-                    <span className="text-muted-foreground">NPI Number</span>
-                    <p className="font-medium">{profile.npi_number}</p>
+                  <div className="flex items-center gap-3 text-sm">
+                    <IdCard className="size-4 text-[#62646a]" />
+                    <span className="text-[#62646a]">NPI Number</span>
+                    <span className="ml-auto font-medium text-[#404145]">
+                      {profile.npi_number}
+                    </span>
                   </div>
                 )}
                 {profile.state_license_number && (
-                  <div>
-                    <span className="text-muted-foreground">State License</span>
-                    <p className="font-medium">
+                  <div className="flex items-center gap-3 text-sm">
+                    <IdCard className="size-4 text-[#62646a]" />
+                    <span className="text-[#62646a]">State License</span>
+                    <span className="ml-auto font-medium text-[#404145]">
                       {profile.state_license_number}
-                      {profile.license_state ? ` (${profile.license_state})` : ''}
-                    </p>
+                      {profile.license_state
+                        ? ` (${profile.license_state})`
+                        : ''}
+                    </span>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Reviews preview */}
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="text-lg font-semibold text-[#404145]">Reviews</h2>
+              {profile.average_rating != null &&
+              profile.total_reviews != null &&
+              profile.total_reviews > 0 ? (
+                <div className="flex items-center gap-2 text-sm">
+                  <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
+                  <span className="font-medium text-[#404145]">
+                    {profile.average_rating.toFixed(1)}
+                  </span>
+                  <span className="text-[#62646a]">
+                    average across {profile.total_reviews}{' '}
+                    {profile.total_reviews === 1 ? 'review' : 'reviews'}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-[#6b7280]">
+                  No reviews yet. Complete jobs to start collecting feedback
+                  from facilities.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right column - sidebar */}
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="space-y-4">
+              <h2 className="text-lg font-semibold text-[#404145]">
+                Quick info
+              </h2>
+
+              <div className="flex items-center gap-3 text-sm">
+                <CircleDollarSign className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Rate</span>
+                <span className="ml-auto font-medium text-[#404145]">
+                  {profile.hourly_rate_min != null &&
+                  profile.hourly_rate_max != null
+                    ? `${formatCurrency(profile.hourly_rate_min)} - ${formatCurrency(
+                        profile.hourly_rate_max,
+                      )}/hr`
+                    : 'Not set'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <MapPin className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Location</span>
+                <span className="ml-auto font-medium text-[#404145]">
+                  {locationStr || 'Not set'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <CalendarCheck className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Availability</span>
+                <span className="ml-auto">
+                  <Badge
+                    variant="outline"
+                    className={
+                      profile.is_available
+                        ? 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]'
+                        : ''
+                    }
+                  >
+                    {profile.is_available ? 'Available' : 'Unavailable'}
+                  </Badge>
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <Clock className="size-4 text-[#62646a]" />
+                <span className="text-[#62646a]">Experience</span>
+                <span className="ml-auto font-medium text-[#404145]">
+                  {profile.years_of_experience != null
+                    ? `${profile.years_of_experience} ${
+                        profile.years_of_experience === 1 ? 'yr' : 'yrs'
+                      }`
+                    : 'Not set'}
+                </span>
               </div>
             </CardContent>
-          </>
-        )}
-      </Card>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }
