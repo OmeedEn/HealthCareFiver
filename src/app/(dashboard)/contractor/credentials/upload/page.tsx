@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select'
 import { CREDENTIAL_TYPE_LABELS } from '@/lib/utils/constants'
 import { toast } from 'sonner'
-import { Loader2, Upload, ArrowLeft } from 'lucide-react'
+import { Loader2, Upload, ArrowLeft, FileText, X } from 'lucide-react'
 
 const MAX_CREDENTIAL_BYTES = 10 * 1024 * 1024
 const ALLOWED_CREDENTIAL_MIME = [
@@ -29,8 +29,15 @@ const ALLOWED_CREDENTIAL_MIME = [
   'image/webp',
 ]
 
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export default function CredentialUploadPage() {
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
   const [credentialType, setCredentialType] = useState('')
   const [name, setName] = useState('')
@@ -59,6 +66,13 @@ export default function CredentialUploadPage() {
       return
     }
     setFile(selected)
+  }
+
+  function handleRemoveFile() {
+    setFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -155,26 +169,34 @@ export default function CredentialUploadPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link href="/contractor/credentials" />}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <h1 className="text-2xl font-bold">Upload Credential</h1>
+    <div className="space-y-6">
+      <Link
+        href="/contractor/credentials"
+        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+      >
+        <ArrowLeft className="size-4" />
+        Back to credentials
+      </Link>
+
+      <div>
+        <h1 className="text-2xl font-bold text-[#404145]">Upload Credential</h1>
+        <p className="text-[#62646a]">
+          Add a professional license, certification, or other credential for verification.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-2xl space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Credential Details</CardTitle>
+            <CardTitle>Credential information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="credential_type">
-                Credential Type <span className="text-destructive">*</span>
+                Credential type <span className="text-red-600">*</span>
               </Label>
               <Select value={credentialType} onValueChange={(v) => setCredentialType(v ?? '')}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="credential_type" className="w-full">
                   <SelectValue placeholder="Select credential type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,7 +211,7 @@ export default function CredentialUploadPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">
-                Credential Name <span className="text-destructive">*</span>
+                Credential name <span className="text-red-600">*</span>
               </Label>
               <Input
                 id="name"
@@ -201,7 +223,7 @@ export default function CredentialUploadPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="issuing_authority">Issuing Authority</Label>
+              <Label htmlFor="issuing_authority">Issuing authority</Label>
               <Input
                 id="issuing_authority"
                 value={issuingAuthority}
@@ -211,7 +233,7 @@ export default function CredentialUploadPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="license_number">License / Certificate Number</Label>
+              <Label htmlFor="license_number">License / certificate number</Label>
               <Input
                 id="license_number"
                 value={licenseNumber}
@@ -222,7 +244,7 @@ export default function CredentialUploadPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="issued_date">Issued Date</Label>
+                <Label htmlFor="issued_date">Issued date</Label>
                 <Input
                   id="issued_date"
                   type="date"
@@ -231,7 +253,7 @@ export default function CredentialUploadPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="expiration_date">Expiration Date</Label>
+                <Label htmlFor="expiration_date">Expiration date</Label>
                 <Input
                   id="expiration_date"
                   type="date"
@@ -240,33 +262,83 @@ export default function CredentialUploadPage() {
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="document">Document (PDF or Image)</Label>
-              <Input
-                id="document"
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
-                onChange={handleFileSelect}
-              />
-              <p className="text-xs text-muted-foreground">
-                Upload a PDF or image of your credential. Max file size: 10MB.
-              </p>
-            </div>
           </CardContent>
         </Card>
 
-        <div className="mt-6 flex items-center justify-end gap-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>Supporting document</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <input
+              ref={fileInputRef}
+              id="document"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.gif,.webp"
+              onChange={handleFileSelect}
+              className="sr-only"
+            />
+
+            {file ? (
+              <div className="flex items-center gap-3 rounded-lg border border-[#bcebd5] bg-[#e8faf1] p-4">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-white">
+                  <FileText className="size-5 text-[#0f8f56]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-[#404145]">{file.name}</p>
+                  <p className="text-xs text-[#62646a]">{formatFileSize(file.size)}</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveFile}
+                  aria-label="Remove file"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ) : (
+              <label
+                htmlFor="document"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#e4e5e7] p-8 text-center transition-colors hover:border-[#1dbf73]"
+              >
+                <Upload className="mx-auto size-8 text-[#62646a]" />
+                <p className="mt-3 text-sm font-medium text-[#404145]">
+                  Click to upload a document
+                </p>
+                <p className="mt-1 text-sm text-[#62646a]">
+                  PDF, PNG, JPG, GIF, or WebP — up to 10 MB
+                </p>
+              </label>
+            )}
+
+            <p className="text-sm text-[#6b7280]">
+              Uploading a clear scan or photo helps speed up verification.
+            </p>
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center justify-end gap-3">
           <Button variant="outline" type="button" render={<Link href="/contractor/credentials" />}>
             Cancel
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button
+            type="submit"
+            disabled={saving}
+            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          >
             {saving ? (
-              <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Uploading...
+              </>
             ) : (
-              <Upload className="size-4" data-icon="inline-start" />
+              <>
+                <Upload className="mr-2 size-4" />
+                Upload credential
+              </>
             )}
-            {saving ? 'Uploading...' : 'Upload Credential'}
           </Button>
         </div>
       </form>
