@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_MESSAGES, DEMO_CONVERSATIONS, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   MessageThread,
   type MessageItem,
@@ -23,15 +24,33 @@ interface OtherUser {
 
 function getDemoInitialState(conversationId: string) {
   const convo = (DEMO_CONVERSATIONS as Record<string, unknown>[]).find(
-    (c) => c.id === conversationId
+    (c) => c.id === conversationId,
   )
-  const other = convo?.other_user as OtherUser | undefined
+  // DEMO_CONVERSATIONS stores other_user as { name, role, avatar_url, email }
+  // — a single display name string — but the real query returns separate
+  // first_name + last_name. Split on the last space so honorifics like "Dr."
+  // stay with the first name.
+  const demoOther = convo?.other_user as
+    | { name: string; avatar_url: string | null }
+    | undefined
+  let otherUser: OtherUser | null = null
+  if (demoOther) {
+    const parts = demoOther.name.trim().split(/\s+/)
+    const last_name = parts.length > 1 ? parts.pop()! : ''
+    const first_name = parts.join(' ')
+    otherUser = {
+      id: convo?.participant_2 as string,
+      first_name,
+      last_name,
+      avatar_url: demoOther.avatar_url,
+    }
+  }
   const convoMessages = (DEMO_MESSAGES as unknown as MessageItem[]).filter(
-    (m) => m.conversation_id === conversationId
+    (m) => m.conversation_id === conversationId,
   )
   return {
     messages: convoMessages,
-    otherUser: other ?? null,
+    otherUser,
   }
 }
 
@@ -209,22 +228,33 @@ export default function ConversationPage() {
       .eq('id', conversationId)
   }
 
+  const otherName = otherUser
+    ? `${otherUser.first_name} ${otherUser.last_name}`.trim()
+    : 'Conversation'
+  const initials = otherUser
+    ? `${otherUser.first_name?.[0] ?? ''}${otherUser.last_name?.[0] ?? ''}`
+        .toUpperCase()
+        .slice(0, 2)
+    : '?'
+
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-2xl flex-col">
+    <div className="flex h-[calc(100vh-8rem)] flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b pb-3">
+      <div className="flex items-center gap-3 border-b border-[#e4e5e7] pb-3">
         <Button
           variant="ghost"
           size="icon-sm"
+          aria-label="Back to messages"
           render={<Link href="/messages" />}
         >
           <ArrowLeftIcon className="size-4" />
         </Button>
-        <div>
-          <h1 className="text-sm font-semibold">
-            {otherUser
-              ? `${otherUser.first_name} ${otherUser.last_name}`
-              : 'Conversation'}
+        <Avatar size="sm">
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-sm font-semibold text-[#404145]">
+            {otherName}
           </h1>
         </div>
       </div>
@@ -232,7 +262,7 @@ export default function ConversationPage() {
       {/* Messages */}
       {loading ? (
         <div className="flex flex-1 items-center justify-center">
-          <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+          <Loader2Icon className="size-6 animate-spin text-[#1dbf73]" />
         </div>
       ) : currentUserId ? (
         <>
