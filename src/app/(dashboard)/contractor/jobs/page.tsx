@@ -17,9 +17,11 @@ import { JobCard, type JobCardData } from '@/components/jobs/job-card'
 import {
   JobSearchFilters,
   defaultFilters,
+  getActiveFilterChips,
+  clearFilterKey,
   type JobFilters,
 } from '@/components/jobs/job-search-filters'
-import { SearchIcon, Loader2, BriefcaseIcon } from 'lucide-react'
+import { SearchIcon, Loader2, BriefcaseIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
 const PAGE_SIZE = 12
@@ -299,7 +301,7 @@ export default function ContractorJobsPage() {
         </p>
       </div>
 
-      {/* Search bar and sort */}
+      {/* Search bar, sort, and filter trigger */}
       <Card>
         <CardContent>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -327,7 +329,6 @@ export default function ContractorJobsPage() {
               />
             </form>
             <div className="flex items-center gap-2">
-              <JobSearchFilters filters={filters} onFilterChange={setFilters} />
               <Select
                 value={filters.sort}
                 onValueChange={(v) => setFilters((f) => ({ ...f, sort: v ?? '' }))}
@@ -344,17 +345,47 @@ export default function ContractorJobsPage() {
                   <SelectItem value="urgency">Most Urgent</SelectItem>
                 </SelectContent>
               </Select>
+              <JobSearchFilters filters={filters} onFilterChange={setFilters} />
             </div>
           </div>
+
+          {(() => {
+            const chips = getActiveFilterChips(filters)
+            if (chips.length === 0) return null
+            return (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {chips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={() => setFilters((f) => clearFilterKey(f, chip.key))}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#e8faf1] px-3 py-1 text-xs font-medium text-[#0f8f56] hover:bg-[#d3f4e3]"
+                  >
+                    {chip.label}
+                    <XIcon className="size-3" />
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFilters({
+                      ...defaultFilters,
+                      search: filters.search,
+                      sort: filters.sort,
+                    })
+                  }
+                  className="ml-1 text-xs font-medium text-[#62646a] hover:text-[#404145] hover:underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )
+          })()}
         </CardContent>
       </Card>
 
-      <div className="flex gap-6">
-        {/* Desktop filter sidebar */}
-        <JobSearchFilters filters={filters} onFilterChange={setFilters} />
-
-        {/* Results grid */}
-        <div className="min-w-0 flex-1">
+      {/* Results */}
+      <div className="min-w-0">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
@@ -404,7 +435,6 @@ export default function ContractorJobsPage() {
               )}
             </>
           )}
-        </div>
       </div>
     </div>
   )
