@@ -15,8 +15,8 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
-        className
+        "group/tabs flex gap-4 data-horizontal:flex-col",
+        className,
       )}
       {...props}
     />
@@ -24,18 +24,23 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
+  "group/tabs-list relative inline-flex items-center text-[#62646a] group-data-vertical/tabs:flex-col group-data-vertical/tabs:items-stretch",
   {
     variants: {
       variant: {
-        default: "bg-muted",
-        line: "gap-1 bg-transparent",
+        // Soft segmented pill — brand-tinted active state inside a white
+        // rounded container with a subtle border + shadow.
+        default:
+          "h-11 w-fit gap-1 rounded-xl border border-[#e4e5e7] bg-white p-1 shadow-sm",
+        // Underlined tabs with a brand-green indicator riding along the
+        // bottom border. Good for in-page section navigation.
+        line: "h-11 gap-1 rounded-none border-b border-[#e4e5e7] bg-transparent group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col group-data-vertical/tabs:border-b-0 group-data-vertical/tabs:border-r",
       },
     },
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 )
 
 function TabsList({
@@ -58,11 +63,45 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
       className={cn(
-        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:text-muted-foreground dark:hover:text-foreground group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
-        "data-active:bg-background data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
-        className
+        // Base typography + spacing — comfortable padding, smooth transitions,
+        // brand-green focus ring at >40% opacity so it's visible but not
+        // overpowering on either variant.
+        "relative inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-150",
+        "px-4 py-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73]/40 focus-visible:ring-offset-2",
+        "disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
+        "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+
+        // ----- DEFAULT variant (segmented pill) -----
+        // Inactive: muted text on transparent; hover lifts text + paints a
+        // faint grey background to telegraph clickability.
+        "group-data-[variant=default]/tabs-list:rounded-lg",
+        "group-data-[variant=default]/tabs-list:text-[#62646a]",
+        "group-data-[variant=default]/tabs-list:hover:text-[#404145] group-data-[variant=default]/tabs-list:hover:bg-[#f7f7f7]",
+        // Active: soft brand-green tint background, deeper green text,
+        // semibold weight, and we suppress the hover-grey by repeating the
+        // brand bg on hover.
+        "group-data-[variant=default]/tabs-list:data-active:bg-[#e8faf1] group-data-[variant=default]/tabs-list:data-active:text-[#0f8f56] group-data-[variant=default]/tabs-list:data-active:font-semibold group-data-[variant=default]/tabs-list:data-active:hover:bg-[#e8faf1]",
+        // Vertical default: tabs become full-width left-aligned rows.
+        "group-data-vertical/tabs:group-data-[variant=default]/tabs-list:w-full group-data-vertical/tabs:group-data-[variant=default]/tabs-list:justify-start",
+
+        // ----- LINE variant (underline) -----
+        // Slightly tighter vertical padding so the indicator hugs the row.
+        "group-data-[variant=line]/tabs-list:py-3",
+        "group-data-[variant=line]/tabs-list:text-[#62646a]",
+        "group-data-[variant=line]/tabs-list:hover:text-[#404145]",
+        "group-data-[variant=line]/tabs-list:data-active:text-[#1dbf73] group-data-[variant=line]/tabs-list:data-active:font-semibold",
+
+        // ----- LINE variant indicator -----
+        // 2px brand-green stripe sitting on top of the list's 1px border, so
+        // active tab visually replaces the divider. Hidden on the default
+        // variant — `after` only activates with `data-[variant=line]`.
+        "after:absolute after:bg-[#1dbf73] after:opacity-0 after:transition-opacity",
+        "group-data-horizontal/tabs:after:inset-x-3 group-data-horizontal/tabs:after:bottom-[-1px] group-data-horizontal/tabs:after:h-0.5",
+        "group-data-vertical/tabs:after:inset-y-1 group-data-vertical/tabs:after:right-[-1px] group-data-vertical/tabs:after:w-0.5",
+        "group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
+        className,
       )}
       {...props}
     />
