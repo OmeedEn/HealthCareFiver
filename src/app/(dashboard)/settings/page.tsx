@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
@@ -9,9 +9,27 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Separator } from '@/components/ui/separator'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from 'sonner'
-import { Loader2, User, Bell, Shield, AlertTriangle } from 'lucide-react'
+import {
+  Loader2,
+  User,
+  Bell,
+  Shield,
+  AlertTriangle,
+  Camera,
+  Mail,
+  Phone,
+  MessageSquare,
+  Briefcase,
+  FileText,
+  DollarSign,
+  Star,
+  KeyRound,
+  Smartphone,
+  Monitor,
+  Lock,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
@@ -39,18 +57,60 @@ const defaultPreferences: NotificationPreferences = {
   email_review_received: true,
 }
 
-const preferenceLabels: Record<keyof NotificationPreferences, string> = {
-  email_new_message: 'New messages',
-  email_application_update: 'Application updates',
-  email_contract_update: 'Contract updates',
-  email_payment_update: 'Payment updates',
-  email_review_received: 'New reviews',
+const preferenceRows: {
+  key: keyof NotificationPreferences
+  title: string
+  description: string
+  icon: React.ElementType
+}[] = [
+  {
+    key: 'email_new_message',
+    title: 'New messages',
+    description: 'A facility or contractor sends you a direct message.',
+    icon: MessageSquare,
+  },
+  {
+    key: 'email_application_update',
+    title: 'Application updates',
+    description: 'Your application status changes (shortlisted, offered, etc.).',
+    icon: Briefcase,
+  },
+  {
+    key: 'email_contract_update',
+    title: 'Contract updates',
+    description: 'A contract you signed has a status or terms change.',
+    icon: FileText,
+  },
+  {
+    key: 'email_payment_update',
+    title: 'Payment updates',
+    description: 'A payment is processed, released, or disputed.',
+    icon: DollarSign,
+  },
+  {
+    key: 'email_review_received',
+    title: 'New reviews',
+    description: 'A facility leaves you a review after a contract.',
+    icon: Star,
+  },
+]
+
+function initialsFromEmail(email: string): string {
+  if (!email) return '?'
+  const local = email.split('@')[0]
+  const parts = local.split(/[._-]/).filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase()
+  }
+  return local.slice(0, 2).toUpperCase()
 }
 
 export default function SettingsPage() {
   const router = useRouter()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingPrefs, setSavingPrefs] = useState(false)
   const [profile, setProfile] = useState<ProfileData>({
     email: '',
     phone: '',
@@ -63,6 +123,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
     async function fetchSettings() {
@@ -72,6 +133,7 @@ export default function SettingsPage() {
           phone: '(310) 555-0142',
           avatar_url: '',
         })
+        setOriginalEmail(DEMO_CONTRACTOR.email)
         setLoading(false)
         return
       }
@@ -111,15 +173,14 @@ export default function SettingsPage() {
     fetchSettings()
   }, [])
 
-  function getSupabase() {
-    return createClient()
-  }
-
   async function handleProfileSave() {
-    if (isDemoMode()) { toast.success('Profile updated (demo)'); return }
+    if (isDemoMode()) {
+      toast.success('Profile updated (demo)')
+      return
+    }
     setSaving(true)
     try {
-      const supabase = getSupabase()
+      const supabase = createClient()
       const normalizedEmail = profile.email.trim().toLowerCase()
       const { error } = await supabase.auth.updateUser({
         email: normalizedEmail || undefined,
@@ -129,7 +190,7 @@ export default function SettingsPage() {
       if (error) throw error
       if (normalizedEmail !== originalEmail) {
         toast.success(
-          'Profile updated. Check your inbox to confirm the new email.'
+          'Profile updated. Check your inbox to confirm the new email.',
         )
       } else {
         toast.success('Profile updated successfully')
@@ -154,10 +215,14 @@ export default function SettingsPage() {
       e.target.value = ''
       return
     }
-    if (isDemoMode()) { toast.success('Avatar updated (demo)'); return }
+    if (isDemoMode()) {
+      toast.success('Avatar updated (demo)')
+      return
+    }
 
+    setAvatarUploading(true)
     try {
-      const supabase = getSupabase()
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -184,14 +249,19 @@ export default function SettingsPage() {
       toast.success('Avatar updated')
     } catch {
       toast.error('Failed to upload avatar')
+    } finally {
+      setAvatarUploading(false)
     }
   }
 
   async function handlePreferencesSave() {
-    if (isDemoMode()) { toast.success('Preferences updated (demo)'); return }
-    setSaving(true)
+    if (isDemoMode()) {
+      toast.success('Preferences updated (demo)')
+      return
+    }
+    setSavingPrefs(true)
     try {
-      const supabase = getSupabase()
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -206,7 +276,7 @@ export default function SettingsPage() {
     } catch {
       toast.error('Failed to update preferences')
     } finally {
-      setSaving(false)
+      setSavingPrefs(false)
     }
   }
 
@@ -228,10 +298,14 @@ export default function SettingsPage() {
       return
     }
 
-    if (isDemoMode()) { toast.success('Password changed (demo)'); return }
+    if (isDemoMode()) {
+      toast.success('Password changed (demo)')
+      return
+    }
+
     setSaving(true)
     try {
-      const supabase = getSupabase()
+      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -271,7 +345,7 @@ export default function SettingsPage() {
 
   async function handleAccountDelete() {
     const confirmed = window.confirm(
-      'This permanently deletes your HealthGig account and all related data. This cannot be undone. Continue?'
+      'This permanently deletes your HealthGig account and all related data. This cannot be undone. Continue?',
     )
     if (!confirmed) return
 
@@ -287,7 +361,7 @@ export default function SettingsPage() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || 'Failed to delete account')
       }
-      const supabase = getSupabase()
+      const supabase = createClient()
       await supabase.auth.signOut()
       toast.success('Account deleted')
       router.push('/')
@@ -307,14 +381,23 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
       </div>
     )
   }
 
+  const emailChanged =
+    profile.email.trim().toLowerCase() !== originalEmail.trim().toLowerCase()
+  const initials = initialsFromEmail(profile.email)
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold">Settings</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[#404145]">Settings</h1>
+        <p className="text-[#62646a]">
+          Manage your account, notifications, and security preferences.
+        </p>
+      </div>
 
       <Tabs defaultValue="profile">
         <TabsList>
@@ -332,201 +415,397 @@ export default function SettingsPage() {
           </TabsTrigger>
         </TabsList>
 
+        {/* ====================== Profile ====================== */}
         <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={profile.email}
-                  onChange={(e) =>
-                    setProfile((prev) => ({ ...prev, email: e.target.value }))
-                  }
-                />
-              </div>
+          <div className="space-y-6">
+            {/* Avatar hero */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile photo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+                  <div className="relative">
+                    {profile.avatar_url ? (
+                      <Image
+                        src={profile.avatar_url}
+                        alt="Avatar"
+                        width={96}
+                        height={96}
+                        className="size-24 rounded-full border border-[#e4e5e7] object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <Avatar className="size-24 border border-[#e4e5e7]">
+                        <AvatarFallback className="bg-[#e8faf1] text-xl font-semibold text-[#0f8f56]">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => avatarInputRef.current?.click()}
+                      disabled={avatarUploading}
+                      aria-label="Upload new photo"
+                      className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#1dbf73] text-white shadow-sm hover:bg-[#19a463] disabled:opacity-60"
+                    >
+                      {avatarUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Camera className="size-4" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-[#404145]">
+                      {profile.email || 'Your account'}
+                    </p>
+                    <p className="text-xs text-[#62646a]">
+                      JPG, PNG, WebP, or GIF — up to 5 MB. Square images look
+                      best.
+                    </p>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleAvatarUpload}
+                      className="sr-only"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(e) =>
-                    setProfile((prev) => ({ ...prev, phone: e.target.value }))
-                  }
-                />
-              </div>
+            {/* Account details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail
+                      aria-hidden="true"
+                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                    />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profile.email}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      className="pl-9"
+                    />
+                  </div>
+                  {emailChanged && (
+                    <p className="text-xs text-[#0f8f56]">
+                      You&apos;ll get a confirmation link at the new address
+                      before the change takes effect.
+                    </p>
+                  )}
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="avatar">Avatar</Label>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                />
-                {profile.avatar_url && (
-                  <Image
-                    src={profile.avatar_url}
-                    alt="Avatar"
-                    width={64}
-                    height={64}
-                    className="mt-2 size-16 rounded-full object-cover"
-                    unoptimized
-                  />
-                )}
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <div className="relative">
+                    <Phone
+                      aria-hidden="true"
+                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                    />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={profile.phone}
+                      onChange={(e) =>
+                        setProfile((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      placeholder="(310) 555-0142"
+                      className="pl-9"
+                    />
+                  </div>
+                  <p className="text-xs text-[#62646a]">
+                    Used for shift reminders and time-sensitive alerts only —
+                    never shared with facilities.
+                  </p>
+                </div>
 
-              <Separator />
-
-              <Button onClick={handleProfileSave} disabled={saving}>
-                {saving && (
-                  <Loader2
-                    className="size-4 animate-spin"
-                    data-icon="inline-start"
-                  />
-                )}
-                Save Changes
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={handleProfileSave}
+                    disabled={saving}
+                    className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                  >
+                    {saving && (
+                      <Loader2
+                        className="mr-2 size-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    )}
+                    Save changes
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
+        {/* ====================== Notifications ====================== */}
         <TabsContent value="notifications">
           <Card>
             <CardHeader>
-              <CardTitle>Email Notifications</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="size-4 text-[#1dbf73]" />
+                Email notifications
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {(
-                Object.entries(preferenceLabels) as [
-                  keyof NotificationPreferences,
-                  string,
-                ][]
-              ).map(([key, label]) => (
-                <div key={key} className="flex items-center justify-between">
-                  <Label htmlFor={key}>{label}</Label>
-                  <button
-                    id={key}
-                    type="button"
-                    role="switch"
-                    aria-checked={preferences[key]}
-                    onClick={() => togglePreference(key)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      preferences[key] ? 'bg-primary' : 'bg-gray-200'
-                    }`}
+            <CardContent className="space-y-1">
+              {preferenceRows.map((row) => {
+                const Icon = row.icon
+                const enabled = preferences[row.key]
+                return (
+                  <div
+                    key={row.key}
+                    className="flex items-start justify-between gap-4 border-b border-[#f1f3f5] py-4 last:border-0"
                   >
-                    <span
-                      className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
-                        preferences[key] ? 'translate-x-5' : 'translate-x-0'
+                    <div className="flex items-start gap-3">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
+                        <Icon className="size-4 text-[#1dbf73]" />
+                      </div>
+                      <div className="min-w-0">
+                        <Label
+                          htmlFor={row.key}
+                          className="text-sm font-medium text-[#404145]"
+                        >
+                          {row.title}
+                        </Label>
+                        <p className="text-xs text-[#62646a]">
+                          {row.description}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      id={row.key}
+                      type="button"
+                      role="switch"
+                      aria-checked={enabled}
+                      onClick={() => togglePreference(row.key)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                        enabled ? 'bg-[#1dbf73]' : 'bg-[#e4e5e7]'
                       }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow ring-0 transition-transform ${
+                          enabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )
+              })}
+
+              <div className="flex justify-end pt-4">
+                <Button
+                  onClick={handlePreferencesSave}
+                  disabled={savingPrefs}
+                  className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                >
+                  {savingPrefs && (
+                    <Loader2
+                      className="mr-2 size-4 animate-spin"
+                      aria-hidden="true"
                     />
-                  </button>
-                </div>
-              ))}
-
-              <Separator />
-
-              <Button onClick={handlePreferencesSave} disabled={saving}>
-                {saving && (
-                  <Loader2
-                    className="size-4 animate-spin"
-                    data-icon="inline-start"
-                  />
-                )}
-                Save Preferences
-              </Button>
+                  )}
+                  Save preferences
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* ====================== Security ====================== */}
         <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change Password</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input
-                    id="current-password"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                  />
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="size-4 text-[#1dbf73]" />
+                  Change password
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={handlePasswordChange}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Current password</Label>
+                    <div className="relative">
+                      <Lock
+                        aria-hidden="true"
+                        className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                      />
+                      <Input
+                        id="current-password"
+                        type="password"
+                        autoComplete="current-password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        autoComplete="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                      <p className="text-xs text-[#62646a]">
+                        At least 8 characters.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        autoComplete="new-password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      type="submit"
+                      disabled={saving}
+                      className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                    >
+                      {saving && (
+                        <Loader2
+                          className="mr-2 size-4 animate-spin"
+                          aria-hidden="true"
+                        />
+                      )}
+                      Update password
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* 2FA placeholder — surfaces the work even though it isn't wired
+                yet, so users know it's coming. */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Smartphone className="size-4 text-[#1dbf73]" />
+                  Two-factor authentication
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-[#404145]">
+                      Add an extra step at sign-in using an authenticator app.
+                    </p>
+                    <p className="text-xs text-[#62646a]">
+                      Two-factor authentication is coming soon. We&apos;ll
+                      notify you when enrollment opens.
+                    </p>
+                  </div>
+                  <Button variant="outline" size="sm" disabled>
+                    Set up
+                  </Button>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                  />
+            {/* Sessions placeholder */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Monitor className="size-4 text-[#1dbf73]" />
+                  Active sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between rounded-md border border-[#e4e5e7] bg-[#fafefb] px-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#404145]">
+                      This device
+                    </p>
+                    <p className="text-xs text-[#62646a]">
+                      Active now · last used just now
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8faf1] px-2 py-0.5 text-xs font-medium text-[#0f8f56]">
+                    <span className="size-1.5 rounded-full bg-[#1dbf73]" />
+                    Current
+                  </span>
                 </div>
+                <p className="mt-3 text-xs text-[#62646a]">
+                  Full session management is coming soon. Until then, you can
+                  sign out from any session by signing out and back in.
+                </p>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
+            {/* Danger zone */}
+            <Card className="border-red-200 bg-red-50/40">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-red-700">
+                  <AlertTriangle className="size-4" />
+                  Danger zone
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-red-700">
+                      Delete account
+                    </p>
+                    <p className="text-sm text-red-700/80">
+                      Permanently deletes your account and all data we hold
+                      about you, including contracts, payments history,
+                      messages, and reviews. Active subscriptions will be
+                      canceled. This cannot be undone.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={handleAccountDelete}
+                    disabled={deleting}
+                    className="shrink-0"
+                  >
+                    {deleting && (
+                      <Loader2
+                        className="mr-2 size-4 animate-spin"
+                        aria-hidden="true"
+                      />
+                    )}
+                    Delete account
+                  </Button>
                 </div>
-
-                <Separator />
-
-                <Button type="submit" disabled={saving}>
-                  {saving && (
-                    <Loader2
-                      className="size-4 animate-spin"
-                      data-icon="inline-start"
-                    />
-                  )}
-                  Update Password
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-6 border-destructive/40">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="size-4" />
-                Delete Account
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all data we hold about you,
-                including contracts, payments history, messages, and reviews.
-                Active subscriptions will be canceled. This cannot be undone.
-              </p>
-              <Button
-                variant="destructive"
-                onClick={handleAccountDelete}
-                disabled={deleting}
-              >
-                {deleting && (
-                  <Loader2
-                    className="size-4 animate-spin"
-                    data-icon="inline-start"
-                  />
-                )}
-                Delete My Account
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
