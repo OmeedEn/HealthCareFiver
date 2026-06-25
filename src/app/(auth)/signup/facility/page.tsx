@@ -19,20 +19,20 @@ import { toast } from 'sonner'
 import { Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { US_STATES } from '@/lib/utils/constants'
 
+// Mirrors the `facility_type` Postgres enum
+// (supabase/migrations/20250523000001_create_enums.sql). Any value not in
+// the enum will fail the handle_new_user trigger and break signup, so this
+// list must stay in sync. Keep alphabetical-ish for findability.
 const FACILITY_TYPES = [
   { value: 'hospital', label: 'Hospital' },
   { value: 'clinic', label: 'Clinic' },
-  { value: 'nursing_home', label: 'Nursing Home' },
-  { value: 'assisted_living', label: 'Assisted Living Facility' },
-  { value: 'home_health_agency', label: 'Home Health Agency' },
-  { value: 'rehabilitation_center', label: 'Rehabilitation Center' },
-  { value: 'urgent_care', label: 'Urgent Care Center' },
-  { value: 'dental_office', label: 'Dental Office' },
-  { value: 'pharmacy', label: 'Pharmacy' },
-  { value: 'mental_health', label: 'Mental Health Facility' },
-  { value: 'hospice', label: 'Hospice' },
-  { value: 'surgical_center', label: 'Surgical Center' },
-  { value: 'diagnostic_lab', label: 'Diagnostic Laboratory' },
+  { value: 'urgent_care', label: 'Urgent care' },
+  { value: 'nursing_home', label: 'Nursing home' },
+  { value: 'assisted_living', label: 'Assisted living facility' },
+  { value: 'home_health', label: 'Home health agency' },
+  { value: 'rehab_center', label: 'Rehabilitation center' },
+  { value: 'telehealth', label: 'Telehealth provider' },
+  { value: 'staffing_agency', label: 'Staffing agency' },
   { value: 'other', label: 'Other' },
 ]
 
@@ -118,7 +118,7 @@ export default function FacilitySignupPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e8faf1]">
           <CheckCircle2 className="h-8 w-8 text-[#1dbf73]" />
         </div>
-        <h2 className="mt-4 text-xl font-black text-[#404145]">
+        <h2 className="mt-4 text-xl font-bold text-[#404145]">
           Check your email
         </h2>
         <p className="mt-2 text-sm text-[#62646a]">
@@ -148,7 +148,7 @@ export default function FacilitySignupPage() {
         Back
       </Link>
 
-      <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#404145]">
         Register your facility
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
@@ -156,44 +156,43 @@ export default function FacilitySignupPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="facility-name"
-              className="text-sm font-semibold text-[#404145]"
-            >
-              Facility name
-            </Label>
-            <Input
-              id="facility-name"
-              placeholder="Your facility name"
-              value={facilityName}
-              onChange={(e) => setFacilityName(e.target.value)}
-              required
-              autoComplete="organization"
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="facility-type"
-              className="text-sm font-semibold text-[#404145]"
-            >
-              Facility type
-            </Label>
-            <Select value={facilityType} onValueChange={(v) => setFacilityType(v ?? '')}>
-              <SelectTrigger id="facility-type" className="h-11 w-full">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                {FACILITY_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="facility-name"
+            className="text-sm font-semibold text-[#404145]"
+          >
+            Facility name
+          </Label>
+          <Input
+            id="facility-name"
+            placeholder="e.g., Memorial Hermann Medical Center"
+            value={facilityName}
+            onChange={(e) => setFacilityName(e.target.value)}
+            required
+            autoComplete="organization"
+            className="h-11"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="facility-type"
+            className="text-sm font-semibold text-[#404145]"
+          >
+            Facility type
+          </Label>
+          <Select value={facilityType} onValueChange={(v) => setFacilityType(v ?? '')}>
+            <SelectTrigger id="facility-type" className="h-11 w-full">
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              {FACILITY_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-1.5">
@@ -306,7 +305,7 @@ export default function FacilitySignupPage() {
               <SelectContent>
                 {US_STATES.map((s) => (
                   <SelectItem key={s.value} value={s.value}>
-                    {s.value}
+                    {s.label} ({s.value})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -336,10 +335,10 @@ export default function FacilitySignupPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+          className="h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Account
+          Create account
         </Button>
       </form>
 
