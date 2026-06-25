@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_CONTRACTS } from '@/lib/demo/data'
@@ -201,36 +201,7 @@ export default function ContractorContractDetailPage() {
   }
 
   if (!contract) {
-    return (
-      <div className="space-y-6">
-        <Link
-          href="/contractor/contracts"
-          className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
-        >
-          <ArrowLeft className="size-4" />
-          Back to contracts
-        </Link>
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-            <FileSearch className="size-6 text-[#1dbf73]" />
-          </div>
-          <h3 className="mt-4 text-lg font-semibold text-[#404145]">
-            Contract not found
-          </h3>
-          <p className="mt-1 text-sm text-[#62646a]">
-            We couldn&apos;t find the contract you&apos;re looking for.
-          </p>
-          <Button
-            variant="outline"
-            className="mt-6"
-            render={<Link href="/contractor/contracts" />}
-          >
-            <ArrowLeft className="size-4" />
-            Back to contracts
-          </Button>
-        </div>
-      </div>
-    )
+    notFound()
   }
 
   const facilityName =

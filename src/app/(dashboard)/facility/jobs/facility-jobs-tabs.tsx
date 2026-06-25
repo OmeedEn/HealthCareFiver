@@ -3,29 +3,24 @@
 import { type ReactNode } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
+type TabKey = 'all' | 'open' | 'in_progress' | 'completed' | 'draft'
+
 interface FacilityJobsTabsProps {
-  tabCounts: {
-    all: number
-    open: number
-    in_progress: number
-    completed: number
-    draft: number
-  }
-  children: (status: string) => ReactNode
+  tabCounts: Record<TabKey, number>
+  // Pre-rendered server content per tab, passed as ReactNode props (not as a
+  // render function) so this component works with a server-rendered parent.
+  content: Record<TabKey, ReactNode>
 }
 
-const TABS = [
+const TABS: { value: TabKey; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'open', label: 'Open' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
   { value: 'draft', label: 'Draft' },
-] as const
+]
 
-export function FacilityJobsTabs({
-  tabCounts,
-  children,
-}: FacilityJobsTabsProps) {
+export function FacilityJobsTabs({ tabCounts, content }: FacilityJobsTabsProps) {
   return (
     <Tabs defaultValue="all">
       <TabsList>
@@ -37,7 +32,7 @@ export function FacilityJobsTabs({
       </TabsList>
       {TABS.map((tab) => (
         <TabsContent key={tab.value} value={tab.value}>
-          {children(tab.value)}
+          {content[tab.value]}
         </TabsContent>
       ))}
     </Tabs>
