@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
@@ -29,8 +30,18 @@ import {
   US_STATES,
 } from '@/lib/utils/constants'
 import { toast } from 'sonner'
-import { Loader2Icon, XIcon, PlusIcon } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import {
+  Loader2,
+  XIcon,
+  PlusIcon,
+  ArrowLeft,
+  Briefcase,
+  Clock,
+  MapPin,
+  DollarSign,
+  Calendar,
+  ShieldCheck,
+} from 'lucide-react'
 
 interface JobFormData {
   title: string
@@ -90,25 +101,30 @@ const initialFormData: JobFormData = {
   additional_requirements: '',
 }
 
+type ListKey =
+  | 'specialties_required'
+  | 'required_credentials'
+  | 'required_certifications'
+
 export default function FacilityNewJobPage() {
   const router = useRouter()
   const [form, setForm] = useState<JobFormData>(initialFormData)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState<'draft' | 'open' | null>(null)
   const [specialtyInput, setSpecialtyInput] = useState('')
   const [credentialInput, setCredentialInput] = useState('')
   const [certificationInput, setCertificationInput] = useState('')
 
   const updateField = <K extends keyof JobFormData>(
     key: K,
-    value: JobFormData[K]
+    value: JobFormData[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
   const addToList = (
-    key: 'specialties_required' | 'required_credentials' | 'required_certifications',
+    key: ListKey,
     value: string,
-    clearInput: () => void
+    clearInput: () => void,
   ) => {
     const trimmed = value.trim()
     if (!trimmed) return
@@ -117,13 +133,10 @@ export default function FacilityNewJobPage() {
     clearInput()
   }
 
-  const removeFromList = (
-    key: 'specialties_required' | 'required_credentials' | 'required_certifications',
-    value: string
-  ) => {
+  const removeFromList = (key: ListKey, value: string) => {
     updateField(
       key,
-      form[key].filter((v) => v !== value)
+      form[key].filter((v) => v !== value),
     )
   }
 
@@ -133,13 +146,13 @@ export default function FacilityNewJobPage() {
       return
     }
 
-    setLoading(true)
+    setLoading(status)
 
     if (isDemoMode()) {
       toast.success(
         status === 'open'
           ? 'Job published successfully! (demo mode)'
-          : 'Draft saved successfully! (demo mode)'
+          : 'Draft saved successfully! (demo mode)',
       )
       router.push('/facility/jobs')
       return
@@ -175,12 +188,8 @@ export default function FacilityNewJobPage() {
         state: form.state || null,
         zip_code: form.zip_code.trim() || null,
         is_remote: form.is_remote,
-        pay_rate_min: form.pay_rate_min
-          ? parseFloat(form.pay_rate_min)
-          : null,
-        pay_rate_max: form.pay_rate_max
-          ? parseFloat(form.pay_rate_max)
-          : null,
+        pay_rate_min: form.pay_rate_min ? parseFloat(form.pay_rate_min) : null,
+        pay_rate_max: form.pay_rate_max ? parseFloat(form.pay_rate_max) : null,
         pay_rate_type: form.pay_rate_type || null,
         overtime_rate: form.overtime_rate
           ? parseFloat(form.overtime_rate)
@@ -206,8 +215,7 @@ export default function FacilityNewJobPage() {
           form.required_certifications.length > 0
             ? form.required_certifications
             : null,
-        additional_requirements:
-          form.additional_requirements.trim() || null,
+        additional_requirements: form.additional_requirements.trim() || null,
         status,
         published_at: status === 'open' ? new Date().toISOString() : null,
       }
@@ -222,58 +230,99 @@ export default function FacilityNewJobPage() {
       toast.success(
         status === 'open'
           ? 'Job published successfully!'
-          : 'Draft saved successfully!'
+          : 'Draft saved successfully!',
       )
       router.push('/facility/jobs')
     } catch {
       toast.error('An unexpected error occurred.')
     } finally {
-      setLoading(false)
+      setLoading(null)
     }
   }
 
+  // Tiny inline "section title with brand icon" helper used by every Card.
+  function SectionTitle({
+    icon: Icon,
+    children,
+  }: {
+    icon: React.ElementType
+    children: React.ReactNode
+  }) {
+    return (
+      <CardTitle className="flex items-center gap-2 text-[#404145]">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-[#e8faf1]">
+          <Icon className="size-4 text-[#1dbf73]" />
+        </span>
+        {children}
+      </CardTitle>
+    )
+  }
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6 pb-24">
+      <Link
+        href="/facility/jobs"
+        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+      >
+        <ArrowLeft className="size-4" />
+        Back to jobs
+      </Link>
+
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Post a New Job</h1>
-        <p className="text-muted-foreground">
-          Fill in the details below to create a new job posting.
+        <h1 className="text-2xl font-bold text-[#404145]">Post a new job</h1>
+        <p className="text-[#62646a]">
+          Fill in the details below to create a new posting. You can save as
+          a draft and publish later, or publish now to start receiving
+          applicants.
         </p>
       </div>
 
       {/* Basic Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Basic Information</CardTitle>
+          <SectionTitle icon={Briefcase}>Basic information</SectionTitle>
           <CardDescription>
-            Provide the essential details about the position.
+            The headline, role, and short summary an applicant sees first.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="title">Job Title *</Label>
+            <Label htmlFor="title">
+              Job title <span className="text-red-600">*</span>
+            </Label>
             <Input
               id="title"
-              placeholder="e.g. Registered Nurse - ICU"
+              placeholder="e.g., Registered Nurse — ICU Night Shift"
               value={form.title}
               onChange={(e) => updateField('title', e.target.value)}
+              required
             />
+            <p className="text-xs text-[#62646a]">
+              A clear, specific title gets 3× more qualified applicants.
+            </p>
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              placeholder="Describe the role, responsibilities, and what you're looking for..."
+              placeholder="Describe the role, day-to-day responsibilities, team, and what you're looking for in an ideal candidate."
               rows={6}
               value={form.description}
               onChange={(e) => updateField('description', e.target.value)}
             />
+            <p className="text-xs text-[#62646a]">
+              {form.description.length} characters. Aim for 150–300 words.
+            </p>
           </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="contractor_type">Contractor Type</Label>
+            <Label htmlFor="contractor_type">Contractor type</Label>
             <Select
               value={form.contractor_type}
-              onValueChange={(v) => v != null && updateField('contractor_type', v)}
+              onValueChange={(v) =>
+                v != null && updateField('contractor_type', v)
+              }
             >
               <SelectTrigger className="w-full" id="contractor_type">
                 <SelectValue placeholder="Select type" />
@@ -284,71 +333,41 @@ export default function FacilityNewJobPage() {
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
-                  )
+                  ),
                 )}
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
-            <Label>Required Specialties</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a specialty"
-                value={specialtyInput}
-                onChange={(e) => setSpecialtyInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addToList('specialties_required', specialtyInput, () =>
-                      setSpecialtyInput('')
-                    )
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  addToList('specialties_required', specialtyInput, () =>
-                    setSpecialtyInput('')
-                  )
-                }
-              >
-                <PlusIcon className="size-4" />
-              </Button>
-            </div>
-            {form.specialties_required.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {form.specialties_required.map((s) => (
-                  <Badge key={s} variant="secondary">
-                    {s}
-                    <button
-                      type="button"
-                      className="ml-1"
-                      onClick={() =>
-                        removeFromList('specialties_required', s)
-                      }
-                    >
-                      <XIcon className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
+
+          <ChipListField
+            label="Required specialties"
+            placeholder="e.g., ICU, Critical Care, Trauma"
+            value={specialtyInput}
+            onChange={setSpecialtyInput}
+            items={form.specialties_required}
+            onAdd={() =>
+              addToList('specialties_required', specialtyInput, () =>
+                setSpecialtyInput(''),
+              )
+            }
+            onRemove={(v) => removeFromList('specialties_required', v)}
+            helper="Press Enter or click + to add. Helps the right contractors find your job."
+          />
         </CardContent>
       </Card>
 
       {/* Job Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Job Details</CardTitle>
+          <SectionTitle icon={Clock}>Job details</SectionTitle>
+          <CardDescription>
+            Type, shift, urgency, and how many spots you need to fill.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="job_type">Job Type</Label>
+              <Label htmlFor="job_type">Job type</Label>
               <Select
                 value={form.job_type}
                 onValueChange={(v) => v != null && updateField('job_type', v)}
@@ -366,10 +385,12 @@ export default function FacilityNewJobPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="shift_type">Shift Type</Label>
+              <Label htmlFor="shift_type">Shift type</Label>
               <Select
                 value={form.shift_type}
-                onValueChange={(v) => v != null && updateField('shift_type', v)}
+                onValueChange={(v) =>
+                  v != null && updateField('shift_type', v)
+                }
               >
                 <SelectTrigger className="w-full" id="shift_type">
                   <SelectValue placeholder="Select shift type" />
@@ -384,6 +405,7 @@ export default function FacilityNewJobPage() {
               </Select>
             </div>
           </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="urgency">Urgency</Label>
@@ -402,7 +424,7 @@ export default function FacilityNewJobPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="positions_available">Positions Available</Label>
+              <Label htmlFor="positions_available">Positions available</Label>
               <Input
                 id="positions_available"
                 type="number"
@@ -420,17 +442,21 @@ export default function FacilityNewJobPage() {
       {/* Location */}
       <Card>
         <CardHeader>
-          <CardTitle>Location</CardTitle>
+          <SectionTitle icon={MapPin}>Location</SectionTitle>
+          <CardDescription>
+            Where the work happens. Mark as remote if applicable.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
             <div className="space-y-1.5">
               <Label htmlFor="city">City</Label>
               <Input
                 id="city"
-                placeholder="City"
+                placeholder="e.g., Los Angeles"
                 value={form.city}
                 onChange={(e) => updateField('city', e.target.value)}
+                autoComplete="address-level2"
               />
             </div>
             <div className="space-y-1.5">
@@ -440,129 +466,117 @@ export default function FacilityNewJobPage() {
                 onValueChange={(v) => v != null && updateField('state', v)}
               >
                 <SelectTrigger className="w-full" id="state">
-                  <SelectValue placeholder="Select state" />
+                  <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
                   {US_STATES.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
-                      {s.label}
+                      {s.label} ({s.value})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zip_code">ZIP Code</Label>
+              <Label htmlFor="zip_code">ZIP code</Label>
               <Input
                 id="zip_code"
-                placeholder="ZIP"
+                placeholder="90001"
                 value={form.zip_code}
                 onChange={(e) => updateField('zip_code', e.target.value)}
+                pattern="[0-9]{5}"
+                maxLength={5}
+                autoComplete="postal-code"
               />
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="is_remote"
-              checked={form.is_remote}
-              onChange={(e) => updateField('is_remote', e.target.checked)}
-              className="size-4 rounded border-input"
-            />
-            <Label htmlFor="is_remote">Remote eligible</Label>
-          </div>
+
+          <BrandedCheckbox
+            id="is_remote"
+            label="Remote eligible"
+            checked={form.is_remote}
+            onChange={(checked) => updateField('is_remote', checked)}
+          />
         </CardContent>
       </Card>
 
       {/* Compensation */}
       <Card>
         <CardHeader>
-          <CardTitle>Compensation</CardTitle>
+          <SectionTitle icon={DollarSign}>Compensation</SectionTitle>
+          <CardDescription>
+            Posting a rate range gets 2× the response of jobs without one.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_min">Pay Rate Min ($)</Label>
-              <Input
+              <Label htmlFor="pay_rate_min">Pay rate min</Label>
+              <CurrencyInput
                 id="pay_rate_min"
-                type="number"
-                step="0.01"
-                min="0"
                 placeholder="Min"
                 value={form.pay_rate_min}
-                onChange={(e) => updateField('pay_rate_min', e.target.value)}
+                onChange={(v) => updateField('pay_rate_min', v)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_max">Pay Rate Max ($)</Label>
-              <Input
+              <Label htmlFor="pay_rate_max">Pay rate max</Label>
+              <CurrencyInput
                 id="pay_rate_max"
-                type="number"
-                step="0.01"
-                min="0"
                 placeholder="Max"
                 value={form.pay_rate_max}
-                onChange={(e) => updateField('pay_rate_max', e.target.value)}
+                onChange={(v) => updateField('pay_rate_max', v)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_type">Pay Rate Type</Label>
+              <Label htmlFor="pay_rate_type">Pay rate type</Label>
               <Select
                 value={form.pay_rate_type}
-                onValueChange={(v) => v != null && updateField('pay_rate_type', v)}
+                onValueChange={(v) =>
+                  v != null && updateField('pay_rate_type', v)
+                }
               >
                 <SelectTrigger className="w-full" id="pay_rate_type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hourly">Hourly</SelectItem>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="per_contract">Per Contract</SelectItem>
+                  <SelectItem value="hourly">Per hour</SelectItem>
+                  <SelectItem value="daily">Per day</SelectItem>
+                  <SelectItem value="weekly">Per week</SelectItem>
+                  <SelectItem value="per_contract">Per contract</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="overtime_rate">Overtime Rate ($/hr)</Label>
-            <Input
-              id="overtime_rate"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="e.g. 67.50"
-              value={form.overtime_rate}
-              onChange={(e) => updateField('overtime_rate', e.target.value)}
-              className="sm:max-w-48"
-            />
+            <Label htmlFor="overtime_rate">Overtime rate</Label>
+            <div className="sm:max-w-48">
+              <CurrencyInput
+                id="overtime_rate"
+                placeholder="e.g., 67.50"
+                value={form.overtime_rate}
+                onChange={(v) => updateField('overtime_rate', v)}
+                suffix="/hr"
+              />
+            </div>
           </div>
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="travel_reimbursement"
-                checked={form.travel_reimbursement}
-                onChange={(e) =>
-                  updateField('travel_reimbursement', e.target.checked)
-                }
-                className="size-4 rounded border-input"
-              />
-              <Label htmlFor="travel_reimbursement">
-                Travel Reimbursement
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="housing_provided"
-                checked={form.housing_provided}
-                onChange={(e) =>
-                  updateField('housing_provided', e.target.checked)
-                }
-                className="size-4 rounded border-input"
-              />
-              <Label htmlFor="housing_provided">Housing Provided</Label>
-            </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <BrandedCheckbox
+              id="travel_reimbursement"
+              label="Travel reimbursement"
+              checked={form.travel_reimbursement}
+              onChange={(checked) =>
+                updateField('travel_reimbursement', checked)
+              }
+            />
+            <BrandedCheckbox
+              id="housing_provided"
+              label="Housing provided"
+              checked={form.housing_provided}
+              onChange={(checked) => updateField('housing_provided', checked)}
+            />
           </div>
         </CardContent>
       </Card>
@@ -570,12 +584,15 @@ export default function FacilityNewJobPage() {
       {/* Schedule */}
       <Card>
         <CardHeader>
-          <CardTitle>Schedule</CardTitle>
+          <SectionTitle icon={Calendar}>Schedule</SectionTitle>
+          <CardDescription>
+            When the contract starts, ends, and the weekly cadence.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="start_date">Start Date</Label>
+              <Label htmlFor="start_date">Start date</Label>
               <Input
                 id="start_date"
                 type="date"
@@ -584,7 +601,7 @@ export default function FacilityNewJobPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="end_date">End Date</Label>
+              <Label htmlFor="end_date">End date</Label>
               <Input
                 id="end_date"
                 type="date"
@@ -595,11 +612,12 @@ export default function FacilityNewJobPage() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="shifts_per_week">Shifts per Week</Label>
+              <Label htmlFor="shifts_per_week">Shifts per week</Label>
               <Input
                 id="shifts_per_week"
                 type="number"
                 min="1"
+                placeholder="e.g., 3"
                 value={form.shifts_per_week}
                 onChange={(e) =>
                   updateField('shifts_per_week', e.target.value)
@@ -607,12 +625,13 @@ export default function FacilityNewJobPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="hours_per_shift">Hours per Shift</Label>
+              <Label htmlFor="hours_per_shift">Hours per shift</Label>
               <Input
                 id="hours_per_shift"
                 type="number"
                 step="0.5"
                 min="1"
+                placeholder="e.g., 12"
                 value={form.hours_per_shift}
                 onChange={(e) =>
                   updateField('hours_per_shift', e.target.value)
@@ -626,131 +645,68 @@ export default function FacilityNewJobPage() {
       {/* Requirements */}
       <Card>
         <CardHeader>
-          <CardTitle>Requirements</CardTitle>
+          <SectionTitle icon={ShieldCheck}>Requirements</SectionTitle>
+          <CardDescription>
+            Listing requirements upfront saves review time and avoids
+            unqualified applicants.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="years_experience_min">
-              Minimum Years of Experience
+              Minimum years of experience
             </Label>
-            <Input
-              id="years_experience_min"
-              type="number"
-              min="0"
-              value={form.years_experience_min}
-              onChange={(e) =>
-                updateField('years_experience_min', e.target.value)
-              }
-              className="sm:max-w-48"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Required Credentials</Label>
-            <div className="flex gap-2">
+            <div className="sm:max-w-48">
               <Input
-                placeholder="Add a credential"
-                value={credentialInput}
-                onChange={(e) => setCredentialInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addToList('required_credentials', credentialInput, () =>
-                      setCredentialInput('')
-                    )
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  addToList('required_credentials', credentialInput, () =>
-                    setCredentialInput('')
-                  )
+                id="years_experience_min"
+                type="number"
+                min="0"
+                placeholder="e.g., 2"
+                value={form.years_experience_min}
+                onChange={(e) =>
+                  updateField('years_experience_min', e.target.value)
                 }
-              >
-                <PlusIcon className="size-4" />
-              </Button>
-            </div>
-            {form.required_credentials.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {form.required_credentials.map((c) => (
-                  <Badge key={c} variant="secondary">
-                    {c}
-                    <button
-                      type="button"
-                      className="ml-1"
-                      onClick={() =>
-                        removeFromList('required_credentials', c)
-                      }
-                    >
-                      <XIcon className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label>Required Certifications</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a certification"
-                value={certificationInput}
-                onChange={(e) => setCertificationInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addToList(
-                      'required_certifications',
-                      certificationInput,
-                      () => setCertificationInput('')
-                    )
-                  }
-                }}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() =>
-                  addToList(
-                    'required_certifications',
-                    certificationInput,
-                    () => setCertificationInput('')
-                  )
-                }
-              >
-                <PlusIcon className="size-4" />
-              </Button>
             </div>
-            {form.required_certifications.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
-                {form.required_certifications.map((c) => (
-                  <Badge key={c} variant="secondary">
-                    {c}
-                    <button
-                      type="button"
-                      className="ml-1"
-                      onClick={() =>
-                        removeFromList('required_certifications', c)
-                      }
-                    >
-                      <XIcon className="size-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
           </div>
+
+          <ChipListField
+            label="Required credentials"
+            placeholder="e.g., RN License, NPI"
+            value={credentialInput}
+            onChange={setCredentialInput}
+            items={form.required_credentials}
+            onAdd={() =>
+              addToList('required_credentials', credentialInput, () =>
+                setCredentialInput(''),
+              )
+            }
+            onRemove={(v) => removeFromList('required_credentials', v)}
+          />
+
+          <ChipListField
+            label="Required certifications"
+            placeholder="e.g., BLS, ACLS, PALS"
+            value={certificationInput}
+            onChange={setCertificationInput}
+            items={form.required_certifications}
+            onAdd={() =>
+              addToList(
+                'required_certifications',
+                certificationInput,
+                () => setCertificationInput(''),
+              )
+            }
+            onRemove={(v) => removeFromList('required_certifications', v)}
+          />
+
           <div className="space-y-1.5">
             <Label htmlFor="additional_requirements">
-              Additional Requirements
+              Additional requirements
             </Label>
             <Textarea
               id="additional_requirements"
-              placeholder="Any other requirements or notes..."
+              placeholder="Any other requirements or notes…"
               rows={4}
               value={form.additional_requirements}
               onChange={(e) =>
@@ -761,21 +717,186 @@ export default function FacilityNewJobPage() {
         </CardContent>
       </Card>
 
-      {/* Actions */}
-      <div className="flex justify-end gap-3 pb-6">
+      {/* Sticky action bar */}
+      <div className="sticky bottom-0 -mx-4 border-t border-[#e4e5e7] bg-white px-4 py-3 sm:-mx-6 sm:px-6">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+          <p className="hidden text-xs text-[#62646a] sm:block">
+            {form.title.trim() ? (
+              <>
+                <span className="font-medium text-[#404145]">
+                  Ready to {form.contractor_type ? 'publish' : 'save'}
+                </span>
+                {' · '}
+                {form.specialties_required.length} specialties,{' '}
+                {form.required_credentials.length +
+                  form.required_certifications.length}{' '}
+                requirements
+              </>
+            ) : (
+              <>Job title required to save or publish</>
+            )}
+          </p>
+          <div className="ml-auto flex items-center gap-3">
+            <Button
+              variant="outline"
+              disabled={loading !== null}
+              onClick={() => handleSubmit('draft')}
+            >
+              {loading === 'draft' && (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              )}
+              Save as draft
+            </Button>
+            <Button
+              disabled={loading !== null || !form.title.trim()}
+              onClick={() => handleSubmit('open')}
+              className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            >
+              {loading === 'open' && (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              )}
+              Publish job
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- Reusable inline form helpers ---------------------------------------
+
+function ChipListField({
+  label,
+  placeholder,
+  value,
+  onChange,
+  items,
+  onAdd,
+  onRemove,
+  helper,
+}: {
+  label: string
+  placeholder: string
+  value: string
+  onChange: (v: string) => void
+  items: string[]
+  onAdd: () => void
+  onRemove: (v: string) => void
+  helper?: string
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onAdd()
+            }
+          }}
+        />
         <Button
+          type="button"
           variant="outline"
-          disabled={loading}
-          onClick={() => handleSubmit('draft')}
+          size="icon"
+          onClick={onAdd}
+          aria-label={`Add ${label.toLowerCase()}`}
+          className="border-[#bcebd5] text-[#0f8f56] hover:bg-[#e8faf1]"
         >
-          {loading && <Loader2Icon className="size-4 animate-spin" />}
-          Save as Draft
-        </Button>
-        <Button disabled={loading} onClick={() => handleSubmit('open')}>
-          {loading && <Loader2Icon className="size-4 animate-spin" />}
-          Publish Job
+          <PlusIcon className="size-4" />
         </Button>
       </div>
+      {items.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {items.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onRemove(s)}
+              className="inline-flex items-center gap-1 rounded-full bg-[#e8faf1] px-3 py-1 text-xs font-medium text-[#0f8f56] hover:bg-[#d3f4e3]"
+            >
+              {s}
+              <XIcon className="size-3" />
+            </button>
+          ))}
+        </div>
+      ) : helper ? (
+        <p className="text-xs text-[#62646a]">{helper}</p>
+      ) : null}
+    </div>
+  )
+}
+
+function BrandedCheckbox({
+  id,
+  label,
+  checked,
+  onChange,
+}: {
+  id: string
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={`flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors ${
+        checked
+          ? 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]'
+          : 'border-[#e4e5e7] bg-white text-[#404145] hover:bg-[#f7f7f7]'
+      }`}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-4 cursor-pointer accent-[#1dbf73]"
+      />
+      <span className="font-medium">{label}</span>
+    </label>
+  )
+}
+
+function CurrencyInput({
+  id,
+  placeholder,
+  value,
+  onChange,
+  suffix,
+}: {
+  id: string
+  placeholder?: string
+  value: string
+  onChange: (v: string) => void
+  suffix?: string
+}) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
+        $
+      </span>
+      <Input
+        id={id}
+        type="number"
+        step="0.01"
+        min="0"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={suffix ? 'pl-7 pr-12' : 'pl-7'}
+      />
+      {suffix && (
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
+          {suffix}
+        </span>
+      )}
     </div>
   )
 }
