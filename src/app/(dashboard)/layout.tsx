@@ -1,21 +1,44 @@
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
-import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
+import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
+
+type DashboardRole = 'contractor' | 'facility' | 'admin'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  let role: 'contractor' | 'facility' | 'admin' = 'contractor'
+  let role: DashboardRole = 'contractor'
   let displayName = 'User'
   let userEmail = ''
 
   if (isDemoMode()) {
-    displayName = `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`
-    userEmail = DEMO_CONTRACTOR.email
-    role = 'contractor'
+    // The DemoRoleSwitcher writes a `demo_role` cookie; the layout reads it
+    // so the sidebar nav and header avatar match whatever dashboard the user
+    // is previewing.
+    const cookieStore = await cookies()
+    const cookieRole = cookieStore.get('demo_role')?.value
+    if (
+      cookieRole === 'facility' ||
+      cookieRole === 'admin' ||
+      cookieRole === 'contractor'
+    ) {
+      role = cookieRole
+    }
+
+    if (role === 'facility') {
+      displayName = DEMO_FACILITY.facility_name
+      userEmail = DEMO_FACILITY.email
+    } else if (role === 'admin') {
+      displayName = 'HealthGig Admin'
+      userEmail = 'admin@healthgig.com'
+    } else {
+      displayName = `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`
+      userEmail = DEMO_CONTRACTOR.email
+    }
   } else {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
