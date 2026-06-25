@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils/format'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
-import { ArrowLeftIcon, StarIcon } from 'lucide-react'
+import { ArrowLeft, Star, Users } from 'lucide-react'
+import { isDemoMode, DEMO_JOBS, DEMO_PROVIDERS } from '@/lib/demo/data'
 import { ApplicantActions } from './applicant-actions'
 
 interface Applicant {
@@ -38,13 +39,24 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  applied: 'outline',
+  applied: 'secondary',
   shortlisted: 'secondary',
-  interviewing: 'secondary',
+  interviewing: 'outline',
   offered: 'default',
   accepted: 'default',
   rejected: 'destructive',
-  withdrawn: 'outline',
+  withdrawn: 'destructive',
+}
+
+// Brand-green pill override for shortlisted; accepted/offered also use brand green.
+function statusBadgeClass(status: string): string | undefined {
+  if (status === 'shortlisted') {
+    return 'border-transparent bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]'
+  }
+  if (status === 'accepted' || status === 'offered') {
+    return 'border-transparent bg-[#1dbf73] text-white hover:bg-[#19a463]'
+  }
+  return undefined
 }
 
 export default async function ApplicantsPage({
@@ -53,6 +65,48 @@ export default async function ApplicantsPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+
+  // ---------------- Demo mode ----------------
+  if (isDemoMode()) {
+    const job = DEMO_JOBS.find((j) => j.id === id)
+    if (!job) {
+      notFound()
+    }
+
+    const demoApplicants: Applicant[] = DEMO_PROVIDERS.slice(0, 6).map(
+      (p, i) => ({
+        id: `app-${i + 1}`,
+        status: (['applied', 'shortlisted', 'interviewing', 'applied', 'rejected', 'applied'] as const)[i] ?? 'applied',
+        cover_letter:
+          i % 2 === 0
+            ? `I'm very interested in the ${job.title} role. With ${p.years_of_experience} years of experience in ${p.specialty}, I'm confident I can contribute to your team.`
+            : null,
+        proposed_rate: p.hourly_rate_max,
+        available_start_date: `2026-07-0${(i % 7) + 1}`,
+        created_at: `2026-05-2${i}T10:00:00Z`,
+        contractor_profiles: {
+          id: p.id,
+          first_name: p.first_name,
+          last_name: p.last_name,
+          contractor_type: p.contractor_type,
+          years_experience: p.years_of_experience,
+          average_rating: p.average_rating,
+          city: p.city,
+          state: p.state,
+        },
+      })
+    )
+
+    return (
+      <ApplicantsView
+        jobId={id}
+        jobTitle={job.title}
+        applicants={demoApplicants}
+      />
+    )
+  }
+
+  // ---------------- Real (Supabase) mode ----------------
   const supabase = await createClient()
 
   const {
@@ -87,32 +141,64 @@ export default async function ApplicantsPage({
   const typedApplicants = (applicants ?? []) as unknown as Applicant[]
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <ApplicantsView
+      jobId={id}
+      jobTitle={job.title}
+      applicants={typedApplicants}
+    />
+  )
+}
+
+// Inline render helper (kept in this file per "no extracted components" rule —
+// it lives in the same module and is only consumed by the default export).
+function ApplicantsView({
+  jobId,
+  jobTitle,
+  applicants,
+}: {
+  jobId: string
+  jobTitle: string
+  applicants: Applicant[]
+}) {
+  return (
+    <div className="mx-auto max-w-4xl space-y-6 font-sans">
       <Link
-        href={`/facility/jobs/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        href={`/facility/jobs/${jobId}`}
+        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
       >
-        <ArrowLeftIcon className="size-4" />
-        Back to Job
+        <ArrowLeft className="size-4" />
+        Back to job
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Applicants</h1>
-        <p className="text-muted-foreground">
-          {job.title} &mdash; {typedApplicants.length} applicant
-          {typedApplicants.length !== 1 ? 's' : ''}
+        <h1 className="text-2xl font-bold text-[#404145]">
+          Applicants for {jobTitle}
+        </h1>
+        <p className="text-[#62646a]">
+          {applicants.length} applicant
+          {applicants.length !== 1 ? 's' : ''} so far
         </p>
       </div>
 
-      {typedApplicants.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">
-            No applications received yet.
-          </p>
-        </div>
+      {applicants.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+              <Users className="size-6 text-[#1dbf73]" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-base font-semibold text-[#404145]">
+                No applicants yet
+              </p>
+              <p className="text-sm text-[#6b7280]">
+                As contractors apply to this job, you&apos;ll see them here.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-4">
-          {typedApplicants.map((applicant) => {
+          {applicants.map((applicant) => {
             const profile = applicant.contractor_profiles
             const name = profile
               ? [profile.first_name, profile.last_name]
@@ -122,6 +208,7 @@ export default async function ApplicantsPage({
             const location = profile
               ? [profile.city, profile.state].filter(Boolean).join(', ')
               : null
+            const badgeClass = statusBadgeClass(applicant.status)
 
             return (
               <Card key={applicant.id}>
@@ -132,22 +219,25 @@ export default async function ApplicantsPage({
                         {profile ? (
                           <Link
                             href={`/facility/contractors/${profile.id}`}
-                            className="font-medium hover:underline"
+                            className="font-medium text-[#404145] hover:text-[#1dbf73] hover:underline"
                           >
                             {name}
                           </Link>
                         ) : (
-                          <span className="font-medium">{name}</span>
+                          <span className="font-medium text-[#404145]">
+                            {name}
+                          </span>
                         )}
                         <Badge
                           variant={
                             STATUS_VARIANT[applicant.status] ?? 'outline'
                           }
+                          className={badgeClass}
                         >
                           {STATUS_LABELS[applicant.status] ?? applicant.status}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6b7280]">
                         {profile?.contractor_type && (
                           <span>
                             {CONTRACTOR_TYPE_LABELS[
@@ -164,17 +254,17 @@ export default async function ApplicantsPage({
                         )}
                         {profile?.average_rating != null && (
                           <span className="flex items-center gap-0.5">
-                            <StarIcon className="size-3 fill-yellow-400 text-yellow-400" />
+                            <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
                             {profile.average_rating.toFixed(1)}
                           </span>
                         )}
                         {location && <span>{location}</span>}
                       </div>
                     </div>
-                    <div className="text-right text-xs text-muted-foreground">
+                    <div className="text-right text-xs text-[#6b7280]">
                       <p>Applied {formatRelativeTime(applicant.created_at)}</p>
                       {applicant.proposed_rate != null && (
-                        <p className="mt-0.5 font-medium text-foreground">
+                        <p className="mt-0.5 font-medium text-[#404145]">
                           Proposed: {formatCurrency(applicant.proposed_rate)}/hr
                         </p>
                       )}
@@ -187,8 +277,8 @@ export default async function ApplicantsPage({
                   </div>
 
                   {applicant.cover_letter && (
-                    <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-                      <p className="mb-1 text-xs font-medium text-foreground">
+                    <div className="rounded-md bg-[#e8faf1]/60 p-3 text-sm text-[#62646a]">
+                      <p className="mb-1 text-xs font-medium text-[#0f8f56]">
                         Cover Letter
                       </p>
                       <p className="line-clamp-3">{applicant.cover_letter}</p>
@@ -198,7 +288,7 @@ export default async function ApplicantsPage({
                   <ApplicantActions
                     applicationId={applicant.id}
                     currentStatus={applicant.status}
-                    jobId={id}
+                    jobId={jobId}
                   />
                 </CardContent>
               </Card>
