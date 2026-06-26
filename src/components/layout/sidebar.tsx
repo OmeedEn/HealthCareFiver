@@ -155,10 +155,10 @@ export function Sidebar({ role, userName, userEmail, variant, open, onOpenChange
     <>
       <div className="flex h-16 items-center gap-2 px-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#1dbf73] text-sm font-black text-white">
-          H
+          S
         </div>
         <span className="text-lg font-black tracking-tight text-[#404145]">
-          HealthGig<span className="text-[#1dbf73]">.</span>
+          Sanus<span className="text-[#1dbf73]">.</span>
         </span>
       </div>
       <Separator />

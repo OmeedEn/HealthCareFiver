@@ -64,7 +64,7 @@ export default function ContractorSignupPage() {
     setLoading(true)
 
     if (isDemoMode()) {
-      toast.success('Welcome to HealthGig demo!')
+      toast.success('Welcome to Sanus demo!')
       router.push('/dashboard')
       return
     }
@@ -275,7 +275,7 @@ export default function ContractorSignupPage() {
         </Button>
 
         <p className="text-center text-xs text-[#95979d]">
-          By signing up, you agree to HealthGig&apos;s Terms of Service and
+          By signing up, you agree to Sanus&apos;s Terms of Service and
           Privacy Policy.
         </p>
       </form>

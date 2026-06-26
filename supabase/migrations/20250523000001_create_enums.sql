@@ -1,5 +1,5 @@
 -- 00001_create_enums.sql
--- Create all enum types for the HealthGig platform
+-- Create all enum types for the Sanus platform
 
 CREATE TYPE user_role AS ENUM (
   'contractor',

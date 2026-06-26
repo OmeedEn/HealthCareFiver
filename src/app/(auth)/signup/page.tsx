@@ -5,7 +5,7 @@ export default function SignupPage() {
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight text-[#404145]">
-        Join HealthGig
+        Join Sanus
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
         Choose how you want to get started

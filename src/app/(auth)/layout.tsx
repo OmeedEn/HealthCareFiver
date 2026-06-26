@@ -19,10 +19,10 @@ export default function AuthLayout({
         <div>
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#1dbf73] text-lg font-black text-white shadow-lg shadow-[#1dbf73]/30">
-              H
+              S
             </div>
             <span className="text-2xl font-black tracking-tight">
-              HealthGig<span className="text-[#8ee7bf]">.</span>
+              Sanus<span className="text-[#8ee7bf]">.</span>
             </span>
           </Link>
 
@@ -86,7 +86,7 @@ export default function AuthLayout({
                 <span className="ml-1 text-sm font-bold">4.9</span>
               </div>
               <p className="mt-1 text-sm leading-relaxed text-[#b8e6d0]">
-                &ldquo;HealthGig made it incredibly easy to find qualified ICU
+                &ldquo;Sanus made it incredibly easy to find qualified ICU
                 nurses for our facility.&rdquo;
               </p>
               <p className="mt-1 text-xs font-semibold text-[#8ee7bf]">
@@ -103,10 +103,10 @@ export default function AuthLayout({
         <div className="flex items-center justify-between border-b border-[#e4e5e7] px-6 py-4 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1dbf73] text-base font-black text-white">
-              H
+              S
             </div>
             <span className="text-xl font-black tracking-tight text-[#404145]">
-              HealthGig<span className="text-[#1dbf73]">.</span>
+              Sanus<span className="text-[#1dbf73]">.</span>
             </span>
           </Link>
         </div>
@@ -118,7 +118,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <div className="border-t border-[#e4e5e7] px-6 py-4 text-center text-xs text-[#95979d]">
-          &copy; {new Date().getFullYear()} HealthGig. All rights reserved.
+          &copy; {new Date().getFullYear()} Sanus. All rights reserved.
         </div>
       </div>
     </div>

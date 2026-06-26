@@ -511,7 +511,7 @@ export const DEMO_PAYMENTS = [
     platform_fee: 94.3,
     net_amount: 848.7,
     created_at: '2026-05-21T15:00:00Z',
-    invoice_number: 'HG-INV-10001',
+    invoice_number: 'SAN-INV-10001',
     contracts: { title: 'ICU RN Night Shift — 13 Week Contract' },
   },
   {
@@ -524,7 +524,7 @@ export const DEMO_PAYMENTS = [
     platform_fee: 94.3,
     net_amount: 848.7,
     created_at: '2026-05-23T13:00:00Z',
-    invoice_number: 'HG-INV-10002',
+    invoice_number: 'SAN-INV-10002',
     contracts: { title: 'ICU RN Night Shift — 13 Week Contract' },
   },
   {
@@ -537,7 +537,7 @@ export const DEMO_PAYMENTS = [
     platform_fee: 94.3,
     net_amount: 848.7,
     created_at: '2026-05-24T09:00:00Z',
-    invoice_number: 'HG-INV-10003',
+    invoice_number: 'SAN-INV-10003',
     contracts: { title: 'ICU RN Night Shift — 13 Week Contract' },
   },
 ]
@@ -948,7 +948,7 @@ export const DEMO_EVENTS = [
     title: 'HIPAA Compliance for Independent Providers',
     type: 'webinar' as const,
     date: '2027-01-20T12:00:00Z',
-    instructor: 'HealthGig Legal Team',
+    instructor: 'Sanus Legal Team',
     price: 0,
     memberPrice: 0,
     description:
@@ -970,7 +970,7 @@ export const DEMO_EVENTS = [
       { time: '1:15 PM', topic: 'Q&A Session' },
     ],
     instructorBio:
-      'The HealthGig Legal Team comprises healthcare attorneys and compliance specialists dedicated to helping independent providers navigate the complex regulatory landscape of healthcare.',
+      'The Sanus Legal Team comprises healthcare attorneys and compliance specialists dedicated to helping independent providers navigate the complex regulatory landscape of healthcare.',
   },
 ]
 

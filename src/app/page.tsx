@@ -180,7 +180,7 @@ const membershipPlans = [
     name: 'Basic',
     price: 'Free',
     period: '',
-    description: 'Get started with essential access to the HealthGig marketplace.',
+    description: 'Get started with essential access to the Sanus marketplace.',
     features: [
       'Browse jobs & facilities',
       'Access public events & webinars',
@@ -255,7 +255,7 @@ const trustCards = [
 const testimonials = [
   {
     quote:
-      'HealthGig completely changed how we handle last-minute shift coverage. We went from scrambling to make phone calls to filling shifts in under two hours.',
+      'Sanus completely changed how we handle last-minute shift coverage. We went from scrambling to make phone calls to filling shifts in under two hours.',
     name: 'Jennifer Martinez',
     role: 'Director of Nursing, Mercy General Hospital',
     rating: 5,
@@ -286,10 +286,10 @@ export default function LandingPage() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1dbf73] text-base font-bold text-white">
-              H
+              S
             </div>
             <span className="text-2xl font-bold tracking-tight text-[#111827]">
-              HealthGig<span className="text-[#1dbf73]">.</span>
+              Sanus<span className="text-[#1dbf73]">.</span>
             </span>
           </Link>
 
@@ -316,7 +316,7 @@ export default function LandingPage() {
               href="/signup"
               className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
             >
-              Join HealthGig
+              Join Sanus
             </Link>
           </div>
         </div>
@@ -479,7 +479,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-heading text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl">
-                How HealthGig Works
+                How Sanus Works
               </h2>
               <p className="mt-3 text-[#6b7280]">
                 From search to care in four simple steps.
@@ -728,7 +728,7 @@ export default function LandingPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[#b8b7b4]">
               Whether you need to fill shifts or find your next opportunity,
-              HealthGig makes healthcare staffing simple, transparent, and
+              Sanus makes healthcare staffing simple, transparent, and
               trustworthy.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -758,10 +758,10 @@ export default function LandingPage() {
             <div>
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-bold text-white">
-                  H
+                  S
                 </div>
                 <span className="text-lg font-bold text-[#111827]">
-                  HealthGig<span className="text-[#1dbf73]">.</span>
+                  Sanus<span className="text-[#1dbf73]">.</span>
                 </span>
               </div>
               <p className="mt-3 text-sm leading-relaxed text-[#6b7280]">
@@ -852,7 +852,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 border-t border-[#e5e7eb] pt-6 text-center text-sm text-[#6b7280]">
-            &copy; {new Date().getFullYear()} HealthGig. All rights reserved.
+            &copy; {new Date().getFullYear()} Sanus. All rights reserved.
           </div>
         </div>
       </footer>

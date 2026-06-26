@@ -76,7 +76,7 @@ export default function FacilitySignupPage() {
     setLoading(true)
 
     if (isDemoMode()) {
-      toast.success('Welcome to HealthGig demo!')
+      toast.success('Welcome to Sanus demo!')
       router.push('/dashboard')
       return
     }

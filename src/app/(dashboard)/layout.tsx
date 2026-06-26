@@ -33,8 +33,8 @@ export default async function DashboardLayout({
       displayName = DEMO_FACILITY.facility_name
       userEmail = DEMO_FACILITY.email
     } else if (role === 'admin') {
-      displayName = 'HealthGig Admin'
-      userEmail = 'admin@healthgig.com'
+      displayName = 'Sanus Admin'
+      userEmail = 'admin@sanus.com'
     } else {
       displayName = `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`
       userEmail = DEMO_CONTRACTOR.email

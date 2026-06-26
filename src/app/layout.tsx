@@ -17,7 +17,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "HealthGig - Healthcare Staffing Platform",
+  title: "Sanus - Healthcare Staffing Platform",
   description: "Connect healthcare facilities with qualified professionals",
 };
 

@@ -345,7 +345,7 @@ export default function SettingsPage() {
 
   async function handleAccountDelete() {
     const confirmed = window.confirm(
-      'This permanently deletes your HealthGig account and all related data. This cannot be undone. Continue?',
+      'This permanently deletes your Sanus account and all related data. This cannot be undone. Continue?',
     )
     if (!confirmed) return
 

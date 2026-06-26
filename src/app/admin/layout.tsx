@@ -33,7 +33,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4 md:px-6">
-          <h1 className="text-lg font-semibold text-[#404145]">HealthGig Admin</h1>
+          <h1 className="text-lg font-semibold text-[#404145]">Sanus Admin</h1>
           <nav className="ml-8 flex items-center gap-4 text-sm">
             <a href="/admin" className="text-[#62646a] hover:text-[#1dbf73]">
               Dashboard
