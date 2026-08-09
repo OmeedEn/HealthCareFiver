@@ -64,7 +64,7 @@ CREATE OR REPLACE FUNCTION generate_invoice_number()
 RETURNS TRIGGER AS $$
 BEGIN
   IF NEW.invoice_number IS NULL THEN
-    NEW.invoice_number := 'HG-INV-' || LPAD(NEXTVAL('invoice_number_seq')::TEXT, 8, '0');
+    NEW.invoice_number := 'SAN-INV-' || LPAD(NEXTVAL('invoice_number_seq')::TEXT, 8, '0');
   END IF;
   RETURN NEW;
 END;

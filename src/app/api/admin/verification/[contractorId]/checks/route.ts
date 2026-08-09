@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { currentUser, requireRole } from '@/lib/auth/roles'
+import { audit } from '@/lib/audit/log'
 import * as medallion from '@/lib/integrations/medallion'
 import * as checkr from '@/lib/integrations/background-check'
 import * as stripeIdentity from '@/lib/integrations/stripe-identity'
@@ -13,8 +14,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ contractorId: string }> }
 ) {
-  const auth = await requireAdmin()
-  if ('error' in auth) return auth.error
+  const rawUser = await currentUser()
+  let admin
+  try {
+    admin = requireRole(rawUser, 'admin')
+  } catch {
+    return NextResponse.json(
+      { error: rawUser ? 'Forbidden' : 'Unauthorized' },
+      { status: rawUser ? 403 : 401 }
+    )
+  }
 
   const { contractorId } = await params
   const body = await request.json().catch(() => ({}))
@@ -92,6 +101,15 @@ export async function POST(
       { status: 500 }
     )
   }
+
+  await audit({
+    actorId: admin.id,
+    actorRole: 'admin',
+    action: `verification_check_${checkType}`,
+    targetTable: 'provider_verification_checks',
+    targetId: contractorId,
+    phiAccessed: true,
+  })
 
   return NextResponse.json({ check: saved })
 }

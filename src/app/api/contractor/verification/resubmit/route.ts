@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { currentUser } from '@/lib/auth/roles'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
@@ -13,10 +13,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * admin-only (see 20260808000001_add_provider_verification.sql).
  */
 export async function POST() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await currentUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

@@ -243,11 +243,11 @@ export function generateBAABase64(recipient: BAARecipient): string {
     `Date: ${new Date().toISOString().slice(0, 10)}`,
     '',
     `Business Associate: ${recipient.name}`,
-    `Covered Entity:     HealthGig`,
+    `Covered Entity:     Sanus`,
     '',
     'This Business Associate Agreement ("Agreement") governs the use and',
     'disclosure of Protected Health Information (PHI) in connection with',
-    'services provided through the HealthGig platform, in accordance with',
+    'services provided through the Sanus platform, in accordance with',
     'the HIPAA Privacy, Security, and Breach Notification Rules.',
     '',
     'Signature: ___________________________    Date: __________',
@@ -389,9 +389,9 @@ export async function sendBAAEnvelope(
   recipient: BAARecipient
 ): Promise<CreateEnvelopeResponse> {
   return createEnvelope({
-    subject: 'HealthGig Business Associate Agreement (BAA)',
+    subject: 'Sanus Business Associate Agreement (BAA)',
     documentBase64: generateBAABase64(recipient),
-    documentName: 'HealthGig-BAA.pdf',
+    documentName: 'Sanus-BAA.pdf',
     signers: [{ name: recipient.name, email: recipient.email, recipientId: '1' }],
     sendNow: true,
   })

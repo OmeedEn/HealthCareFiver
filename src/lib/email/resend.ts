@@ -37,7 +37,7 @@ function getApiKey(): string | null {
 }
 
 function getFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || 'HealthGig <notifications@healthgig.com>'
+  return process.env.RESEND_FROM_EMAIL || 'Sanus <notifications@sanus.com>'
 }
 
 // ---------------------------------------------------------------------------
@@ -91,12 +91,12 @@ export async function sendProviderApprovalEmail(
 ): Promise<SendEmailResponse> {
   return sendEmail({
     to: provider.email,
-    subject: "You're approved on HealthGig",
+    subject: "You're approved on Sanus",
     html: `
       <p>Hi ${provider.firstName},</p>
-      <p>Good news — your HealthGig provider verification has been approved. Your profile is now live and visible to facilities, and you can apply to open shifts.</p>
+      <p>Good news — your Sanus provider verification has been approved. Your profile is now live and visible to facilities, and you can apply to open shifts.</p>
       <p>You'll also receive a separate email shortly to review and sign our Business Associate Agreement (BAA) via DocuSign.</p>
-      <p>Welcome aboard,<br />The HealthGig Team</p>
+      <p>Welcome aboard,<br />The Sanus Team</p>
     `,
   })
 }
@@ -112,8 +112,8 @@ export async function sendVerificationActionEmail(
 ): Promise<SendEmailResponse> {
   const subject =
     action === 'more_info_requested'
-      ? 'Action needed: your HealthGig verification'
-      : 'Update on your HealthGig verification'
+      ? 'Action needed: your Sanus verification'
+      : 'Update on your Sanus verification'
 
   const intro =
     action === 'more_info_requested'
@@ -133,7 +133,7 @@ export async function sendVerificationActionEmail(
           ? '<p>Please log in and upload the requested information so we can continue the review.</p>'
           : ''
       }
-      <p>Thanks,<br />The HealthGig Team</p>
+      <p>Thanks,<br />The Sanus Team</p>
     `,
   })
 }

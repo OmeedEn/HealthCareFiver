@@ -537,10 +537,10 @@ function FindCarePageContent() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-bold text-white">
-              H
+              S
             </div>
             <span className="text-xl font-bold tracking-tight text-[#111827]">
-              HealthGig<span className="text-[#1dbf73]">.</span>
+              Sanus<span className="text-[#1dbf73]">.</span>
             </span>
           </Link>
 
@@ -778,7 +778,7 @@ function FindCarePageContent() {
       {/* ── Footer ── */}
       <footer className="mt-16 border-t border-[#e5e7eb] bg-white py-8">
         <div className="mx-auto max-w-7xl px-4 text-center text-sm text-[#6b7280] sm:px-6">
-          &copy; {new Date().getFullYear()} HealthGig. All rights reserved.
+          &copy; {new Date().getFullYear()} Sanus. All rights reserved.
         </div>
       </footer>
     </div>

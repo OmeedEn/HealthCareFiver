@@ -5,7 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CredentialCard } from '@/components/contractor/credential-card'
 import type { CredentialData } from '@/components/contractor/credential-card'
-import { Plus, ShieldCheck, Clock, AlertTriangle, FileX } from 'lucide-react'
+import {
+  Plus,
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  FileX,
+  ListChecks,
+} from 'lucide-react'
 import { isDemoMode, DEMO_CREDENTIALS, DEMO_REQUIRED_CREDENTIALS } from '@/lib/demo/data'
 
 interface RequiredCredential {
@@ -13,6 +20,33 @@ interface RequiredCredential {
   contractor_type: string
   credential_type: string
   name: string
+}
+
+function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+}: {
+  title: string
+  value: string
+  description: string
+  icon: React.ElementType
+}) {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-[#62646a]">{title}</CardTitle>
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
+          <Icon className="size-4 text-[#1dbf73]" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold text-[#404145]">{value}</div>
+        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default async function ContractorCredentialsPage() {
@@ -77,61 +111,117 @@ export default async function ContractorCredentialsPage() {
     (r) => !existingTypes.has(r.credential_type)
   )
 
-  const groups = [
+  const groups: {
+    title: string
+    icon: React.ReactNode
+    items: CredentialData[]
+  }[] = [
     {
       title: 'Verified',
-      icon: <ShieldCheck className="size-4 text-green-600" />,
+      icon: <ShieldCheck className="size-4 text-[#1dbf73]" />,
       items: verified,
     },
     {
       title: 'Pending Review',
-      icon: <Clock className="size-4 text-yellow-600" />,
+      icon: <Clock className="size-4 text-[#62646a]" />,
       items: pending,
     },
     {
       title: 'Expired / Expiring Soon',
-      icon: <AlertTriangle className="size-4 text-red-600" />,
+      icon: <AlertTriangle className="size-4 text-destructive" />,
       items: expired,
     },
     {
       title: 'Rejected',
-      icon: <FileX className="size-4 text-red-600" />,
+      icon: <FileX className="size-4 text-destructive" />,
       items: rejected,
     },
   ]
 
+  const hasCredentials = credentials.length > 0
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Credentials</h1>
-        <Button render={<Link href="/contractor/credentials/upload" />}>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#404145]">My Credentials</h1>
+          <p className="mt-1 text-[#62646a]">
+            Manage your professional licenses, certifications, and required documentation.
+          </p>
+        </div>
+        <Button
+          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          render={<Link href="/contractor/credentials/upload" />}
+        >
           <Plus className="size-4" data-icon="inline-start" />
           Upload Credential
         </Button>
       </div>
 
+      {/* Stat strip */}
+      {hasCredentials && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Verified"
+            value={String(verified.length)}
+            description="Credentials approved and active"
+            icon={ShieldCheck}
+          />
+          <StatCard
+            title="Pending"
+            value={String(pending.length)}
+            description="Awaiting upload or review"
+            icon={Clock}
+          />
+          <StatCard
+            title="Expired / Expiring"
+            value={String(expired.length)}
+            description="Need renewal soon"
+            icon={AlertTriangle}
+          />
+          <StatCard
+            title="Rejected"
+            value={String(rejected.length)}
+            description="Action required"
+            icon={FileX}
+          />
+        </div>
+      )}
+
       {/* Required Credentials Checklist */}
       {requiredCredentials.length > 0 && (
-        <Card>
+        <Card
+          className={
+            missingRequired.length > 0
+              ? 'border-[#bcebd5] bg-[#e8faf1]'
+              : undefined
+          }
+        >
           <CardHeader>
-            <CardTitle>Required Credentials</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-[#404145]">
+              <ListChecks className="size-5 text-[#1dbf73]" />
+              Required Credentials
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
               {requiredCredentials.map((req) => {
                 const exists = existingTypes.has(req.credential_type)
                 return (
-                  <li key={req.id} className="flex items-center gap-2 text-sm">
+                  <li
+                    key={req.id}
+                    className="flex items-center gap-2 text-sm text-[#111827]"
+                  >
                     {exists ? (
-                      <ShieldCheck className="size-4 text-green-600" />
+                      <ShieldCheck className="size-4 shrink-0 text-[#1dbf73]" />
                     ) : (
-                      <AlertTriangle className="size-4 text-yellow-600" />
+                      <AlertTriangle className="size-4 shrink-0 text-[#62646a]" />
                     )}
-                    <span className={exists ? '' : 'text-muted-foreground'}>
-                      {req.name}
-                    </span>
+                    <span className={exists ? '' : 'text-[#62646a]'}>{req.name}</span>
                     {exists ? (
-                      <Badge variant="default" className="ml-auto">
+                      <Badge
+                        className="ml-auto bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]"
+                      >
                         Submitted
                       </Badge>
                     ) : (
@@ -144,12 +234,12 @@ export default async function ContractorCredentialsPage() {
               })}
             </ul>
             {missingRequired.length > 0 && (
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="mt-3 text-xs text-[#0f8f56]">
                 You have {missingRequired.length} missing required{' '}
                 {missingRequired.length === 1 ? 'credential' : 'credentials'}.{' '}
                 <Link
                   href="/contractor/credentials/upload"
-                  className="text-primary hover:underline"
+                  className="text-[#1dbf73] hover:underline"
                 >
                   Upload now
                 </Link>
@@ -164,7 +254,7 @@ export default async function ContractorCredentialsPage() {
         (group) =>
           group.items.length > 0 && (
             <div key={group.title} className="space-y-3">
-              <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#404145]">
                 {group.icon}
                 {group.title}
                 <Badge variant="secondary">{group.items.length}</Badge>
@@ -181,14 +271,21 @@ export default async function ContractorCredentialsPage() {
       {credentials.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <FileX className="mx-auto size-10 text-muted-foreground" />
-            <h3 className="mt-4 font-medium">No credentials yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Upload your first credential to get started.
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+              <ShieldCheck className="size-6 text-[#1dbf73]" />
+            </div>
+            <h3 className="mt-4 text-base font-semibold text-[#404145]">
+              No credentials yet
+            </h3>
+            <p className="mt-1 text-sm text-[#62646a]">
+              Upload your first credential to start getting matched with jobs.
             </p>
-            <Button className="mt-4" render={<Link href="/contractor/credentials/upload" />}>
+            <Button
+              className="mt-4 bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              render={<Link href="/contractor/credentials/upload" />}
+            >
               <Plus className="size-4" data-icon="inline-start" />
-              Upload Credential
+              Upload your first credential
             </Button>
           </CardContent>
         </Card>

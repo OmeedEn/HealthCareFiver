@@ -60,5 +60,5 @@ INSERT INTO platform_config (key, value, description) VALUES
   ('max_travel_radius_miles', '500'::JSONB, 'Maximum travel radius allowed for contractor search'),
   ('auto_verify_credentials', 'false'::JSONB, 'Whether to auto-verify credentials via third-party API'),
   ('maintenance_mode', 'false'::JSONB, 'Whether the platform is in maintenance mode'),
-  ('support_email', '"support@healthgig.com"'::JSONB, 'Platform support email address'),
+  ('support_email', '"support@sanus.com"'::JSONB, 'Platform support email address'),
   ('terms_version', '"1.0.0"'::JSONB, 'Current version of terms of service');

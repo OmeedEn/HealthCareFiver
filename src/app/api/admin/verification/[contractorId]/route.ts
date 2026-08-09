@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { requireAdmin } from '@/lib/auth/require-admin'
+import { currentUser, requireRole } from '@/lib/auth/roles'
+import { audit } from '@/lib/audit/log'
 import { sendBAAEnvelope } from '@/lib/integrations/docusign'
 import { sendProviderApprovalEmail, sendVerificationActionEmail } from '@/lib/email/resend'
 
@@ -19,7 +20,7 @@ const NOTIFICATION_TYPE_BY_ACTION: Record<Action, string> = {
 }
 
 const NOTIFICATION_TITLE_BY_ACTION: Record<Action, string> = {
-  approve: "You're approved on HealthGig",
+  approve: "You're approved on Sanus",
   request_info: 'More information needed',
   reject: 'Verification update',
 }
@@ -28,8 +29,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ contractorId: string }> }
 ) {
-  const auth = await requireAdmin()
-  if ('error' in auth) return auth.error
+  const rawUser = await currentUser()
+  let admin
+  try {
+    admin = requireRole(rawUser, 'admin')
+  } catch {
+    return NextResponse.json(
+      { error: rawUser ? 'Forbidden' : 'Unauthorized' },
+      { status: rawUser ? 403 : 401 }
+    )
+  }
 
   const { contractorId } = await params
   const body = await request.json().catch(() => ({}))
@@ -73,7 +82,7 @@ export async function POST(
     .from('contractor_profiles')
     .update({
       verification_status: newStatus,
-      verification_reviewed_by: auth.adminId,
+      verification_reviewed_by: admin.id,
       verification_reviewed_at: now,
       verification_notes: notes || null,
     })
@@ -87,7 +96,7 @@ export async function POST(
   }
 
   await adminSupabase.from('admin_audit_log').insert({
-    admin_id: auth.adminId,
+    admin_id: admin.id,
     action: `verification_${action}`,
     entity_type: 'contractor_profiles',
     entity_id: contractorId,
@@ -101,6 +110,16 @@ export async function POST(
     type: NOTIFICATION_TYPE_BY_ACTION[action],
     title: NOTIFICATION_TITLE_BY_ACTION[action],
     body: notes || null,
+  })
+
+  await audit({
+    actorId: admin.id,
+    actorRole: 'admin',
+    action: `verification_${action}`,
+    targetTable: 'contractor_profiles',
+    targetId: contractorId,
+    phiAccessed: true,
+    metadata: { newStatus },
   })
 
   // Side-effect emails/envelopes are best-effort: a failure here shouldn't

@@ -1,14 +1,22 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import Link from 'next/link'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_CONVERSATIONS, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   ConversationList,
   type ConversationItem,
 } from '@/components/messaging/conversation-list'
-import { MessageSquarePlusIcon, Loader2Icon } from 'lucide-react'
+import {
+  Loader2Icon,
+  MessageSquareIcon,
+  MessageSquarePlusIcon,
+  SearchIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function MessagesPage() {
@@ -20,6 +28,7 @@ export default function MessagesPage() {
     isDemo ? DEMO_CONTRACTOR.id : null
   )
   const [loading, setLoading] = useState(!isDemo)
+  const [search, setSearch] = useState('')
 
   const fetchConversations = useCallback(async () => {
     const supabase = createClient()
@@ -132,30 +141,90 @@ export default function MessagesPage() {
     }
   }, [currentUserId, fetchConversations])
 
+  const filteredConversations = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return conversations
+    return conversations.filter((c) => {
+      const name =
+        `${c.other_user.first_name} ${c.other_user.last_name}`.toLowerCase()
+      const preview = (c.last_message_preview ?? '').toLowerCase()
+      return name.includes(q) || preview.includes(q)
+    })
+  }, [conversations, search])
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-[#404145]">Messages</h1>
+          <p className="text-[#62646a]">
             Your conversations with facilities and contractors
           </p>
         </div>
-        <Button variant="outline" disabled>
+        <Button
+          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          disabled
+        >
           <MessageSquarePlusIcon className="size-4" data-icon="inline-start" />
           New Conversation
         </Button>
       </div>
 
+      <Card>
+        <CardContent>
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#6b7280]" />
+            <Input
+              type="search"
+              placeholder="Search by name or message"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+          <Loader2Icon className="size-6 animate-spin text-[#1dbf73]" />
         </div>
       ) : currentUserId ? (
-        <ConversationList
-          conversations={conversations}
-          currentUserId={currentUserId}
-        />
+        filteredConversations.length === 0 ? (
+          <Card>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+                  <MessageSquareIcon className="size-6 text-[#1dbf73]" />
+                </div>
+                <h3 className="mt-4 text-base font-semibold text-[#404145]">
+                  {search ? 'No matching conversations' : 'No messages yet'}
+                </h3>
+                <p className="mt-1 max-w-sm text-sm text-[#62646a]">
+                  {search
+                    ? 'Try a different name or keyword to find a conversation.'
+                    : 'Apply to jobs to start a conversation with facility contacts. New messages will appear here.'}
+                </p>
+                {!search && (
+                  <Link href="/contractor/jobs" className="mt-6">
+                    <Button className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
+                      Browse jobs
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent>
+              <ConversationList
+                conversations={filteredConversations}
+                currentUserId={currentUserId}
+              />
+            </CardContent>
+          </Card>
+        )
       ) : null}
     </div>
   )

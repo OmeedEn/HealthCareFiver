@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Trash2, Calendar } from 'lucide-react'
+import { Plus, Trash2, Calendar, Loader2, CalendarOff } from 'lucide-react'
 
 const DAYS_OF_WEEK = [
   'Sunday',
@@ -178,15 +178,62 @@ export default function AvailabilityPage() {
     }
   }
 
+  async function addBlockedTime() {
+    if (isDemo) {
+      const newSlot: AvailabilitySlot = {
+        id: `demo-block-${Date.now()}`,
+        day_of_week: null,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+        start_time: null,
+        end_time: null,
+        is_recurring: false,
+        is_blocked: true,
+        notes: null,
+      }
+      setSlots([...slots, newSlot])
+      toast.success('Block added')
+      return
+    }
+
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data, error } = await supabase
+      .from('contractor_availability')
+      .insert({
+        contractor_id: user.id,
+        is_recurring: false,
+        is_blocked: true,
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date().toISOString().split('T')[0],
+      })
+      .select()
+      .single()
+
+    if (error) {
+      toast.error('Failed to add block')
+    } else if (data) {
+      setSlots([...slots, data as AvailabilitySlot])
+      toast.success('Block added')
+    }
+  }
+
   if (loading) {
     return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-20 rounded-lg bg-muted animate-pulse"
-          />
-        ))}
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#404145]">Availability</h1>
+          <p className="text-[#62646a]">
+            Set your weekly availability and block out time off
+          </p>
+        </div>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+        </div>
       </div>
     )
   }
@@ -194,121 +241,215 @@ export default function AvailabilityPage() {
   const recurringSlots = slots.filter((s) => s.is_recurring && !s.is_blocked)
   const blockedSlots = slots.filter((s) => s.is_blocked)
 
+  // Group recurring slots by day for the weekly grid summary
+  const slotsByDay = new Map<number, AvailabilitySlot[]>()
+  for (const s of recurringSlots) {
+    if (s.day_of_week == null) continue
+    const list = slotsByDay.get(s.day_of_week) ?? []
+    list.push(s)
+    slotsByDay.set(s.day_of_week, list)
+  }
+
   return (
-    <div className="max-w-3xl space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Availability</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-[#404145]">Availability</h1>
+          <p className="text-[#62646a]">
             Set your weekly availability and block out time off
           </p>
         </div>
-        <Button onClick={addSlot} disabled={saving}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Slot
+        <Button
+          onClick={addSlot}
+          disabled={saving}
+          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+        >
+          <Plus className="size-4 mr-2" />
+          Add slot
         </Button>
       </div>
 
-      {/* Weekly Recurring */}
+      {/* Weekly schedule overview grid */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Weekly Schedule
+          <CardTitle className="flex items-center gap-2 text-[#404145]">
+            <Calendar className="size-5 text-[#1dbf73]" />
+            Weekly schedule
           </CardTitle>
-          <CardDescription>
-            Your recurring weekly availability
+          <CardDescription className="text-[#62646a]">
+            Your recurring availability for each day of the week
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {recurringSlots.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No recurring availability set. Click &quot;Add Slot&quot; to get
-              started.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {recurringSlots.map((slot) => (
+        <CardContent className="space-y-6">
+          {/* 7-day overview */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+            {DAYS_OF_WEEK.map((day, i) => {
+              const dayShifts = slotsByDay.get(i) ?? []
+              const hasShifts = dayShifts.length > 0
+              return (
                 <div
-                  key={slot.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border"
+                  key={day}
+                  className={`rounded-lg border p-3 ${
+                    hasShifts
+                      ? 'border-[#bcebd5] bg-[#e8faf1]'
+                      : 'border-[#f1f3f5] bg-white'
+                  }`}
                 >
-                  <Select
-                    value={String(slot.day_of_week ?? 0)}
-                    onValueChange={(v) =>
-                      updateSlot(slot.id, { day_of_week: parseInt(v ?? '0') })
-                    }
-                  >
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DAYS_OF_WEEK.map((day, i) => (
-                        <SelectItem key={i} value={String(i)}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <div className="flex items-center gap-2">
-                    <Label className="sr-only">Start</Label>
-                    <Input
-                      type="time"
-                      value={slot.start_time || '08:00'}
-                      onChange={(e) =>
-                        updateSlot(slot.id, { start_time: e.target.value })
-                      }
-                      className="w-32"
-                    />
-                    <span className="text-muted-foreground">to</span>
-                    <Input
-                      type="time"
-                      value={slot.end_time || '17:00'}
-                      onChange={(e) =>
-                        updateSlot(slot.id, { end_time: e.target.value })
-                      }
-                      className="w-32"
-                    />
+                  <div className="text-sm font-medium text-[#404145]">
+                    {day.slice(0, 3)}
                   </div>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteSlot(slot.id)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {hasShifts ? (
+                    <div className="mt-1 space-y-0.5">
+                      {dayShifts.map((s) => (
+                        <div
+                          key={s.id}
+                          className="text-xs text-[#0f8f56]"
+                        >
+                          {(s.start_time || '08:00').slice(0, 5)}–
+                          {(s.end_time || '17:00').slice(0, 5)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-1 text-xs text-[#6b7280]">Off</div>
+                  )}
                 </div>
-              ))}
+              )
+            })}
+          </div>
+
+          {/* Editable list of recurring slots */}
+          {recurringSlots.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#f1f3f5] py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+                <Calendar className="size-6 text-[#1dbf73]" />
+              </div>
+              <h3 className="mt-3 text-lg font-semibold text-[#404145]">
+                No recurring availability
+              </h3>
+              <p className="mt-1 text-sm text-[#62646a]">
+                Click &quot;Add slot&quot; above to set hours for a day.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-[#404145]">
+                Weekly slots
+              </h2>
+              <div className="divide-y divide-[#f1f3f5] rounded-lg border border-[#f1f3f5]">
+                {recurringSlots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="flex flex-wrap items-center gap-3 px-4 py-3"
+                  >
+                    <Select
+                      value={String(slot.day_of_week ?? 0)}
+                      onValueChange={(v) =>
+                        updateSlot(slot.id, {
+                          day_of_week: parseInt(v ?? '0'),
+                        })
+                      }
+                    >
+                      <SelectTrigger className="w-36">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {DAYS_OF_WEEK.map((day, i) => (
+                          <SelectItem key={i} value={String(i)}>
+                            {day}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div className="flex items-center gap-2">
+                      <Label className="sr-only">Start</Label>
+                      <Input
+                        type="time"
+                        value={slot.start_time || '08:00'}
+                        onChange={(e) =>
+                          updateSlot(slot.id, {
+                            start_time: e.target.value,
+                          })
+                        }
+                        className="w-32"
+                      />
+                      <span className="text-sm text-[#62646a]">to</span>
+                      <Input
+                        type="time"
+                        value={slot.end_time || '17:00'}
+                        onChange={(e) =>
+                          updateSlot(slot.id, { end_time: e.target.value })
+                        }
+                        className="w-32"
+                      />
+                    </div>
+
+                    <Badge
+                      variant="outline"
+                      className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                    >
+                      Available
+                    </Badge>
+
+                    <div className="ml-auto">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => deleteSlot(slot.id)}
+                        aria-label="Remove slot"
+                      >
+                        <Trash2 className="size-4 text-[#62646a]" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Blocked Time */}
+      {/* Date blocks */}
       <Card>
         <CardHeader>
-          <CardTitle>Time Off / Blocked</CardTitle>
-          <CardDescription>
-            Block out dates when you&apos;re not available
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-[#404145]">
+                <CalendarOff className="size-5 text-[#1dbf73]" />
+                Date blocks
+              </CardTitle>
+              <CardDescription className="text-[#62646a]">
+                Block specific dates when you&apos;re not available
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={addBlockedTime}>
+              <Plus className="size-4 mr-2" />
+              Add block
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {blockedSlots.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No blocked time. Add a slot and mark it as blocked for time off.
-            </p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+                <Calendar className="size-6 text-[#1dbf73]" />
+              </div>
+              <h3 className="mt-3 text-lg font-semibold text-[#404145]">
+                No date blocks
+              </h3>
+              <p className="mt-1 text-sm text-[#62646a]">
+                Add a block to mark vacation or other time off.
+              </p>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-[#f1f3f5]">
               {blockedSlots.map((slot) => (
                 <div
                   key={slot.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border border-red-200 bg-red-50"
+                  className="flex flex-wrap items-center justify-between gap-3 py-3 last:border-0"
                 >
-                  <Badge variant="destructive">Blocked</Badge>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Input
                       type="date"
                       value={slot.start_date || ''}
@@ -317,7 +458,7 @@ export default function AvailabilityPage() {
                       }
                       className="w-40"
                     />
-                    <span className="text-muted-foreground">to</span>
+                    <span className="text-sm text-[#62646a]">to</span>
                     <Input
                       type="date"
                       value={slot.end_date || ''}
@@ -326,74 +467,35 @@ export default function AvailabilityPage() {
                       }
                       className="w-40"
                     />
+                    <Input
+                      placeholder="Reason (e.g., Vacation)"
+                      value={slot.notes || ''}
+                      onChange={(e) =>
+                        updateSlot(slot.id, { notes: e.target.value })
+                      }
+                      className="w-48"
+                    />
                   </div>
-                  <Input
-                    placeholder="Notes (e.g., Vacation)"
-                    value={slot.notes || ''}
-                    onChange={(e) =>
-                      updateSlot(slot.id, { notes: e.target.value })
-                    }
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteSlot(slot.id)}
-                    className="text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
+                    >
+                      Blocked
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => deleteSlot(slot.id)}
+                      aria-label="Remove block"
+                    >
+                      <Trash2 className="size-4 text-[#62646a]" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
-
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={async () => {
-              if (isDemo) {
-                const newSlot: AvailabilitySlot = {
-                  id: `demo-block-${Date.now()}`,
-                  day_of_week: null,
-                  start_date: new Date().toISOString().split('T')[0],
-                  end_date: new Date().toISOString().split('T')[0],
-                  start_time: null,
-                  end_time: null,
-                  is_recurring: false,
-                  is_blocked: true,
-                  notes: null,
-                }
-                setSlots([...slots, newSlot])
-                return
-              }
-
-              const supabase = createClient()
-              const {
-                data: { user },
-              } = await supabase.auth.getUser()
-              if (!user) return
-
-              const { data, error } = await supabase
-                .from('contractor_availability')
-                .insert({
-                  contractor_id: user.id,
-                  is_recurring: false,
-                  is_blocked: true,
-                  start_date: new Date().toISOString().split('T')[0],
-                  end_date: new Date().toISOString().split('T')[0],
-                })
-                .select()
-                .single()
-
-              if (!error && data) {
-                setSlots([...slots, data as AvailabilitySlot])
-              }
-            }}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Block Time Off
-          </Button>
         </CardContent>
       </Card>
     </div>

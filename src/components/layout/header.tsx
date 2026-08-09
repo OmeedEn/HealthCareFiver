@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,15 +14,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-import { Menu, Bell, User, Settings, LogOut } from 'lucide-react'
+import { Menu, User, Settings, LogOut } from 'lucide-react'
 import { Sidebar } from './sidebar'
+import { NotificationsBell } from './notifications-bell'
 
 interface HeaderProps {
+  role: 'contractor' | 'facility' | 'admin'
   userName: string
   userEmail: string
 }
 
-export function Header({ userName, userEmail }: HeaderProps) {
+export function Header({ role, userName, userEmail }: HeaderProps) {
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -61,13 +62,7 @@ export function Header({ userName, userEmail }: HeaderProps) {
 
         <div className="flex-1" />
 
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-[10px] flex items-center justify-center">
-            3
-          </Badge>
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <NotificationsBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -84,13 +79,13 @@ export function Header({ userName, userEmail }: HeaderProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => router.push('/settings')}
             >
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => router.push('/settings')}
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
@@ -104,11 +99,12 @@ export function Header({ userName, userEmail }: HeaderProps) {
         </DropdownMenu>
       </header>
 
-      {/* Mobile sidebar controlled by header */}
+      {/* Mobile sidebar drawer, controlled by the hamburger button above */}
       <Sidebar
-        role="contractor"
+        role={role}
         userName={userName}
         userEmail={userEmail}
+        variant="mobile"
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
       />

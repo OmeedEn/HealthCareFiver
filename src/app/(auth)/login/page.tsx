@@ -33,7 +33,7 @@ function LoginFormFallback() {
         Welcome back
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
-        Sign in to your HealthGig account to continue
+        Sign in to your Sanus account to continue
       </p>
     </div>
   )
@@ -53,7 +53,7 @@ function LoginForm() {
     setLoading(true)
 
     if (isDemoMode()) {
-      toast.success('Welcome to HealthGig demo!')
+      toast.success('Welcome to Sanus demo!')
       router.push(redirectTo)
       return
     }
@@ -90,7 +90,7 @@ function LoginForm() {
         Welcome back
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
-        Sign in to your HealthGig account to continue
+        Sign in to your Sanus account to continue
       </p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">

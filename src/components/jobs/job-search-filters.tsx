@@ -24,7 +24,7 @@ import {
   SHIFT_TYPE_LABELS,
   US_STATES,
 } from '@/lib/utils/constants'
-import { SlidersHorizontalIcon, XIcon } from 'lucide-react'
+import { SlidersHorizontalIcon } from 'lucide-react'
 
 export interface JobFilters {
   search: string
@@ -57,6 +57,91 @@ export const defaultFilters: JobFilters = {
 interface JobSearchFiltersProps {
   filters: JobFilters
   onFilterChange: (filters: JobFilters) => void
+}
+
+const URGENCY_LABELS: Record<string, string> = {
+  normal: 'Normal',
+  high: 'High',
+  critical: 'Critical',
+}
+
+const STATE_LABELS: Record<string, string> = US_STATES.reduce<Record<string, string>>(
+  (acc, s) => {
+    acc[s.value] = s.label
+    return acc
+  },
+  {},
+)
+
+export interface ActiveFilterChip {
+  key: keyof JobFilters
+  label: string
+}
+
+/**
+ * Walk the filters and produce a chip per active value (skipping search + sort,
+ * which have their own UI). Returns [] when no filters are active.
+ */
+export function getActiveFilterChips(filters: JobFilters): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = []
+  if (filters.contractor_type) {
+    chips.push({
+      key: 'contractor_type',
+      label:
+        CONTRACTOR_TYPE_LABELS[
+          filters.contractor_type as keyof typeof CONTRACTOR_TYPE_LABELS
+        ] ?? filters.contractor_type,
+    })
+  }
+  if (filters.job_type) {
+    chips.push({
+      key: 'job_type',
+      label:
+        JOB_TYPE_LABELS[filters.job_type as keyof typeof JOB_TYPE_LABELS] ??
+        filters.job_type,
+    })
+  }
+  if (filters.shift_type) {
+    chips.push({
+      key: 'shift_type',
+      label:
+        SHIFT_TYPE_LABELS[
+          filters.shift_type as keyof typeof SHIFT_TYPE_LABELS
+        ] ?? filters.shift_type,
+    })
+  }
+  if (filters.state) {
+    chips.push({ key: 'state', label: STATE_LABELS[filters.state] ?? filters.state })
+  }
+  if (filters.city) {
+    chips.push({ key: 'city', label: filters.city })
+  }
+  if (filters.pay_min || filters.pay_max) {
+    const min = filters.pay_min || '0'
+    const max = filters.pay_max || '∞'
+    chips.push({ key: 'pay_min', label: `$${min}–${max}/hr` })
+  }
+  if (filters.start_date) {
+    chips.push({ key: 'start_date', label: `From ${filters.start_date}` })
+  }
+  if (filters.urgency) {
+    chips.push({
+      key: 'urgency',
+      label: `${URGENCY_LABELS[filters.urgency] ?? filters.urgency} urgency`,
+    })
+  }
+  return chips
+}
+
+/** Reset a single filter key to its default. pay_min also clears pay_max. */
+export function clearFilterKey(
+  filters: JobFilters,
+  key: keyof JobFilters,
+): JobFilters {
+  if (key === 'pay_min') {
+    return { ...filters, pay_min: '', pay_max: '' }
+  }
+  return { ...filters, [key]: defaultFilters[key] }
 }
 
 function FilterFields({
@@ -167,7 +252,7 @@ function FilterFields({
             value={filters.pay_min}
             onChange={(e) => onChange('pay_min', e.target.value)}
           />
-          <span className="text-muted-foreground">-</span>
+          <span className="text-[#62646a]">–</span>
           <Input
             type="number"
             placeholder="Max"
@@ -208,103 +293,70 @@ function FilterFields({
   )
 }
 
+/**
+ * The Filters trigger button — opens a side Sheet containing the full filter
+ * set. Only one variant; the page renders just this single button next to the
+ * search input. Active filter chips are rendered by the page itself via
+ * {@link getActiveFilterChips}.
+ */
 export function JobSearchFilters({
   filters,
   onFilterChange,
 }: JobSearchFiltersProps) {
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const [open, setOpen] = useState(false)
+  const activeCount = getActiveFilterChips(filters).length
 
   const handleChange = (key: keyof JobFilters, value: string) => {
     onFilterChange({ ...filters, [key]: value })
   }
 
-  const hasActiveFilters = Object.entries(filters).some(
-    ([key, value]) =>
-      key !== 'search' && key !== 'sort' && value !== '' && value !== defaultFilters[key as keyof JobFilters]
-  )
-
-  const clearFilters = () => {
-    onFilterChange({ ...defaultFilters, search: filters.search, sort: filters.sort })
+  const clearAll = () => {
+    onFilterChange({
+      ...defaultFilters,
+      search: filters.search,
+      sort: filters.sort,
+    })
   }
 
   return (
-    <>
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 lg:block">
-        <div className="sticky top-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Filters</h3>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="xs" onClick={clearFilters}>
-                <XIcon className="size-3" />
-                Clear
-              </Button>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button variant="outline" size="sm" className="gap-2">
+            <SlidersHorizontalIcon className="size-4" />
+            Filters
+            {activeCount > 0 && (
+              <span className="ml-1 inline-flex size-5 items-center justify-center rounded-full bg-[#1dbf73] text-[10px] font-semibold text-white">
+                {activeCount}
+              </span>
             )}
-          </div>
+          </Button>
+        }
+      />
+      <SheetContent side="right" className="w-full sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Filters</SheetTitle>
+        </SheetHeader>
+        <div className="overflow-y-auto px-4 pb-4">
           <FilterFields filters={filters} onChange={handleChange} />
+          <div className="mt-6 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={clearAll}
+              disabled={activeCount === 0}
+            >
+              Clear all
+            </Button>
+            <Button
+              className="flex-1 bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              onClick={() => setOpen(false)}
+            >
+              Done
+            </Button>
+          </div>
         </div>
-      </aside>
-
-      {/* Mobile filter sheet */}
-      <div className="lg:hidden">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger
-            render={
-              <Button variant="outline" size="sm">
-                <SlidersHorizontalIcon className="size-4" />
-                Filters
-                {hasActiveFilters && (
-                  <Badge className="ml-1 size-5 rounded-full p-0 text-[10px]">
-                    !
-                  </Badge>
-                )}
-              </Button>
-            }
-          />
-          <SheetContent side="left">
-            <SheetHeader>
-              <SheetTitle>Filters</SheetTitle>
-            </SheetHeader>
-            <div className="overflow-y-auto p-4">
-              <FilterFields filters={filters} onChange={handleChange} />
-              <div className="mt-4 flex gap-2">
-                {hasActiveFilters && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={clearFilters}
-                  >
-                    Clear All
-                  </Button>
-                )}
-                <Button
-                  className="flex-1"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Apply
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
-  )
-}
-
-// Simple Badge for mobile filter indicator - inline to avoid circular deps
-function Badge({
-  className,
-  children,
-}: {
-  className?: string
-  children: React.ReactNode
-}) {
-  return (
-    <span
-      className={`inline-flex items-center justify-center bg-primary text-primary-foreground text-xs font-medium ${className ?? ''}`}
-    >
-      {children}
-    </span>
+      </SheetContent>
+    </Sheet>
   )
 }
