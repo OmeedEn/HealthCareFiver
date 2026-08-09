@@ -23,6 +23,8 @@ export default async function DashboardPage() {
   let role = 'contractor'
   let firstName = 'there'
   let profile: Record<string, unknown> | null = null
+  let verificationStatus: string | null = null
+  let verificationNotes: string | null = null
 
   if (isDemoMode()) {
     firstName = DEMO_CONTRACTOR.first_name
@@ -45,13 +47,27 @@ export default async function DashboardPage() {
     const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     profile = profileData
     role = (profileData?.role ?? user.user_metadata?.role ?? 'contractor') as string
     firstName =
       profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
+
+    if (role === 'contractor') {
+      const { data: contractorProfile } = await supabase
+        .from('contractor_profiles')
+        .select('profile_completion_pct, verification_status, verification_notes')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (contractorProfile) {
+        profile = { ...profile, ...contractorProfile }
+      }
+      verificationStatus = contractorProfile?.verification_status ?? null
+      verificationNotes = contractorProfile?.verification_notes ?? null
+    }
   }
 
   return (
@@ -65,14 +81,97 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      {role === 'contractor' && <ContractorDashboard profile={profile} isDemo={isDemoMode()} />}
+      {role === 'contractor' && (
+        <ContractorDashboard
+          profile={profile}
+          isDemo={isDemoMode()}
+          verificationStatus={verificationStatus}
+          verificationNotes={verificationNotes}
+        />
+      )}
       {role === 'facility' && <FacilityDashboard />}
       {role === 'admin' && <AdminDashboard />}
     </div>
   )
 }
 
-function ContractorDashboard({ profile, isDemo }: { profile: Record<string, unknown> | null; isDemo: boolean }) {
+const VERIFICATION_BANNER: Record<
+  string,
+  { title: string; className: string; iconClassName: string }
+> = {
+  pending_review: {
+    title: 'Your account is pending verification',
+    className: 'border-[#f5deb3] bg-[#fdf6e3]',
+    iconClassName: 'text-[#b8860b]',
+  },
+  more_info_requested: {
+    title: 'Action needed: more information requested',
+    className: 'border-[#f5c6cb] bg-[#fdecea]',
+    iconClassName: 'text-[#c0392b]',
+  },
+  rejected: {
+    title: 'Your verification was not approved',
+    className: 'border-[#f5c6cb] bg-[#fdecea]',
+    iconClassName: 'text-[#c0392b]',
+  },
+}
+
+function VerificationBanner({
+  status,
+  notes,
+}: {
+  status: string | null
+  notes: string | null
+}) {
+  if (!status || status === 'approved') return null
+
+  const config = VERIFICATION_BANNER[status]
+  if (!config) return null
+
+  return (
+    <Card className={`rounded-md ${config.className}`}>
+      <CardHeader>
+        <CardTitle className={`flex items-center gap-2 ${config.iconClassName}`}>
+          <AlertCircle className="h-5 w-5" />
+          {config.title}
+        </CardTitle>
+        {notes && (
+          <CardDescription className="font-medium text-[#404145]">
+            {notes}
+          </CardDescription>
+        )}
+        {status === 'pending_review' && !notes && (
+          <CardDescription>
+            An admin is reviewing your submitted documents. You&apos;ll be notified once
+            you&apos;re approved to go live and apply to jobs.
+          </CardDescription>
+        )}
+      </CardHeader>
+      {status === 'more_info_requested' && (
+        <CardContent>
+          <Link
+            href="/contractor/credentials/upload"
+            className="text-sm font-black text-[#1dbf73] hover:underline"
+          >
+            Upload Requested Document &rarr;
+          </Link>
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
+function ContractorDashboard({
+  profile,
+  isDemo,
+  verificationStatus,
+  verificationNotes,
+}: {
+  profile: Record<string, unknown> | null
+  isDemo: boolean
+  verificationStatus: string | null
+  verificationNotes: string | null
+}) {
   const completionPct =
     typeof profile?.profile_completion_pct === 'number'
       ? profile.profile_completion_pct
@@ -80,6 +179,7 @@ function ContractorDashboard({ profile, isDemo }: { profile: Record<string, unkn
 
   return (
     <div className="space-y-6">
+      <VerificationBanner status={verificationStatus} notes={verificationNotes} />
       {completionPct < 100 && (
         <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
           <CardHeader>

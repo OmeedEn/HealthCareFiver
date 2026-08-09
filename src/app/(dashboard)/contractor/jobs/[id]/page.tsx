@@ -123,6 +123,18 @@ export default async function ContractorJobDetailPage({
     isSaved = !!data
   }
 
+  // Applying is gated on admin verification approval
+  let verificationStatus: string | null = null
+  if (user) {
+    const { data } = await supabase
+      .from('contractor_profiles')
+      .select('verification_status')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    verificationStatus = data?.verification_status ?? null
+  }
+
   const facility = typedJob.facility_profiles
   const location = [typedJob.city, typedJob.state, typedJob.zip_code]
     .filter(Boolean)
@@ -193,6 +205,7 @@ export default async function ContractorJobDetailPage({
           isSaved={isSaved}
           applicationStatus={existingApplication?.status ?? null}
           applicationDate={existingApplication?.created_at ?? null}
+          isVerified={verificationStatus === 'approved'}
         />
       </div>
 

@@ -104,6 +104,11 @@ export interface ContractData {
   terms: string
 }
 
+export interface BAARecipient {
+  name: string
+  email: string
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -214,6 +219,40 @@ export function generateContractBase64(data: ContractData): string {
   ]
     .filter(Boolean)
     .join('\n')
+
+  return Buffer.from(text).toString('base64')
+}
+
+// ---------------------------------------------------------------------------
+// BAA document generation helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a simple plain-text Business Associate Agreement and return it
+ * as a base64-encoded string suitable for the `documentBase64` field.
+ *
+ * In production, replace this with the org's counsel-approved BAA
+ * template (e.g. via `DOCUSIGN_BAA_TEMPLATE_ID` and DocuSign's template
+ * API) instead of generating the document body inline.
+ */
+export function generateBAABase64(recipient: BAARecipient): string {
+  const text = [
+    'BUSINESS ASSOCIATE AGREEMENT',
+    '=============================',
+    '',
+    `Date: ${new Date().toISOString().slice(0, 10)}`,
+    '',
+    `Business Associate: ${recipient.name}`,
+    `Covered Entity:     HealthGig`,
+    '',
+    'This Business Associate Agreement ("Agreement") governs the use and',
+    'disclosure of Protected Health Information (PHI) in connection with',
+    'services provided through the HealthGig platform, in accordance with',
+    'the HIPAA Privacy, Security, and Breach Notification Rules.',
+    '',
+    'Signature: ___________________________    Date: __________',
+    '',
+  ].join('\n')
 
   return Buffer.from(text).toString('base64')
 }
@@ -339,4 +378,21 @@ export async function getEnvelopeStatus(
     completedAt: result.completedDateTime || null,
     sentAt: result.sentDateTime || null,
   }
+}
+
+/**
+ * Send a Business Associate Agreement (BAA) to a newly approved provider
+ * for signature. Thin wrapper around `createEnvelope` — reuses the same
+ * mock/live plumbing.
+ */
+export async function sendBAAEnvelope(
+  recipient: BAARecipient
+): Promise<CreateEnvelopeResponse> {
+  return createEnvelope({
+    subject: 'HealthGig Business Associate Agreement (BAA)',
+    documentBase64: generateBAABase64(recipient),
+    documentName: 'HealthGig-BAA.pdf',
+    signers: [{ name: recipient.name, email: recipient.email, recipientId: '1' }],
+    sendNow: true,
+  })
 }

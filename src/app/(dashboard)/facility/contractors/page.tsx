@@ -61,6 +61,7 @@ export default function FindContractorsPage() {
     let query = supabase
       .from('contractor_profiles')
       .select('*, profiles!inner(avatar_url)')
+      .eq('verification_status', 'approved')
       .order('average_rating', { ascending: false })
       .limit(50)
 

@@ -17,6 +17,7 @@ interface JobDetailActionsProps {
   isSaved: boolean
   applicationStatus: string | null
   applicationDate: string | null
+  isVerified: boolean
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -35,6 +36,7 @@ export function JobDetailActions({
   isSaved: initialSaved,
   applicationStatus,
   applicationDate,
+  isVerified,
 }: JobDetailActionsProps) {
   const [saved, setSaved] = useState(initialSaved)
   const router = useRouter()
@@ -82,6 +84,10 @@ export function JobDetailActions({
         </Button>
         {hasApplied ? (
           <Button disabled>Already Applied</Button>
+        ) : !isVerified ? (
+          <Button disabled title="Your account is pending verification">
+            Pending Verification
+          </Button>
         ) : (
           <JobApplicationForm
             jobId={jobId}
@@ -89,6 +95,11 @@ export function JobDetailActions({
           />
         )}
       </div>
+      {!hasApplied && !isVerified && (
+        <p className="text-right text-xs text-muted-foreground">
+          You can apply once your provider verification is approved.
+        </p>
+      )}
       {hasApplied && applicationStatus && (
         <div className="text-right text-sm">
           <Badge

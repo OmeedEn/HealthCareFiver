@@ -143,6 +143,9 @@ export default function CredentialUploadPage() {
       if (error) {
         toast.error('Failed to save credential: ' + error.message)
       } else {
+        // If the provider was asked for more info, resubmitting a
+        // credential puts them back in the admin verification queue.
+        fetch('/api/contractor/verification/resubmit', { method: 'POST' }).catch(() => {})
         toast.success('Credential uploaded successfully!')
         router.push('/contractor/credentials')
       }
