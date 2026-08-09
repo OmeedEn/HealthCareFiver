@@ -98,16 +98,33 @@ CREATE POLICY "provider_verification_checks_update_admin"
 --
 -- contractor_profiles_update_own (20250523000011_create_rls_policies.sql)
 -- lets a contractor UPDATE any column on their own row, including the
--- ones added above. Row-level policies can't restrict by column, so
--- revoke UPDATE on these specific columns from `authenticated` — all
--- writes to them go through the service-role admin API routes instead,
--- which bypass table/column grants entirely.
+-- ones added above, and RLS can't restrict by column. Column-level
+-- REVOKE doesn't help either: `authenticated` already holds table-level
+-- UPDATE (Supabase's default grant), and Postgres column privileges are
+-- additive on top of table-level ones, not a restriction — a column
+-- REVOKE is a no-op once a table-level GRANT already covers it. A
+-- BEFORE UPDATE trigger is the only mechanism that actually enforces
+-- this. The admin API routes (which use the service-role key, executing
+-- as the `service_role` Postgres role) are exempted so they can still
+-- write these columns; every other caller must be an admin per is_admin().
 -- ============================================================
-REVOKE UPDATE (
-  verification_status,
-  verification_reviewed_by,
-  verification_reviewed_at,
-  verification_notes,
-  baa_sent_at,
-  approval_email_sent_at
-) ON contractor_profiles FROM authenticated;
+CREATE OR REPLACE FUNCTION protect_verification_columns()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF current_user <> 'service_role' AND NOT is_admin() AND (
+    NEW.verification_status IS DISTINCT FROM OLD.verification_status OR
+    NEW.verification_reviewed_by IS DISTINCT FROM OLD.verification_reviewed_by OR
+    NEW.verification_reviewed_at IS DISTINCT FROM OLD.verification_reviewed_at OR
+    NEW.verification_notes IS DISTINCT FROM OLD.verification_notes OR
+    NEW.baa_sent_at IS DISTINCT FROM OLD.baa_sent_at OR
+    NEW.approval_email_sent_at IS DISTINCT FROM OLD.approval_email_sent_at
+  ) THEN
+    RAISE EXCEPTION 'Only admins can modify provider verification fields';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER contractor_profiles_protect_verification
+  BEFORE UPDATE ON contractor_profiles
+  FOR EACH ROW EXECUTE FUNCTION protect_verification_columns();
