@@ -25,6 +25,8 @@ import {
   Building2,
   CheckCircle2,
   TrendingUp,
+  Search,
+  CalendarDays,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -38,6 +40,7 @@ import {
   DEMO_PROVIDERS,
 } from '@/lib/demo/data'
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
+import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 
 type DashboardJob = {
@@ -106,7 +109,7 @@ type FacilityKpis = {
 }
 
 export default async function DashboardPage() {
-  let role: 'contractor' | 'facility' | 'admin' = 'contractor'
+  let role: 'contractor' | 'facility' | 'admin' | 'client' = 'contractor'
   let firstName = 'there'
   let profile: Record<string, unknown> | null = null
   let jobs: DashboardJob[] = []
@@ -115,6 +118,10 @@ export default async function DashboardPage() {
   let contractorType: string | null = null
   let verificationStatus: string | null = null
   let verificationNotes: string | null = null
+
+  // Client-specific data
+  let clientInterests: string[] = []
+  let clientLocation: string | null = null
 
   // Facility-specific data
   let facilityKpis: FacilityKpis = {
@@ -283,8 +290,27 @@ export default async function DashboardPage() {
       | 'contractor'
       | 'facility'
       | 'admin'
+      | 'client'
     firstName =
       profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
+
+    if (role === 'client') {
+      const { data: clientRow } = await supabase
+        .from('client_profiles')
+        .select('first_name, interests, city, state')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (typeof clientRow?.first_name === 'string' && clientRow.first_name) {
+        firstName = clientRow.first_name
+      }
+      clientInterests = Array.isArray(clientRow?.interests)
+        ? (clientRow.interests as string[])
+        : []
+      clientLocation =
+        [clientRow?.city, clientRow?.state]
+          .filter((v): v is string => typeof v === 'string' && v.length > 0)
+          .join(', ') || null
+    }
 
     if (role === 'contractor') {
       const { data: verificationRow } = await supabase
@@ -378,17 +404,19 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {isDemoMode() && (
+      {isDemoMode() && role !== 'client' && (
         <DemoRoleSwitcher current={role} />
       )}
-      <div>
-        <h1 className="text-2xl font-bold text-[#404145]">
-          Welcome back, {firstName}!
-        </h1>
-        <p className="text-[#62646a]">
-          Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
-        </p>
-      </div>
+      {role !== 'client' && (
+        <div>
+          <h1 className="text-2xl font-bold text-[#404145]">
+            Welcome back, {firstName}!
+          </h1>
+          <p className="text-[#62646a]">
+            Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
+          </p>
+        </div>
+      )}
 
       {role === 'contractor' && (
         <ContractorDashboard
@@ -413,6 +441,13 @@ export default async function DashboardPage() {
         />
       )}
       {role === 'admin' && <AdminDashboard />}
+      {role === 'client' && (
+        <ClientDashboard
+          firstName={firstName}
+          interests={clientInterests}
+          location={clientLocation}
+        />
+      )}
     </div>
   )
 }
@@ -1195,6 +1230,124 @@ function FacilityDashboard({
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ClientDashboard({
+  firstName,
+  interests,
+  location,
+}: {
+  firstName: string
+  interests: string[]
+  location: string | null
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[#404145]">
+          Welcome, {firstName}!
+        </h1>
+        <p className="text-[#62646a]">
+          Find and connect with health professionals on Sanus.
+        </p>
+      </div>
+
+      <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
+            <Search className="h-5 w-5" />
+            Find a professional
+          </CardTitle>
+          <CardDescription className="font-semibold text-[#0f8f56]">
+            Browse clinicians, coaches, consultants, and educators
+            {location ? ` near ${location}` : ''}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/find-care"
+            className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+          >
+            Browse professionals &rarr;
+          </Link>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#404145]">
+                <CalendarDays className="size-4 text-[#1dbf73]" />
+                Your bookings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[#62646a]">
+                You don&apos;t have any bookings yet. When you book a session
+                with a professional, it will show up here.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#404145]">
+                <MessageSquare className="size-4 text-[#1dbf73]" />
+                Messages
+              </CardTitle>
+              <CardAction>
+                <Link
+                  href="/messages"
+                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                >
+                  Open inbox &rarr;
+                </Link>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[#62646a]">
+                No conversations yet. Reach out to a professional from their
+                profile to start one.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#404145]">Your interests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {interests.length === 0 ? (
+                <p className="text-sm text-[#62646a]">
+                  You haven&apos;t saved any interests yet.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {interests.map((key) => (
+                    <Badge
+                      key={key}
+                      className="bg-[#e8faf1] px-3 py-1 text-sm text-[#0f8f56]"
+                    >
+                      {CLIENT_INTEREST_LABELS[key] ?? key}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {location && (
+                <p className="mt-4 flex items-center gap-1 text-xs text-[#6b7280]">
+                  <MapPin className="size-3" />
+                  {location}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -20,7 +20,7 @@ import { NotificationsBell } from './notifications-bell'
 import { profileHrefFor } from '@/components/marketing/nav-auth'
 
 interface HeaderProps {
-  role: 'contractor' | 'facility' | 'admin'
+  role: 'contractor' | 'facility' | 'admin' | 'client'
   userName: string
   userEmail: string
 }
