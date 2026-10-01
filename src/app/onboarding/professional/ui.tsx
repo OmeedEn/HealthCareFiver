@@ -255,6 +255,91 @@ export function ChipMultiSelect({
   )
 }
 
+/** Single-choice radio cards (yes/no questions, credential basis, CEU, …). */
+export function RadioCards<T extends string>({
+  name,
+  legend,
+  options,
+  value,
+  onChange,
+  error,
+  columns = 3,
+}: {
+  name: string
+  legend: string
+  options: readonly { value: T; label: string }[]
+  value: T | ''
+  onChange: (v: T) => void
+  error?: string
+  columns?: 2 | 3
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-semibold text-[#404145]">{legend}</legend>
+      <div className={`grid gap-2 ${columns === 2 ? 'grid-cols-2' : 'sm:grid-cols-3'}`}>
+        {options.map((o) => (
+          <label
+            key={o.value}
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition ${
+              value === o.value
+                ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
+                : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+            }`}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={o.value}
+              checked={value === o.value}
+              onChange={() => onChange(o.value)}
+              className="accent-[#1dbf73]"
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+      <FieldError msg={error} />
+    </fieldset>
+  )
+}
+
+export const YES_NO_OPTIONS = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+] as const
+
+/** A checkbox with a wrapping text label (attestations). */
+export function CheckRow({
+  id,
+  checked,
+  onChange,
+  label,
+  error,
+}: {
+  id: string
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+  error?: string
+}) {
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm text-[#404145]">
+        <input
+          id={id}
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          aria-invalid={error ? true : undefined}
+          className="mt-0.5 size-4 shrink-0 rounded border-[#c5c6c9] accent-[#1dbf73]"
+        />
+        <span>{label}</span>
+      </label>
+      <FieldError msg={error} />
+    </div>
+  )
+}
+
 export function Toggle({
   id,
   checked,

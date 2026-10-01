@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { ArrowLeft, ArrowRight, Loader2, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { US_STATES } from '@/lib/utils/constants'
@@ -11,29 +11,46 @@ import {
   CEU_OPTIONS,
   CONSULTANT_CLIENT_TYPES,
   CONSULTING_BACKGROUND_MAX,
+  DISCLOSURE_DETAILS_MAX,
+  DISCLOSURE_KEYS,
+  DISCLOSURE_QUESTIONS,
   EDUCATOR_AUDIENCES,
   LICENSE_TYPE_SUGGESTIONS,
+  PRACTICE_QUESTION,
+  branchHasComplianceQuestions,
+  todayIso,
+  type Branch,
+  type CredentialBasis,
   type CredentialsData,
+  type DisclosureAnswer,
+  type DisclosureKey,
   type ProCategory,
 } from './shared'
 import {
   ChipMultiSelect,
-  FieldError,
   PRIMARY_BTN,
+  RadioCards,
   StepHeading,
   TextAreaField,
   TextField,
+  FieldError,
+  YES_NO_OPTIONS,
 } from './ui'
 
 const STATE_LABEL = new Map(US_STATES.map((s) => [s.value, s.label]))
 
 export function StepCredentials({
   category,
+  credentialBasis,
+  branch,
   initial,
   onBack,
   onSaved,
 }: {
   category: ProCategory
+  credentialBasis: CredentialBasis | null
+  /** effectiveBranch(category, credentialBasis) */
+  branch: Branch
   initial: CredentialsData
   onBack: () => void
   onSaved: (c: CredentialsData) => void
@@ -47,10 +64,35 @@ export function StepCredentials({
     if (errors[key]) setErrors((e) => ({ ...e, [key]: '' }))
   }
 
+  function setDisclosure(key: DisclosureKey, patch: Partial<DisclosureAnswer>) {
+    setV((prev) => ({
+      ...prev,
+      self_disclosures: {
+        ...prev.self_disclosures,
+        [key]: { ...prev.self_disclosures[key], ...patch },
+      },
+    }))
+    setErrors((e) => {
+      const next = { ...e }
+      for (const f of Object.keys(patch)) delete next[`self_disclosures.${key}.${f}`]
+      if (patch.answer === 'no') delete next[`self_disclosures.${key}.details`]
+      return next
+    })
+  }
+
+  const licenseExpired =
+    !!v.license_expiration_date && v.license_expiration_date < todayIso()
+
   function submit(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
-      const res = await saveCredentialDetails({ ...v, category })
+      // category/credential_basis are only read in demo mode; otherwise the
+      // server branches on the stored values.
+      const res = await saveCredentialDetails({
+        ...v,
+        category,
+        credential_basis: credentialBasis,
+      })
       if (!res.ok) {
         setErrors(res.fieldErrors ?? {})
         toast.error(res.error)
@@ -69,8 +111,27 @@ export function StepCredentials({
       />
 
       <div className="mt-6 space-y-4">
-        {category === 'clinical' && (
+        {branch === 'clinical' && (
           <>
+            <TextField
+              id="legal_name"
+              label="Legal name as it appears on your license"
+              value={v.legal_name}
+              onChange={(x) => set('legal_name', x)}
+              error={errors.legal_name}
+              autoComplete="name"
+              maxLength={150}
+            />
+            <TextField
+              id="other_names"
+              label="Other names used"
+              optional
+              value={v.other_names}
+              onChange={(x) => set('other_names', x)}
+              error={errors.other_names}
+              placeholder="e.g., maiden name, former legal name"
+              maxLength={300}
+            />
             <TextField
               id="license_type"
               label="Profession / license type"
@@ -101,10 +162,57 @@ export function StepCredentials({
               error={errors.state_license_number}
               placeholder="As it appears on your license"
             />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                id="license_issue_date"
+                label="License issue date"
+                type="date"
+                value={v.license_issue_date}
+                onChange={(x) => set('license_issue_date', x)}
+                error={errors.license_issue_date}
+              />
+              <TextField
+                id="license_expiration_date"
+                label="License expiration date"
+                type="date"
+                value={v.license_expiration_date}
+                onChange={(x) => set('license_expiration_date', x)}
+                error={errors.license_expiration_date}
+              />
+            </div>
+            {licenseExpired && !errors.license_expiration_date && (
+              <p
+                role="status"
+                className="flex items-start gap-2 rounded-lg border border-[#f5d48a] bg-[#fff8e6] p-3 text-xs text-[#8a5a00]"
+              >
+                <AlertTriangle className="mt-px size-4 shrink-0" />
+                This license appears to be expired. You can continue, but we can only
+                approve an active license.
+              </p>
+            )}
             <StateMultiSelect
+              id="license_states"
+              label="Licensing state"
               value={v.license_states}
               onChange={(x) => set('license_states', x)}
               error={errors.license_states}
+            />
+            <RadioCards
+              name="has_compact_license"
+              legend="Do you hold a compact (multistate) license?"
+              options={YES_NO_OPTIONS}
+              columns={2}
+              value={v.has_compact_license}
+              onChange={(x) => set('has_compact_license', x)}
+              error={errors.has_compact_license}
+            />
+            <StateMultiSelect
+              id="telehealth_states"
+              label="States where your clients will be"
+              sub="(for telehealth; add all that apply)"
+              value={v.telehealth_states}
+              onChange={(x) => set('telehealth_states', x)}
+              error={errors.telehealth_states}
             />
             <TextField
               id="npi_number"
@@ -125,8 +233,17 @@ export function StepCredentials({
           </>
         )}
 
-        {category === 'allied' && (
+        {branch === 'allied' && (
           <>
+            <TextField
+              id="legal_name"
+              label="Name as it appears on your certification"
+              value={v.legal_name}
+              onChange={(x) => set('legal_name', x)}
+              error={errors.legal_name}
+              autoComplete="name"
+              maxLength={150}
+            />
             <TextField
               id="certification_type"
               label="Certification type"
@@ -142,13 +259,6 @@ export function StepCredentials({
               onChange={(x) => set('certifying_organization', x)}
               error={errors.certifying_organization}
               placeholder="e.g., NASM, DONA International, NCCAOM"
-            />
-            <TextField
-              id="certification_number"
-              label="Certification number or ID"
-              value={v.certification_number}
-              onChange={(x) => set('certification_number', x)}
-              error={errors.certification_number}
             />
             <TextField
               id="specialty"
@@ -167,7 +277,7 @@ export function StepCredentials({
           </>
         )}
 
-        {category === 'consultant' && (
+        {branch === 'consultant' && (
           <>
             <TextField
               id="specialty"
@@ -214,7 +324,7 @@ export function StepCredentials({
           </>
         )}
 
-        {category === 'educator' && (
+        {branch === 'educator' && (
           <>
             <TextField
               id="primary_background"
@@ -240,34 +350,67 @@ export function StepCredentials({
               onChange={(x) => set('client_types', x)}
               error={errors.client_types}
             />
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-semibold text-[#404145]">
-                Do you offer accredited CEU/CME credits?
-              </legend>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {CEU_OPTIONS.map((o) => (
-                  <label
-                    key={o.value}
-                    className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition ${
-                      v.ceu_accreditation === o.value
-                        ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                        : 'border-[#e4e5e7] text-[#404145] hover:border-[#bcebd5]'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="ceu_accreditation"
-                      value={o.value}
-                      checked={v.ceu_accreditation === o.value}
-                      onChange={() => set('ceu_accreditation', o.value)}
-                      className="accent-[#1dbf73]"
-                    />
-                    {o.label}
-                  </label>
-                ))}
+            <RadioCards
+              name="ceu_accreditation"
+              legend="Do you offer accredited CEU/CME credits?"
+              options={CEU_OPTIONS}
+              value={v.ceu_accreditation}
+              onChange={(x) => set('ceu_accreditation', x)}
+              error={errors.ceu_accreditation}
+            />
+          </>
+        )}
+
+        {branchHasComplianceQuestions(branch) && (
+          <>
+            <div className="border-t border-[#e4e5e7] pt-5">
+              <RadioCards
+                name="offers_high_risk_services"
+                legend={PRACTICE_QUESTION}
+                options={YES_NO_OPTIONS}
+                columns={2}
+                value={v.offers_high_risk_services}
+                onChange={(x) => set('offers_high_risk_services', x)}
+                error={errors.offers_high_risk_services}
+              />
+            </div>
+
+            <div className="space-y-4 border-t border-[#e4e5e7] pt-5">
+              <div>
+                <h2 className="text-base font-bold text-[#404145]">Background questions</h2>
+                <p className="mt-1 text-xs text-[#62646a]">
+                  A &quot;yes&quot; doesn&apos;t automatically disqualify you. Please explain
+                  any yes so our team has the full picture.
+                </p>
               </div>
-              <FieldError msg={errors.ceu_accreditation} />
-            </fieldset>
+              {DISCLOSURE_KEYS.map((key) => {
+                const d = v.self_disclosures[key]
+                return (
+                  <div key={key} className="space-y-2">
+                    <RadioCards
+                      name={`disclosure_${key}`}
+                      legend={DISCLOSURE_QUESTIONS[key]}
+                      options={YES_NO_OPTIONS}
+                      columns={2}
+                      value={d.answer}
+                      onChange={(x) => setDisclosure(key, { answer: x })}
+                      error={errors[`self_disclosures.${key}.answer`]}
+                    />
+                    {d.answer === 'yes' && (
+                      <TextAreaField
+                        id={`disclosure_${key}_details`}
+                        label="Please explain"
+                        value={d.details}
+                        onChange={(x) => setDisclosure(key, { details: x })}
+                        error={errors[`self_disclosures.${key}.details`]}
+                        maxLength={DISCLOSURE_DETAILS_MAX}
+                        placeholder="What happened, when, and how it was resolved."
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </>
         )}
       </div>
@@ -312,10 +455,16 @@ function YearsField({
 }
 
 function StateMultiSelect({
+  id,
+  label,
+  sub = '(add all that apply)',
   value,
   onChange,
   error,
 }: {
+  id: string
+  label: string
+  sub?: string
   value: string[]
   onChange: (v: string[]) => void
   error?: string
@@ -323,9 +472,9 @@ function StateMultiSelect({
   const remaining = US_STATES.filter((s) => !value.includes(s.value))
   return (
     <div className="space-y-1.5">
-      <Label htmlFor="license_states_add" className="text-sm font-semibold text-[#404145]">
-        Licensing state
-        <span className="ml-1 font-normal text-[#95979d]">(add all that apply)</span>
+      <Label htmlFor={`${id}_add`} className="text-sm font-semibold text-[#404145]">
+        {label}
+        <span className="ml-1 font-normal text-[#95979d]">{sub}</span>
       </Label>
       {value.length > 0 && (
         <div className="flex flex-wrap gap-2 pb-1">
@@ -348,7 +497,7 @@ function StateMultiSelect({
         </div>
       )}
       <select
-        id="license_states_add"
+        id={`${id}_add`}
         value=""
         onChange={(e) => {
           if (e.target.value) onChange([...value, e.target.value])
