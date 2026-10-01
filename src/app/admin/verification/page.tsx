@@ -1,134 +1,82 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { isDemoMode } from '@/lib/demo/data'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { EXCLUSION_RESCREEN_DAYS } from '@/lib/compliance/config'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { formatRelativeTime } from '@/lib/utils/format'
-import { Loader2 } from 'lucide-react'
+  VERIFICATION_STATUSES,
+  disclosureYesKeys,
+  isRescreenDue,
+  type SelfDisclosures,
+} from './_lib/shared'
+import { fetchDuplicateFlags, requireAdminPage } from './_lib/server'
+import { QueueClient, type QueueRow } from './queue-client'
+import { DEMO_QUEUE } from './_lib/demo'
 
-interface QueuedProvider {
+export const dynamic = 'force-dynamic'
+
+interface ProfileRow {
   id: string
   first_name: string
   last_name: string
-  contractor_type: string
+  professional_category: string | null
+  other_profession: string | null
+  credential_basis: string | null
   verification_status: string
   updated_at: string
+  self_disclosures: SelfDisclosures | null
+  last_exclusion_check_at: string | null
+  insurance_due_at: string | null
   profiles: { email: string | null } | null
 }
 
-const STATUS_BADGE: Record<string, 'secondary' | 'outline' | 'destructive'> = {
-  not_submitted: 'outline',
-  pending_review: 'secondary',
-  more_info_requested: 'outline',
-  rejected: 'destructive',
-}
-
-const STATUS_LABEL: Record<string, string> = {
-  not_submitted: 'Not submitted',
-  pending_review: 'Pending Review',
-  more_info_requested: 'More Info Requested',
-}
-
-export default function AdminVerificationQueuePage() {
-  const [providers, setProviders] = useState<QueuedProvider[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const supabase = createClient()
-
-    async function fetchProviders() {
-      const { data } = await supabase
-        .from('contractor_profiles')
-        .select(
-          'id, first_name, last_name, contractor_type, verification_status, updated_at, profiles(email)'
-        )
-        .in('verification_status', ['pending_review', 'more_info_requested'])
-        .order('updated_at', { ascending: true })
-
-      setProviders((data ?? []) as unknown as QueuedProvider[])
-      setLoading(false)
-    }
-
-    fetchProviders()
-  }, [])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    )
+export default async function AdminVerificationQueuePage() {
+  if (isDemoMode()) {
+    return <QueueClient rows={DEMO_QUEUE} rescreenDays={EXCLUSION_RESCREEN_DAYS} demo />
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Provider Verification Queue</h1>
-        <Badge variant="secondary">{providers.length} awaiting review</Badge>
-      </div>
+  await requireAdminPage()
+  const adminSupabase = createAdminClient()
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Providers</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {providers.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              No providers awaiting verification.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {providers.map((provider) => (
-                  <TableRow key={provider.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/admin/verification/${provider.id}`}
-                        className="hover:underline"
-                      >
-                        {provider.first_name} {provider.last_name}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{provider.contractor_type}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {provider.profiles?.email ?? '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_BADGE[provider.verification_status] ?? 'secondary'}>
-                        {STATUS_LABEL[provider.verification_status] ?? provider.verification_status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatRelativeTime(provider.updated_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+  const { data, error } = await adminSupabase
+    .from('contractor_profiles')
+    .select(
+      'id, first_name, last_name, professional_category, other_profession, credential_basis, verification_status, updated_at, self_disclosures, last_exclusion_check_at, insurance_due_at, profiles(email)'
+    )
+    .in('verification_status', [...VERIFICATION_STATUSES])
+    .order('updated_at', { ascending: true })
+    .limit(500)
+
+  if (error) {
+    console.error('[admin/verification] queue load failed', error)
+  }
+
+  const profiles = (data ?? []) as unknown as ProfileRow[]
+  const duplicates = await fetchDuplicateFlags(profiles.map((p) => p.id))
+
+  const rows: QueueRow[] = profiles.map((p) => ({
+    id: p.id,
+    name: `${p.first_name} ${p.last_name}`.trim(),
+    email: p.profiles?.email ?? null,
+    category: p.professional_category,
+    otherProfession: p.other_profession,
+    credentialBasis: p.credential_basis,
+    status: p.verification_status,
+    updatedAt: p.updated_at,
+    disclosuresYes: disclosureYesKeys(p.self_disclosures),
+    duplicateCount: duplicates.has(p.id) ? duplicates.get(p.id)!.length : null,
+    rescreenDue: isRescreenDue(
+      p.verification_status,
+      p.last_exclusion_check_at,
+      EXCLUSION_RESCREEN_DAYS
+    ),
+    lastExclusionCheckAt: p.last_exclusion_check_at,
+    insuranceDueAt: p.insurance_due_at,
+  }))
+
+  return (
+    <QueueClient
+      rows={rows}
+      rescreenDays={EXCLUSION_RESCREEN_DAYS}
+      loadError={error ? 'Could not load applicants. Check the server logs.' : null}
+    />
   )
 }

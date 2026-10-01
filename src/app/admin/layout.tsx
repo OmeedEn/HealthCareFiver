@@ -48,6 +48,9 @@ export default async function AdminLayout({
             <Link href="/admin/verification" className="text-[#62646a] hover:text-[#1dbf73]">
               Verification
             </Link>
+            <Link href="/admin/listings" className="text-[#62646a] hover:text-[#1dbf73]">
+              Listings review
+            </Link>
             <a href="/admin/disputes" className="text-[#62646a] hover:text-[#1dbf73]">
               Disputes
             </a>
