@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { TwoFactorSettings } from '@/components/settings/two-factor-settings'
 import { toast } from 'sonner'
+import { ClientPreferences } from '@/components/settings/client-preferences'
 import {
   Loader2,
   User,
@@ -554,6 +555,9 @@ export default function SettingsPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Interests + location — renders only for role 'client' */}
+            <ClientPreferences />
           </div>
         </TabsContent>
 
