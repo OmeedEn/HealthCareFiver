@@ -1,8 +1,10 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
+import { isLiveSubscription } from '@/lib/auth/can-go-live'
 
 type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
 
@@ -14,6 +16,9 @@ export default async function DashboardLayout({
   let role: DashboardRole = 'contractor'
   let displayName = 'User'
   let userEmail = ''
+  // Verified professionals without a live subscription see a "go live" banner.
+  // Joining and verification are free; the dashboard is never paywalled.
+  let showGoLiveBanner = false
 
   if (isDemoMode()) {
     // The DemoRoleSwitcher writes a `demo_role` cookie; the layout reads it
@@ -60,9 +65,13 @@ export default async function DashboardLayout({
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
       DashboardRole
 
-    // Contractors must have an active subscription to access the dashboard
-    if (role === 'contractor' && profile?.subscription_status !== 'active') {
-      redirect('/subscribe')
+    if (role === 'contractor' && !isLiveSubscription(profile?.subscription_status)) {
+      const { data: contractor } = await supabase
+        .from('contractor_profiles')
+        .select('verification_status')
+        .eq('id', user.id)
+        .maybeSingle()
+      showGoLiveBanner = contractor?.verification_status === 'approved'
     }
 
     displayName =
@@ -91,6 +100,22 @@ export default async function DashboardLayout({
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header role={role} userName={displayName} userEmail={userEmail} />
+        {showGoLiveBanner && (
+          <div
+            role="status"
+            className="flex flex-col gap-2 border-b border-[#1dbf73]/30 bg-[#e8faf1] px-4 py-2.5 text-sm text-[#0f4c3a] sm:flex-row sm:items-center sm:justify-between md:px-6"
+          >
+            <p className="font-semibold">
+              You&apos;re verified! Activate your profile to go live — $29/mo
+            </p>
+            <Link
+              href="/subscribe"
+              className="inline-flex shrink-0 items-center justify-center rounded-md bg-[#1dbf73] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#19a463]"
+            >
+              Activate profile
+            </Link>
+          </div>
+        )}
         <main
           id="dashboard-main"
           tabIndex={-1}

@@ -5,8 +5,16 @@ import { rateLimit } from '@/lib/rate-limit'
 
 const schema = z.object({
   email: z.string().email().max(254),
-  redirectTo: z.string().url().optional(),
 })
+
+// The reset link must land on /callback (PKCE code exchange) and then on
+// /reset-password to actually set the new password. Built server-side so a
+// client can't point the email link elsewhere. The Supabase Auth redirect
+// allow-list must include `<origin>/callback**`.
+function resetRedirectUrl(request: NextRequest): string {
+  const origin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+  return `${origin.replace(/\/$/, '')}/callback?next=/reset-password`
+}
 
 export async function POST(request: NextRequest) {
   const json = await request.json().catch(() => null)
@@ -46,7 +54,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: parsed.data.redirectTo,
+    redirectTo: resetRedirectUrl(request),
   })
 
   if (error) {

@@ -30,10 +30,7 @@ export default function ForgotPasswordPage() {
       await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          redirectTo: `${window.location.origin}/callback`,
-        }),
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       })
     } catch (err) {
       // Treat network errors as success too — never reveal account existence.

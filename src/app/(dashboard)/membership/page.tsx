@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { isDemoMode, DEMO_MEMBERSHIP } from '@/lib/demo/data'
 import {
   Card,
@@ -17,14 +18,16 @@ import { Check, Crown, Sparkles } from 'lucide-react'
 export default function MembershipPage() {
   const [currentPlan] = useState(DEMO_MEMBERSHIP.currentPlan)
   const plans = DEMO_MEMBERSHIP.plans
+  const router = useRouter()
 
   function handleUpgrade(planName: string) {
     if (isDemoMode()) {
       toast.success(`Upgrade to ${planName} initiated (demo mode)`)
       return
     }
-    // In production: would call Stripe checkout session
-    toast.info('Redirecting to checkout...')
+    // The only live paid plan is the $29/mo "go live" subscription; /subscribe
+    // checks eligibility (verified professionals only) and starts checkout.
+    router.push('/subscribe')
   }
 
   return (
@@ -150,11 +153,12 @@ export default function MembershipPage() {
           </div>
           <div>
             <p className="font-medium text-[#111827]">
-              Is there a free trial for paid plans?
+              Do I have to pay to join or get verified?
             </p>
             <p className="text-sm text-[#6b7280]">
-              Professional and Enterprise plans include a 14-day free trial.
-              No credit card required to start.
+              No. Joining and credential verification are free. Once
+              you&apos;re verified, the $29/mo Professional plan takes your
+              profile live so you can be found, booked, and apply to jobs.
             </p>
           </div>
           <div>
