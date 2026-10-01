@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
+import { useOrgStatus } from '@/lib/org/use-org-status'
+import { orgBlockedReason } from '@/lib/org/review'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -129,6 +131,9 @@ export default function FacilityNewJobPage() {
   const [specialtyInput, setSpecialtyInput] = useState('')
   const [credentialInput, setCredentialInput] = useState('')
   const [certificationInput, setCertificationInput] = useState('')
+  // Until the org is approved, publishing is blocked (also enforced in the DB).
+  const orgStatus = useOrgStatus()
+  const publishBlockedReason = orgBlockedReason(orgStatus)
 
   const updateField = <K extends keyof JobFormData>(
     key: K,
@@ -168,6 +173,10 @@ export default function FacilityNewJobPage() {
     // NOT NULL in the jobs table — catch them here instead of a generic DB error.
     if (!form.contractor_type || !form.job_type || !form.shift_type) {
       toast.error('Choose a profession, job type, and shift type.')
+      return
+    }
+    if (!form.city.trim() || !form.state || !form.zip_code.trim()) {
+      toast.error('Add the city, state, and ZIP code.')
       return
     }
 
@@ -244,7 +253,8 @@ export default function FacilityNewJobPage() {
       const { error } = await supabase.from('jobs').insert(insertData)
 
       if (error) {
-        toast.error('Failed to create job posting.')
+        // 42501 = the publish gate in jobs_require_approved_org.
+        toast.error(error.code === '42501' ? error.message : 'Failed to create job posting.')
         return
       }
 
@@ -726,6 +736,11 @@ export default function FacilityNewJobPage() {
             )}
           </p>
           <div className="ml-auto flex items-center gap-3">
+            {publishBlockedReason && (
+              <p className="max-w-xs text-right text-xs text-[#b8860b]">
+                {publishBlockedReason}
+              </p>
+            )}
             <Button
               variant="outline"
               disabled={loading !== null}
@@ -737,7 +752,8 @@ export default function FacilityNewJobPage() {
               Save as draft
             </Button>
             <Button
-              disabled={loading !== null || !form.title.trim()}
+              disabled={loading !== null || !form.title.trim() || !!publishBlockedReason}
+              title={publishBlockedReason ?? undefined}
               onClick={() => handleSubmit('open')}
               className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
             >
