@@ -17,14 +17,48 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { CONTRACTOR_TYPE_LABELS, US_STATES } from '@/lib/utils/constants'
+import { US_STATES } from '@/lib/utils/constants'
 import { toast } from 'sonner'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
+// Broad category picked at /signup/professional (contractor_profiles.professional_category).
+const PROFESSIONAL_CATEGORY_LABELS: Record<string, string> = {
+  clinical: 'Licensed clinical professional',
+  allied: 'Allied or certified health practitioner',
+  consultant: 'Healthcare consultant or advisor',
+  educator: 'Health educator or trainer',
+}
+
+// Keys must match the `contractor_type` Postgres enum
+// (20250523000001_create_enums.sql). CONTRACTOR_TYPE_LABELS in
+// lib/utils/constants uses different keys (e.g. 'registered_nurse'), which
+// the DB rejects, so this page keeps its own enum-aligned list.
+const LICENSE_TYPE_LABELS: Record<string, string> = {
+  rn: 'Registered Nurse (RN)',
+  lpn: 'Licensed Practical Nurse (LPN)',
+  cna: 'Certified Nursing Assistant (CNA)',
+  np: 'Nurse Practitioner (NP)',
+  pa: 'Physician Assistant (PA)',
+  md: 'Physician (MD)',
+  do: 'Physician (DO)',
+  pt: 'Physical Therapist (PT)',
+  ot: 'Occupational Therapist (OT)',
+  slp: 'Speech-Language Pathologist (SLP)',
+  rt: 'Respiratory Therapist (RT)',
+  pharm: 'Pharmacist',
+  rad_tech: 'Radiology Technologist',
+  lab_tech: 'Lab Technician',
+  ma: 'Medical Assistant (MA)',
+  emt: 'EMT / Paramedic',
+  sw: 'Social Worker',
+  other: 'Other',
+}
+
 interface FormData {
   first_name: string
   last_name: string
+  professional_category: string
   contractor_type: string
   headline: string
   bio: string
@@ -46,6 +80,7 @@ interface FormData {
 const initialFormData: FormData = {
   first_name: '',
   last_name: '',
+  professional_category: '',
   contractor_type: '',
   headline: '',
   bio: '',
@@ -117,6 +152,7 @@ export default function ContractorProfileEditPage() {
           willing_to_travel: data.willing_to_travel ?? false,
           travel_radius_miles: data.travel_radius_miles?.toString() ?? '',
           is_available: data.is_available ?? true,
+          professional_category: '',
         })
         setLoading(false)
         return
@@ -160,6 +196,7 @@ export default function ContractorProfileEditPage() {
           willing_to_travel: data.willing_to_travel ?? false,
           travel_radius_miles: data.travel_radius_miles?.toString() ?? '',
           is_available: data.is_available ?? true,
+          professional_category: data.professional_category ?? '',
         })
       }
 
@@ -218,6 +255,7 @@ export default function ContractorProfileEditPage() {
       const updatePayload = {
         first_name: formData.first_name || null,
         last_name: formData.last_name || null,
+        professional_category: formData.professional_category || null,
         contractor_type: formData.contractor_type || null,
         headline: formData.headline || null,
         bio: formData.bio || null,
@@ -364,8 +402,27 @@ export default function ContractorProfileEditPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label htmlFor="professional_category">Professional category</Label>
+                <Select
+                  value={formData.professional_category}
+                  onValueChange={(val) => handleSelectChange('professional_category', val)}
+                >
+                  <SelectTrigger id="professional_category" className="mt-2 w-full">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PROFESSIONAL_CATEGORY_LABELS).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div>
-                <Label htmlFor="contractor_type">Contractor type</Label>
+                <Label htmlFor="contractor_type">License / profession type</Label>
                 <Select
                   value={formData.contractor_type}
                   onValueChange={(val) => handleSelectChange('contractor_type', val)}
@@ -374,7 +431,7 @@ export default function ContractorProfileEditPage() {
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CONTRACTOR_TYPE_LABELS).map(([value, label]) => (
+                    {Object.entries(LICENSE_TYPE_LABELS).map(([value, label]) => (
                       <SelectItem key={value} value={value}>
                         {label}
                       </SelectItem>
