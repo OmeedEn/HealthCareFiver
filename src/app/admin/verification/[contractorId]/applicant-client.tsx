@@ -66,6 +66,7 @@ type Action =
   | 'unsuspend'
   | 'mark_exclusion_screened'
   | 'verify_insurance'
+  | 'clear_hold'
 
 type DialogAction = 'approve' | 'request_info' | 'reject' | 'suspend' | 'unsuspend'
 
@@ -730,6 +731,18 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
             {profile.compliance_hold_reason && (
               <Field label="Compliance hold">
                 <span className="text-destructive">{profile.compliance_hold_reason}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                  disabled={!!submitting}
+                  onClick={() => post('clear_hold')}
+                >
+                  {submitting === 'clear_hold' && (
+                    <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+                  )}
+                  Clear hold
+                </Button>
               </Field>
             )}
             <Field label="Agreement accepted">

@@ -3,7 +3,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { audit } from '@/lib/audit/log'
 import { sendBAAEnvelope } from '@/lib/integrations/docusign'
 import { sendVerificationActionEmail } from '@/lib/email/resend'
-import { applyApproval, markInsuranceVerified } from '@/lib/compliance/transitions'
+import {
+  applyApproval,
+  clearComplianceHold,
+  markInsuranceVerified,
+} from '@/lib/compliance/transitions'
 import { isUuid, requireAdminApi } from '@/app/api/admin/_lib/guard'
 
 type Action =
@@ -14,6 +18,7 @@ type Action =
   | 'unsuspend'
   | 'mark_exclusion_screened'
   | 'verify_insurance'
+  | 'clear_hold'
 
 const ACTIONS: Action[] = [
   'approve',
@@ -23,6 +28,7 @@ const ACTIONS: Action[] = [
   'unsuspend',
   'mark_exclusion_screened',
   'verify_insurance',
+  'clear_hold',
 ]
 
 const NOTES_REQUIRED: Action[] = ['request_info', 'reject', 'suspend']
@@ -229,6 +235,29 @@ export async function POST(
         .eq('id', contractorId)
       if (error) return failed('Failed to record the exclusion screening')
       extra.lastExclusionCheckAt = now
+      break
+    }
+
+    case 'clear_hold': {
+      // Refuses while the lapse still applies (the daily cron would re-set
+      // it); `force` clears it anyway for manual holds the admin resolved.
+      let result
+      try {
+        result = await clearComplianceHold(adminSupabase, contractorId, {
+          force: body.force === true,
+        })
+      } catch (err) {
+        console.error('[verification] clearComplianceHold failed', err)
+        return failed('Failed to clear the compliance hold')
+      }
+      if (!result.cleared) {
+        return NextResponse.json(
+          {
+            error: `Hold still applies: ${result.blockingReason}. Verify a current document or fix the expiration date first.`,
+          },
+          { status: 409 }
+        )
+      }
       break
     }
 
