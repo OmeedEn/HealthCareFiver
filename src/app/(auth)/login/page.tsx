@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, MailWarning } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 // Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
 function safeRedirect(target: string | null): string {
@@ -46,11 +47,35 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  // Set to the email that tried to sign in before confirming it.
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+
+  async function handleResend() {
+    if (!unconfirmedEmail || resending) return
+    setResending(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: unconfirmedEmail,
+    })
+    setResending(false)
+    if (error) {
+      toast.error(
+        error.status === 429
+          ? 'Please wait a minute before requesting another email.'
+          : 'Couldn’t resend the email — please try again.'
+      )
+      return
+    }
+    toast.success('Confirmation email sent. Check your inbox and spam folder.')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (loading) return
     setLoading(true)
+    setUnconfirmedEmail(null)
 
     if (isDemoMode()) {
       toast.success('Welcome to Sanus demo!')
@@ -69,6 +94,11 @@ function LoginForm() {
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
+        if (body.code === 'email_not_confirmed') {
+          setUnconfirmedEmail(email.trim().toLowerCase())
+          setLoading(false)
+          return
+        }
         toast.error(body.error || 'Could not sign in')
         setLoading(false)
         return
@@ -92,6 +122,33 @@ function LoginForm() {
       <p className="mt-1.5 text-sm text-[#62646a]">
         Sign in to your Sanus account to continue
       </p>
+
+      {unconfirmedEmail && (
+        <div
+          role="alert"
+          className="mt-6 flex gap-3 rounded-lg border border-[#f5d68a] bg-[#fffaeb] p-4"
+        >
+          <MailWarning className="mt-0.5 h-5 w-5 shrink-0 text-[#b7791f]" />
+          <div className="text-sm text-[#404145]">
+            <p className="font-semibold">Your account isn&apos;t confirmed yet</p>
+            <p className="mt-1 text-[#62646a]">
+              We sent a confirmation link to{' '}
+              <span className="font-medium text-[#404145]">{unconfirmedEmail}</span>.
+              Click it to activate your account, then sign in. Don&apos;t see
+              it? Check your spam or junk folder.
+            </p>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="mt-2 inline-flex items-center font-semibold text-[#1dbf73] hover:underline disabled:opacity-60"
+            >
+              {resending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+              Resend confirmation email
+            </button>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-5">
         <div className="space-y-1.5">
