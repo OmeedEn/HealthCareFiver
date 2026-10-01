@@ -5,8 +5,8 @@
 // (20261001000600_org_onboarding.sql).
 
 /** Steps shown in the wizard progress bar (step 1 is the signup page). */
-export const ORG_TOTAL_STEPS = 4
-export type OrgWizardStep = 2 | 3 | 4
+export const ORG_TOTAL_STEPS = 5
+export type OrgWizardStep = 2 | 3 | 4 | 5
 
 export const ORG_DESCRIPTION_MAX = 300
 export const ORG_TYPE_OTHER_MAX = 100
@@ -142,4 +142,115 @@ export const FREE_EMAIL_DOMAINS = new Set([
 export function isFreeEmail(email: string): boolean {
   const domain = email.split('@')[1]?.trim().toLowerCase() ?? ''
   return FREE_EMAIL_DOMAINS.has(domain)
+}
+
+/* ───────────── Step 5: Quick setup ───────────── */
+
+/**
+ * Staffing posts (section D) stay off until the legal questions in the spec
+ * ("Settle with an attorney before building staffing posts": worker
+ * classification, nurse registry rules, pay transparency) are settled.
+ * Turn on with NEXT_PUBLIC_STAFFING_POSTS_ENABLED=true.
+ */
+export const STAFFING_POSTS_ENABLED = process.env.NEXT_PUBLIC_STAFFING_POSTS_ENABLED === 'true'
+
+/** Shown on every staffing post and its form. */
+export const NOT_EMPLOYER_NOTICE =
+  'Sanus connects organizations and professionals. Sanus isn’t the employer or a staffing agency and doesn’t handle pay, scheduling, or employment — the organization and professional arrange those directly.'
+
+export const SERVICE_AUDIENCES = [
+  { value: 'individuals', label: 'Individuals' },
+  { value: 'businesses', label: 'Businesses' },
+  { value: 'professionals', label: 'Other professionals' },
+] as const
+
+export const LISTING_FORMATS = [
+  { value: 'in_person', label: 'In-person' },
+  { value: 'virtual', label: 'Virtual' },
+  { value: 'home_visit', label: 'Home visit' },
+] as const
+
+export const EVENT_FORMATS = [
+  { value: 'in_person', label: 'In-person' },
+  { value: 'virtual', label: 'Virtual' },
+  { value: 'hybrid', label: 'Hybrid' },
+] as const
+
+export const REACH_VIA = [
+  { value: 'book', label: 'Book on Sanus' },
+  { value: 'inquiry', label: 'Send an inquiry' },
+] as const
+
+export const ORG_EVENT_TYPES = [
+  { value: 'webinar', label: 'Webinar' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'ceu_course', label: 'CEU/CME course' },
+  { value: 'certification', label: 'Certification' },
+  { value: 'conference', label: 'Conference' },
+  { value: 'health_fair', label: 'Health fair' },
+  { value: 'support_group', label: 'Support group' },
+] as const
+
+export const EVENT_AUDIENCES = [
+  { value: 'public', label: 'The public' },
+  { value: 'professionals', label: 'Professionals' },
+  { value: 'staff', label: 'Our own staff' },
+] as const
+
+/** Same tiers as professional signup. */
+export const PROFESSIONAL_TIERS = [
+  { value: 'clinical', label: 'Licensed clinical' },
+  { value: 'allied', label: 'Allied or certified' },
+  { value: 'consultant', label: 'Healthcare consultant' },
+  { value: 'educator', label: 'Educator or trainer' },
+  { value: 'other', label: 'Other' },
+] as const
+
+export const LOOKING_FOR_ENGAGEMENTS = [
+  { value: 'employee', label: 'Employee' },
+  { value: 'independent_contractor', label: 'Independent contractor' },
+  { value: 'per_diem', label: 'Per diem' },
+  { value: 'consulting_project', label: 'Consulting project' },
+  { value: 'volunteer', label: 'Volunteer' },
+] as const
+
+export const WORK_SETTINGS = [
+  { value: 'on_site', label: 'On-site' },
+  { value: 'remote', label: 'Remote' },
+  { value: 'hybrid', label: 'Hybrid' },
+] as const
+
+export const HIRING_TIMELINES = [
+  { value: 'immediately', label: 'Immediately' },
+  { value: 'within_month', label: 'Within a month' },
+  { value: 'exploring', label: 'Just exploring' },
+] as const
+
+export const STAFFING_POST_TYPES = [
+  { value: 'surge', label: 'Surge or pop-up event' },
+  { value: 'staffing_shortage', label: 'Staffing shortage' },
+  { value: 'ongoing_role', label: 'Ongoing role' },
+  { value: 'short_term_project', label: 'Short-term project' },
+] as const
+
+export const STAFFING_ENGAGEMENTS = [
+  { value: 'employee', label: 'Employee' },
+  { value: 'independent_contractor', label: 'Independent contractor' },
+  { value: 'volunteer', label: 'Volunteer' },
+] as const
+
+export const PAY_UNITS = [
+  { value: 'hourly', label: 'per hour' },
+  { value: 'daily', label: 'per day' },
+  { value: 'flat', label: 'flat' },
+  { value: 'salary', label: 'per year (salary)' },
+] as const
+
+export const MAX_SCREENING_QUESTIONS = 3
+
+export function labelFor(
+  options: readonly { value: string; label: string }[],
+  value: string | null | undefined
+): string {
+  return options.find((o) => o.value === value)?.label ?? value ?? ''
 }

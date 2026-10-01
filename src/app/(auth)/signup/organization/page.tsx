@@ -147,7 +147,7 @@ export default function OrganizationSignupPage() {
 
       <div className="mt-6">
         <p className="text-xs font-semibold uppercase tracking-wide text-[#1dbf73]">
-          Step 1 of 4 · Organization
+          Step 1 of 5 · Organization
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#404145]">
           Create your account

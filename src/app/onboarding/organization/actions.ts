@@ -6,10 +6,16 @@ import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_DISCLOSURES, ORG_DOCUMENT_KINDS, facilityTypeEnumFor } from '@/lib/onboarding/organization'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import {
   aboutSchema,
+  eventSchema,
   fieldErrors,
   intentsSchema,
+  lookingForSchema,
+  serviceSchema,
+  staffingSchema,
+  toCents,
   verifySchema,
   type OrgDoc,
 } from './shared'
@@ -181,8 +187,8 @@ export async function saveVerification(input: unknown): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Step 4: save intents and submit the application for review. */
-export async function submitIntents(input: unknown): Promise<ActionResult> {
+/** Step 4: save what they want to do, then on to quick setup. */
+export async function saveIntents(input: unknown): Promise<ActionResult> {
   const parsed = intentsSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
   if (isDemoMode()) return { ok: true }
@@ -192,21 +198,175 @@ export async function submitIntents(input: unknown): Promise<ActionResult> {
 
   const { data: org } = await a.supabase
     .from('facility_profiles')
-    .select('onboarding_step, onboarding_submitted_at, attested_authorized_at')
+    .select('attested_authorized_at')
     .eq('id', a.user.id)
     .single()
   if (!org?.attested_authorized_at) return { ok: false, error: 'Finish verifying your organization first.' }
 
   const { error } = await a.supabase
     .from('facility_profiles')
-    .update({
-      intents: Array.from(new Set(parsed.data)),
-      onboarding_step: 5,
-      onboarding_submitted_at: org.onboarding_submitted_at ?? new Date().toISOString(),
-    })
+    .update({ intents: Array.from(new Set(parsed.data)), onboarding_step: 5 })
     .eq('id', a.user.id)
   if (error) {
-    console.error('[onboarding/organization] submitIntents failed', error)
+    console.error('[onboarding/organization] saveIntents failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+/* ───────────── Step 5: Quick setup ───────────── */
+
+function invalid(error: z.ZodError): ActionResult {
+  return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(error) }
+}
+
+/** A. Advertise services / B. Host events — saved as drafts. */
+export async function saveListing(kind: 'service' | 'event', input: unknown): Promise<ActionResult> {
+  const a = isDemoMode() ? null : await authed()
+  if (a && 'error' in a) return { ok: false, error: a.error as string }
+
+  let row: Record<string, unknown>
+  if (kind === 'service') {
+    const parsed = serviceSchema.safeParse(input)
+    if (!parsed.success) return invalid(parsed.error)
+    const d = parsed.data
+    row = {
+      kind, title: d.title, description: d.description, audiences: d.audiences, format: d.format,
+      locations: d.locations || null, contact_for_pricing: d.contact_for_pricing,
+      price_cents: d.contact_for_pricing ? null : toCents(d.price), reach_via: d.reach_via,
+    }
+  } else {
+    const parsed = eventSchema.safeParse(input)
+    if (!parsed.success) return invalid(parsed.error)
+    const d = parsed.data
+    row = {
+      kind, event_type: d.event_type, title: d.title, description: d.description,
+      starts_at: d.date_later ? null : new Date(d.starts_at).toISOString(), format: d.format,
+      locations: d.locations || null, capacity: d.capacity ? Number(d.capacity) : null,
+      is_free: d.is_free, price_cents: d.is_free ? null : toCents(d.price),
+      offers_ceu: d.offers_ceu === 'yes', audiences: d.audiences,
+    }
+  }
+  if (!a) return { ok: true }
+
+  const { error } = await a.supabase.from('org_listings').insert({ ...row, facility_id: a.user.id, status: 'draft' })
+  if (error) {
+    console.error('[onboarding/organization] saveListing failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+/** C. Find professionals — the org's "looking for" profile. */
+export async function saveLookingFor(input: unknown): Promise<ActionResult> {
+  const parsed = lookingForSchema.safeParse(input)
+  if (!parsed.success) return invalid(parsed.error)
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  const d = parsed.data
+  const lookingFor = {
+    ...d,
+    specialties: d.specialties.split(',').map((x) => x.trim()).filter(Boolean),
+    min_years: d.min_years ? Number(d.min_years) : null,
+  }
+  const { error } = await a.supabase.from('facility_profiles').update({ looking_for: lookingFor }).eq('id', a.user.id)
+  if (error) {
+    console.error('[onboarding/organization] saveLookingFor failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+const JOB_TYPE_FOR: Record<string, string> = {
+  employee: 'permanent',
+  independent_contractor: 'contract',
+  volunteer: 'contract',
+}
+const PAY_RATE_TYPE_FOR: Record<string, string> = {
+  hourly: 'hourly',
+  daily: 'daily',
+  flat: 'per_contract',
+  salary: 'per_contract',
+}
+
+/** D. Urgent need / staffing post — saved as a draft job (off until legal review). */
+export async function saveStaffingPost(input: unknown): Promise<ActionResult> {
+  if (!STAFFING_POSTS_ENABLED) return { ok: false, error: 'Staffing posts aren’t available yet.' }
+  const parsed = staffingSchema.safeParse(input)
+  if (!parsed.success) return invalid(parsed.error)
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  const d = parsed.data
+  const needs = d.needs.map((n) => ({ type: n.type, count: Number(n.count) }))
+  const payMin = d.is_volunteer ? null : Number(d.pay_min)
+  const payMax = d.is_volunteer || !d.pay_max ? null : Number(d.pay_max)
+
+  const { error } = await a.supabase.from('jobs').insert({
+    facility_id: a.user.id,
+    status: 'draft',
+    title: d.title,
+    description: d.description,
+    post_type: d.post_type,
+    professional_needs: needs,
+    positions_available: needs.reduce((n, x) => n + x.count, 0),
+    // Legacy NOT NULL columns; the spec fields above are the source of truth.
+    contractor_type: 'other',
+    job_type: JOB_TYPE_FOR[d.engagement_type],
+    shift_type: 'flexible',
+    is_ongoing: d.is_ongoing,
+    start_date: d.is_ongoing ? null : d.start_date,
+    end_date: d.is_ongoing || !d.end_date ? null : d.end_date,
+    schedule: d.schedule,
+    city: d.city,
+    state: d.state,
+    zip_code: d.zip_code,
+    is_remote: d.is_remote,
+    engagement_type: d.engagement_type,
+    is_volunteer: d.is_volunteer,
+    pay_rate_min: payMin,
+    pay_rate_max: payMax,
+    hourly_rate_min: payMin,
+    hourly_rate_max: payMax,
+    pay_unit: d.is_volunteer ? null : d.pay_unit,
+    pay_rate_type: d.is_volunteer ? 'hourly' : PAY_RATE_TYPE_FOR[d.pay_unit],
+    additional_requirements: d.requirements || null,
+    years_experience_min: d.min_years ? Number(d.min_years) : null,
+    years_experience_required: d.min_years ? Number(d.min_years) : null,
+    screening_questions: d.screening_questions.filter(Boolean),
+    application_deadline: d.application_deadline || null,
+    urgency: d.is_urgent ? 'high' : 'medium',
+    reviewer_emails: d.reviewer_emails.split(/[\s,]+/).filter(Boolean),
+    applicant_cap: d.applicant_cap ? Number(d.applicant_cap) : null,
+  })
+  if (error) {
+    console.error('[onboarding/organization] saveStaffingPost failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+/** Finish: submit the application for review. */
+export async function finishOnboarding(): Promise<ActionResult> {
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+
+  const { data: org } = await a.supabase
+    .from('facility_profiles')
+    .select('onboarding_submitted_at, attested_authorized_at, intents')
+    .eq('id', a.user.id)
+    .single()
+  if (!org?.attested_authorized_at || !(org.intents ?? []).length) {
+    return { ok: false, error: 'Finish the earlier steps first.' }
+  }
+  const { error } = await a.supabase
+    .from('facility_profiles')
+    .update({ onboarding_step: 5, onboarding_submitted_at: org.onboarding_submitted_at ?? new Date().toISOString() })
+    .eq('id', a.user.id)
+  if (error) {
+    console.error('[onboarding/organization] finishOnboarding failed', error)
     return { ok: false, error: 'We couldn’t submit your application. Please try again.' }
   }
   return { ok: true }

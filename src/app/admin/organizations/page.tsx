@@ -160,7 +160,7 @@ export default async function AdminOrganizationsPage({
                         <Badge variant={ORG_STATUS_BADGE[s]}>{ORG_STATUS_LABEL[s]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {r.onboarding_submitted_at ? `${done}/${total}` : `Step ${r.onboarding_step ?? 2} of 4`}
+                        {r.onboarding_submitted_at ? `${done}/${total}` : `Step ${r.onboarding_step ?? 2} of 5`}
                       </TableCell>
                       <TableCell>
                         {freeEmail && <Badge variant="outline">Free email</Badge>}

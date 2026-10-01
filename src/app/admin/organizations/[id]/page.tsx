@@ -27,7 +27,13 @@ import {
   BUSINESS_STRUCTURES,
   ORG_DISCLOSURES,
   ORG_DOCUMENT_KINDS,
+  ORG_EVENT_TYPES,
   ORG_INTENTS,
+  HIRING_TIMELINES,
+  LOOKING_FOR_ENGAGEMENTS,
+  PROFESSIONAL_TIERS,
+  WORK_SETTINGS,
+  labelFor,
   orgTypeLabel,
 } from '@/lib/onboarding/organization'
 import { addEvidence, decideOrganization, setChecklistItem } from '../actions'
@@ -89,7 +95,7 @@ export default async function AdminOrganizationPage({
   const { db } = await requireAdmin()
   const { id } = await params
 
-  const [{ data: org }, { data: account }, { data: evidenceRows }, { count: draftCount }, { data: orgDocs }] =
+  const [{ data: org }, { data: account }, { data: evidenceRows }, { count: draftCount }, { data: orgDocs }, { data: listings }] =
     await Promise.all([
       db.from('facility_profiles').select('*').eq('id', id).maybeSingle(),
       db.from('profiles').select('email, phone, created_at').eq('id', id).maybeSingle(),
@@ -104,6 +110,11 @@ export default async function AdminOrganizationPage({
         .select('id, kind, filename, storage_path, uploaded_at')
         .eq('facility_id', id)
         .order('uploaded_at'),
+      db
+        .from('org_listings')
+        .select('id, kind, title, status, event_type')
+        .eq('facility_id', id)
+        .order('created_at'),
     ])
   if (!org) notFound()
 
@@ -156,7 +167,7 @@ export default async function AdminOrganizationPage({
         <Card className="border-[#f5deb3] bg-[#fdf6e3]">
           <CardContent className="pt-6 text-sm text-[#404145]">
             <span className="font-semibold">Application not submitted yet.</span> They&apos;re on step{' '}
-            {org.onboarding_step ?? 2} of 4 of signup. Review once they submit.
+            {org.onboarding_step ?? 2} of 5 of signup. Review once they submit.
           </CardContent>
         </Card>
       )}
@@ -255,6 +266,61 @@ export default async function AdminOrganizationPage({
                   <p className="text-sm text-[#62646a]">None uploaded.</p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quick setup</CardTitle>
+              <CardDescription>
+                What they set up in step 5. Review every listing and post before it goes live.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div>
+                <p className="font-semibold text-[#404145]">Services &amp; events</p>
+                {listings && listings.length > 0 ? (
+                  <ul className="list-disc pl-5 text-[#404145]">
+                    {listings.map((l) => (
+                      <li key={l.id}>
+                        {l.title}{' '}
+                        <span className="text-[#62646a]">
+                          ({l.kind === 'service' ? 'service' : labelFor(ORG_EVENT_TYPES, l.event_type)}, {l.status})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-[#62646a]">None.</p>
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-[#404145]">Looking for</p>
+                {(() => {
+                  const lf = (org.looking_for ?? {}) as Record<string, unknown>
+                  const list = (k: string, opts: readonly { value: string; label: string }[]) =>
+                    (Array.isArray(lf[k]) ? (lf[k] as string[]) : []).map((v) => labelFor(opts, v)).join(', ')
+                  if (!Array.isArray(lf.types) || !(lf.types as string[]).length) {
+                    return <p className="text-[#62646a]">Not set.</p>
+                  }
+                  return (
+                    <p className="text-[#404145]">
+                      {[
+                        list('types', PROFESSIONAL_TIERS),
+                        list('engagement_types', LOOKING_FOR_ENGAGEMENTS),
+                        list('settings', WORK_SETTINGS),
+                        labelFor(HIRING_TIMELINES, lf.timeline as string),
+                        Array.isArray(lf.specialties) && lf.specialties.length ? `Specialties: ${(lf.specialties as string[]).join(', ')}` : null,
+                        Array.isArray(lf.license_states) && lf.license_states.length ? `License: ${(lf.license_states as string[]).join(', ')}` : null,
+                        lf.min_years ? `${lf.min_years}+ years` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  )
+                })()}
+              </div>
+              <p className="text-[#62646a]">Job and staffing posts (including drafts): {draftCount ?? 0}</p>
             </CardContent>
           </Card>
 

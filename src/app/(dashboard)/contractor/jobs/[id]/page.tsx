@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { NotEmployerNotice } from '@/components/jobs/not-employer-notice'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { isDemoMode, DEMO_JOBS } from '@/lib/demo/data'
@@ -67,6 +68,7 @@ interface JobDetail {
     state: string | null
     average_rating: number | null
   } | null
+  post_type?: string | null
 }
 
 export default async function ContractorJobDetailPage({
@@ -241,6 +243,7 @@ export default async function ContractorJobDetailPage({
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
+          {typedJob.post_type && <NotEmployerNotice />}
           {/* Description */}
           {typedJob.description && (
             <Card>

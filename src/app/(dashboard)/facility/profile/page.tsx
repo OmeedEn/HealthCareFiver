@@ -20,6 +20,7 @@ import {
 import { isDemoMode, DEMO_FACILITY } from '@/lib/demo/data'
 import { FacilityProfileEditForm } from './edit-form'
 import { OrgIntentsCard } from './intents-card'
+import { LookingForCard } from './looking-for-card'
 import { ORG_INTENT_KEYS, type OrgIntent } from '@/lib/onboarding/organization'
 
 interface FacilityProfile {
@@ -42,6 +43,7 @@ interface FacilityProfile {
   total_reviews: number | null
   is_verified: boolean
   intents?: string[] | null
+  looking_for?: Record<string, unknown> | null
 }
 
 export default async function FacilityProfilePage() {
@@ -410,8 +412,24 @@ export default async function FacilityProfilePage() {
         />
       )}
 
+      {!demo && <LookingForCard initial={lookingForInitial(facility?.looking_for)} />}
+
       {/* Inline Edit Form - real mode only */}
       {!demo && <FacilityProfileEditForm facility={facility} />}
     </div>
   )
+}
+
+function lookingForInitial(raw: Record<string, unknown> | null | undefined) {
+  const r = raw ?? {}
+  const arr = (k: string) => (Array.isArray(r[k]) ? (r[k] as string[]) : [])
+  return {
+    types: arr('types'),
+    specialties: arr('specialties').join(', '),
+    engagement_types: arr('engagement_types'),
+    settings: arr('settings'),
+    timeline: typeof r.timeline === 'string' ? r.timeline : '',
+    license_states: arr('license_states'),
+    min_years: r.min_years != null ? String(r.min_years) : '',
+  }
 }
