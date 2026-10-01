@@ -9,11 +9,10 @@ import {
   SlidersHorizontal,
   MapPin,
   ChevronDown,
-  Menu,
   UserPlus,
 } from 'lucide-react'
 import type { PublicProvider } from '@/lib/find-care/types'
-import { NavAuth } from '@/components/marketing/nav-auth'
+import { SiteHeader } from '@/components/marketing/site-header'
 import { Input } from '@/components/ui/input'
 import {
   Sheet,
@@ -493,7 +492,6 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
   const [stateFilter, setStateFilter] = useState('All States')
   const [sortBy, setSortBy] = useState('highest_rated')
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
-  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const clearAll = () => {
     setSessionType('all')
@@ -627,92 +625,7 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
 
   return (
     <div className="min-h-screen bg-[#f9fafb] text-[#111827]">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-50 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-bold text-white">
-              S
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#111827]">
-              Sanus<span className="text-[#1dbf73]">.</span>
-            </span>
-          </Link>
-
-          <nav className="hidden items-center gap-7 text-sm font-medium text-[#6b7280] lg:flex">
-            <Link
-              href="/find-care"
-              className="font-semibold text-[#1dbf73]"
-            >
-              Find Care
-            </Link>
-            <Link href="/#events" className="transition hover:text-[#111827]">
-              Events &amp; Education
-            </Link>
-            <Link href="/#pricing" className="transition hover:text-[#111827]">
-              Pricing
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <NavAuth>
-              <Link
-                href="/login"
-                className="hidden text-sm font-medium text-[#6b7280] transition hover:text-[#111827] sm:block"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex h-9 items-center justify-center rounded-lg bg-[#1dbf73] px-4 text-sm font-semibold text-white transition hover:bg-[#19a463]"
-              >
-                Get Started
-              </Link>
-            </NavAuth>
-            {/* Mobile nav toggle */}
-            <button
-              onClick={() => setMobileNavOpen(!mobileNavOpen)}
-              className="lg:hidden"
-            >
-              <Menu className="h-5 w-5 text-[#374151]" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile nav */}
-        {mobileNavOpen && (
-          <div className="border-t border-[#e5e7eb] bg-white px-4 py-3 lg:hidden">
-            <nav className="flex flex-col gap-2 text-sm font-medium">
-              <Link
-                href="/find-care"
-                className="rounded-lg px-3 py-2 font-semibold text-[#1dbf73]"
-              >
-                Find Care
-              </Link>
-              <Link
-                href="/#events"
-                className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827]"
-              >
-                Events &amp; Education
-              </Link>
-              <Link
-                href="/#pricing"
-                className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827]"
-              >
-                Pricing
-              </Link>
-              <NavAuth hideWhenSignedIn>
-                <Link
-                  href="/login"
-                  className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827] sm:hidden"
-                >
-                  Sign In
-                </Link>
-              </NavAuth>
-            </nav>
-          </div>
-        )}
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         {/* ── Page Heading ── */}
