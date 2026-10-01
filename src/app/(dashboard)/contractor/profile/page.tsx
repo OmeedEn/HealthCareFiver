@@ -78,7 +78,7 @@ export default async function ContractorProfilePage() {
 
     const { data: contractor } = await supabase
       .from('contractor_profiles')
-      .select('*, profiles(*)')
+      .select('*, profiles!contractor_profiles_id_fkey(*)')
       .eq('id', user.id)
       .single()
 

@@ -133,7 +133,7 @@ export default async function ContractorDetailPage({
 
     const { data: row } = await supabase
       .from('contractor_profiles')
-      .select('*, profiles!inner(avatar_url, email)')
+      .select('*, profiles!contractor_profiles_id_fkey!inner(avatar_url, email)')
       .eq('id', id)
       .single()
 

@@ -179,7 +179,7 @@ export default function ContractorProfileEditPage() {
 
       const { data } = await supabase
         .from('contractor_profiles')
-        .select('*, profiles(avatar_url)')
+        .select('*, profiles!contractor_profiles_id_fkey(avatar_url)')
         .eq('id', user.id)
         .single()
 

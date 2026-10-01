@@ -53,7 +53,7 @@ export default async function AdminApplicantPage({
     await Promise.all([
       adminSupabase
         .from('contractor_profiles')
-        .select('*, profiles(email, phone)')
+        .select('*, profiles!contractor_profiles_id_fkey(email, phone)')
         .eq('id', contractorId)
         .maybeSingle(),
       adminSupabase
