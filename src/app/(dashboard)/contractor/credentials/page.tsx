@@ -149,13 +149,23 @@ export default async function ContractorCredentialsPage() {
             Manage your professional licenses, certifications, and required documentation.
           </p>
         </div>
-        <Button
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
-          render={<Link href="/contractor/credentials/upload" />}
-        >
-          <Plus className="size-4" data-icon="inline-start" />
-          Upload Credential
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button
+            variant="outline"
+            render={
+              <Link href="/contractor/credentials/upload?type=malpractice_insurance" />
+            }
+          >
+            Upload malpractice certificate
+          </Button>
+          <Button
+            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            render={<Link href="/contractor/credentials/upload" />}
+          >
+            <Plus className="size-4" data-icon="inline-start" />
+            Upload Credential
+          </Button>
+        </div>
       </div>
 
       {/* Stat strip */}

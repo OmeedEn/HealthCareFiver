@@ -42,6 +42,7 @@ import {
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
+import { SUPPORT_EMAIL } from '@/lib/env'
 import {
   buildContractorChecklist,
   isNewAccount,
@@ -152,6 +153,8 @@ export default async function DashboardPage() {
   let verificationStatus: string | null = null
   let verificationNotes: string | null = null
   let checklist: ContractorChecklist | null = null
+  let compliance: ComplianceState | null = null
+  let previewHref: string | null = null
   let contractorStats: ContractorStats | null = null
   let accountCreatedAt: string | null = null
 
@@ -268,13 +271,17 @@ export default async function DashboardPage() {
       // Mocked setup state: everything done except payouts, so the demo
       // shows the checklist mid-way ("4 of 5").
       checklist = buildContractorChecklist({
-        profile: DEMO_CONTRACTOR,
+        profile: { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'] },
+        avatarUrl: 'demo',
+        availabilitySlots: 3,
         credentialCount: 5,
         verificationStatus: 'approved',
         stripeConnectId: DEMO_CONTRACTOR.stripe_connect_id,
         stripeConnectOnboarded: DEMO_CONTRACTOR.stripe_connect_onboarded,
         agreementAcceptedAt: '2026-01-01T00:00:00.000Z',
+        listings: { total: 3, published: 1, inReview: 0 },
       })
+      previewHref = `/pros/${DEMO_CONTRACTOR.id}`
     }
 
     // Contractor-only demo data — only compute if we're in contractor view.
@@ -366,7 +373,7 @@ export default async function DashboardPage() {
         supabase
           .from('contractor_profiles')
           .select(
-            'first_name, verification_status, verification_notes, professional_category, contractor_type, headline, bio, specialties, hourly_rate_min, hourly_rate_max, city, state, state_license_number, license_state'
+            'first_name, verification_status, verification_notes, professional_category, contractor_type, headline, bio, specialties, languages, hourly_rate_min, hourly_rate_max, city, state, state_license_number, license_state'
           )
           .eq('id', user.id)
           .maybeSingle(),
@@ -407,8 +414,64 @@ export default async function DashboardPage() {
         activeContracts: activeContractCount ?? 0,
         credentials: credentialCount ?? 0,
       }
+      // Provider-area extras (v3). Each query degrades to "unknown" on error
+      // (e.g. columns not migrated yet) instead of breaking the dashboard.
+      const [
+        { count: availabilityCount, error: availabilityError },
+        { data: listingRows, error: listingsError },
+        { data: complianceRow, error: complianceError },
+        { count: malpracticeInReview },
+      ] = await Promise.all([
+        supabase
+          .from('contractor_availability')
+          .select('id', { count: 'exact', head: true })
+          .eq('contractor_id', user.id)
+          .eq('is_blocked', false),
+        supabase
+          .from('professional_offerings')
+          .select('status')
+          .eq('contractor_id', user.id),
+        supabase
+          .from('contractor_profiles')
+          .select('insurance_due_at, compliance_hold_reason')
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('credentials')
+          .select('id', { count: 'exact', head: true })
+          .eq('contractor_id', user.id)
+          .eq('credential_type', 'malpractice_insurance')
+          .eq('status', 'pending_review'),
+      ])
+      const listingStatuses = listingsError
+        ? null
+        : ((listingRows ?? []) as { status: string }[]).map((r) => r.status)
+      compliance = {
+        insuranceDueAt: complianceError
+          ? null
+          : ((complianceRow?.insurance_due_at as string | null) ?? null),
+        holdReason: complianceError
+          ? null
+          : ((complianceRow?.compliance_hold_reason as string | null) ?? null),
+        certificateInReview: (malpracticeInReview ?? 0) > 0,
+      }
+      previewHref = `/pros/${user.id}`
+
       checklist = buildContractorChecklist({
         profile: contractorRow,
+        avatarUrl: (profileData?.avatar_url as string | null) ?? null,
+        availabilitySlots: availabilityError
+          ? undefined
+          : (availabilityCount ?? 0),
+        listings: listingStatuses
+          ? {
+              total: listingStatuses.length,
+              published: listingStatuses.filter((x) => x === 'published')
+                .length,
+              inReview: listingStatuses.filter((x) => x === 'pending_review')
+                .length,
+            }
+          : undefined,
         credentialCount: credentialCount ?? 0,
         verificationStatus,
         stripeConnectId: profileData?.stripe_connect_id ?? null,
@@ -572,6 +635,8 @@ export default async function DashboardPage() {
           contractorType={contractorType}
           verificationStatus={verificationStatus}
           verificationNotes={verificationNotes}
+          compliance={compliance}
+          previewHref={previewHref}
         />
       )}
       {role === 'facility' && (
@@ -615,9 +680,7 @@ const VERIFICATION_BANNER: Record<
     iconClassName: 'text-[#0f8f56]',
   },
   pending_review: {
-    title: 'Your account is pending verification',
-    body:
-      "An admin is reviewing your submitted documents. You'll be notified once you're approved to go live and apply to jobs.",
+    title: "Your application is under review. We'll email you within 24-48 hours.",
     className: 'border-[#f5deb3] bg-[#fdf6e3]',
     iconClassName: 'text-[#b8860b]',
   },
@@ -632,7 +695,16 @@ const VERIFICATION_BANNER: Record<
     className: 'border-[#f5c6cb] bg-[#fdecea]',
     iconClassName: 'text-[#c0392b]',
   },
+  suspended: {
+    title: 'Your account is suspended',
+    body: `Your profile and listings are hidden from clients and you can't take bookings. Email ${SUPPORT_EMAIL} to resolve this.`,
+    className: 'border-[#f5c6cb] bg-[#fdecea]',
+    iconClassName: 'text-[#c0392b]',
+  },
 }
+
+/** Statuses whose banner shows the admin's verification_notes. */
+const BANNER_SHOWS_NOTES = new Set(['more_info_requested', 'rejected', 'suspended'])
 
 function VerificationBanner({
   status,
@@ -645,6 +717,7 @@ function VerificationBanner({
 
   const config = VERIFICATION_BANNER[status]
   if (!config) return null
+  const shownNotes = BANNER_SHOWS_NOTES.has(status) ? notes : null
 
   return (
     <Card className={`rounded-md ${config.className}`}>
@@ -653,12 +726,12 @@ function VerificationBanner({
           <AlertCircle className="h-5 w-5" />
           {config.title}
         </CardTitle>
-        {notes && (
+        {shownNotes && (
           <CardDescription className="font-medium text-[#404145]">
-            {notes}
+            {shownNotes}
           </CardDescription>
         )}
-        {config.body && !notes && (
+        {config.body && (!shownNotes || status === 'suspended') && (
           <CardDescription>{config.body}</CardDescription>
         )}
       </CardHeader>
@@ -676,6 +749,123 @@ function VerificationBanner({
   )
 }
 
+type ComplianceState = {
+  /** contractor_profiles.insurance_due_at (malpractice grace deadline) */
+  insuranceDueAt: string | null
+  /** contractor_profiles.compliance_hold_reason */
+  holdReason: string | null
+  /** A malpractice certificate is uploaded and waiting for admin review. */
+  certificateInReview: boolean
+}
+
+const MALPRACTICE_UPLOAD_HREF =
+  '/contractor/credentials/upload?type=malpractice_insurance'
+
+function daysUntil(iso: string, now = Date.now()): number | null {
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return null
+  return Math.ceil((t - now) / (24 * 60 * 60 * 1000))
+}
+
+/**
+ * Malpractice grace period (status 'insurance_pending') and compliance holds.
+ * Shown on every dashboard visit until resolved.
+ */
+function ComplianceBanner({
+  status,
+  compliance,
+}: {
+  status: string | null
+  compliance: ComplianceState | null
+}) {
+  if (!compliance) return null
+
+  if (compliance.holdReason && status !== 'suspended') {
+    return (
+      <Card className="rounded-md border-[#f5c6cb] bg-[#fdecea]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-[#c0392b]">
+            <AlertCircle className="h-5 w-5" />
+            Your profile is on hold
+          </CardTitle>
+          <CardDescription className="font-medium text-[#404145]">
+            {compliance.holdReason}
+          </CardDescription>
+          <CardDescription>
+            Clients can&apos;t see your profile or book your listings until
+            this is resolved. Update the document below, or email{' '}
+            {SUPPORT_EMAIL} if you have questions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/contractor/credentials"
+            className="text-sm font-black text-[#1dbf73] hover:underline"
+          >
+            Update documents &rarr;
+          </Link>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (status !== 'insurance_pending') return null
+
+  const days = compliance.insuranceDueAt
+    ? daysUntil(compliance.insuranceDueAt)
+    : null
+  const overdue = days != null && days <= 0
+
+  let title: string
+  let body: string
+  if (compliance.certificateInReview) {
+    title = 'We’re reviewing your malpractice certificate'
+    body = overdue
+      ? 'Listings for in-person care, home visits, prescribing, injectables, or IVs stay paused until we finish the review.'
+      : 'Listings for in-person care, home visits, prescribing, injectables, or IVs go live once it’s approved.'
+  } else if (overdue) {
+    title = 'Upload your malpractice certificate — your deadline has passed.'
+    body =
+      'Listings for in-person care, home visits, prescribing, injectables, or IVs are paused and hidden from clients until your certificate is uploaded and reviewed. Your other listings stay live.'
+  } else {
+    title =
+      days != null
+        ? `Upload your malpractice certificate — ${days} day${days === 1 ? '' : 's'} left.`
+        : 'Upload your malpractice certificate.'
+    body =
+      'Listings for in-person care, home visits, prescribing, injectables, or IVs stay unpublished until it’s reviewed.'
+  }
+  const urgent = overdue && !compliance.certificateInReview
+
+  return (
+    <Card
+      className={`rounded-md ${
+        urgent ? 'border-[#f5c6cb] bg-[#fdecea]' : 'border-[#f5deb3] bg-[#fdf6e3]'
+      }`}
+    >
+      <CardHeader>
+        <CardTitle
+          className={`flex items-center gap-2 ${urgent ? 'text-[#c0392b]' : 'text-[#8a6508]'}`}
+        >
+          <ShieldCheck className="h-5 w-5" />
+          {title}
+        </CardTitle>
+        <CardDescription>{body}</CardDescription>
+      </CardHeader>
+      {!compliance.certificateInReview && (
+        <CardContent>
+          <Link
+            href={MALPRACTICE_UPLOAD_HREF}
+            className="text-sm font-black text-[#1dbf73] hover:underline"
+          >
+            Upload malpractice certificate &rarr;
+          </Link>
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
 function ContractorDashboard({
   checklist,
   stats,
@@ -686,6 +876,8 @@ function ContractorDashboard({
   contractorType,
   verificationStatus,
   verificationNotes,
+  compliance,
+  previewHref,
 }: {
   checklist: ContractorChecklist | null
   stats: ContractorStats | null
@@ -696,6 +888,8 @@ function ContractorDashboard({
   contractorType: string | null
   verificationStatus: string | null
   verificationNotes: string | null
+  compliance: ComplianceState | null
+  previewHref: string | null
 }) {
   const contractorTypeLabel = contractorType
     ? CONTRACTOR_TYPE_LABELS[contractorType] ?? contractorType.toUpperCase()
@@ -710,9 +904,28 @@ function ContractorDashboard({
 
   return (
     <div className="space-y-6">
-      <VerificationBanner status={verificationStatus} notes={verificationNotes} />
+      <VerificationBanner
+        status={verificationStatus}
+        notes={
+          verificationStatus === 'suspended'
+            ? (compliance?.holdReason ?? verificationNotes)
+            : verificationNotes
+        }
+      />
+      <ComplianceBanner status={verificationStatus} compliance={compliance} />
       {checklist && !checklist.allDone && (
         <SetupChecklistCard checklist={checklist} />
+      )}
+      {previewHref && (
+        <p className="text-sm text-[#62646a]">
+          <Link
+            href={previewHref}
+            className="font-semibold text-[#1dbf73] hover:underline"
+          >
+            Preview my profile &rarr;
+          </Link>{' '}
+          See your profile the way clients will.
+        </p>
       )}
 
       {isDemo && (

@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Menu,
   UserPlus,
+  ShieldCheck,
 } from 'lucide-react'
 import type { PublicProvider } from '@/lib/find-care/types'
 import { NavAuth } from '@/components/marketing/nav-auth'
@@ -175,6 +176,12 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
             <span className="shrink-0 rounded-full bg-[#e8faf1] px-2.5 py-0.5 text-xs font-semibold text-[#0f4c3a]">
               {provider.credential}
             </span>
+            {provider.insured && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#eef6ff] px-2.5 py-0.5 text-xs font-semibold text-[#1e5aa8]">
+                <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+                Insured
+              </span>
+            )}
           </div>
           <p className="mt-0.5 truncate text-sm text-[#6b7280]">
             {provider.specialty}
@@ -245,7 +252,7 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
       {/* Action */}
       <div className="mt-4">
         <Link
-          href="/signup"
+          href={`/pros/${provider.id}`}
           className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-[#1dbf73] text-sm font-semibold text-[#1dbf73] transition hover:bg-[#1dbf73] hover:text-white"
         >
           View Profile

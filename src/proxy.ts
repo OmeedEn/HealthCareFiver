@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   '/forgot-password',
   '/callback',
   '/find-care',
+  '/pros',
   '/terms',
   '/privacy',
   '/legal',

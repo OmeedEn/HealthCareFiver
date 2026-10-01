@@ -34,6 +34,8 @@ export type PublicProvider = {
   is_available: boolean
   /** Empty when unknown (real profiles don't record session formats yet). */
   session_types: string[]
+  /** Admin reviewed a current malpractice certificate (insured_verified_at). */
+  insured: boolean
 }
 
 export const PROFESSIONAL_CATEGORY_LABELS: Record<ProfessionalCategory, string> =

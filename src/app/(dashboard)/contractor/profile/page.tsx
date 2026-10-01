@@ -196,7 +196,13 @@ export default async function ContractorProfilePage() {
               </div>
             </div>
 
-            <div className="shrink-0">
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Button
+                variant="outline"
+                render={<Link href={`/pros/${profile.id}`} />}
+              >
+                Preview my profile
+              </Button>
               <Button
                 className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
                 render={<Link href="/contractor/profile/edit" />}
