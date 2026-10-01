@@ -35,6 +35,26 @@ interface NPIResult {
   }>
 }
 
+/**
+ * Offline NPI format check: exactly 10 digits whose last digit is the Luhn
+ * check digit computed over the prefix "80840" + the first 9 digits (CMS
+ * NPI check-digit algorithm). Pure — safe in client components.
+ */
+export function isValidNpiFormat(npi: string): boolean {
+  if (!/^\d{10}$/.test(npi)) return false
+  // The "80840" prefix contributes a constant 24 to the Luhn sum.
+  let sum = 24
+  for (let i = 0; i < 9; i++) {
+    let d = Number(npi[8 - i])
+    if (i % 2 === 0) {
+      d *= 2
+      if (d > 9) d -= 9
+    }
+    sum += d
+  }
+  return (10 - (sum % 10)) % 10 === Number(npi[9])
+}
+
 export async function lookupNPI(npiNumber: string): Promise<{
   valid: boolean
   data?: NPIResult['results'][0]
