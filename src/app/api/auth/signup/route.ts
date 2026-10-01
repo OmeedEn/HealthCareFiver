@@ -289,6 +289,22 @@ export async function POST(request: NextRequest) {
       // GoTrue's password-policy message is user-facing and safe to show.
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
+    if (error.code === 'over_email_send_rate_limit' || error.status === 429) {
+      // Supabase couldn't send the confirmation email (project-wide email
+      // quota). Log it — it means SMTP needs attention — but tell the user
+      // plainly that it's temporary.
+      console.error('[signup] email send rate limit hit', {
+        role: body.role,
+        code: error.code,
+      })
+      return NextResponse.json(
+        {
+          error:
+            'We’re getting a lot of sign-ups right now and couldn’t send your confirmation email. Please try again in a few minutes.',
+        },
+        { status: 429, headers: { 'Retry-After': '300' } }
+      )
+    }
     // Anything else (e.g. "Database error saving new user") is internal —
     // log it, but don't leak it to the client.
     console.error('[signup] auth.signUp failed', {
