@@ -27,7 +27,6 @@ import {
   Users,
   AlertTriangle,
   LogOut,
-  Receipt,
   GraduationCap,
   Bell,
 } from 'lucide-react'
@@ -46,7 +45,7 @@ const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: GraduationCap },
-  { label: 'Pricing', href: '/membership', icon: Receipt },
+  // Pricing (/membership) hidden from the nav for now; the page still exists.
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
