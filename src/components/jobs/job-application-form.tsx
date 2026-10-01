@@ -72,6 +72,9 @@ export function JobApplicationForm({
       if (error) {
         if (error.code === '23505') {
           toast.error('You have already applied to this job.')
+        } else if (error.hint === 'not_verified') {
+          // Raised by the job_applications_require_verified DB trigger.
+          toast.error('You can apply once your credentials are verified.')
         } else {
           toast.error('Failed to submit application. Please try again.')
         }

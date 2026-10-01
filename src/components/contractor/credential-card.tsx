@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { CREDENTIAL_TYPE_LABELS } from '@/lib/utils/constants'
 import { formatDate } from '@/lib/utils/format'
+import { credentialDocumentHref } from '@/lib/credentials/document'
 import { AlertTriangle, ExternalLink, ShieldCheck, Clock, XCircle } from 'lucide-react'
 
 export interface CredentialData {
@@ -116,7 +117,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
         </dl>
         {credential.document_url && (
           <a
-            href={credential.document_url}
+            href={credentialDocumentHref(credential.id)}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
