@@ -18,6 +18,10 @@ import {
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { US_STATES } from '@/lib/utils/constants'
+import { getInitials } from '@/lib/utils/format'
+import { normalizeLanguages } from '@/lib/profile/languages'
+import { HeadshotUpload } from '@/components/contractor/headshot-upload'
+import { LanguagesInput } from '@/components/contractor/languages-input'
 import { toast } from 'sonner'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -124,6 +128,10 @@ function calculateCompletion(data: FormData): number {
 export default function ContractorProfileEditPage() {
   const router = useRouter()
   const [formData, setFormData] = useState<FormData>(initialFormData)
+  // contractor_profiles.languages (TEXT[])
+  const [languages, setLanguages] = useState<string[]>([])
+  // profiles.avatar_url — written immediately by <HeadshotUpload>
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -154,6 +162,7 @@ export default function ContractorProfileEditPage() {
           is_available: data.is_available ?? true,
           professional_category: '',
         })
+        setLanguages(['English', 'Spanish'])
         setLoading(false)
         return
       }
@@ -170,7 +179,7 @@ export default function ContractorProfileEditPage() {
 
       const { data } = await supabase
         .from('contractor_profiles')
-        .select('*')
+        .select('*, profiles(avatar_url)')
         .eq('id', user.id)
         .single()
 
@@ -198,6 +207,9 @@ export default function ContractorProfileEditPage() {
           is_available: data.is_available ?? true,
           professional_category: data.professional_category ?? '',
         })
+        setLanguages(Array.isArray(data.languages) ? data.languages : [])
+        const linked = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles
+        setAvatarUrl(linked?.avatar_url ?? null)
       }
 
       setLoading(false)
@@ -280,6 +292,7 @@ export default function ContractorProfileEditPage() {
           ? parseInt(formData.travel_radius_miles, 10)
           : null,
         is_available: formData.is_available,
+        languages: normalizeLanguages(languages),
         profile_completion_pct: profileCompletion,
       }
 
@@ -335,6 +348,15 @@ export default function ContractorProfileEditPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label className="mb-2">Headshot</Label>
+                <HeadshotUpload
+                  avatarUrl={avatarUrl}
+                  initials={getInitials(formData.first_name, formData.last_name)}
+                  onUploaded={setAvatarUrl}
+                />
+              </div>
+
               <div>
                 <Label htmlFor="first_name">
                   First name <span className="text-red-600">*</span>
@@ -386,12 +408,27 @@ export default function ContractorProfileEditPage() {
                   name="bio"
                   value={formData.bio}
                   onChange={handleChange}
-                  placeholder="Tell facilities about your experience and skills..."
+                  placeholder="Tell clients about your background, experience, and how you work..."
                   rows={5}
                   className="mt-2"
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Languages */}
+        <Card>
+          <CardHeader>
+            <CardTitle id="languages-label" className="text-base font-semibold">
+              Languages
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p className="text-sm text-[#62646a]">
+              Select every language you can work with clients in.
+            </p>
+            <LanguagesInput value={languages} onChange={setLanguages} />
           </CardContent>
         </Card>
 

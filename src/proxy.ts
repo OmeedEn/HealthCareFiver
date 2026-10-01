@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = [
   '/find-care',
   '/terms',
   '/privacy',
+  '/legal',
 ]
 
 function isPublicRoute(pathname: string): boolean {
