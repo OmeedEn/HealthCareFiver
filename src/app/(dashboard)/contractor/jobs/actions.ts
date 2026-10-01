@@ -82,6 +82,14 @@ export async function applyToJob(
         message: 'You have already applied to this job.',
       }
     }
+    // Defense in depth: the job_applications_require_verified trigger
+    // (enforce_verified_applicant) re-checks can_go_live and reports which
+    // half is missing in the error HINT. Only reachable if state changed
+    // between the canGoLive() pre-check and the insert. The DB messages are
+    // written to be user-facing.
+    if (error.hint === 'not_verified' || error.hint === 'not_subscribed') {
+      return { ok: false, reason: error.hint, message: error.message }
+    }
     console.error('Job application insert failed:', error)
     return {
       ok: false,
