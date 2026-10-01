@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
@@ -83,6 +83,16 @@ const TYPE_HINTS: Record<string, { name: string; authority: string }> = {
   },
 }
 
+const MALPRACTICE = 'malpractice_insurance'
+const MALPRACTICE_DEFAULT_NAME = 'Professional liability / malpractice certificate'
+
+// CREDENTIAL_TYPE_LABELS predates malpractice uploads; add it here so the
+// dashboard's "Upload malpractice certificate" link can preselect it.
+const TYPE_OPTIONS: Record<string, string> = {
+  ...CREDENTIAL_TYPE_LABELS,
+  [MALPRACTICE]: 'Malpractice / professional liability insurance',
+}
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
@@ -94,11 +104,28 @@ function isImageMime(mime: string): boolean {
 }
 
 export default function CredentialUploadPage() {
+  // useSearchParams() needs a Suspense boundary on a prerendered page.
+  return (
+    <Suspense fallback={null}>
+      <CredentialUploadForm />
+    </Suspense>
+  )
+}
+
+function CredentialUploadForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const presetType = searchParams.get('type')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [saving, setSaving] = useState(false)
-  const [credentialType, setCredentialType] = useState('')
-  const [name, setName] = useState('')
+  const [credentialType, setCredentialType] = useState(() =>
+    presetType && presetType in TYPE_OPTIONS ? presetType : ''
+  )
+  const [name, setName] = useState(() =>
+    presetType === MALPRACTICE ? MALPRACTICE_DEFAULT_NAME : ''
+  )
+  // credentials.coverage_amount — malpractice only (e.g. "$1M / $3M")
+  const [coverageAmount, setCoverageAmount] = useState('')
   const [issuingAuthority, setIssuingAuthority] = useState('')
   const [licenseNumber, setLicenseNumber] = useState('')
   const [issuedDate, setIssuedDate] = useState('')
@@ -120,6 +147,7 @@ export default function CredentialUploadPage() {
   }, [file])
 
   const typeHint = credentialType ? TYPE_HINTS[credentialType] : undefined
+  const isMalpractice = credentialType === MALPRACTICE
 
   function validateAndSet(selected: File | null) {
     if (!selected) {
@@ -161,6 +189,26 @@ export default function CredentialUploadPage() {
     if (!credentialType || !name) {
       toast.error('Please fill in the required fields.')
       return
+    }
+
+    // Malpractice certificate: carrier → issuing_authority, policy number →
+    // license_number, coverage → coverage_amount, expiry → expiration_date.
+    if (isMalpractice) {
+      if (
+        !issuingAuthority.trim() ||
+        !licenseNumber.trim() ||
+        !coverageAmount.trim() ||
+        !expirationDate
+      ) {
+        toast.error(
+          'Add the carrier, policy number, coverage amount, and expiration date.'
+        )
+        return
+      }
+      if (!file) {
+        toast.error('Upload a copy of your malpractice certificate.')
+        return
+      }
     }
 
     if (file) {
@@ -217,7 +265,7 @@ export default function CredentialUploadPage() {
         documentFilename = file.name
       }
 
-      const { error } = await supabase.from('credentials').insert({
+      const row: Record<string, unknown> = {
         contractor_id: user.id,
         credential_type: credentialType,
         name,
@@ -228,7 +276,20 @@ export default function CredentialUploadPage() {
         status: 'pending_review',
         document_url: documentUrl,
         document_filename: documentFilename,
-      })
+      }
+      if (isMalpractice) row.coverage_amount = coverageAmount.trim()
+
+      let { error } = await supabase.from('credentials').insert(row)
+      // Before the v3 migration adds credentials.coverage_amount, keep the
+      // upload working without it (the certificate itself shows coverage).
+      if (
+        error &&
+        isMalpractice &&
+        /coverage_amount/.test(error.message ?? '')
+      ) {
+        delete row.coverage_amount
+        ;({ error } = await supabase.from('credentials').insert(row))
+      }
 
       if (error) {
         toast.error('Failed to save credential: ' + error.message)
@@ -270,10 +331,13 @@ export default function CredentialUploadPage() {
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Upload credential</h1>
+        <h1 className="text-2xl font-bold text-[#404145]">
+          {isMalpractice ? 'Upload malpractice certificate' : 'Upload credential'}
+        </h1>
         <p className="text-[#62646a]">
-          Add a professional license, certification, or other credential.
-          We&apos;ll verify it and make it visible to facilities once approved.
+          {isMalpractice
+            ? 'Upload your certificate of professional liability (malpractice) insurance. Once our team reviews it, your profile shows an "Insured" badge and listings for in-person care, home visits, prescribing, injectables, or IVs can go live.'
+            : "Add a professional license, certification, or other credential. We'll verify it and make it visible to facilities once approved."}
         </p>
       </div>
 
@@ -289,14 +353,21 @@ export default function CredentialUploadPage() {
                   Credential type <span className="text-red-600">*</span>
                 </Label>
                 <Select
+                  items={TYPE_OPTIONS}
                   value={credentialType}
-                  onValueChange={(v) => setCredentialType(v ?? '')}
+                  onValueChange={(v) => {
+                    const next = v ?? ''
+                    setCredentialType(next)
+                    if (next === MALPRACTICE && !name) {
+                      setName(MALPRACTICE_DEFAULT_NAME)
+                    }
+                  }}
                 >
                   <SelectTrigger id="credential_type" className="w-full">
                     <SelectValue placeholder="Select credential type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(CREDENTIAL_TYPE_LABELS).map(
+                    {Object.entries(TYPE_OPTIONS).map(
                       ([value, label]) => (
                         <SelectItem key={value} value={value}>
                           {label}
@@ -326,11 +397,20 @@ export default function CredentialUploadPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="issuing_authority">Issuing authority</Label>
+                <Label htmlFor="issuing_authority">
+                  {isMalpractice ? (
+                    <>
+                      Insurance carrier <span className="text-red-600">*</span>
+                    </>
+                  ) : (
+                    'Issuing authority'
+                  )}
+                </Label>
                 <Input
                   id="issuing_authority"
                   value={issuingAuthority}
                   onChange={(e) => setIssuingAuthority(e.target.value)}
+                  required={isMalpractice}
                   placeholder={
                     typeHint?.authority ??
                     'e.g., California Board of Registered Nursing'
@@ -340,15 +420,42 @@ export default function CredentialUploadPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="license_number">
-                  License / certificate number
+                  {isMalpractice ? (
+                    <>
+                      Policy number <span className="text-red-600">*</span>
+                    </>
+                  ) : (
+                    'License / certificate number'
+                  )}
                 </Label>
                 <Input
                   id="license_number"
                   value={licenseNumber}
                   onChange={(e) => setLicenseNumber(e.target.value)}
-                  placeholder="Number on the credential, if any"
+                  required={isMalpractice}
+                  placeholder={
+                    isMalpractice
+                      ? 'Policy number on the certificate'
+                      : 'Number on the credential, if any'
+                  }
                 />
               </div>
+
+              {isMalpractice && (
+                <div className="space-y-2">
+                  <Label htmlFor="coverage_amount">
+                    Coverage amount <span className="text-red-600">*</span>
+                  </Label>
+                  <Input
+                    id="coverage_amount"
+                    value={coverageAmount}
+                    onChange={(e) => setCoverageAmount(e.target.value)}
+                    maxLength={100}
+                    required
+                    placeholder="e.g., $1,000,000 per claim / $3,000,000 aggregate"
+                  />
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -361,11 +468,15 @@ export default function CredentialUploadPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="expiration_date">Expiration date</Label>
+                  <Label htmlFor="expiration_date">
+                    Expiration date
+                    {isMalpractice && <span className="text-red-600"> *</span>}
+                  </Label>
                   <Input
                     id="expiration_date"
                     type="date"
                     value={expirationDate}
+                    required={isMalpractice}
                     onChange={(e) => setExpirationDate(e.target.value)}
                   />
                 </div>
@@ -375,7 +486,16 @@ export default function CredentialUploadPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Supporting document</CardTitle>
+              <CardTitle>
+                {isMalpractice ? (
+                  <>
+                    Certificate of insurance{' '}
+                    <span className="text-red-600">*</span>
+                  </>
+                ) : (
+                  'Supporting document'
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <input
