@@ -16,41 +16,26 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { TERMS_VERSION } from '@/lib/legal'
+import {
+  ORG_NEEDS as NEEDS,
+  ORG_SIZES,
+  ORG_TYPES,
+} from '@/lib/onboarding/organization'
+import {
+  CheckEmailStep,
+  TermsConsent,
+  TwoFactorNotice,
+  type SignupResponse,
+} from '@/components/auth/signup-shared'
 import { Loader2, ArrowLeft, ArrowRight, Check } from 'lucide-react'
 
 type Step = 1 | 2 | 3 | 4
 
-// Note: organization types don't all map cleanly to the `facility_type`
-// Postgres enum. We send 'other' to the API for the non-enum values
-// (Corporate employer, Law firm, Startup, etc.) and surface the org's
-// raw type label in `org_label` for downstream use. The enum-only values
-// (hospital, clinic, etc.) pass through directly.
-const ORG_TYPES: { value: string; label: string; enumValue: string }[] = [
-  { value: 'hospital', label: 'Hospital or health system', enumValue: 'hospital' },
-  { value: 'clinic', label: 'Clinic or medical practice', enumValue: 'clinic' },
-  { value: 'asc', label: 'Ambulatory surgery center', enumValue: 'other' },
-  { value: 'nursing_home', label: 'Nursing home or long-term care', enumValue: 'nursing_home' },
-  { value: 'telehealth', label: 'Telehealth company', enumValue: 'telehealth' },
-  { value: 'gym', label: 'Gym or fitness facility', enumValue: 'other' },
-  { value: 'employer', label: 'Corporate employer (wellness programs)', enumValue: 'other' },
-  { value: 'law_firm', label: 'Law firm (healthcare legal needs)', enumValue: 'other' },
-  { value: 'startup', label: 'Startup or tech company', enumValue: 'other' },
-  { value: 'staffing', label: 'Staffing or recruiting firm', enumValue: 'staffing_agency' },
-  { value: 'other_health', label: 'Other healthcare business', enumValue: 'other' },
-  { value: 'other_non_health', label: 'Other non-healthcare business', enumValue: 'other' },
-]
-
-const ORG_SIZES = ['1–10', '11–50', '51–200', '201–500', '500+']
-
-const NEEDS = [
-  { key: 'clinical', label: 'Clinical services', sub: 'Nursing, PT, telehealth, direct care' },
-  { key: 'consulting', label: 'Healthcare consulting', sub: 'Compliance, operations, billing, management' },
-  { key: 'legal', label: 'Legal and regulatory expertise', sub: 'Attorneys, regulatory advisors' },
-  { key: 'education', label: 'Education and staff training', sub: 'CEU, workshops, corporate wellness' },
-  { key: 'nutrition', label: 'Nutrition and wellness programs', sub: 'RDNs, coaches, group programs' },
-  { key: 'mental_health', label: 'Mental health services', sub: 'For staff or patients' },
-  { key: 'it', label: 'Healthcare IT or EHR consulting', sub: 'Implementation, integration, audits' },
-]
+// The account is created on step 3 (after needs) so size, needs and the
+// "something else" text are sent in the same signup request. facility_profiles
+// has no columns for them, so they live in auth user metadata (`org_type`,
+// `org_size`, `org_needs`, `org_other_need`) — see lib/onboarding/organization.
 
 export default function OrganizationSignupPage() {
   const router = useRouter()
@@ -62,6 +47,7 @@ export default function OrganizationSignupPage() {
   const [contactLast, setContactLast] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   // Step 2
   const [orgName, setOrgName] = useState('')
@@ -74,10 +60,29 @@ export default function OrganizationSignupPage() {
   // Step 3
   const [needs, setNeeds] = useState<Set<string>>(new Set())
   const [otherNeed, setOtherNeed] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
-  const canStep1 = contactFirst && contactLast && email && password.length >= 8
-  const canStep2 = orgName && orgType && orgSize && city && state && zipCode.length === 5
-  const canStep3 = needs.size > 0
+  // Step 4 — set when Supabase requires email confirmation (no session yet)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
+
+  const canStep1 =
+    !!contactFirst.trim() &&
+    !!contactLast.trim() &&
+    !!email.trim() &&
+    password.length >= 8 &&
+    password === confirmPassword
+  const canStep2 =
+    !!orgName.trim() &&
+    !!orgType &&
+    !!orgSize &&
+    !!city.trim() &&
+    !!state &&
+    /^\d{5}$/.test(zipCode.trim())
+  const canStep3 =
+    canStep1 &&
+    canStep2 &&
+    (needs.size > 0 || otherNeed.trim().length > 0) &&
+    acceptedTerms
 
   function toggleNeed(key: string) {
     setNeeds((prev) => {
@@ -88,27 +93,26 @@ export default function OrganizationSignupPage() {
     })
   }
 
-  async function submitAccount() {
-    setLoading(true)
-    if (isDemoMode()) {
-      // Defer the actual API call to step 4 in demo; advance.
-      setStep(2)
-      setLoading(false)
-      return
-    }
-    setStep(2)
-    setLoading(false)
+  function startOver() {
+    setNeedsConfirmation(false)
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    setAcceptedTerms(false)
+    setStep(1)
   }
 
-  async function submitOrg() {
+  async function submitSignup() {
+    if (!canStep3 || loading) return
     setLoading(true)
     if (isDemoMode()) {
-      setStep(3)
+      setStep(4)
       setLoading(false)
       return
     }
     try {
       const chosen = ORG_TYPES.find((t) => t.value === orgType)
+      const other = otherNeed.trim()
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -122,14 +126,21 @@ export default function OrganizationSignupPage() {
           city: city.trim(),
           state,
           zip_code: zipCode.trim(),
+          ...(chosen ? { org_type: chosen.value } : {}),
+          org_size: orgSize,
+          org_needs: Array.from(needs),
+          ...(other ? { org_other_need: other } : {}),
+          accepted_terms: true,
+          terms_version: TERMS_VERSION,
         }),
       })
+      const body: SignupResponse = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
         toast.error(body.error || 'Could not create account')
         return
       }
-      setStep(3)
+      setNeedsConfirmation(Boolean(body.needsEmailConfirmation))
+      setStep(4)
     } catch {
       toast.error('Network error — please try again')
     } finally {
@@ -137,20 +148,17 @@ export default function OrganizationSignupPage() {
     }
   }
 
-  function submitNeeds() {
-    toast.success(`Welcome to Sanus, ${orgName}!`)
-    setStep(4)
-  }
-
   return (
     <div>
-      <Link
-        href="/signup"
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
-      >
-        <ArrowLeft className="size-3.5" />
-        Back
-      </Link>
+      {step < 4 && (
+        <Link
+          href="/signup"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
+        >
+          <ArrowLeft className="size-3.5" />
+          Back
+        </Link>
+      )}
 
       <Progress step={step} total={4} />
 
@@ -160,7 +168,8 @@ export default function OrganizationSignupPage() {
             Hire health expertise for your organization
           </h1>
           <p className="mt-1.5 text-sm text-[#62646a]">
-            Create an account. Next we&apos;ll get your organization details.
+            Start with your contact details. Next we&apos;ll get your
+            organization details.
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -170,23 +179,31 @@ export default function OrganizationSignupPage() {
           <div className="mt-3">
             <Field label="Work email address" id="email" type="email" value={email} onChange={setEmail} autoComplete="email" placeholder="you@company.com" />
           </div>
-          <div className="mt-3">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field label="Password" id="pw" type="password" value={password} onChange={setPassword} autoComplete="new-password" placeholder="Min 8 characters" />
+            <Field label="Confirm password" id="pw2" type="password" value={confirmPassword} onChange={setConfirmPassword} autoComplete="new-password" placeholder="Repeat password" />
           </div>
+          {password.length > 0 && password.length < 8 ? (
+            <p className="mt-2 text-xs text-[#c0392b]">
+              Password must be at least 8 characters ({password.length}/8).
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-[#62646a]">
+              Use at least 8 characters. A longer passphrase is stronger.
+            </p>
+          )}
+          {confirmPassword && password !== confirmPassword && (
+            <p className="mt-1 text-xs text-red-600">Passwords don&apos;t match.</p>
+          )}
 
           <Button
-            disabled={!canStep1 || loading}
-            onClick={submitAccount}
+            disabled={!canStep1}
+            onClick={() => setStep(2)}
             className="mt-6 h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
           >
-            {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
             Continue
             <ArrowRight className="ml-2 size-4" />
           </Button>
-          <p className="mt-3 text-center text-xs text-[#62646a]">
-            By continuing you agree to Sanus&apos;s Terms of Service and
-            Privacy Policy.
-          </p>
         </div>
       )}
 
@@ -247,8 +264,7 @@ export default function OrganizationSignupPage() {
             <Button variant="outline" onClick={() => setStep(1)} className="h-11 flex-1">
               <ArrowLeft className="mr-2 size-4" />Back
             </Button>
-            <Button disabled={!canStep2 || loading} onClick={submitOrg} className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">
-              {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+            <Button disabled={!canStep2} onClick={() => setStep(3)} className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">
               Continue<ArrowRight className="ml-2 size-4" />
             </Button>
           </div>
@@ -295,22 +311,29 @@ export default function OrganizationSignupPage() {
             })}
             <div className="mt-2 space-y-1.5">
               <Label htmlFor="other" className="text-xs font-medium text-[#62646a]">Something else (optional)</Label>
-              <Input id="other" value={otherNeed} onChange={(e) => setOtherNeed(e.target.value)} placeholder="Describe what you need…" className="h-10" />
+              <Input id="other" value={otherNeed} onChange={(e) => setOtherNeed(e.target.value)} placeholder="Describe what you need…" maxLength={500} className="h-10" />
             </div>
           </div>
 
+          <TermsConsent checked={acceptedTerms} onChange={setAcceptedTerms} />
+
           <div className="mt-6 flex gap-3">
-            <Button variant="outline" onClick={() => setStep(2)} className="h-11 flex-1">
+            <Button variant="outline" onClick={() => setStep(2)} disabled={loading} className="h-11 flex-1">
               <ArrowLeft className="mr-2 size-4" />Back
             </Button>
-            <Button disabled={!canStep3} onClick={submitNeeds} className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">
-              Continue<ArrowRight className="ml-2 size-4" />
+            <Button disabled={!canStep3 || loading} onClick={submitSignup} className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">
+              {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Create account<ArrowRight className="ml-2 size-4" />
             </Button>
           </div>
         </div>
       )}
 
-      {step === 4 && (
+      {step === 4 && needsConfirmation && (
+        <CheckEmailStep email={email.trim().toLowerCase()} onStartOver={startOver} />
+      )}
+
+      {step === 4 && !needsConfirmation && (
         <div className="mt-6 text-center">
           <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#e8faf1]">
             <Check className="size-8 text-[#1dbf73]" />
@@ -321,7 +344,10 @@ export default function OrganizationSignupPage() {
           <p className="mt-2 text-sm text-[#62646a]">
             Your organization account is ready. Pick how you want to start.
           </p>
-          <div className="mt-8 space-y-3">
+          <div className="mt-6">
+            <TwoFactorNotice />
+          </div>
+          <div className="mt-6 space-y-3">
             <Button
               onClick={() => router.push('/find-care')}
               className="h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"

@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server'
 import { currentUser } from '@/lib/auth/roles'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { submitContractorForReview } from '@/lib/verification/submit-for-review'
 
 /**
- * Called after a contractor uploads a new credential. If they were
- * previously asked for more information, flips their verification status
- * back to `pending_review` so the admin queue picks them up again.
- *
- * This can ONLY perform the more_info_requested -> pending_review
- * transition — it never grants approval. That keeps it safe to expose to
- * the contractor themself even though verification_status is otherwise
- * admin-only (see 20260808000001_add_provider_verification.sql).
+ * Called after a contractor uploads a credential. Moves them into the admin
+ * verification queue (`pending_review`) when they are `not_submitted` or
+ * `more_info_requested`. See submitContractorForReview() for the (narrow)
+ * transitions this can perform.
  */
 export async function POST() {
   const user = await currentUser()
@@ -19,19 +15,15 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const adminSupabase = createAdminClient()
+  if (user.role !== 'contractor') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
-  const { data, error } = await adminSupabase
-    .from('contractor_profiles')
-    .update({ verification_status: 'pending_review' })
-    .eq('id', user.id)
-    .eq('verification_status', 'more_info_requested')
-    .select('id')
-    .maybeSingle()
+  const result = await submitContractorForReview(user.id)
 
-  if (error) {
+  if (!result.ok) {
     return NextResponse.json({ error: 'Failed to update status' }, { status: 500 })
   }
 
-  return NextResponse.json({ resubmitted: !!data })
+  return NextResponse.json({ resubmitted: result.resubmitted })
 }

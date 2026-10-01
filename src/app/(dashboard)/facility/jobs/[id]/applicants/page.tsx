@@ -133,7 +133,7 @@ export default async function ApplicantsPage({
   const { data: applicants } = await supabase
     .from('job_applications')
     .select(
-      'id, status, cover_letter, proposed_rate, available_start_date, created_at, contractor_profiles(id, first_name, last_name, contractor_type, years_experience, average_rating, city, state)'
+      'id, status, cover_letter, proposed_rate, available_start_date, created_at, contractor_profiles(id, first_name, last_name, contractor_type, years_experience:years_of_experience, average_rating, city, state)'
     )
     .eq('job_id', id)
     .order('created_at', { ascending: false })

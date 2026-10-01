@@ -85,8 +85,8 @@ export function JobDetailActions({
         {hasApplied ? (
           <Button disabled>Already Applied</Button>
         ) : !isVerified ? (
-          <Button disabled title="Your account is pending verification">
-            Pending Verification
+          <Button disabled title="You can apply once your credentials are verified">
+            Verification Required
           </Button>
         ) : (
           <JobApplicationForm
@@ -97,7 +97,7 @@ export function JobDetailActions({
       </div>
       {!hasApplied && !isVerified && (
         <p className="text-right text-xs text-muted-foreground">
-          You can apply once your provider verification is approved.
+          You can apply once your credentials are verified.
         </p>
       )}
       {hasApplied && applicationStatus && (

@@ -27,8 +27,9 @@ import {
   Users,
   AlertTriangle,
   LogOut,
-  Crown,
+  Receipt,
   GraduationCap,
+  Bell,
 } from 'lucide-react'
 
 type NavItem = {
@@ -45,7 +46,7 @@ const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: GraduationCap },
-  { label: 'Membership', href: '/membership', icon: Crown },
+  { label: 'Pricing', href: '/membership', icon: Receipt },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
@@ -73,12 +74,24 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
+// Clients (consumers seeking care) only get routes that exist and make sense
+// for them — never the contractor nav, which leads to the provider paywall.
+const CLIENT_NAV: NavItem[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Find care', href: '/find-care', icon: Search },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
+]
+
 function getNavItems(role: string): NavItem[] {
   switch (role) {
     case 'facility':
       return FACILITY_NAV
     case 'admin':
       return ADMIN_NAV
+    case 'client':
+      return CLIENT_NAV
     default:
       return CONTRACTOR_NAV
   }
@@ -119,7 +132,7 @@ function NavLinks({
 }
 
 interface SidebarProps {
-  role: 'contractor' | 'facility' | 'admin'
+  role: 'contractor' | 'facility' | 'admin' | 'client'
   userName: string
   userEmail: string
   variant: 'desktop' | 'mobile'

@@ -25,6 +25,8 @@ import {
   Building2,
   CheckCircle2,
   TrendingUp,
+  Search,
+  CalendarDays,
 } from 'lucide-react'
 import Link from 'next/link'
 import {
@@ -38,7 +40,14 @@ import {
   DEMO_PROVIDERS,
 } from '@/lib/demo/data'
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
+import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
+import {
+  buildContractorChecklist,
+  isNewAccount,
+  type ChecklistItem,
+  type ContractorChecklist,
+} from '@/lib/onboarding/contractor-checklist'
 
 type DashboardJob = {
   id: string
@@ -105,16 +114,50 @@ type FacilityKpis = {
   spendThisMonth: number
 }
 
+/** Real counts for the contractor stat row (demo mode uses mocked values). */
+type ContractorStats = {
+  applications: number
+  activeContracts: number
+  credentials: number
+}
+
+/** First-run setup state for a facility (both done → card hidden). */
+type FacilitySetup = {
+  hasPostedJob: boolean
+  orgProfileMissing: string[]
+}
+
+const FACILITY_PROFILE_FIELDS: { key: string; label: string }[] = [
+  { key: 'description', label: 'description' },
+  { key: 'phone', label: 'phone' },
+  { key: 'city', label: 'city' },
+  { key: 'state', label: 'state' },
+  { key: 'contact_name', label: 'contact name' },
+]
+
+function missingFacilityFields(row: Record<string, unknown> | null): string[] {
+  return FACILITY_PROFILE_FIELDS.filter(({ key }) => {
+    const v = row?.[key]
+    return !(typeof v === 'string' && v.trim().length > 0)
+  }).map(({ label }) => label)
+}
+
 export default async function DashboardPage() {
-  let role: 'contractor' | 'facility' | 'admin' = 'contractor'
+  let role: 'contractor' | 'facility' | 'admin' | 'client' = 'contractor'
   let firstName = 'there'
-  let profile: Record<string, unknown> | null = null
   let jobs: DashboardJob[] = []
   let activity: DashboardNotification[] = []
   let specialties: string[] = []
   let contractorType: string | null = null
   let verificationStatus: string | null = null
   let verificationNotes: string | null = null
+  let checklist: ContractorChecklist | null = null
+  let contractorStats: ContractorStats | null = null
+  let accountCreatedAt: string | null = null
+
+  // Client-specific data
+  let clientInterests: string[] = []
+  let clientLocation: string | null = null
 
   // Facility-specific data
   let facilityKpis: FacilityKpis = {
@@ -126,6 +169,7 @@ export default async function DashboardPage() {
   let facilityJobs: FacilityJobRow[] = []
   let facilityApplicants: FacilityApplicantRow[] = []
   let facilityContracts: FacilityContractRow[] = []
+  let facilitySetup: FacilitySetup | null = null
 
   if (isDemoMode()) {
     // Read the demo role override cookie set by DemoRoleSwitcher.
@@ -141,7 +185,6 @@ export default async function DashboardPage() {
 
     if (role === 'facility') {
       firstName = DEMO_FACILITY.facility_name
-      profile = {}
       const ownJobs = DEMO_JOBS.filter(
         (j) => j.facility_id === DEMO_FACILITY.id,
       )
@@ -219,13 +262,19 @@ export default async function DashboardPage() {
         }))
     } else if (role === 'admin') {
       firstName = 'Admin'
-      profile = {}
     } else {
       // contractor (default)
       firstName = DEMO_CONTRACTOR.first_name
-      profile = {
-        profile_completion_pct: 85,
-      }
+      // Mocked setup state: everything done except payouts, so the demo
+      // shows the checklist mid-way ("4 of 5").
+      checklist = buildContractorChecklist({
+        profile: DEMO_CONTRACTOR,
+        credentialCount: 5,
+        verificationStatus: 'approved',
+        stripeConnectId: DEMO_CONTRACTOR.stripe_connect_id,
+        stripeConnectOnboarded: DEMO_CONTRACTOR.stripe_connect_onboarded,
+        agreementAcceptedAt: '2026-01-01T00:00:00.000Z',
+      })
     }
 
     // Contractor-only demo data — only compute if we're in contractor view.
@@ -278,22 +327,99 @@ export default async function DashboardPage() {
       .eq('id', user.id)
       .single()
 
-    profile = profileData
+    accountCreatedAt =
+      (profileData?.created_at as string | undefined) ?? user.created_at ?? null
     role = (profileData?.role ?? user.user_metadata?.role ?? 'contractor') as
       | 'contractor'
       | 'facility'
       | 'admin'
+      | 'client'
     firstName =
       profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
 
-    if (role === 'contractor') {
-      const { data: verificationRow } = await supabase
-        .from('contractor_profiles')
-        .select('verification_status, verification_notes')
+    if (role === 'client') {
+      const { data: clientRow } = await supabase
+        .from('client_profiles')
+        .select('first_name, interests, city, state')
         .eq('id', user.id)
         .maybeSingle()
-      verificationStatus = verificationRow?.verification_status ?? null
-      verificationNotes = verificationRow?.verification_notes ?? null
+      if (typeof clientRow?.first_name === 'string' && clientRow.first_name) {
+        firstName = clientRow.first_name
+      }
+      clientInterests = Array.isArray(clientRow?.interests)
+        ? (clientRow.interests as string[])
+        : []
+      clientLocation =
+        [clientRow?.city, clientRow?.state]
+          .filter((v): v is string => typeof v === 'string' && v.length > 0)
+          .join(', ') || null
+    }
+
+    if (role === 'contractor') {
+      const [
+        { data: contractorRow },
+        { count: credentialCount },
+        { count: applicationCount },
+        { count: activeContractCount },
+        { data: agreementRow, error: agreementError },
+      ] = await Promise.all([
+        supabase
+          .from('contractor_profiles')
+          .select(
+            'first_name, verification_status, verification_notes, professional_category, contractor_type, headline, bio, specialties, hourly_rate_min, hourly_rate_max, city, state, state_license_number, license_state'
+          )
+          .eq('id', user.id)
+          .maybeSingle(),
+        supabase
+          .from('credentials')
+          .select('id', { count: 'exact', head: true })
+          .eq('contractor_id', user.id),
+        supabase
+          .from('job_applications')
+          .select('id', { count: 'exact', head: true })
+          .eq('contractor_id', user.id),
+        supabase
+          .from('contracts')
+          .select('id', { count: 'exact', head: true })
+          .eq('contractor_id', user.id)
+          .eq('status', 'active'),
+        // Separate query so a missing column (migration not yet applied)
+        // can't break the main contractor_profiles select above.
+        supabase
+          .from('contractor_profiles')
+          .select('contractor_agreement_accepted_at')
+          .eq('id', user.id)
+          .maybeSingle(),
+      ])
+      if (firstName === 'there' && contractorRow?.first_name) {
+        firstName = contractorRow.first_name as string
+      }
+      verificationStatus = contractorRow?.verification_status ?? null
+      verificationNotes = contractorRow?.verification_notes ?? null
+      specialties = Array.isArray(contractorRow?.specialties)
+        ? (contractorRow.specialties as string[])
+        : []
+      contractorType =
+        (contractorRow?.contractor_type as string | null | undefined) ?? null
+
+      contractorStats = {
+        applications: applicationCount ?? 0,
+        activeContracts: activeContractCount ?? 0,
+        credentials: credentialCount ?? 0,
+      }
+      checklist = buildContractorChecklist({
+        profile: contractorRow,
+        credentialCount: credentialCount ?? 0,
+        verificationStatus,
+        stripeConnectId: profileData?.stripe_connect_id ?? null,
+        stripeConnectOnboarded: profileData?.stripe_connect_onboarded ?? false,
+        agreementAcceptedAt: agreementError
+          ? null
+          : ((agreementRow?.contractor_agreement_accepted_at as
+              | string
+              | null
+              | undefined) ?? null),
+      })
 
       const { data: jobsData } = await supabase
         .from('jobs')
@@ -346,53 +472,99 @@ export default async function DashboardPage() {
         .limit(5)
 
       activity = (notifData ?? []) as DashboardNotification[]
+    }
 
-      const profileSpecialties = Array.isArray(
-        (profileData as Record<string, unknown> | null)?.specialties
-      )
-        ? ((profileData as Record<string, unknown>).specialties as string[])
-        : null
-
-      if (profileSpecialties) {
-        specialties = profileSpecialties
-      } else {
-        const { data: contractorProfile } = await supabase
-          .from('contractor_profiles')
-          .select('specialties, contractor_type')
+    if (role === 'facility') {
+      const [
+        { data: facilityRow },
+        { data: recentJobs },
+        { data: openJobs },
+        { count: activeContractCount },
+        { data: notifData },
+      ] = await Promise.all([
+        supabase
+          .from('facility_profiles')
+          .select('description, phone, city, state, contact_name')
           .eq('id', user.id)
-          .single()
-        specialties = Array.isArray(contractorProfile?.specialties)
-          ? (contractorProfile?.specialties as string[])
-          : []
-        contractorType =
-          (contractorProfile?.contractor_type as string | null) ?? null
-      }
+          .maybeSingle(),
+        supabase
+          .from('jobs')
+          .select(
+            'id, title, status, city, state, total_applicants, positions_available, positions_filled, published_at'
+          )
+          .eq('facility_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(4),
+        supabase
+          .from('jobs')
+          .select('total_applicants')
+          .eq('facility_id', user.id)
+          .eq('status', 'open'),
+        supabase
+          .from('contracts')
+          .select('id', { count: 'exact', head: true })
+          .eq('facility_id', user.id)
+          .eq('status', 'active'),
+        supabase
+          .from('notifications')
+          .select('id, type, title, body, is_read, created_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5),
+      ])
 
-      if (!contractorType) {
-        const ct = (profileData as Record<string, unknown> | null)
-          ?.contractor_type
-        if (typeof ct === 'string') contractorType = ct
+      facilityJobs = (recentJobs ?? []) as FacilityJobRow[]
+      const open = (openJobs ?? []) as { total_applicants: number | null }[]
+      facilityKpis = {
+        activeJobs: open.length,
+        totalApplicants: open.reduce(
+          (sum, j) => sum + (j.total_applicants ?? 0),
+          0,
+        ),
+        activeContracts: activeContractCount ?? 0,
+        spendThisMonth: 0,
+      }
+      activity = (notifData ?? []) as DashboardNotification[]
+      facilitySetup = {
+        hasPostedJob: facilityJobs.length > 0,
+        orgProfileMissing: missingFacilityFields(
+          facilityRow as Record<string, unknown> | null,
+        ),
       }
     }
   }
 
+  const setupComplete =
+    role === 'contractor'
+      ? (checklist?.allDone ?? true)
+      : role === 'facility' && facilitySetup
+        ? facilitySetup.hasPostedJob &&
+          facilitySetup.orgProfileMissing.length === 0
+        : true
+  const greeting = isNewAccount({ createdAt: accountCreatedAt, setupComplete })
+    ? 'Welcome'
+    : 'Welcome back'
+
   return (
     <div className="space-y-6">
-      {isDemoMode() && (
+      {isDemoMode() && role !== 'client' && (
         <DemoRoleSwitcher current={role} />
       )}
-      <div>
-        <h1 className="text-2xl font-bold text-[#404145]">
-          Welcome back, {firstName}!
-        </h1>
-        <p className="text-[#62646a]">
-          Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
-        </p>
-      </div>
+      {role !== 'client' && (
+        <div>
+          <h1 className="text-2xl font-bold text-[#404145]">
+            {greeting}, {firstName}!
+          </h1>
+          <p className="text-[#62646a]">
+            Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
+          </p>
+        </div>
+      )}
 
       {role === 'contractor' && (
         <ContractorDashboard
-          profile={profile}
+          checklist={checklist}
+          stats={contractorStats}
           isDemo={isDemoMode()}
           jobs={jobs}
           activity={activity}
@@ -409,25 +581,49 @@ export default async function DashboardPage() {
           applicants={facilityApplicants}
           contracts={facilityContracts}
           activity={activity}
+          setup={facilitySetup}
           isDemo={isDemoMode()}
         />
       )}
       {role === 'admin' && <AdminDashboard />}
+      {role === 'client' && (
+        <ClientDashboard
+          firstName={firstName}
+          interests={clientInterests}
+          location={clientLocation}
+        />
+      )}
     </div>
   )
 }
 
 const VERIFICATION_BANNER: Record<
   string,
-  { title: string; className: string; iconClassName: string }
+  {
+    title: string
+    body?: string
+    cta?: { label: string; href: string }
+    className: string
+    iconClassName: string
+  }
 > = {
+  not_submitted: {
+    title: 'Get verified to go live',
+    body: 'Upload your license or certification and a government ID. Our team reviews within 24–48 hours.',
+    cta: { label: 'Upload documents', href: '/contractor/credentials/upload' },
+    className: 'border-[#bcebd5] bg-[#e8faf1]',
+    iconClassName: 'text-[#0f8f56]',
+  },
   pending_review: {
     title: 'Your account is pending verification',
+    body:
+      "An admin is reviewing your submitted documents. You'll be notified once you're approved to go live and apply to jobs.",
     className: 'border-[#f5deb3] bg-[#fdf6e3]',
     iconClassName: 'text-[#b8860b]',
   },
   more_info_requested: {
     title: 'Action needed: more information requested',
+    cta: { label: 'Upload Requested Document', href: '/contractor/credentials/upload' },
     className: 'border-[#f5c6cb] bg-[#fdecea]',
     iconClassName: 'text-[#c0392b]',
   },
@@ -462,20 +658,17 @@ function VerificationBanner({
             {notes}
           </CardDescription>
         )}
-        {status === 'pending_review' && !notes && (
-          <CardDescription>
-            An admin is reviewing your submitted documents. You&apos;ll be notified once
-            you&apos;re approved to go live and apply to jobs.
-          </CardDescription>
+        {config.body && !notes && (
+          <CardDescription>{config.body}</CardDescription>
         )}
       </CardHeader>
-      {status === 'more_info_requested' && (
+      {config.cta && (
         <CardContent>
           <Link
-            href="/contractor/credentials/upload"
+            href={config.cta.href}
             className="text-sm font-black text-[#1dbf73] hover:underline"
           >
-            Upload Requested Document &rarr;
+            {config.cta.label} &rarr;
           </Link>
         </CardContent>
       )}
@@ -484,7 +677,8 @@ function VerificationBanner({
 }
 
 function ContractorDashboard({
-  profile,
+  checklist,
+  stats,
   isDemo,
   jobs,
   activity,
@@ -493,7 +687,8 @@ function ContractorDashboard({
   verificationStatus,
   verificationNotes,
 }: {
-  profile: Record<string, unknown> | null
+  checklist: ContractorChecklist | null
+  stats: ContractorStats | null
   isDemo: boolean
   jobs: DashboardJob[]
   activity: DashboardNotification[]
@@ -502,67 +697,74 @@ function ContractorDashboard({
   verificationStatus: string | null
   verificationNotes: string | null
 }) {
-  const completionPct =
-    typeof profile?.profile_completion_pct === 'number'
-      ? profile.profile_completion_pct
-      : 0
-
   const contractorTypeLabel = contractorType
     ? CONTRACTOR_TYPE_LABELS[contractorType] ?? contractorType.toUpperCase()
     : null
 
+  // Real users only see real counts; a brand-new account with nothing yet
+  // gets no stat row at all rather than a wall of zeros.
+  const showRealStats =
+    !isDemo &&
+    stats != null &&
+    stats.applications + stats.activeContracts + stats.credentials > 0
+
   return (
     <div className="space-y-6">
       <VerificationBanner status={verificationStatus} notes={verificationNotes} />
-      {completionPct < 100 && (
-        <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
-              <AlertCircle className="h-5 w-5" />
-              Complete Your Profile
-            </CardTitle>
-            <CardDescription className="font-semibold text-[#0f8f56]">
-              Your profile is {completionPct}% complete. A complete profile helps you
-              get matched with more jobs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link
-              href="/settings"
-              className="text-sm font-black text-[#1dbf73] hover:underline"
-            >
-              Go to Profile Settings &rarr;
-            </Link>
-          </CardContent>
-        </Card>
+      {checklist && !checklist.allDone && (
+        <SetupChecklistCard checklist={checklist} />
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Job Matches"
-          value={isDemo ? '24' : '--'}
-          description="New matches this week"
-          icon={Briefcase}
-        />
-        <StatCard
-          title="Credentials"
-          value={isDemo ? '5' : '--'}
-          description="Active credentials"
-          icon={ShieldCheck}
-        />
-        <StatCard
-          title="Active Contracts"
-          value={isDemo ? '1' : '--'}
-          description="Currently working"
-          icon={FileText}
-        />
-        <StatCard
-          title="Earnings"
-          value={isDemo ? '$1,697.40' : '--'}
-          description="This month"
-          icon={CreditCard}
-        />
-      </div>
+      {isDemo && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Job Matches"
+            value="24"
+            description="New matches this week"
+            icon={Briefcase}
+          />
+          <StatCard
+            title="Credentials"
+            value="5"
+            description="Active credentials"
+            icon={ShieldCheck}
+          />
+          <StatCard
+            title="Active Contracts"
+            value="1"
+            description="Currently working"
+            icon={FileText}
+          />
+          <StatCard
+            title="Earnings"
+            value="$1,697.40"
+            description="This month"
+            icon={CreditCard}
+          />
+        </div>
+      )}
+      {showRealStats && stats && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Applications"
+            value={String(stats.applications)}
+            description="Jobs you've applied to"
+            icon={Briefcase}
+          />
+          <StatCard
+            title="Active Contracts"
+            value={String(stats.activeContracts)}
+            description="Currently working"
+            icon={FileText}
+          />
+          <StatCard
+            title="Credentials"
+            value={String(stats.credentials)}
+            description="Uploaded documents"
+            icon={ShieldCheck}
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -730,6 +932,106 @@ function ContractorDashboard({
   )
 }
 
+const CHECKLIST_STATE_STYLES: Record<
+  ChecklistItem['state'],
+  { label: string; className: string }
+> = {
+  done: { label: 'Done', className: 'bg-[#e8faf1] text-[#0f8f56]' },
+  todo: { label: 'To do', className: 'bg-[#f1f3f5] text-[#404145]' },
+  in_progress: { label: 'In progress', className: 'bg-[#fdf6e3] text-[#8a6508]' },
+  action_needed: {
+    label: 'Action needed',
+    className: 'bg-[#fdecea] text-[#c0392b]',
+  },
+  locked: { label: 'Locked', className: 'bg-[#f1f3f5] text-[#6b7280]' },
+}
+
+function SetupChecklistCard({ checklist }: { checklist: ContractorChecklist }) {
+  const pct = Math.round((checklist.completed / checklist.total) * 100)
+  return (
+    <Card className="rounded-md">
+      <CardHeader>
+        <CardTitle className="text-[#404145]">Get set up</CardTitle>
+        <CardDescription>
+          {checklist.completed} of {checklist.total} done — finish these to go
+          live and start getting booked.
+        </CardDescription>
+        <CardAction>
+          <span className="text-sm font-semibold text-[#0f8f56]">
+            {checklist.completed}/{checklist.total}
+          </span>
+        </CardAction>
+        <div
+          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#f1f3f5]"
+          role="progressbar"
+          aria-label="Setup progress"
+          aria-valuemin={0}
+          aria-valuemax={checklist.total}
+          aria-valuenow={checklist.completed}
+        >
+          <div
+            className="h-full rounded-full bg-[#1dbf73]"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ol className="divide-y divide-[#f1f3f5]">
+          {checklist.items.map((item, i) => {
+            const style = CHECKLIST_STATE_STYLES[item.state]
+            const done = item.state === 'done'
+            return (
+              <li
+                key={item.key}
+                className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                {done ? (
+                  <CheckCircle2
+                    className="mt-0.5 size-5 shrink-0 text-[#1dbf73]"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span
+                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-[#c5c6c9] text-[11px] font-semibold text-[#62646a]"
+                    aria-hidden="true"
+                  >
+                    {i + 1}
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p
+                      className={`text-sm font-medium ${
+                        done ? 'text-[#62646a] line-through' : 'text-[#404145]'
+                      }`}
+                    >
+                      {item.title}
+                    </p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${style.className}`}
+                    >
+                      {style.label}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-sm text-[#62646a]">{item.detail}</p>
+                </div>
+                {item.href && item.cta && (
+                  <Link
+                    href={item.href}
+                    className="shrink-0 text-sm font-semibold text-[#1dbf73] hover:underline"
+                  >
+                    {item.cta} &rarr;
+                  </Link>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+      </CardContent>
+    </Card>
+  )
+}
+
 const SUGGESTED_CREDENTIALS: { name: string; description: string }[] = [
   {
     name: 'ACLS Certification',
@@ -848,6 +1150,7 @@ function FacilityDashboard({
   applicants,
   contracts,
   activity,
+  setup,
   isDemo,
 }: {
   kpis: FacilityKpis
@@ -855,6 +1158,7 @@ function FacilityDashboard({
   applicants: FacilityApplicantRow[]
   contracts: FacilityContractRow[]
   activity: DashboardNotification[]
+  setup: FacilitySetup | null
   isDemo: boolean
 }) {
   const moneyFmt = new Intl.NumberFormat('en-US', {
@@ -862,66 +1166,112 @@ function FacilityDashboard({
     currency: 'USD',
     maximumFractionDigits: 0,
   })
-  const noJobsYet = jobs.length === 0
+  // Demo mode has no real setup state; fall back to "has jobs" there.
+  const hasPostedJob = setup ? setup.hasPostedJob : jobs.length > 0
+  const orgProfileMissing = setup?.orgProfileMissing ?? []
+  const showFirstRun = !hasPostedJob || orgProfileMissing.length > 0
+  // Hide the stat row for a brand-new facility rather than show zeros.
+  const showRealStats =
+    !isDemo && (hasPostedJob || kpis.activeContracts > 0)
 
   return (
     <div className="space-y-6">
-      {noJobsYet && (
+      {showFirstRun && (
         <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
               <PlusCircle className="h-5 w-5" />
-              Post your first job
+              Get started
             </CardTitle>
             <CardDescription className="font-semibold text-[#0f8f56]">
-              Start finding qualified healthcare professionals for your
-              facility.
+              Two quick steps to start finding qualified healthcare
+              professionals.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link
-              href="/facility/jobs/new"
-              className="text-sm font-semibold text-[#1dbf73] hover:underline"
-            >
-              Post a job &rarr;
-            </Link>
+            <ul className="space-y-3">
+              <FirstRunItem
+                done={hasPostedJob}
+                title="Post your first job"
+                detail="Describe the role, schedule, and pay."
+                href="/facility/jobs/new"
+                cta="Post a job"
+              />
+              <FirstRunItem
+                done={orgProfileMissing.length === 0}
+                title="Complete your organization profile"
+                detail={
+                  orgProfileMissing.length > 0
+                    ? `Add your ${orgProfileMissing.join(', ')}.`
+                    : 'Professionals can see who they would work with.'
+                }
+                href="/facility/profile"
+                cta="Edit profile"
+              />
+            </ul>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Active jobs"
-          value={isDemo ? String(kpis.activeJobs) : '--'}
-          description="Currently posted"
-          icon={Briefcase}
-        />
-        <StatCard
-          title="Total applicants"
-          value={isDemo ? String(kpis.totalApplicants) : '--'}
-          description="Across all open jobs"
-          icon={ClipboardList}
-        />
-        <StatCard
-          title="Active contracts"
-          value={isDemo ? String(kpis.activeContracts) : '--'}
-          description="Currently in progress"
-          icon={FileText}
-        />
-        <StatCard
-          title="Spend"
-          value={isDemo ? moneyFmt.format(kpis.spendThisMonth) : '--'}
-          description="This month"
-          icon={CreditCard}
-        />
-      </div>
+      {isDemo && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Active jobs"
+            value={String(kpis.activeJobs)}
+            description="Currently posted"
+            icon={Briefcase}
+          />
+          <StatCard
+            title="Total applicants"
+            value={String(kpis.totalApplicants)}
+            description="Across all open jobs"
+            icon={ClipboardList}
+          />
+          <StatCard
+            title="Active contracts"
+            value={String(kpis.activeContracts)}
+            description="Currently in progress"
+            icon={FileText}
+          />
+          <StatCard
+            title="Spend"
+            value={moneyFmt.format(kpis.spendThisMonth)}
+            description="This month"
+            icon={CreditCard}
+          />
+        </div>
+      )}
+      {showRealStats && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            title="Active jobs"
+            value={String(kpis.activeJobs)}
+            description="Currently posted"
+            icon={Briefcase}
+          />
+          <StatCard
+            title="Total applicants"
+            value={String(kpis.totalApplicants)}
+            description="Across all open jobs"
+            icon={ClipboardList}
+          />
+          <StatCard
+            title="Active contracts"
+            value={String(kpis.activeContracts)}
+            description="Currently in progress"
+            icon={FileText}
+          />
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           {/* Your open jobs */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">Your open jobs</CardTitle>
+              <CardTitle className="text-[#404145]">
+                {isDemo ? 'Your open jobs' : 'Your recent jobs'}
+              </CardTitle>
               <CardAction>
                 <Link
                   href="/facility/jobs"
@@ -1195,6 +1545,183 @@ function FacilityDashboard({
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FirstRunItem({
+  done,
+  title,
+  detail,
+  href,
+  cta,
+}: {
+  done: boolean
+  title: string
+  detail: string
+  href: string
+  cta: string
+}) {
+  return (
+    <li className="flex items-start gap-3">
+      <CheckCircle2
+        className={`mt-0.5 size-5 shrink-0 ${
+          done ? 'text-[#1dbf73]' : 'text-[#c5c6c9]'
+        }`}
+        aria-hidden="true"
+      />
+      <div className="min-w-0 flex-1">
+        <p
+          className={`text-sm font-medium ${
+            done ? 'text-[#62646a] line-through' : 'text-[#404145]'
+          }`}
+        >
+          {title}
+          {done && <span className="sr-only"> (done)</span>}
+        </p>
+        {!done && <p className="text-sm text-[#62646a]">{detail}</p>}
+      </div>
+      {!done && (
+        <Link
+          href={href}
+          className="shrink-0 text-sm font-semibold text-[#1dbf73] hover:underline"
+        >
+          {cta} &rarr;
+        </Link>
+      )}
+    </li>
+  )
+}
+
+function ClientDashboard({
+  firstName,
+  interests,
+  location,
+}: {
+  firstName: string
+  interests: string[]
+  location: string | null
+}) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-[#404145]">
+          Welcome, {firstName}!
+        </h1>
+        <p className="text-[#62646a]">
+          Find and connect with health professionals on Sanus.
+        </p>
+      </div>
+
+      <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
+            <Search className="h-5 w-5" />
+            Find a professional
+          </CardTitle>
+          <CardDescription className="font-semibold text-[#0f8f56]">
+            Browse clinicians, coaches, consultants, and educators
+            {location ? ` near ${location}` : ''}.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/find-care"
+            className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+          >
+            Browse professionals &rarr;
+          </Link>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#404145]">
+                <CalendarDays className="size-4 text-[#1dbf73]" />
+                Your bookings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[#62646a]">
+                You don&apos;t have any bookings yet. When you book a session
+                with a professional, it will show up here.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#404145]">
+                <MessageSquare className="size-4 text-[#1dbf73]" />
+                Messages
+              </CardTitle>
+              <CardAction>
+                <Link
+                  href="/messages"
+                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                >
+                  Open inbox &rarr;
+                </Link>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-[#62646a]">
+                No conversations yet. Reach out to a professional from their
+                profile to start one.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#404145]">Your interests</CardTitle>
+              <CardAction>
+                <Link
+                  href="/settings#preferences"
+                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                >
+                  Edit &rarr;
+                </Link>
+              </CardAction>
+            </CardHeader>
+            <CardContent>
+              {interests.length === 0 ? (
+                <p className="text-sm text-[#62646a]">
+                  You haven&apos;t saved any interests yet.{' '}
+                  <Link
+                    href="/settings#preferences"
+                    className="font-medium text-[#1dbf73] hover:underline"
+                  >
+                    Add some
+                  </Link>
+                  .
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {interests.map((key) => (
+                    <Badge
+                      key={key}
+                      className="bg-[#e8faf1] px-3 py-1 text-sm text-[#0f8f56]"
+                    >
+                      {CLIENT_INTEREST_LABELS[key] ?? key}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {location && (
+                <p className="mt-4 flex items-center gap-1 text-xs text-[#6b7280]">
+                  <MapPin className="size-3" />
+                  {location}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>

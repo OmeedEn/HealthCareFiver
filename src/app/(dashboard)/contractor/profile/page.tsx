@@ -23,6 +23,8 @@ import {
   CircleDollarSign,
   CalendarCheck,
   IdCard,
+  Languages,
+  Camera,
 } from 'lucide-react'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 
@@ -49,6 +51,7 @@ interface ContractorProfile {
   profile_completion_pct: number | null
   average_rating: number | null
   total_reviews: number | null
+  languages?: string[] | null
   profiles: {
     avatar_url: string | null
     email: string
@@ -122,6 +125,7 @@ export default async function ContractorProfilePage() {
         <CardContent>
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="flex flex-col items-start gap-2 sm:items-center">
               <Avatar size="lg" className="size-24">
                 {profile.profiles?.avatar_url && (
                   <AvatarImage
@@ -133,6 +137,16 @@ export default async function ContractorProfilePage() {
                   {getInitials(profile.first_name, profile.last_name)}
                 </AvatarFallback>
               </Avatar>
+              {!profile.profiles?.avatar_url && (
+                <Link
+                  href="/contractor/profile/edit"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#1dbf73] hover:underline"
+                >
+                  <Camera className="size-3.5" />
+                  Add a headshot
+                </Link>
+              )}
+              </div>
 
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
@@ -211,6 +225,39 @@ export default async function ContractorProfilePage() {
                 <p className="text-sm text-[#6b7280]">
                   Tell facilities a little about your background and what makes
                   you a great fit.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Languages */}
+          <Card>
+            <CardContent className="space-y-3">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#404145]">
+                <Languages className="size-5 text-[#62646a]" />
+                Languages
+              </h2>
+              {profile.languages && profile.languages.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {profile.languages.map((language) => (
+                    <Badge
+                      key={language}
+                      variant="outline"
+                      className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                    >
+                      {language}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[#6b7280]">
+                  No languages added yet.{' '}
+                  <Link
+                    href="/contractor/profile/edit"
+                    className="font-semibold text-[#1dbf73] hover:underline"
+                  >
+                    Add languages
+                  </Link>
                 </p>
               )}
             </CardContent>

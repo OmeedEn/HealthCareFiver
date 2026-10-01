@@ -1,16 +1,46 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createConnectAccount, createAccountLink } from '@/lib/stripe/connect'
+import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  createConnectAccount,
+  createAccountLink,
+  isConnectReturnTarget,
+  type ConnectReturnTarget,
+} from '@/lib/stripe/connect'
+import { currentUser } from '@/lib/auth/roles'
 
-export async function POST() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+/**
+ * Starts (or resumes) Stripe Connect Express onboarding and returns a
+ * Stripe-hosted Account Link URL. Optional JSON body `{ returnTo }` picks a
+ * whitelisted return page: 'payments' (default) or 'go-live'.
+ */
+export async function POST(request: NextRequest) {
+  // currentUser() enforces AAL2 (MFA) — API routes are outside the proxy,
+  // and this route writes a billing column with the service role below.
+  const user = await currentUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  if (user.role !== 'contractor') {
+    return NextResponse.json(
+      { error: 'Only professionals can set up payouts' },
+      { status: 403 }
+    )
+  }
+
+  const body: unknown = await request.json().catch(() => null)
+  const requested =
+    body && typeof body === 'object' && 'returnTo' in body
+      ? (body as { returnTo: unknown }).returnTo
+      : undefined
+  const target: ConnectReturnTarget = isConnectReturnTarget(requested)
+    ? requested
+    : 'payments'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+
+  const supabase = await createClient()
 
   // Check if user already has a Connect account
   const { data: profile } = await supabase
@@ -27,10 +57,12 @@ export async function POST() {
     let connectAccountId = profile?.stripe_connect_id
 
     if (!connectAccountId) {
-      const account = await createConnectAccount(user.email!, user.id)
+      const account = await createConnectAccount(user.email ?? '', user.id)
       connectAccountId = account.id
 
-      const { error: updateError } = await supabase
+      // stripe_connect_id is a protected billing column (trigger
+      // profiles_protect_privileged): only the service role may write it.
+      const { error: updateError } = await createAdminClient()
         .from('profiles')
         .update({ stripe_connect_id: account.id })
         .eq('id', user.id)
@@ -43,7 +75,10 @@ export async function POST() {
       }
     }
 
-    const accountLink = await createAccountLink(connectAccountId)
+    const accountLink = await createAccountLink(connectAccountId, {
+      target,
+      appUrl,
+    })
 
     return NextResponse.json({ url: accountLink.url })
   } catch (err) {

@@ -1,13 +1,10 @@
 'use client'
 
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { TotpEnrollment } from '@/components/auth/totp-setup'
+import { CheckCircle2, Clock, ShieldCheck } from 'lucide-react'
 import { MfaSignOut, safeRedirect } from '../shared'
 
 export default function MfaEnrollPage() {
@@ -22,156 +19,97 @@ function Header() {
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight text-[#404145]">
-        Set up two-factor authentication
+        Protect your account
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
-        Sanus handles protected health information, so every account needs an
-        authenticator app before continuing.
+        One last step: connect an authenticator app so only you can sign in.
       </p>
     </div>
   )
 }
 
-interface Enrollment {
-  factorId: string
-  qrCode: string
-  secret: string
+function WhyExplainer() {
+  return (
+    <div className="mt-6 rounded-lg border border-[#e4e5e7] bg-[#fafefb] px-4 py-3">
+      <p className="flex items-center gap-2 text-sm font-semibold text-[#404145]">
+        <ShieldCheck className="size-4 text-[#1dbf73]" aria-hidden="true" />
+        Why is this required?
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-[#62646a]">
+        Sanus handles health information, so every account uses two-step
+        sign-in: your password plus a 6-digit code from an app on your phone.
+        Even if someone learns your password, they can’t get in without your
+        phone.
+      </p>
+      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#404145]">
+        <Clock className="size-3.5 text-[#95979d]" aria-hidden="true" />
+        Takes about a minute.
+      </p>
+    </div>
+  )
 }
 
 function EnrollForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = safeRedirect(searchParams.get('redirectTo'))
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
-  const [code, setCode] = useState('')
-  const [loading, setLoading] = useState(false)
-  const started = useRef(false)
+  const [done, setDone] = useState(false)
 
-  useEffect(() => {
-    // Strict mode double-invokes effects; only enroll once.
-    if (started.current) return
-    started.current = true
-
-    async function start() {
-      const supabase = createClient()
-
-      // Clear any half-finished TOTP factors from an abandoned attempt so the
-      // user isn't blocked by the factor limit or a stale friendly name.
-      const { data: factors } = await supabase.auth.mfa.listFactors()
-      for (const f of factors?.all ?? []) {
-        if (f.factor_type === 'totp' && f.status === 'unverified') {
-          await supabase.auth.mfa.unenroll({ factorId: f.id })
-        }
-      }
-
-      const { data, error } = await supabase.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: `Authenticator ${new Date().toISOString().slice(0, 10)}`,
-      })
-      if (error || !data) {
-        toast.error(error?.message ?? 'Could not start enrollment')
-        return
-      }
-      setEnrollment({
-        factorId: data.id,
-        qrCode: data.totp.qr_code,
-        secret: data.totp.secret,
-      })
-    }
-    start()
-  }, [])
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!enrollment || loading) return
-    setLoading(true)
-
-    const supabase = createClient()
-    const { error } = await supabase.auth.mfa.challengeAndVerify({
-      factorId: enrollment.factorId,
-      code: code.trim(),
-    })
-    if (error) {
-      toast.error('That code didn’t match. Check your app and try again.')
-      setCode('')
-      setLoading(false)
-      return
-    }
-
-    toast.success('Two-factor authentication enabled')
+  function handleContinue() {
     router.push(redirectTo)
     router.refresh()
+  }
+
+  // Don't router.refresh() until the user continues: this session is now
+  // AAL2, so the proxy would bounce /mfa/enroll straight to /dashboard and
+  // skip the success screen.
+  if (done) {
+    return (
+      <div>
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
+          <CheckCircle2 className="size-6 text-[#1dbf73]" aria-hidden="true" />
+        </div>
+        <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">
+          You’re all set
+        </h1>
+        <p className="mt-1.5 text-sm text-[#62646a]">
+          Two-step sign-in is on. Next time you sign in, open your
+          authenticator app and enter the code it shows for Sanus.
+        </p>
+
+        <div className="mt-6 rounded-lg border border-[#e4e5e7] bg-[#fafefb] px-4 py-3">
+          <p className="text-sm font-semibold text-[#404145]">
+            Tip: add a backup authenticator
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-[#62646a]">
+            If you lose or replace your phone, a backup keeps you from being
+            locked out. When you have a minute, go to{' '}
+            <strong>Settings → Security</strong> and add an authenticator on a
+            second device (like a tablet or an old phone), or
+            use an app that syncs, like 1Password.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          onClick={handleContinue}
+          autoFocus
+          className="mt-6 h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+        >
+          Continue
+        </Button>
+      </div>
+    )
   }
 
   return (
     <div>
       <Header />
+      <WhyExplainer />
 
-      <ol className="mt-8 space-y-6">
-        <li>
-          <p className="text-sm font-semibold text-[#404145]">
-            1. Scan this QR code with your authenticator app
-          </p>
-          <p className="mt-1 text-xs text-[#62646a]">
-            Google Authenticator, Authy, 1Password, or any TOTP app works.
-          </p>
-          <div className="mt-3 flex h-48 w-48 items-center justify-center rounded-lg border border-[#e4e5e7] bg-white p-2">
-            {enrollment ? (
-              // qr_code is an SVG data URI generated by Supabase
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={enrollment.qrCode}
-                alt="Authenticator QR code"
-                className="h-full w-full"
-              />
-            ) : (
-              <Loader2 className="h-6 w-6 animate-spin text-[#95979d]" />
-            )}
-          </div>
-          {enrollment && (
-            <details className="mt-2 text-xs text-[#62646a]">
-              <summary className="cursor-pointer font-semibold text-[#1dbf73]">
-                Can’t scan? Enter the key manually
-              </summary>
-              <code className="mt-1 block break-all rounded bg-[#f5f5f5] px-2 py-1 font-mono text-[#404145]">
-                {enrollment.secret}
-              </code>
-            </details>
-          )}
-        </li>
-
-        <li>
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <Label
-              htmlFor="code"
-              className="text-sm font-semibold text-[#404145]"
-            >
-              2. Enter the 6-digit code from the app
-            </Label>
-            <Input
-              id="code"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              placeholder="123456"
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              required
-              disabled={!enrollment}
-              className="h-11 tracking-[0.3em]"
-            />
-            <Button
-              type="submit"
-              disabled={!enrollment || loading || code.length !== 6}
-              className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Verify and continue
-            </Button>
-          </form>
-        </li>
-      </ol>
+      <div className="mt-8">
+        <TotpEnrollment kind="primary" onVerified={() => setDone(true)} />
+      </div>
 
       <MfaSignOut />
     </div>

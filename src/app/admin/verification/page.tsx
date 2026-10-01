@@ -27,12 +27,14 @@ interface QueuedProvider {
 }
 
 const STATUS_BADGE: Record<string, 'secondary' | 'outline' | 'destructive'> = {
+  not_submitted: 'outline',
   pending_review: 'secondary',
   more_info_requested: 'outline',
   rejected: 'destructive',
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  not_submitted: 'Not submitted',
   pending_review: 'Pending Review',
   more_info_requested: 'More Info Requested',
 }

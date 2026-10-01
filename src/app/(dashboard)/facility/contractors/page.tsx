@@ -61,7 +61,10 @@ export default function FindContractorsPage() {
     let query = supabase
       .from('contractor_profiles')
       .select('*, profiles!inner(avatar_url)')
+      // Only "live" professionals: verified AND contractor agreement accepted
+      // (see can-go-live.ts).
       .eq('verification_status', 'approved')
+      .not('contractor_agreement_accepted_at', 'is', null)
       .order('average_rating', { ascending: false })
       .limit(50)
 

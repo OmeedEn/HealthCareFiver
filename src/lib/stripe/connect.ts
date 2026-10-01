@@ -1,5 +1,50 @@
+import type Stripe from 'stripe'
 import { getStripe } from './client'
 
+/**
+ * Where Stripe-hosted onboarding sends the professional back to. Whitelisted
+ * so the API route never builds return URLs from arbitrary client input.
+ */
+export type ConnectReturnTarget = 'payments' | 'go-live'
+
+const CONNECT_RETURN_PATHS: Record<
+  ConnectReturnTarget,
+  { returnPath: string; refreshPath: string }
+> = {
+  payments: {
+    returnPath: '/contractor/payments?onboarded=true',
+    refreshPath: '/contractor/payments?refresh=true',
+  },
+  'go-live': {
+    returnPath: '/go-live?payouts=done',
+    refreshPath: '/go-live#payouts',
+  },
+}
+
+export function isConnectReturnTarget(value: unknown): value is ConnectReturnTarget {
+  return typeof value === 'string' && value in CONNECT_RETURN_PATHS
+}
+
+/**
+ * A connected account is ready to be paid once Stripe has its details and
+ * both payouts and the transfers capability are enabled. Sanus uses
+ * destination charges (the platform processes the charge), so the account
+ * only needs `transfers` — `charges_enabled` reflects `card_payments`, which
+ * we never request, so it must not gate readiness.
+ */
+export function isConnectAccountReady(account: Stripe.Account): boolean {
+  return (
+    account.details_submitted === true &&
+    account.payouts_enabled === true &&
+    account.capabilities?.transfers === 'active'
+  )
+}
+
+/**
+ * Creates an Express connected account. Express = Stripe-hosted onboarding
+ * and a Stripe-hosted Express Dashboard; Stripe collects identity and bank
+ * details (DOB, SSN digits, bank account) — they never touch Sanus.
+ */
 export async function createConnectAccount(email: string, userId: string) {
   const account = await getStripe().accounts.create({
     type: 'express',
@@ -12,12 +57,23 @@ export async function createConnectAccount(email: string, userId: string) {
   return account
 }
 
-export async function createAccountLink(accountId: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL!
+/**
+ * Stripe-hosted onboarding link (Account Links). `appUrl` falls back to
+ * NEXT_PUBLIC_APP_URL.
+ */
+export async function createAccountLink(
+  accountId: string,
+  {
+    target = 'payments',
+    appUrl = process.env.NEXT_PUBLIC_APP_URL!,
+  }: { target?: ConnectReturnTarget; appUrl?: string } = {}
+) {
+  const base = appUrl.replace(/\/+$/, '')
+  const { returnPath, refreshPath } = CONNECT_RETURN_PATHS[target]
   const accountLink = await getStripe().accountLinks.create({
     account: accountId,
-    refresh_url: `${appUrl}/contractor/payments?refresh=true`,
-    return_url: `${appUrl}/contractor/payments?onboarded=true`,
+    refresh_url: `${base}${refreshPath}`,
+    return_url: `${base}${returnPath}`,
     type: 'account_onboarding',
   })
   return accountLink
@@ -29,6 +85,7 @@ export async function getAccountStatus(accountId: string) {
     chargesEnabled: account.charges_enabled,
     payoutsEnabled: account.payouts_enabled,
     detailsSubmitted: account.details_submitted,
+    ready: isConnectAccountReady(account),
   }
 }
 

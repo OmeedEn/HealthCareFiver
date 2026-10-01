@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isConnectAccountReady } from '@/lib/stripe/connect'
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -74,8 +75,9 @@ export async function POST(request: NextRequest) {
           const { error } = await supabase
             .from('profiles')
             .update({
-              stripe_connect_onboarded:
-                account.charges_enabled && account.payouts_enabled,
+              // transfers-only Express account (destination charges):
+              // charges_enabled tracks card_payments, which we never request.
+              stripe_connect_onboarded: isConnectAccountReady(account),
             })
             .eq('id', userId)
           if (error) throw error

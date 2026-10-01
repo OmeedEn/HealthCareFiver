@@ -20,10 +20,19 @@ const NOTIFICATION_TYPE_BY_ACTION: Record<Action, string> = {
 }
 
 const NOTIFICATION_TITLE_BY_ACTION: Record<Action, string> = {
-  approve: "You're approved on Sanus",
+  approve: "You're live on Sanus.",
   request_info: 'More information needed',
   reject: 'Verification update',
 }
+
+const NOTIFICATION_HREF_BY_ACTION: Record<Action, string | null> = {
+  approve: '/go-live',
+  request_info: '/contractor/credentials/upload',
+  reject: null,
+}
+
+const APPROVE_NOTIFICATION_BODY =
+  'Accept the Independent Contractor and Platform Agreement and set up payouts to finish going live.'
 
 export async function POST(
   request: NextRequest,
@@ -105,12 +114,24 @@ export async function POST(
     notes: notes || null,
   })
 
-  await adminSupabase.from('notifications').insert({
-    user_id: contractorId,
-    type: NOTIFICATION_TYPE_BY_ACTION[action],
-    title: NOTIFICATION_TITLE_BY_ACTION[action],
-    body: notes || null,
-  })
+  const wasAlreadyApproved = contractor.verification_status === 'approved'
+  const href = NOTIFICATION_HREF_BY_ACTION[action]
+
+  const { error: notificationError } = await adminSupabase
+    .from('notifications')
+    .insert({
+      user_id: contractorId,
+      type: NOTIFICATION_TYPE_BY_ACTION[action],
+      title: NOTIFICATION_TITLE_BY_ACTION[action],
+      body:
+        action === 'approve'
+          ? notes || APPROVE_NOTIFICATION_BODY
+          : notes || null,
+      data: href ? { href } : null,
+    })
+  if (notificationError) {
+    console.error('[verification] Failed to create notification', notificationError)
+  }
 
   await audit({
     actorId: admin.id,
@@ -125,6 +146,8 @@ export async function POST(
   // Side-effect emails/envelopes are best-effort: a failure here shouldn't
   // undo the review decision, but should be surfaced to the admin.
   const warnings: string[] = []
+  // Emails need absolute links; fall back to this request's origin.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
 
   if (!email) {
     warnings.push('Provider has no email on file — no notification email was sent.')
@@ -142,26 +165,36 @@ export async function POST(
       warnings.push('Failed to send the BAA envelope via DocuSign.')
     }
 
-    try {
-      await sendProviderApprovalEmail({
-        firstName: contractor.first_name,
-        lastName: contractor.last_name,
-        email,
-      })
-      await adminSupabase
-        .from('contractor_profiles')
-        .update({ approval_email_sent_at: new Date().toISOString() })
-        .eq('id', contractorId)
-    } catch (err) {
-      console.error('[verification] Failed to send approval email', err)
-      warnings.push('Failed to send the approval email.')
+    // "You're live on Sanus." — only on the transition into 'approved', so a
+    // repeat approve click doesn't re-send it.
+    if (wasAlreadyApproved) {
+      warnings.push('Provider was already approved — the approval email was not re-sent.')
+    } else {
+      try {
+        await sendProviderApprovalEmail(
+          {
+            firstName: contractor.first_name,
+            lastName: contractor.last_name,
+            email,
+          },
+          appUrl
+        )
+        await adminSupabase
+          .from('contractor_profiles')
+          .update({ approval_email_sent_at: new Date().toISOString() })
+          .eq('id', contractorId)
+      } catch (err) {
+        console.error('[verification] Failed to send approval email', err)
+        warnings.push('Failed to send the approval email.')
+      }
     }
   } else {
     try {
       await sendVerificationActionEmail(
         { firstName: contractor.first_name, lastName: contractor.last_name, email },
         action === 'request_info' ? 'more_info_requested' : 'rejected',
-        notes
+        notes,
+        appUrl
       )
     } catch (err) {
       console.error('[verification] Failed to send verification action email', err)

@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers'
-import { SUBSCRIPTION_REQUIRED } from '@/lib/billing'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
 
-type DashboardRole = 'contractor' | 'facility' | 'admin'
+type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
 
 export default async function DashboardLayout({
   children,
@@ -15,6 +15,9 @@ export default async function DashboardLayout({
   let role: DashboardRole = 'contractor'
   let displayName = 'User'
   let userEmail = ''
+  // Approved professionals who haven't accepted the contractor agreement yet
+  // see a "go live" banner. Joining is free; the dashboard is never paywalled.
+  let showGoLiveBanner = false
 
   if (isDemoMode()) {
     // The DemoRoleSwitcher writes a `demo_role` cookie; the layout reads it
@@ -59,17 +62,20 @@ export default async function DashboardLayout({
       .single()
 
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
-      | 'contractor'
-      | 'facility'
-      | 'admin'
+      DashboardRole
 
-    // Contractors must have an active subscription to access the dashboard
-    if (
-      SUBSCRIPTION_REQUIRED &&
-      role === 'contractor' &&
-      profile?.subscription_status !== 'active'
-    ) {
-      redirect('/subscribe')
+    if (role === 'contractor') {
+      // If the agreement column isn't available yet (migration not applied),
+      // the select errors and we simply don't show the banner.
+      const { data: contractor, error: contractorError } = await supabase
+        .from('contractor_profiles')
+        .select('verification_status, contractor_agreement_accepted_at')
+        .eq('id', user.id)
+        .maybeSingle()
+      showGoLiveBanner =
+        !contractorError &&
+        contractor?.verification_status === 'approved' &&
+        !contractor?.contractor_agreement_accepted_at
     }
 
     displayName =
@@ -98,6 +104,22 @@ export default async function DashboardLayout({
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header role={role} userName={displayName} userEmail={userEmail} />
+        {showGoLiveBanner && (
+          <div
+            role="status"
+            className="flex flex-col gap-2 border-b border-[#1dbf73]/30 bg-[#e8faf1] px-4 py-2.5 text-sm text-[#0f4c3a] sm:flex-row sm:items-center sm:justify-between md:px-6"
+          >
+            <p className="font-semibold">
+              You&apos;re approved! Accept the contractor agreement to go live
+            </p>
+            <Link
+              href="/go-live"
+              className="inline-flex shrink-0 items-center justify-center rounded-md bg-[#1dbf73] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#19a463]"
+            >
+              Go live
+            </Link>
+          </div>
+        )}
         <main
           id="dashboard-main"
           tabIndex={-1}

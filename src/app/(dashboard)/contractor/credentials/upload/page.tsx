@@ -211,11 +211,9 @@ export default function CredentialUploadPage() {
           return
         }
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from('credentials').getPublicUrl(filePath)
-
-        documentUrl = publicUrl
+        // The bucket is private: store the object PATH, not a public URL.
+        // Viewers get a short-lived signed URL via credentialDocumentHref().
+        documentUrl = filePath
         documentFilename = file.name
       }
 
@@ -235,9 +233,21 @@ export default function CredentialUploadPage() {
       if (error) {
         toast.error('Failed to save credential: ' + error.message)
       } else {
-        // If the provider was asked for more info, resubmitting a
-        // credential puts them back in the admin verification queue.
-        fetch('/api/contractor/verification/resubmit', { method: 'POST' }).catch(() => {})
+        // Submitting a credential (first upload, or responding to a
+        // more-info request) puts the provider in the admin review queue.
+        // The credential itself is already saved, so a failure here must not
+        // fail the upload — but surface it so it doesn't silently stall.
+        try {
+          const res = await fetch('/api/contractor/verification/resubmit', {
+            method: 'POST',
+          })
+          if (!res.ok) throw new Error(`resubmit returned ${res.status}`)
+        } catch (resubmitErr) {
+          console.error('Failed to submit for verification review', resubmitErr)
+          toast.warning(
+            "Your document was saved, but we couldn't notify our review team. Upload again or contact support if your status doesn't change.",
+          )
+        }
         toast.success('Credential uploaded successfully!')
         router.push('/contractor/credentials')
       }
