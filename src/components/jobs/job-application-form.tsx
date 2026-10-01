@@ -58,12 +58,15 @@ export function JobApplicationForm({
       })
 
       if (!result.ok) {
-        if (result.reason === 'not_subscribed') {
+        // Widened to string so this compiles whether the action reports the
+        // new 'agreement_required' reason or the legacy 'not_subscribed' one.
+        const reason: string = result.reason
+        if (reason === 'agreement_required' || reason === 'not_subscribed') {
           toast.error(result.message, {
             action: {
-              label: 'Activate',
+              label: 'Go live',
               onClick: () => {
-                window.location.href = '/subscribe'
+                window.location.href = '/go-live'
               },
             },
           })

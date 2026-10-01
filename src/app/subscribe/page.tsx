@@ -1,14 +1,12 @@
 import { redirect } from 'next/navigation'
 import { isDemoMode } from '@/lib/demo/data'
-import { getGoLiveState } from '@/lib/auth/can-go-live'
-import { SubscribeCard } from './subscribe-card'
 
-// "Go live" checkout. Joining and verification are free; the $29/mo plan is
-// only offered to approved professionals. Everyone else is routed away or
-// told what to do first. The proxy has already enforced auth + MFA.
+// Legacy route. The paid "go live" plan was dropped: Sanus is free to join and
+// a small service fee applies to each booking. Going live now happens at
+// /go-live (contractor agreement + payouts). Kept so old links/emails work.
 export default async function SubscribePage() {
   if (isDemoMode()) {
-    return <SubscribeCard state="ready" />
+    redirect('/go-live')
   }
 
   const { createClient } = await import('@/lib/supabase/server')
@@ -18,20 +16,15 @@ export default async function SubscribePage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login?redirectTo=/subscribe')
+    redirect('/login?redirectTo=/go-live')
   }
 
-  const state = await getGoLiveState(supabase, user.id)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
 
-  // Facilities, clients, admins: nothing to buy here.
-  if (!state.isContractor) {
-    redirect('/dashboard')
-  }
-
-  // Already live.
-  if (state.isSubscribed) {
-    redirect('/dashboard')
-  }
-
-  return <SubscribeCard state={state.isApproved ? 'ready' : 'not_verified'} />
+  const role = profile?.role ?? user.user_metadata?.role
+  redirect(role === 'contractor' ? '/go-live' : '/dashboard')
 }

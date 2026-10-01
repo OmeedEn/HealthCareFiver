@@ -974,55 +974,6 @@ export const DEMO_EVENTS = [
   },
 ]
 
-// Demo membership
-export const DEMO_MEMBERSHIP = {
-  currentPlan: 'basic',
-  plans: [
-    {
-      id: 'basic',
-      name: 'Basic',
-      price: 0,
-      interval: 'month',
-      features: [
-        'Browse jobs & facilities',
-        'Access public events & webinars',
-        'Free credential verification',
-        'Book up to 3 sessions/month',
-      ],
-    },
-    {
-      id: 'professional',
-      name: 'Professional',
-      price: 29,
-      interval: 'month',
-      popular: true,
-      features: [
-        'Everything in Basic',
-        'Go live: visible & bookable profile',
-        'Apply to jobs',
-        'Priority search placement',
-        'Superbill generation',
-        'HIPAA-compliant messaging',
-        'Unlimited bookings',
-      ],
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      price: 79,
-      interval: 'month',
-      features: [
-        'Everything in Professional',
-        'Dedicated care coordinator',
-        'Custom care plans',
-        'White-glove support',
-        'Early access to events',
-        'Priority support',
-      ],
-    },
-  ],
-}
-
 // Demo providers for public search page
 export const DEMO_PROVIDERS = [
   { id: 'prov-1', first_name: 'Sarah', last_name: 'Johnson', credential: 'RN', contractor_type: 'rn', specialty: 'ICU & Critical Care', specialties: ['ICU', 'Emergency', 'Cardiac Care'], headline: 'Experienced ICU Nurse | 8+ Years', hourly_rate_min: 55, hourly_rate_max: 85, city: 'Los Angeles', state: 'CA', average_rating: 4.9, total_reviews: 127, is_available: true, session_types: ['in_person', 'virtual'], years_of_experience: 8 },

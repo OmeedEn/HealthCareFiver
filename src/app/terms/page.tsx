@@ -119,14 +119,17 @@ const sections: LegalSection[] = [
         </p>
         <ul>
           <li>
-            Professionals set their own rates. Sanus may charge Clients and/or
-            Professionals a platform fee or commission, disclosed before you
-            pay.
+            Joining Sanus is free for Professionals. There is no subscription
+            or monthly fee to be listed or bookable.
           </li>
           <li>
-            Professionals may need an active paid subscription to be listed
-            and bookable. Subscription pricing, billing cycle, trial terms,
-            and cancellation are shown at checkout.
+            Professionals set their own rates. Sanus charges a small service
+            fee on each booking. The exact amount is shown to Professionals
+            before they publish an offering, and to Clients before they pay.
+          </li>
+          <li>
+            To be listed and bookable, a Professional must be verified by Sanus
+            and accept the independent contractor and platform agreement.
           </li>
           <li>
             Payouts to Professionals are made through Stripe on Stripe&apos;s

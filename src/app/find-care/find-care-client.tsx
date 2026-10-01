@@ -649,8 +649,8 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
             <Link href="/#events" className="transition hover:text-[#111827]">
               Events &amp; Education
             </Link>
-            <Link href="/#membership" className="transition hover:text-[#111827]">
-              Membership
+            <Link href="/#pricing" className="transition hover:text-[#111827]">
+              Pricing
             </Link>
           </nav>
 
@@ -696,10 +696,10 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
                 Events &amp; Education
               </Link>
               <Link
-                href="/#membership"
+                href="/#pricing"
                 className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827]"
               >
-                Membership
+                Pricing
               </Link>
               <NavAuth hideWhenSignedIn>
                 <Link

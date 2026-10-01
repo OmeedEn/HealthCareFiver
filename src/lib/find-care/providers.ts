@@ -3,7 +3,6 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
-import { LIVE_SUBSCRIPTION_STATUSES } from '@/lib/auth/can-go-live'
 import { DEMO_PROVIDERS } from '@/lib/demo/data'
 import {
   CONTRACTOR_TYPE_BADGES,
@@ -139,39 +138,17 @@ export async function getLiveProviders(): Promise<PublicProvider[]> {
   try {
     const supabase = await getReadClient()
 
-    // 1. Contractors with a live subscription (and an active account).
-    const { data: liveProfiles, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, avatar_url')
-      .eq('role', 'contractor')
-      .eq('is_active', true)
-      .in('subscription_status', [...LIVE_SUBSCRIPTION_STATUSES])
-      .limit(1000)
-
-    if (profilesError || !liveProfiles || liveProfiles.length === 0) {
-      if (profilesError) {
-        console.error('[find-care] profiles query failed', profilesError.message)
-      }
-      return []
-    }
-
-    const avatarById = new Map<string, string | null>(
-      liveProfiles.map((p) => [
-        p.id as string,
-        (p.avatar_url as string | null) ?? null,
-      ])
-    )
-
-    // 2. Of those, only admin-approved contractor profiles.
+    // 1. "Live" professionals: admin-approved AND contractor agreement
+    //    accepted (mirrors SQL can_go_live; see src/lib/auth/can-go-live.ts).
     const { data: rows, error: contractorsError } = await supabase
       .from('contractor_profiles')
       .select(PUBLIC_CONTRACTOR_COLUMNS)
       .eq('verification_status', 'approved')
-      .in('id', [...avatarById.keys()])
+      .not('contractor_agreement_accepted_at', 'is', null)
       .order('average_rating', { ascending: false })
       .limit(MAX_RESULTS)
 
-    if (contractorsError || !rows) {
+    if (contractorsError || !rows || rows.length === 0) {
       if (contractorsError) {
         console.error(
           '[find-care] contractor_profiles query failed',
@@ -181,9 +158,36 @@ export async function getLiveProviders(): Promise<PublicProvider[]> {
       return []
     }
 
-    return (rows as unknown as ContractorRow[]).map((row) =>
-      mapRow(row, avatarById.get(row.id) ?? null)
+    const contractorRows = rows as unknown as ContractorRow[]
+
+    // 2. Of those, only active contractor accounts (plus their avatars).
+    const { data: activeProfiles, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, avatar_url')
+      .eq('role', 'contractor')
+      .eq('is_active', true)
+      .in(
+        'id',
+        contractorRows.map((r) => r.id)
+      )
+
+    if (profilesError || !activeProfiles) {
+      if (profilesError) {
+        console.error('[find-care] profiles query failed', profilesError.message)
+      }
+      return []
+    }
+
+    const avatarById = new Map<string, string | null>(
+      activeProfiles.map((p) => [
+        p.id as string,
+        (p.avatar_url as string | null) ?? null,
+      ])
     )
+
+    return contractorRows
+      .filter((row) => avatarById.has(row.id))
+      .map((row) => mapRow(row, avatarById.get(row.id) ?? null))
   } catch (err) {
     console.error('[find-care] failed to load providers', err)
     return []

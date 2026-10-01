@@ -1,177 +1,75 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { isDemoMode, DEMO_MEMBERSHIP } from '@/lib/demo/data'
+import Link from 'next/link'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
-import { Check, Crown, Sparkles } from 'lucide-react'
+import { BadgeCheck, Receipt, UserPlus } from 'lucide-react'
 
-export default function MembershipPage() {
-  const [currentPlan] = useState(DEMO_MEMBERSHIP.currentPlan)
-  const plans = DEMO_MEMBERSHIP.plans
-  const router = useRouter()
+// Professionals no longer pay a subscription. This page (kept at /membership so
+// old links work) just explains how Sanus pricing works.
+const POINTS = [
+  {
+    icon: UserPlus,
+    title: 'Free to join',
+    body: 'Creating your account, credential verification, and going live cost nothing. There is no monthly plan.',
+  },
+  {
+    icon: Receipt,
+    title: 'A small service fee per booking',
+    body: 'Sanus charges a small service fee on each booking. You’ll see the exact amount before you publish a service, consulting offer, or event.',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Enhanced Verified badge (coming later)',
+    body: 'An optional badge with an added background check will be available later. It is never required to join, go live, or get booked.',
+  },
+] as const
 
-  function handleUpgrade(planName: string) {
-    if (isDemoMode()) {
-      toast.success(`Upgrade to ${planName} initiated (demo mode)`)
-      return
-    }
-    // The only live paid plan is the $29/mo "go live" subscription; /subscribe
-    // checks eligibility (verified professionals only) and starts checkout.
-    router.push('/subscribe')
-  }
-
+export default function PricingPage() {
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold text-[#111827]">
-          Membership Plans
+          How Sanus pricing works
         </h1>
         <p className="mt-1 text-[#6b7280]">
-          Choose the plan that fits your needs. Upgrade anytime.
+          Free to join. A small service fee applies to each booking.
         </p>
       </div>
 
-      {/* Current plan status */}
-      <Card className="border-[#1dbf73]/20 bg-[#e8faf1]">
-        <CardContent className="flex items-center gap-4 py-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1dbf73]/20">
-            <Crown className="h-5 w-5 text-[#1dbf73]" />
-          </div>
-          <div>
-            <p className="text-sm text-[#6b7280]">Current Plan</p>
-            <p className="text-lg font-semibold text-[#111827]">
-              Basic &mdash; Free
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Plan cards */}
-      <div className="grid gap-6 md:grid-cols-3">
-        {plans.map((plan) => {
-          const isCurrent = plan.id === currentPlan
-          const isPopular = 'popular' in plan && plan.popular
-
-          return (
-            <Card
-              key={plan.id}
-              className={`relative flex flex-col ${
-                isPopular
-                  ? 'border-2 border-[#1dbf73] shadow-lg'
-                  : isCurrent
-                    ? 'border-2 border-[#374151]'
-                    : 'border border-[#e4e5e7]'
-              }`}
-            >
-              {isPopular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90">
-                    <Sparkles className="mr-1 h-3 w-3" />
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className="pb-4 pt-6">
-                <CardTitle className="font-heading text-xl text-[#111827]">
-                  {plan.name}
-                </CardTitle>
-                <CardDescription>
-                  <span className="text-3xl font-bold text-[#111827]">
-                    {plan.price === 0 ? 'Free' : `$${plan.price}`}
-                  </span>
-                  {plan.price > 0 && (
-                    <span className="text-sm text-[#6b7280]">
-                      /{plan.interval}
-                    </span>
-                  )}
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="flex flex-1 flex-col gap-6">
-                <ul className="flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
-                      <span className="text-sm text-[#374151]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {isCurrent ? (
-                  <Button
-                    variant="outline"
-                    className="w-full border-[#374151] text-[#374151]"
-                    disabled
-                  >
-                    Current Plan
-                  </Button>
-                ) : (
-                  <Button
-                    className={`w-full ${
-                      isPopular
-                        ? 'bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90'
-                        : 'bg-[#374151] text-white hover:bg-[#374151]/90'
-                    }`}
-                    onClick={() => handleUpgrade(plan.name)}
-                  >
-                    Upgrade to {plan.name}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {/* FAQ / Info */}
       <Card>
         <CardHeader>
           <CardTitle className="font-heading text-lg text-[#111827]">
-            Frequently Asked Questions
+            For professionals
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="font-medium text-[#111827]">
-              Can I cancel anytime?
-            </p>
-            <p className="text-sm text-[#6b7280]">
-              Yes. You can downgrade or cancel your plan at any time. Changes
-              take effect at the end of your current billing period.
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-[#111827]">
-              Do I have to pay to join or get verified?
-            </p>
-            <p className="text-sm text-[#6b7280]">
-              No. Joining and credential verification are free. Once
-              you&apos;re verified, the $29/mo Professional plan takes your
-              profile live so you can be found, booked, and apply to jobs.
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-[#111827]">
-              What payment methods do you accept?
-            </p>
-            <p className="text-sm text-[#6b7280]">
-              We accept all major credit cards, debit cards, and ACH bank
-              transfers through our secure payment partner Stripe.
-            </p>
-          </div>
+        <CardContent className="space-y-5">
+          {POINTS.map(({ icon: Icon, title, body }) => (
+            <div key={title} className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e8faf1]">
+                <Icon className="h-4 w-4 text-[#1dbf73]" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="font-medium text-[#111827]">{title}</p>
+                <p className="text-sm text-[#6b7280]">{body}</p>
+              </div>
+            </div>
+          ))}
         </CardContent>
       </Card>
+
+      <p className="text-sm text-[#6b7280]">
+        Payouts are handled securely through Stripe. Set them up on your{' '}
+        <Link
+          href="/contractor/payments"
+          className="font-medium text-[#0f4c3a] underline underline-offset-2"
+        >
+          Payments
+        </Link>{' '}
+        page.
+      </p>
     </div>
   )
 }

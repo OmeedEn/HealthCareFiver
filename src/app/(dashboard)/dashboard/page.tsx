@@ -273,7 +273,7 @@ export default async function DashboardPage() {
         verificationStatus: 'approved',
         stripeConnectId: DEMO_CONTRACTOR.stripe_connect_id,
         stripeConnectOnboarded: DEMO_CONTRACTOR.stripe_connect_onboarded,
-        subscriptionStatus: 'active',
+        agreementAcceptedAt: '2026-01-01T00:00:00.000Z',
       })
     }
 
@@ -361,6 +361,7 @@ export default async function DashboardPage() {
         { count: credentialCount },
         { count: applicationCount },
         { count: activeContractCount },
+        { data: agreementRow, error: agreementError },
       ] = await Promise.all([
         supabase
           .from('contractor_profiles')
@@ -382,6 +383,13 @@ export default async function DashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('contractor_id', user.id)
           .eq('status', 'active'),
+        // Separate query so a missing column (migration not yet applied)
+        // can't break the main contractor_profiles select above.
+        supabase
+          .from('contractor_profiles')
+          .select('contractor_agreement_accepted_at')
+          .eq('id', user.id)
+          .maybeSingle(),
       ])
       if (firstName === 'there' && contractorRow?.first_name) {
         firstName = contractorRow.first_name as string
@@ -405,7 +413,12 @@ export default async function DashboardPage() {
         verificationStatus,
         stripeConnectId: profileData?.stripe_connect_id ?? null,
         stripeConnectOnboarded: profileData?.stripe_connect_onboarded ?? false,
-        subscriptionStatus: profileData?.subscription_status ?? null,
+        agreementAcceptedAt: agreementError
+          ? null
+          : ((agreementRow?.contractor_agreement_accepted_at as
+              | string
+              | null
+              | undefined) ?? null),
       })
 
       const { data: jobsData } = await supabase

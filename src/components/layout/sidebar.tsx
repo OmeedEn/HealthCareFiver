@@ -27,7 +27,7 @@ import {
   Users,
   AlertTriangle,
   LogOut,
-  Crown,
+  Receipt,
   GraduationCap,
   Bell,
 } from 'lucide-react'
@@ -46,7 +46,7 @@ const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Events', href: '/events', icon: GraduationCap },
-  { label: 'Membership', href: '/membership', icon: Crown },
+  { label: 'Pricing', href: '/membership', icon: Receipt },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 

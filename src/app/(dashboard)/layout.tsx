@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
-import { isLiveSubscription } from '@/lib/auth/can-go-live'
 
 type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
 
@@ -16,8 +15,8 @@ export default async function DashboardLayout({
   let role: DashboardRole = 'contractor'
   let displayName = 'User'
   let userEmail = ''
-  // Verified professionals without a live subscription see a "go live" banner.
-  // Joining and verification are free; the dashboard is never paywalled.
+  // Approved professionals who haven't accepted the contractor agreement yet
+  // see a "go live" banner. Joining is free; the dashboard is never paywalled.
   let showGoLiveBanner = false
 
   if (isDemoMode()) {
@@ -65,13 +64,18 @@ export default async function DashboardLayout({
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
       DashboardRole
 
-    if (role === 'contractor' && !isLiveSubscription(profile?.subscription_status)) {
-      const { data: contractor } = await supabase
+    if (role === 'contractor') {
+      // If the agreement column isn't available yet (migration not applied),
+      // the select errors and we simply don't show the banner.
+      const { data: contractor, error: contractorError } = await supabase
         .from('contractor_profiles')
-        .select('verification_status')
+        .select('verification_status, contractor_agreement_accepted_at')
         .eq('id', user.id)
         .maybeSingle()
-      showGoLiveBanner = contractor?.verification_status === 'approved'
+      showGoLiveBanner =
+        !contractorError &&
+        contractor?.verification_status === 'approved' &&
+        !contractor?.contractor_agreement_accepted_at
     }
 
     displayName =
@@ -106,13 +110,13 @@ export default async function DashboardLayout({
             className="flex flex-col gap-2 border-b border-[#1dbf73]/30 bg-[#e8faf1] px-4 py-2.5 text-sm text-[#0f4c3a] sm:flex-row sm:items-center sm:justify-between md:px-6"
           >
             <p className="font-semibold">
-              You&apos;re verified! Activate your profile to go live — $29/mo
+              You&apos;re approved! Accept the contractor agreement to go live
             </p>
             <Link
-              href="/subscribe"
+              href="/go-live"
               className="inline-flex shrink-0 items-center justify-center rounded-md bg-[#1dbf73] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#19a463]"
             >
-              Activate profile
+              Go live
             </Link>
           </div>
         )}

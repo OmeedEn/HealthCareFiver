@@ -1,5 +1,3 @@
-import { isLiveSubscription } from '../auth/can-go-live'
-
 /**
  * Contractor "Get set up" checklist, computed from real account state.
  *
@@ -85,8 +83,8 @@ export type ChecklistItemKey =
   | 'profile'
   | 'credentials'
   | 'verification'
+  | 'agreement'
   | 'payouts'
-  | 'go_live'
 
 export type ChecklistItemState =
   | 'done'
@@ -114,7 +112,11 @@ export type ContractorChecklistInput = {
   stripeConnectId: string | null | undefined
   /** profiles.stripe_connect_onboarded — set by the account.updated webhook. */
   stripeConnectOnboarded: boolean | null | undefined
-  subscriptionStatus: string | null | undefined
+  /**
+   * contractor_profiles.contractor_agreement_accepted_at. Going live =
+   * verification approved AND this set (accepted on /go-live).
+   */
+  agreementAcceptedAt: string | null | undefined
 }
 
 export type ContractorChecklist = {
@@ -181,7 +183,6 @@ export function buildContractorChecklist(
   const credentialCount = Math.max(0, input.credentialCount || 0)
   const verificationStatus = input.verificationStatus ?? 'not_submitted'
   const isApproved = verificationStatus === 'approved'
-  const subscriptionStatus = input.subscriptionStatus ?? null
 
   const items: ChecklistItem[] = [
     profile.complete
@@ -215,6 +216,28 @@ export function buildContractorChecklist(
           cta: 'Upload',
         },
     verificationItem(verificationStatus, credentialCount),
+    input.agreementAcceptedAt
+      ? {
+          key: 'agreement',
+          title: 'Accept the contractor agreement',
+          state: 'done',
+          detail: 'Accepted — you’re live on Sanus.',
+        }
+      : !isApproved
+        ? {
+            key: 'agreement',
+            title: 'Accept the contractor agreement',
+            state: 'locked',
+            detail: 'Available once you’re verified.',
+          }
+        : {
+            key: 'agreement',
+            title: 'Accept the contractor agreement',
+            state: 'todo',
+            detail: 'Accept the agreement to go live and get booked.',
+            href: '/go-live',
+            cta: 'Go live',
+          },
     input.stripeConnectOnboarded
       ? {
           key: 'payouts',
@@ -239,37 +262,6 @@ export function buildContractorChecklist(
             href: '/contractor/payments',
             cta: 'Set up',
           },
-    isLiveSubscription(subscriptionStatus)
-      ? {
-          key: 'go_live',
-          title: 'Go live',
-          state: 'done',
-          detail: 'Your listing is live.',
-        }
-      : !isApproved
-        ? {
-            key: 'go_live',
-            title: 'Go live',
-            state: 'locked',
-            detail: 'Available once you’re verified ($29/mo).',
-          }
-        : subscriptionStatus === 'past_due'
-          ? {
-              key: 'go_live',
-              title: 'Go live',
-              state: 'action_needed',
-              detail: 'Payment issue — update billing to stay live.',
-              href: '/subscribe',
-              cta: 'Fix billing',
-            }
-          : {
-              key: 'go_live',
-              title: 'Go live',
-              state: 'todo',
-              detail: 'Activate your listing ($29/mo) to apply to jobs.',
-              href: '/subscribe',
-              cta: 'Activate',
-            },
   ]
 
   const completed = items.filter((i) => i.state === 'done').length

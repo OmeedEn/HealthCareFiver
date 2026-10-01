@@ -169,52 +169,13 @@ const featuredEvents = [
   },
 ]
 
-const professionalPlans = [
-  {
-    name: 'Basic',
-    price: 'Free',
-    period: '',
-    description: 'Get listed and start receiving inquiries.',
-    features: [
-      'Profile listing (basic)',
-      '1 service listing',
-      'Verified reviews',
-      'In-platform messaging',
-    ],
-    cta: 'Get started',
-    highlighted: false,
-  },
-  {
-    name: 'Professional',
-    price: '$29',
-    period: '/month',
-    description: 'For active professionals growing a real practice.',
-    features: [
-      'Full profile listing',
-      'Unlimited service & event listings',
-      'Priority placement in search',
-      'Analytics dashboard',
-      'In-platform messaging',
-    ],
-    cta: 'Start free trial',
-    highlighted: true,
-  },
-  {
-    name: 'Practice',
-    price: '$79',
-    period: '/month',
-    description: 'Multi-provider teams and group practices.',
-    features: [
-      'Everything in Professional',
-      'Team accounts (up to 5)',
-      'Custom booking page',
-      'Top-tier search placement',
-      'Advanced analytics',
-      'Dedicated support',
-    ],
-    cta: 'Start free trial',
-    highlighted: false,
-  },
+// Professionals: no subscription or plan tiers. Free to join; Sanus takes a
+// small service fee on each booking.
+const professionalPricingPoints = [
+  'Free account, credential review, and profile',
+  'List services, consulting, and events',
+  'See the exact service fee before you publish',
+  'Payouts handled through Stripe',
 ]
 
 const trustItems = [
@@ -926,69 +887,45 @@ export default function LandingPage() {
                 Simple, transparent pricing
               </h2>
               <p className="mt-3 text-[#6b7280]">
-                Different tracks for different needs. No hidden fees.
+                Free to join. A small service fee applies to each booking. No
+                hidden fees.
               </p>
             </div>
 
-            {/* Professional plans */}
+            {/* Professionals: free to join, service fee per booking */}
             <div className="mt-10">
               <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6b7280]">
                 For professionals
               </h3>
-              <div className="mt-4 grid gap-6 md:grid-cols-3">
-                {professionalPlans.map((plan) => (
-                  <div
-                    key={plan.name}
-                    className={`relative rounded-2xl bg-white p-7 shadow-sm ${
-                      plan.highlighted
-                        ? 'border-2 border-[#1dbf73] shadow-lg'
-                        : 'border border-[#e5e7eb]'
-                    }`}
-                  >
-                    {plan.highlighted && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#1dbf73] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-                        Recommended
-                      </div>
-                    )}
-                    <h4 className="text-lg font-semibold text-[#111827]">
-                      {plan.name}
-                    </h4>
-                    <div className="mt-3 flex items-baseline gap-1">
-                      <span className="font-heading text-4xl font-bold text-[#111827]">
-                        {plan.price}
-                      </span>
-                      {plan.period && (
-                        <span className="text-sm text-[#6b7280]">
-                          {plan.period}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-3 text-sm text-[#6b7280]">
-                      {plan.description}
+              <div className="mt-4 rounded-2xl border-2 border-[#1dbf73] bg-white p-7 shadow-sm sm:p-9">
+                <div className="grid gap-8 md:grid-cols-[1fr_1fr] md:items-center">
+                  <div>
+                    <p className="font-heading text-4xl font-bold text-[#111827]">
+                      Free to join
                     </p>
-                    <ul className="mt-5 space-y-2.5">
-                      {plan.features.map((f) => (
-                        <li
-                          key={f}
-                          className="flex items-start gap-2 text-sm text-[#374151]"
-                        >
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
+                    <p className="mt-3 text-[#6b7280]">
+                      Free to join. A small service fee applies to each
+                      booking.
+                    </p>
                     <Link
                       href="/signup?as=professional"
-                      className={`mt-7 inline-flex h-11 w-full items-center justify-center rounded-lg text-sm font-semibold transition ${
-                        plan.highlighted
-                          ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]'
-                          : 'border border-[#e5e7eb] text-[#111827] hover:border-[#1dbf73] hover:text-[#1dbf73]'
-                      }`}
+                      className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463]"
                     >
-                      {plan.cta}
+                      Get started
                     </Link>
                   </div>
-                ))}
+                  <ul className="space-y-2.5">
+                    {professionalPricingPoints.map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-sm text-[#374151]"
+                      >
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
 
@@ -1004,8 +941,8 @@ export default function LandingPage() {
                   </h3>
                 </div>
                 <p className="mt-4 text-sm text-[#6b7280]">
-                  Free to browse and book. Sanus earns a small commission per
-                  transaction. No subscription required to hire.
+                  Free to browse. A small service fee applies to each
+                  booking.
                 </p>
                 <Link
                   href="/find-care"

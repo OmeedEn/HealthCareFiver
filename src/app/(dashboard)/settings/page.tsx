@@ -763,8 +763,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-red-700/80">
                       Permanently deletes your account and all data we hold
                       about you, including contracts, payments history,
-                      messages, and reviews. Active subscriptions will be
-                      canceled. This cannot be undone.
+                      messages, and reviews. This cannot be undone.
                     </p>
                   </div>
                   <Button

@@ -82,7 +82,7 @@ const sections: LegalSection[] = [
         <li>
           To review and verify Professionals before they can be booked.
         </li>
-        <li>To process payments, subscriptions, and payouts via Stripe.</li>
+        <li>To process payments, booking service fees, and payouts via Stripe.</li>
         <li>
           To send transactional emails (account, verification, booking, and
           security notices).
