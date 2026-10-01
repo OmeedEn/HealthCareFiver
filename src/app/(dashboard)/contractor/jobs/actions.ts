@@ -25,15 +25,26 @@ export type ApplyToJobResult =
         | 'unauthorized'
         | 'invalid'
         | 'not_verified'
+        | 'agreement_required'
+        /** @deprecated never returned; kept until job-application-form drops it */
         | 'not_subscribed'
         | 'duplicate'
         | 'error'
       message: string
+      /** Where the user can resolve the problem (e.g. /go-live). */
+      href?: string
     }
 
+const AGREEMENT_REQUIRED = {
+  ok: false,
+  reason: 'agreement_required',
+  message: 'Accept the contractor agreement to start applying',
+  href: '/go-live',
+} as const
+
 /**
- * Apply to a job. Only professionals who can "go live" (verified AND an
- * active/trialing subscription) may apply.
+ * Apply to a job. Only professionals who can "go live" (verified AND the
+ * contractor agreement accepted) may apply.
  */
 export async function applyToJob(
   input: ApplyToJobInput
@@ -61,6 +72,7 @@ export async function applyToJob(
 
   const live = await canGoLive(supabase, user.id)
   if (!live.ok) {
+    if (live.reason === 'agreement_required') return AGREEMENT_REQUIRED
     return { ok: false, reason: live.reason, message: live.message }
   }
 
@@ -87,8 +99,9 @@ export async function applyToJob(
     // half is missing in the error HINT. Only reachable if state changed
     // between the canGoLive() pre-check and the insert. The DB messages are
     // written to be user-facing.
-    if (error.hint === 'not_verified' || error.hint === 'not_subscribed') {
-      return { ok: false, reason: error.hint, message: error.message }
+    if (error.hint === 'agreement_required') return AGREEMENT_REQUIRED
+    if (error.hint === 'not_verified') {
+      return { ok: false, reason: 'not_verified', message: error.message }
     }
     console.error('Job application insert failed:', error)
     return {
