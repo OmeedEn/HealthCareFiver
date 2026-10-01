@@ -3,11 +3,6 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
-import {
-  ORG_NEED_KEYS,
-  ORG_SIZES,
-  ORG_TYPE_KEYS,
-} from '@/lib/onboarding/organization'
 import { TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
@@ -22,11 +17,6 @@ const CONTRACTOR_TYPES = [
   'lab_tech', 'ma', 'emt', 'sw', 'other',
 ] as const
 
-const FACILITY_TYPES = [
-  'hospital', 'clinic', 'nursing_home', 'assisted_living',
-  'home_health', 'rehab_center', 'urgent_care', 'telehealth',
-  'staffing_agency', 'other',
-] as const
 
 const PROFESSIONAL_CATEGORIES = [
   'clinical', 'allied', 'consultant', 'educator',
@@ -107,41 +97,22 @@ const contractorSchema = z.object({
     .optional(),
 })
 
+// Organization signup is step 1 of the Organization Onboarding spec: just
+// the account. Steps 2-4 (organization details, verification, intents)
+// happen in /onboarding/organization after the email is confirmed.
 const facilitySchema = z.object({
   ...consent,
   role: z.literal('facility'),
   email,
   password,
-  facility_name: z
-    .string({ error: 'Organization name is required' })
+  first_name: firstName,
+  last_name: lastName,
+  title: z
+    .string({ error: 'Your role or title is required' })
     .trim()
-    .min(1, 'Organization name is required')
-    .max(200, 'Organization name must be 200 characters or fewer'),
-  facility_type: z.enum(FACILITY_TYPES, 'Select a valid organization type'),
-  contact_name: z
-    .string({ error: 'Contact name is required' })
-    .trim()
-    .min(1, 'Contact name is required')
-    .max(200, 'Contact name must be 200 characters or fewer'),
-  city: z
-    .string({ error: 'City is required' })
-    .trim()
-    .min(1, 'City is required')
-    .max(100, 'City must be 100 characters or fewer'),
-  state: stateCode,
-  zip_code: zipCode,
-  // Not columns on facility_profiles — kept in auth user metadata only.
-  org_type: z.enum(ORG_TYPE_KEYS, 'Select a valid organization type').optional(),
-  org_size: z.enum(ORG_SIZES, 'Select a valid organization size').optional(),
-  org_needs: z
-    .array(z.enum(ORG_NEED_KEYS, 'Select a valid need'))
-    .max(20, 'Too many needs selected')
-    .optional(),
-  org_other_need: z
-    .string()
-    .trim()
-    .max(500, 'Keep "something else" to 500 characters or fewer')
-    .optional(),
+    .min(1, 'Your role or title is required')
+    .max(100, 'Keep your title to 100 characters or fewer'),
+  phone,
 })
 
 const clientSchema = z.object({
@@ -227,18 +198,13 @@ export async function POST(request: NextRequest) {
   } else if (body.role === 'facility') {
     data = {
       role: 'facility' as const,
-      facility_name: body.facility_name,
-      facility_type: body.facility_type,
-      contact_name: body.contact_name,
-      city: body.city,
-      state: body.state,
-      zip_code: body.zip_code,
-      ...(body.org_type ? { org_type: body.org_type } : {}),
-      ...(body.org_size ? { org_size: body.org_size } : {}),
-      ...(body.org_needs?.length
-        ? { org_needs: Array.from(new Set(body.org_needs)) }
-        : {}),
-      ...(body.org_other_need ? { org_other_need: body.org_other_need } : {}),
+      first_name: body.first_name,
+      last_name: body.last_name,
+      // handle_new_user copies contact_name to facility_profiles and phone to
+      // profiles.phone; the wizard copies contact_title on its first load.
+      contact_name: `${body.first_name} ${body.last_name}`,
+      contact_title: body.title,
+      phone: body.phone,
     }
   } else {
     data = {
@@ -267,7 +233,11 @@ export async function POST(request: NextRequest) {
       // Professionals land straight in the onboarding wizard.
       emailRedirectTo: authCallbackUrl(
         request,
-        body.role === 'contractor' ? '/onboarding/professional' : '/dashboard'
+        body.role === 'contractor'
+          ? '/onboarding/professional'
+          : body.role === 'facility'
+            ? '/onboarding/organization'
+            : '/dashboard'
       ),
     },
   })

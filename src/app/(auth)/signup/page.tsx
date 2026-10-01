@@ -14,8 +14,8 @@ const PATHS = [
     title: 'I represent a business or organization',
     description:
       'Hospitals, clinics, practices, gyms, employers, and wellness businesses.',
-    // Hidden from the picker for now; /signup/organization still works directly.
-    hidden: true,
+    // Set `hidden: true` to take this path off the picker.
+    hidden: false,
   },
   {
     href: '/signup/professional',

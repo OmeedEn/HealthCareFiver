@@ -22,6 +22,14 @@ import {
   type OrgStatus,
 } from '@/lib/org/review'
 import { detectOrgRedFlags } from '@/lib/org/red-flags'
+import { CREDENTIALS_BUCKET } from '@/lib/credentials/document'
+import {
+  BUSINESS_STRUCTURES,
+  ORG_DISCLOSURES,
+  ORG_DOCUMENT_KINDS,
+  ORG_INTENTS,
+  orgTypeLabel,
+} from '@/lib/onboarding/organization'
 import { addEvidence, decideOrganization, setChecklistItem } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -35,19 +43,43 @@ interface EvidenceRow {
 }
 
 const DETAIL_FIELDS: [string, string][] = [
-  ['facility_type', 'Type'],
+  ['org_type', 'Type'],
+  ['org_size', 'Size'],
   ['description', 'Description'],
   ['website', 'Website'],
-  ['phone', 'Phone'],
-  ['address_line_1', 'Address'],
+  ['phone', 'Organization phone'],
   ['city', 'City'],
   ['state', 'State'],
   ['zip_code', 'ZIP'],
+  ['location_count', 'Locations'],
   ['contact_name', 'Contact'],
   ['contact_title', 'Contact title'],
-  ['contact_email', 'Contact email'],
-  ['ein', 'EIN'],
 ]
+
+const VERIFY_FIELDS: [string, string][] = [
+  ['legal_name', 'Legal business name'],
+  ['business_structure', 'Business structure'],
+  ['registration_state', 'State of registration'],
+  ['has_facility_license', 'Holds a facility license'],
+  ['facility_license_type', 'License type'],
+  ['facility_license_number', 'License number'],
+  ['facility_license_agency', 'Issuing agency'],
+  ['facility_license_expires', 'License expires'],
+  ['org_npi', 'Organization NPI'],
+  ['ein', 'EIN'],
+  ['attested_authorized_at', 'Attested authorized & accurate'],
+  ['authorized_checks_at', 'Authorized verification & screening'],
+]
+
+function display(org: Record<string, unknown>, key: string): string {
+  const v = org[key]
+  if (v === null || v === undefined || v === '') return '—'
+  if (key === 'org_type') return orgTypeLabel(String(v), org.org_type_other as string | null) ?? '—'
+  if (key === 'business_structure') return BUSINESS_STRUCTURES.find((b) => b.value === v)?.label ?? String(v)
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No'
+  if (key.endsWith('_at')) return formatDateTime(String(v))
+  return String(v)
+}
 
 export default async function AdminOrganizationPage({
   params,
@@ -57,7 +89,7 @@ export default async function AdminOrganizationPage({
   const { db } = await requireAdmin()
   const { id } = await params
 
-  const [{ data: org }, { data: account }, { data: evidenceRows }, { count: draftCount }] =
+  const [{ data: org }, { data: account }, { data: evidenceRows }, { count: draftCount }, { data: orgDocs }] =
     await Promise.all([
       db.from('facility_profiles').select('*').eq('id', id).maybeSingle(),
       db.from('profiles').select('email, phone, created_at').eq('id', id).maybeSingle(),
@@ -67,6 +99,11 @@ export default async function AdminOrganizationPage({
         .eq('facility_id', id)
         .order('created_at', { ascending: false }),
       db.from('jobs').select('id', { count: 'exact', head: true }).eq('facility_id', id),
+      db
+        .from('org_documents')
+        .select('id, kind, filename, storage_path, uploaded_at')
+        .eq('facility_id', id)
+        .order('uploaded_at'),
     ])
   if (!org) notFound()
 
@@ -87,6 +124,16 @@ export default async function AdminOrganizationPage({
       })
   )
 
+  const docLinks = new Map<string, string>()
+  await Promise.all(
+    (orgDocs ?? []).map(async (d) => {
+      const { data } = await db.storage.from(CREDENTIALS_BUCKET).createSignedUrl(d.storage_path, 600)
+      if (data?.signedUrl) docLinks.set(d.id, data.signedUrl)
+    })
+  )
+  const disclosures = (org.self_disclosures ?? {}) as Record<string, { answer?: boolean; details?: string | null }>
+  const intents = (org.intents ?? []) as string[]
+
   return (
     <div className="space-y-6">
       <Link href="/admin/organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
@@ -104,6 +151,15 @@ export default async function AdminOrganizationPage({
           {ORG_STATUS_LABEL[status]}
         </Badge>
       </div>
+
+      {!org.onboarding_submitted_at && (
+        <Card className="border-[#f5deb3] bg-[#fdf6e3]">
+          <CardContent className="pt-6 text-sm text-[#404145]">
+            <span className="font-semibold">Application not submitted yet.</span> They&apos;re on step{' '}
+            {org.onboarding_step ?? 2} of 4 of signup. Review once they submit.
+          </CardContent>
+        </Card>
+      )}
 
       {org.verification_notes && (
         <Card>
@@ -129,10 +185,76 @@ export default async function AdminOrganizationPage({
                 {DETAIL_FIELDS.map(([key, label]) => (
                   <div key={key} className="contents">
                     <dt className="text-[#62646a]">{label}</dt>
-                    <dd className="break-words text-[#404145]">{(org as Record<string, unknown>)[key] ? String((org as Record<string, unknown>)[key]) : '—'}</dd>
+                    <dd className="break-words text-[#404145]">{display(org as Record<string, unknown>, key)}</dd>
                   </div>
                 ))}
               </dl>
+              <div className="mt-4 text-sm">
+                <span className="text-[#62646a]">Wants to: </span>
+                {intents.length
+                  ? intents.map((k) => ORG_INTENTS.find((i) => i.key === k)?.label ?? k).join(' · ')
+                  : '—'}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Verification details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[220px_1fr]">
+                {VERIFY_FIELDS.map(([key, label]) => (
+                  <div key={key} className="contents">
+                    <dt className="text-[#62646a]">{label}</dt>
+                    <dd className="break-words text-[#404145]">{display(org as Record<string, unknown>, key)}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold text-[#404145]">Self-disclosures</p>
+                <ul className="space-y-2 text-sm">
+                  {ORG_DISCLOSURES.map((q) => {
+                    const a = disclosures[q.key]
+                    const yes = a?.answer === true
+                    return (
+                      <li key={q.key} className={yes ? 'rounded-md bg-[#fdecea] p-2' : ''}>
+                        <span className="text-[#62646a]">{q.question}</span>{' '}
+                        <strong className={yes ? 'text-[#c0392b]' : 'text-[#404145]'}>
+                          {a == null ? '—' : yes ? 'Yes' : 'No'}
+                        </strong>
+                        {yes && a?.details && <p className="mt-1 whitespace-pre-line text-[#404145]">{a.details}</p>}
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+
+              <div>
+                <p className="mb-2 text-sm font-semibold text-[#404145]">Documents</p>
+                {orgDocs && orgDocs.length > 0 ? (
+                  <ul className="space-y-1 text-sm">
+                    {orgDocs.map((d) => (
+                      <li key={d.id}>
+                        <span className="text-[#62646a]">
+                          {ORG_DOCUMENT_KINDS.find((k) => k.kind === d.kind)?.label ?? d.kind}:
+                        </span>{' '}
+                        {docLinks.get(d.id) ? (
+                          <a href={docLinks.get(d.id)} target="_blank" rel="noreferrer" className="font-semibold text-[#1dbf73] hover:underline">
+                            {d.filename}
+                          </a>
+                        ) : (
+                          d.filename
+                        )}{' '}
+                        <span className="text-xs text-[#95979d]">{formatDateTime(d.uploaded_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-[#62646a]">None uploaded.</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 

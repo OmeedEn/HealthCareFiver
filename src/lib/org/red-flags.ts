@@ -3,12 +3,8 @@
  * only, no web presence…"). Hints only — an admin makes the call.
  */
 
-export const FREE_EMAIL_DOMAINS = new Set([
-  'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'hotmail.com', 'outlook.com',
-  'live.com', 'msn.com', 'aol.com', 'icloud.com', 'me.com', 'mac.com', 'proton.me',
-  'protonmail.com', 'gmx.com', 'mail.com', 'zoho.com', 'yandex.com', 'comcast.net',
-  'att.net', 'verizon.net', 'sbcglobal.net',
-])
+export { FREE_EMAIL_DOMAINS } from '@/lib/onboarding/organization'
+import { FREE_EMAIL_DOMAINS } from '@/lib/onboarding/organization'
 
 export function emailDomain(email: string | null | undefined): string {
   return (email ?? '').split('@')[1]?.trim().toLowerCase() ?? ''
