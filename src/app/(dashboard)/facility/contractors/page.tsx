@@ -60,7 +60,7 @@ export default function FindContractorsPage() {
     const supabase = createClient()
     let query = supabase
       .from('contractor_profiles')
-      .select('*, profiles!inner(avatar_url)')
+      .select('*, profiles!contractor_profiles_id_fkey!inner(avatar_url)')
       // Only "live" professionals: verified (incl. insurance pending), agreement
       // accepted and no compliance hold (see can-go-live.ts).
       .in('verification_status', ['approved', 'insurance_pending'])

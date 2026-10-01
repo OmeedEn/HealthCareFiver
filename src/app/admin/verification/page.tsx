@@ -39,7 +39,7 @@ export default async function AdminVerificationQueuePage() {
   const { data, error } = await adminSupabase
     .from('contractor_profiles')
     .select(
-      'id, first_name, last_name, professional_category, other_profession, credential_basis, verification_status, updated_at, self_disclosures, last_exclusion_check_at, insurance_due_at, profiles(email)'
+      'id, first_name, last_name, professional_category, other_profession, credential_basis, verification_status, updated_at, self_disclosures, last_exclusion_check_at, insurance_due_at, profiles!contractor_profiles_id_fkey(email)'
     )
     .in('verification_status', [...VERIFICATION_STATUSES])
     .order('updated_at', { ascending: true })
