@@ -74,7 +74,8 @@ export default async function DashboardLayout({
         .maybeSingle()
       showGoLiveBanner =
         !contractorError &&
-        contractor?.verification_status === 'approved' &&
+        (contractor?.verification_status === 'approved' ||
+          contractor?.verification_status === 'insurance_pending') &&
         !contractor?.contractor_agreement_accepted_at
     }
 
