@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 // Only allow internal-path redirects to avoid an open redirect via `?next=`
+// (e.g. /onboarding/account after Google sign-in). Backslashes are rejected
+// too: browsers treat `/\evil.com` like `//evil.com`.
 function safeNext(target: string | null): string | null {
   if (!target) return null
   if (!target.startsWith('/') || target.startsWith('//')) return null
+  if (target.includes('\\')) return null
   return target
 }
 
