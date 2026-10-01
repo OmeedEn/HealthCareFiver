@@ -14,6 +14,8 @@ const PATHS = [
     title: 'I represent a business or organization',
     description:
       'Hospitals, clinics, practices, gyms, employers, and wellness businesses.',
+    // Hidden from the picker for now; /signup/organization still works directly.
+    hidden: true,
   },
   {
     href: '/signup/professional',
@@ -35,7 +37,7 @@ export default function SignupPickerPage() {
       </p>
 
       <div className="mt-8 space-y-3">
-        {PATHS.map((p) => {
+        {PATHS.filter((p) => !p.hidden).map((p) => {
           const Icon = p.icon
           return (
             <Link
