@@ -3,6 +3,13 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
+import {
+  ORG_NEED_KEYS,
+  ORG_SIZES,
+  ORG_TYPE_KEYS,
+} from '@/lib/onboarding/organization'
+import { TERMS_VERSION } from '@/lib/legal'
+import { authCallbackUrl } from '@/lib/auth/redirect-url'
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -52,7 +59,21 @@ const zipCode = z
   .trim()
   .regex(/^\d{5}$/, 'Enter a 5-digit ZIP code')
 
+// Explicit consent to the current Terms of Service + Privacy Policy. The
+// version must match what this deploy serves so we know exactly which text
+// the user agreed to; a stale tab gets a clear "refresh" message.
+const consent = {
+  accepted_terms: z.literal(true, {
+    error: 'Please agree to the Terms of Service and Privacy Policy to continue',
+  }),
+  terms_version: z.literal(TERMS_VERSION, {
+    error:
+      'Our Terms of Service or Privacy Policy were updated — please refresh the page and review them',
+  }),
+}
+
 const contractorSchema = z.object({
+  ...consent,
   role: z.literal('contractor'),
   email,
   password,
@@ -65,6 +86,7 @@ const contractorSchema = z.object({
 })
 
 const facilitySchema = z.object({
+  ...consent,
   role: z.literal('facility'),
   email,
   password,
@@ -86,9 +108,22 @@ const facilitySchema = z.object({
     .max(100, 'City must be 100 characters or fewer'),
   state: stateCode,
   zip_code: zipCode,
+  // Not columns on facility_profiles — kept in auth user metadata only.
+  org_type: z.enum(ORG_TYPE_KEYS, 'Select a valid organization type').optional(),
+  org_size: z.enum(ORG_SIZES, 'Select a valid organization size').optional(),
+  org_needs: z
+    .array(z.enum(ORG_NEED_KEYS, 'Select a valid need'))
+    .max(20, 'Too many needs selected')
+    .optional(),
+  org_other_need: z
+    .string()
+    .trim()
+    .max(500, 'Keep "something else" to 500 characters or fewer')
+    .optional(),
 })
 
 const clientSchema = z.object({
+  ...consent,
   role: z.literal('client'),
   email,
   password,
@@ -174,6 +209,12 @@ export async function POST(request: NextRequest) {
       city: body.city,
       state: body.state,
       zip_code: body.zip_code,
+      ...(body.org_type ? { org_type: body.org_type } : {}),
+      ...(body.org_size ? { org_size: body.org_size } : {}),
+      ...(body.org_needs?.length
+        ? { org_needs: Array.from(new Set(body.org_needs)) }
+        : {}),
+      ...(body.org_other_need ? { org_other_need: body.org_other_need } : {}),
     }
   } else {
     data = {
@@ -187,10 +228,20 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { error } = await supabase.auth.signUp({
+  // Consent record: server timestamp (never trust a client clock) plus the
+  // exact terms version shown.
+  data.terms_accepted_at = new Date().toISOString()
+  data.terms_version = body.terms_version
+
+  const { data: result, error } = await supabase.auth.signUp({
     email: normalizedEmail,
     password: body.password,
-    options: { data },
+    options: {
+      data,
+      // When email confirmations are on, the link must go through /callback
+      // (PKCE code exchange) rather than the bare Site URL.
+      emailRedirectTo: authCallbackUrl(request, '/dashboard'),
+    },
   })
 
   if (error) {
@@ -224,5 +275,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  return NextResponse.json({ success: true })
+  // No session means Supabase is waiting on email confirmation (or, with
+  // confirmations on, the address already exists and Supabase obfuscates
+  // that — either way "check your email" is the right next screen).
+  return NextResponse.json({
+    success: true,
+    needsEmailConfirmation: !result.session,
+  })
 }

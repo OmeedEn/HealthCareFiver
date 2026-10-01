@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import { TERMS_VERSION } from '@/lib/legal'
+import {
+  CheckEmailStep,
+  TermsConsent,
+  TwoFactorNotice,
+  type SignupResponse,
+} from '@/components/auth/signup-shared'
 import {
   Loader2,
   ArrowLeft,
@@ -20,7 +27,6 @@ import {
   ShieldCheck,
   UserRound,
   Wallet,
-  KeyRound,
 } from 'lucide-react'
 
 // Professional onboarding is intentionally short: pick a category, create
@@ -96,6 +102,10 @@ export default function ProfessionalSignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+
+  // Step 3 — set when Supabase requires email confirmation (no session yet)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
 
   const canStep1 = proType !== null
   const canStep2 =
@@ -104,7 +114,8 @@ export default function ProfessionalSignupPage() {
     lastName.trim() &&
     email.trim() &&
     password.length >= 8 &&
-    password === confirmPassword
+    password === confirmPassword &&
+    acceptedTerms
 
   async function submitAccount() {
     if (!canStep2 || loading) return
@@ -128,19 +139,31 @@ export default function ProfessionalSignupPage() {
           // 'other' keeps the contractor_type enum happy at signup.
           contractor_type: 'other',
           professional_category: proType,
+          accepted_terms: true,
+          terms_version: TERMS_VERSION,
         }),
       })
+      const body: SignupResponse = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
         toast.error(body.error || 'Could not create account')
         return
       }
+      setNeedsConfirmation(Boolean(body.needsEmailConfirmation))
       setStep(3)
     } catch {
       toast.error('Network error — please try again')
     } finally {
       setLoading(false)
     }
+  }
+
+  function startOver() {
+    setNeedsConfirmation(false)
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    setAcceptedTerms(false)
+    setStep(2)
   }
 
   return (
@@ -237,6 +260,8 @@ export default function ProfessionalSignupPage() {
             <p className="mt-2 text-xs text-red-600">Passwords don&apos;t match.</p>
           )}
 
+          <TermsConsent checked={acceptedTerms} onChange={setAcceptedTerms} />
+
           <div className="mt-6 flex gap-3">
             <Button type="button" variant="outline" onClick={() => setStep(1)} className="h-11 flex-1"><ArrowLeft className="mr-2 size-4" />Back</Button>
             <Button type="submit" disabled={!canStep2 || loading} className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">
@@ -244,16 +269,14 @@ export default function ProfessionalSignupPage() {
               Create account
             </Button>
           </div>
-          <p className="mt-3 text-center text-xs text-[#62646a]">
-            By continuing you agree to Sanus&apos;s{' '}
-            <Link href="/terms" className="font-medium underline hover:text-[#404145]">Terms of Service</Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="font-medium underline hover:text-[#404145]">Privacy Policy</Link>.
-          </p>
         </form>
       )}
 
-      {step === 3 && (
+      {step === 3 && needsConfirmation && (
+        <CheckEmailStep email={email.trim().toLowerCase()} onStartOver={startOver} />
+      )}
+
+      {step === 3 && !needsConfirmation && (
         <div className="mt-6">
           <div className="text-center">
             <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#e8faf1]">
@@ -293,16 +316,8 @@ export default function ProfessionalSignupPage() {
             $29/month to go live and get booked.
           </p>
 
-          <div className="mt-6 rounded-xl border border-[#bcebd5] bg-[#e8faf1] p-4">
-            <div className="flex gap-3">
-              <KeyRound className="mt-0.5 size-5 shrink-0 text-[#0f8f56]" />
-              <p className="text-xs text-[#0f8f56]">
-                Next, you&apos;ll set up two-factor authentication with an
-                authenticator app (like Google Authenticator, 1Password, or
-                Authy). It&apos;s required for every account because Sanus
-                handles health information.
-              </p>
-            </div>
+          <div className="mt-6">
+            <TwoFactorNotice />
           </div>
 
           <Button onClick={() => router.push('/dashboard')} className="mt-6 h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]">

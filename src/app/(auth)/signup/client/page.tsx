@@ -17,6 +17,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { TERMS_VERSION } from '@/lib/legal'
+import {
+  CheckEmailStep,
+  TermsConsent,
+  TwoFactorNotice,
+  type SignupResponse,
+} from '@/components/auth/signup-shared'
 import {
   Loader2,
   ArrowLeft,
@@ -71,11 +78,22 @@ export default function ClientSignupPage() {
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+
+  // Step 3 — set when Supabase requires email confirmation (no session yet)
+  const [needsConfirmation, setNeedsConfirmation] = useState(false)
 
   const zipValid = zipCode === '' || /^\d{5}$/.test(zipCode.trim())
   const canNextStep1 = interests.size > 0 && zipValid
+  const passwordsMatch = password === confirmPassword
   const canSubmit =
-    firstName.trim() && lastName.trim() && email.trim() && password.length >= 8
+    !!firstName.trim() &&
+    !!lastName.trim() &&
+    !!email.trim() &&
+    password.length >= 8 &&
+    passwordsMatch &&
+    acceptedTerms
 
   function toggleInterest(key: string) {
     setInterests((prev) => {
@@ -86,7 +104,17 @@ export default function ClientSignupPage() {
     })
   }
 
+  function startOver() {
+    setNeedsConfirmation(false)
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    setAcceptedTerms(false)
+    setStep(2)
+  }
+
   async function handleCreateAccount() {
+    if (!canSubmit || loading) return
     setLoading(true)
     if (isDemoMode()) {
       // Skip the real API in demo
@@ -108,13 +136,18 @@ export default function ClientSignupPage() {
           ...(city.trim() ? { city: city.trim() } : {}),
           ...(state ? { state } : {}),
           ...(zipCode.trim() ? { zip_code: zipCode.trim() } : {}),
+          accepted_terms: true,
+          terms_version: TERMS_VERSION,
         }),
       })
+      const body: SignupResponse = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
+        // The API returns a human-readable message for the first invalid
+        // field (or rate limit / duplicate email).
         toast.error(body.error || 'Could not create account')
         return
       }
+      setNeedsConfirmation(Boolean(body.needsEmailConfirmation))
       setStep(3)
     } catch {
       toast.error('Network error — please try again')
@@ -215,7 +248,13 @@ export default function ClientSignupPage() {
       )}
 
       {step === 2 && (
-        <div className="mt-6">
+        <form
+          className="mt-6"
+          onSubmit={(e) => {
+            e.preventDefault()
+            handleCreateAccount()
+          }}
+        >
           <h1 className="text-2xl font-bold tracking-tight text-[#404145]">
             Create your account
           </h1>
@@ -239,7 +278,7 @@ export default function ClientSignupPage() {
               placeholder="you@example.com"
             />
           </div>
-          <div className="mt-3">
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Field
               label="Password"
               id="pw"
@@ -249,10 +288,34 @@ export default function ClientSignupPage() {
               autoComplete="new-password"
               placeholder="Min 8 characters"
             />
+            <Field
+              label="Confirm password"
+              id="pw2"
+              type="password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+              placeholder="Repeat password"
+            />
           </div>
+          {password.length > 0 && password.length < 8 ? (
+            <p className="mt-2 text-xs text-[#c0392b]">
+              Password must be at least 8 characters ({password.length}/8).
+            </p>
+          ) : (
+            <p className="mt-2 text-xs text-[#62646a]">
+              Use at least 8 characters. A longer passphrase is stronger.
+            </p>
+          )}
+          {confirmPassword && !passwordsMatch && (
+            <p className="mt-1 text-xs text-red-600">Passwords don&apos;t match.</p>
+          )}
+
+          <TermsConsent checked={acceptedTerms} onChange={setAcceptedTerms} />
 
           <div className="mt-6 flex gap-3">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setStep(1)}
               disabled={loading}
@@ -262,8 +325,8 @@ export default function ClientSignupPage() {
               Back
             </Button>
             <Button
+              type="submit"
               disabled={!canSubmit || loading}
-              onClick={handleCreateAccount}
               className="h-11 flex-1 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
             >
               {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
@@ -271,21 +334,14 @@ export default function ClientSignupPage() {
               <ArrowRight className="ml-2 size-4" />
             </Button>
           </div>
-          <p className="mt-3 text-center text-xs text-[#62646a]">
-            By creating an account you agree to Sanus&apos;s{' '}
-            <Link href="/terms" className="font-semibold underline hover:text-[#404145]">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" className="font-semibold underline hover:text-[#404145]">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-        </div>
+        </form>
       )}
 
-      {step === 3 && (
+      {step === 3 && needsConfirmation && (
+        <CheckEmailStep email={email.trim().toLowerCase()} onStartOver={startOver} />
+      )}
+
+      {step === 3 && !needsConfirmation && (
         <WelcomeStep
           firstName={firstName}
           subtitle="Your account is ready and your preferences are saved. Start browsing professionals whenever you're ready."
@@ -391,7 +447,10 @@ function WelcomeStep({
         Welcome to Sanus, {firstName}!
       </h2>
       <p className="mt-2 text-sm text-[#62646a]">{subtitle}</p>
-      <div className="mt-8 space-y-3">
+      <div className="mt-6">
+        <TwoFactorNotice />
+      </div>
+      <div className="mt-6 space-y-3">
         <Button
           onClick={onPrimary}
           className="h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
