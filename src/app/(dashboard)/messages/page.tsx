@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { PROFILE_NAME_SELECT, profileName, type ProfileWithNames } from '@/lib/profile-name'
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_CONVERSATIONS, DEMO_CONTRACTOR } from '@/lib/demo/data'
@@ -42,7 +43,7 @@ export default function MessagesPage() {
     const { data, error } = await supabase
       .from('conversations')
       .select(
-        '*, participant_1_profile:profiles!conversations_participant_1_fkey(user_id, first_name, last_name, avatar_url, role), participant_2_profile:profiles!conversations_participant_2_fkey(user_id, first_name, last_name, avatar_url, role)'
+        `*, participant_1_profile:profiles!conversations_participant_1_fkey(${PROFILE_NAME_SELECT}), participant_2_profile:profiles!conversations_participant_2_fkey(${PROFILE_NAME_SELECT})`
       )
       .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`)
       .order('last_message_at', { ascending: false, nullsFirst: false })
@@ -54,20 +55,8 @@ export default function MessagesPage() {
 
     const mapped: ConversationItem[] = (data ?? []).map(
       (row: Record<string, unknown>) => {
-        const p1 = row.participant_1_profile as {
-          user_id: string
-          first_name: string
-          last_name: string
-          avatar_url: string | null
-          role: string
-        } | null
-        const p2 = row.participant_2_profile as {
-          user_id: string
-          first_name: string
-          last_name: string
-          avatar_url: string | null
-          role: string
-        } | null
+        const p1 = row.participant_1_profile as ProfileWithNames | null
+        const p2 = row.participant_2_profile as ProfileWithNames | null
 
         const isP1 = row.participant_1 === user.id
         const other = isP1 ? p2 : p1
@@ -82,9 +71,8 @@ export default function MessagesPage() {
           unread_count_2: (row.unread_count_2 as number) ?? 0,
           created_at: row.created_at as string,
           other_user: {
-            id: other?.user_id ?? '',
-            first_name: other?.first_name ?? 'Unknown',
-            last_name: other?.last_name ?? '',
+            id: other?.id ?? '',
+            ...profileName(other),
             avatar_url: other?.avatar_url ?? null,
             role: other?.role ?? 'contractor',
           },

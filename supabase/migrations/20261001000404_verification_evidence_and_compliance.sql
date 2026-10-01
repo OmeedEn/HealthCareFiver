@@ -1,4 +1,4 @@
--- 20261001000204_verification_evidence_and_compliance.sql
+-- 20261001000404_verification_evidence_and_compliance.sql
 -- Admin manual verification checklist evidence, compliance reminder log, and
 -- the duplicate-account red-flag lookup. All new objects; no existing table
 -- is touched.

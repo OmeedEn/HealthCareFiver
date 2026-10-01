@@ -58,7 +58,6 @@ interface JobFormData {
   is_remote: boolean
   pay_rate_min: string
   pay_rate_max: string
-  pay_rate_type: string
   overtime_rate: string
   travel_reimbursement: boolean
   housing_provided: boolean
@@ -79,7 +78,7 @@ const initialFormData: JobFormData = {
   specialties_required: [],
   job_type: '',
   shift_type: '',
-  urgency: 'normal',
+  urgency: 'medium',
   positions_available: '1',
   city: '',
   state: '',
@@ -87,7 +86,6 @@ const initialFormData: JobFormData = {
   is_remote: false,
   pay_rate_min: '',
   pay_rate_max: '',
-  pay_rate_type: 'hourly',
   overtime_rate: '',
   travel_reimbursement: false,
   housing_provided: false,
@@ -105,6 +103,24 @@ type ListKey =
   | 'specialties_required'
   | 'required_credentials'
   | 'required_certifications'
+
+// Tiny inline "section title with brand icon" helper used by every Card.
+function SectionTitle({
+  icon: Icon,
+  children,
+}: {
+  icon: React.ElementType
+  children: React.ReactNode
+}) {
+  return (
+    <CardTitle className="flex items-center gap-2 text-[#404145]">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-[#e8faf1]">
+        <Icon className="size-4 text-[#1dbf73]" />
+      </span>
+      {children}
+    </CardTitle>
+  )
+}
 
 export default function FacilityNewJobPage() {
   const router = useRouter()
@@ -145,6 +161,15 @@ export default function FacilityNewJobPage() {
       toast.error('Job title is required.')
       return
     }
+    if (!form.description.trim()) {
+      toast.error('Job description is required.')
+      return
+    }
+    // NOT NULL in the jobs table — catch them here instead of a generic DB error.
+    if (!form.contractor_type || !form.job_type || !form.shift_type) {
+      toast.error('Choose a profession, job type, and shift type.')
+      return
+    }
 
     setLoading(status)
 
@@ -172,7 +197,7 @@ export default function FacilityNewJobPage() {
       const insertData: Record<string, unknown> = {
         facility_id: user.id,
         title: form.title.trim(),
-        description: form.description.trim() || null,
+        description: form.description.trim(),
         contractor_type: form.contractor_type || null,
         specialties_required:
           form.specialties_required.length > 0
@@ -180,7 +205,7 @@ export default function FacilityNewJobPage() {
             : null,
         job_type: form.job_type || null,
         shift_type: form.shift_type || null,
-        urgency: form.urgency || 'normal',
+        urgency: form.urgency || 'medium',
         positions_available: form.positions_available
           ? parseInt(form.positions_available)
           : 1,
@@ -188,9 +213,8 @@ export default function FacilityNewJobPage() {
         state: form.state || null,
         zip_code: form.zip_code.trim() || null,
         is_remote: form.is_remote,
-        pay_rate_min: form.pay_rate_min ? parseFloat(form.pay_rate_min) : null,
-        pay_rate_max: form.pay_rate_max ? parseFloat(form.pay_rate_max) : null,
-        pay_rate_type: form.pay_rate_type || null,
+        hourly_rate_min: form.pay_rate_min ? parseFloat(form.pay_rate_min) : null,
+        hourly_rate_max: form.pay_rate_max ? parseFloat(form.pay_rate_max) : null,
         overtime_rate: form.overtime_rate
           ? parseFloat(form.overtime_rate)
           : null,
@@ -198,23 +222,20 @@ export default function FacilityNewJobPage() {
         housing_provided: form.housing_provided,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
-        shifts_per_week: form.shifts_per_week
-          ? parseInt(form.shifts_per_week)
-          : null,
-        hours_per_shift: form.hours_per_shift
-          ? parseFloat(form.hours_per_shift)
-          : null,
-        years_experience_min: form.years_experience_min
+        // The jobs table stores weekly hours, not shifts × hours.
+        hours_per_week:
+          form.shifts_per_week && form.hours_per_shift
+            ? parseInt(form.shifts_per_week) * parseFloat(form.hours_per_shift)
+            : null,
+        years_experience_required: form.years_experience_min
           ? parseInt(form.years_experience_min)
           : null,
-        required_credentials:
-          form.required_credentials.length > 0
-            ? form.required_credentials
-            : null,
-        required_certifications:
-          form.required_certifications.length > 0
-            ? form.required_certifications
-            : null,
+        // jobs has a single required_certifications list; credentials and
+        // certifications both go there.
+        required_certifications: (() => {
+          const all = [...new Set([...form.required_credentials, ...form.required_certifications])]
+          return all.length > 0 ? all : null
+        })(),
         additional_requirements: form.additional_requirements.trim() || null,
         status,
         published_at: status === 'open' ? new Date().toISOString() : null,
@@ -240,23 +261,6 @@ export default function FacilityNewJobPage() {
     }
   }
 
-  // Tiny inline "section title with brand icon" helper used by every Card.
-  function SectionTitle({
-    icon: Icon,
-    children,
-  }: {
-    icon: React.ElementType
-    children: React.ReactNode
-  }) {
-    return (
-      <CardTitle className="flex items-center gap-2 text-[#404145]">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-[#e8faf1]">
-          <Icon className="size-4 text-[#1dbf73]" />
-        </span>
-        {children}
-      </CardTitle>
-    )
-  }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-24">
@@ -303,7 +307,9 @@ export default function FacilityNewJobPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">
+              Description <span className="text-red-600">*</span>
+            </Label>
             <Textarea
               id="description"
               placeholder="Describe the role, day-to-day responsibilities, team, and what you're looking for in an ideal candidate."
@@ -417,7 +423,7 @@ export default function FacilityNewJobPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="medium">Normal</SelectItem>
                   <SelectItem value="high">High</SelectItem>
                   <SelectItem value="critical">Critical</SelectItem>
                 </SelectContent>
@@ -509,43 +515,26 @@ export default function FacilityNewJobPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_min">Pay rate min</Label>
+              <Label htmlFor="pay_rate_min">Hourly rate min</Label>
               <CurrencyInput
                 id="pay_rate_min"
                 placeholder="Min"
                 value={form.pay_rate_min}
                 onChange={(v) => updateField('pay_rate_min', v)}
+                suffix="/hr"
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_max">Pay rate max</Label>
+              <Label htmlFor="pay_rate_max">Hourly rate max</Label>
               <CurrencyInput
                 id="pay_rate_max"
                 placeholder="Max"
                 value={form.pay_rate_max}
                 onChange={(v) => updateField('pay_rate_max', v)}
+                suffix="/hr"
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="pay_rate_type">Pay rate type</Label>
-              <Select
-                value={form.pay_rate_type}
-                onValueChange={(v) =>
-                  v != null && updateField('pay_rate_type', v)
-                }
-              >
-                <SelectTrigger className="w-full" id="pay_rate_type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hourly">Per hour</SelectItem>
-                  <SelectItem value="daily">Per day</SelectItem>
-                  <SelectItem value="weekly">Per week</SelectItem>
-                  <SelectItem value="per_contract">Per contract</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

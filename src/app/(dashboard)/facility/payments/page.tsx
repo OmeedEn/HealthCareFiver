@@ -155,7 +155,7 @@ export default function FacilityPaymentsPage() {
       const { data: paymentData } = await supabase
         .from('payments')
         .select(
-          'id, created_at, amount, platform_fee, net_amount, status, invoice_url, contracts(title, contractor_profiles(first_name, last_name))'
+          'id, created_at, amount:gross_amount, platform_fee, net_amount, status, invoice_url, contracts(title, contractor_profiles(first_name, last_name))'
         )
         .eq('payer_id', user.id)
         .order('created_at', { ascending: false })

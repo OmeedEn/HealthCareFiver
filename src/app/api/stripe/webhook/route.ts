@@ -100,12 +100,21 @@ export async function POST(request: NextRequest) {
 
       case 'payment_intent.payment_failed': {
         const failedIntent = event.data.object
+        // payments has no failure_reason column; merge it into metadata.
+        const { data: existing } = await supabase
+          .from('payments')
+          .select('metadata')
+          .eq('stripe_payment_intent_id', failedIntent.id)
+          .maybeSingle()
         const { error } = await supabase
           .from('payments')
           .update({
             status: 'failed',
-            failure_reason:
-              failedIntent.last_payment_error?.message || 'Payment failed',
+            metadata: {
+              ...((existing?.metadata as Record<string, unknown> | null) ?? {}),
+              failure_reason:
+                failedIntent.last_payment_error?.message || 'Payment failed',
+            },
           })
           .eq('stripe_payment_intent_id', failedIntent.id)
         if (error) throw error

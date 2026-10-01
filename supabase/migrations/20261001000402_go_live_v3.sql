@@ -1,4 +1,4 @@
--- 20261001000202_go_live_v3.sql
+-- 20261001000402_go_live_v3.sql
 -- Go-live v3. Mirrors src/lib/auth/can-go-live.ts.
 --
 --   can_go_live(uuid) =

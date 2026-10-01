@@ -116,7 +116,7 @@ export function JobCard({
               {SHIFT_TYPE_LABELS[job.shift_type] ?? job.shift_type}
             </Badge>
           )}
-          {job.urgency && job.urgency !== 'normal' && (
+          {(job.urgency === 'high' || job.urgency === 'critical') && (
             <Badge variant={getUrgencyVariant(job.urgency)}>
               {job.urgency === 'critical' ? 'Critical' : 'High Priority'}
             </Badge>

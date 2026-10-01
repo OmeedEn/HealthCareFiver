@@ -67,8 +67,9 @@ const FACILITY_NAV: NavItem[] = [
 // items previously listed here had no backing routes — removed rather than left
 // as 404s. Add them back when the corresponding admin pages ship.
 const ADMIN_NAV: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { label: 'Admin Console', href: '/admin', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Verification', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Credentials', href: '/admin/credentials', icon: ShieldCheck },
   { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Events', href: '/events', icon: GraduationCap },

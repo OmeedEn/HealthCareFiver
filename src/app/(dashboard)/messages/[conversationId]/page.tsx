@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { PROFILE_NAME_SELECT, profileName, type ProfileWithNames } from '@/lib/profile-name'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -87,7 +88,7 @@ export default function ConversationPage() {
     const { data: convo } = await supabase
       .from('conversations')
       .select(
-        '*, participant_1_profile:profiles!conversations_participant_1_fkey(user_id, first_name, last_name, avatar_url), participant_2_profile:profiles!conversations_participant_2_fkey(user_id, first_name, last_name, avatar_url)'
+        `*, participant_1_profile:profiles!conversations_participant_1_fkey(${PROFILE_NAME_SELECT}), participant_2_profile:profiles!conversations_participant_2_fkey(${PROFILE_NAME_SELECT})`
       )
       .eq('id', conversationId)
       .single()
@@ -95,29 +96,22 @@ export default function ConversationPage() {
     if (convo) {
       const isP1 = convo.participant_1 === user.id
       const otherProfile = isP1
-        ? (convo.participant_2_profile as OtherUser | null)
-        : (convo.participant_1_profile as OtherUser | null)
+        ? (convo.participant_2_profile as ProfileWithNames | null)
+        : (convo.participant_1_profile as ProfileWithNames | null)
 
       if (otherProfile) {
         setOtherUser({
           id: otherProfile.id ?? (isP1 ? convo.participant_2 : convo.participant_1),
-          first_name: otherProfile.first_name,
-          last_name: otherProfile.last_name,
-          avatar_url: otherProfile.avatar_url,
+          ...profileName(otherProfile),
+          avatar_url: otherProfile.avatar_url ?? null,
         })
       }
 
-      // Mark messages as read
-      const unreadField = isP1 ? 'unread_count_1' : 'unread_count_2'
-      await supabase
-        .from('conversations')
-        .update({ [unreadField]: 0 })
-        .eq('id', conversationId)
-
-      // Mark individual messages as read
+      // Mark the other participant's messages as read (unread state lives on
+      // messages; conversations has no unread counters).
       await supabase
         .from('messages')
-        .update({ read_at: new Date().toISOString() })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('conversation_id', conversationId)
         .neq('sender_id', user.id)
         .is('read_at', null)

@@ -1,4 +1,4 @@
--- 20261001000201_provider_onboarding_v3_columns.sql
+-- 20261001000401_provider_onboarding_v3_columns.sql
 -- Provider onboarding v3: "Other" professionals, licensed/allied step-3
 -- fields, practice question, self-disclosures, attestations, and the
 -- admin-owned compliance columns (approval clock, malpractice grace period,

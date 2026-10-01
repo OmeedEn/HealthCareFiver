@@ -116,7 +116,7 @@ export default function FacilityContractDetailPage() {
     const { data: contractData, error } = await supabase
       .from('contracts')
       .select(
-        '*, contractor_profiles!inner(first_name, last_name)'
+        '*, rate_amount:agreed_rate, contractor_profiles!inner(first_name, last_name)'
       )
       .eq('id', contractId)
       .single()

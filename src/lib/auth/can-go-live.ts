@@ -15,7 +15,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * 'not_submitted' are never live. Stripe Connect payouts are needed to get
  * paid but are NOT a go-live gate.
  *
- * Mirrors SQL can_go_live(uuid) (20261001000202). Use canGoLive() for
+ * Mirrors SQL can_go_live(uuid) (20261001000402). Use canGoLive() for
  * server-side checks on any action that makes a professional visible or lets
  * them transact (applying to jobs, listings).
  */
