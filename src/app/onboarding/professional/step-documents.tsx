@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
@@ -18,16 +19,22 @@ import { isDemoMode } from '@/lib/demo/data'
 import { CREDENTIALS_BUCKET } from '@/lib/credentials/document'
 import { recordDocument, removeDocument, submitDocuments } from './actions'
 import {
+  ATTEST_ACCURATE_LABEL,
+  AUTHORIZE_CHECKS_LABEL,
   DOC_MIME,
   DOCX_MIME,
+  LIABILITY_QUESTION,
+  MALPRACTICE_REQUIRED_NOTICE,
+  MALPRACTICE_SLOT,
   MAX_DOC_BYTES,
   REVIEW_NOTE,
   docSlotsFor,
+  type Branch,
   type DocSlot,
-  type ProCategory,
+  type InsuranceData,
   type UploadedDoc,
 } from './shared'
-import { PRIMARY_BTN, StepHeading } from './ui'
+import { CheckRow, PRIMARY_BTN, RadioCards, StepHeading, TextField, YES_NO_OPTIONS } from './ui'
 
 /** Storage-safe object name: `{uuid}-{sanitized original name}` */
 function objectName(file: File): string {
@@ -50,22 +57,45 @@ function docForSlot(slot: DocSlot, docs: UploadedDoc[]): UploadedDoc | undefined
 
 export function StepDocuments({
   userId,
-  category,
+  branch,
+  malpracticeRequired,
   docs,
   setDocs,
+  insurance,
+  setInsurance,
   onBack,
   onSaved,
 }: {
   userId: string
-  category: ProCategory
+  branch: Branch
+  /** practice question answered "yes" (offers_high_risk_services) */
+  malpracticeRequired: boolean
   docs: UploadedDoc[]
   setDocs: React.Dispatch<React.SetStateAction<UploadedDoc[]>>
+  insurance: InsuranceData
+  setInsurance: React.Dispatch<React.SetStateAction<InsuranceData>>
   onBack: () => void
   onSaved: () => void
 }) {
-  const slots = docSlotsFor(category)
+  const slots = docSlotsFor(branch)
+  const insured = insurance.carries_liability_insurance === 'yes'
+  const [attestAccurate, setAttestAccurate] = useState(false)
+  const [authorizeChecks, setAuthorizeChecks] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [pending, startTransition] = useTransition()
-  const missing = slots.filter((s) => s.required && !docForSlot(s, docs))
+
+  const required = insured ? [...slots, MALPRACTICE_SLOT] : slots
+  const missing = required.filter((s) => s.required && !docForSlot(s, docs))
+  const ready =
+    missing.length === 0 &&
+    insurance.carries_liability_insurance !== '' &&
+    attestAccurate &&
+    authorizeChecks
+
+  function setIns<K extends keyof InsuranceData>(key: K, value: InsuranceData[K]) {
+    setInsurance((prev) => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors((e) => ({ ...e, [key]: '' }))
+  }
 
   function submit() {
     if (missing.length > 0) {
@@ -73,11 +103,17 @@ export function StepDocuments({
       return
     }
     startTransition(async () => {
-      const res = await submitDocuments()
+      const res = await submitDocuments({
+        ...insurance,
+        attest_accurate: attestAccurate,
+        authorize_checks: authorizeChecks,
+      })
       if (!res.ok) {
+        setErrors(res.fieldErrors ?? {})
         toast.error(res.error)
         return
       }
+      setErrors({})
       onSaved()
     })
   }
@@ -104,7 +140,103 @@ export function StepDocuments({
         ))}
       </div>
 
-      <p className="mt-5 rounded-lg bg-[#f7f7f7] p-3 text-center text-sm text-[#62646a]">
+      <section className="mt-8 space-y-4 border-t border-[#e4e5e7] pt-6">
+        <h2 className="text-base font-bold text-[#404145]">Professional liability</h2>
+        <RadioCards
+          name="carries_liability_insurance"
+          legend={LIABILITY_QUESTION}
+          options={YES_NO_OPTIONS}
+          columns={2}
+          value={insurance.carries_liability_insurance}
+          onChange={(x) => setIns('carries_liability_insurance', x)}
+          error={errors.carries_liability_insurance}
+        />
+
+        {insured && (
+          <div className="space-y-4">
+            <DocSlotRow
+              slot={MALPRACTICE_SLOT}
+              userId={userId}
+              doc={docForSlot(MALPRACTICE_SLOT, docs)}
+              onUploaded={(doc, replacedId) =>
+                setDocs((prev) => [doc, ...prev.filter((d) => d.id !== replacedId)])
+              }
+              onRemoved={(id) => setDocs((prev) => prev.filter((d) => d.id !== id))}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                id="ins_carrier"
+                label="Insurance carrier"
+                value={insurance.carrier}
+                onChange={(x) => setIns('carrier', x)}
+                error={errors.carrier}
+                maxLength={150}
+                placeholder="e.g., The Doctors Company"
+              />
+              <TextField
+                id="ins_policy_number"
+                label="Policy number"
+                value={insurance.policy_number}
+                onChange={(x) => setIns('policy_number', x)}
+                error={errors.policy_number}
+                maxLength={100}
+              />
+              <TextField
+                id="ins_coverage_amount"
+                label="Coverage amount"
+                value={insurance.coverage_amount}
+                onChange={(x) => setIns('coverage_amount', x)}
+                error={errors.coverage_amount}
+                maxLength={100}
+                placeholder="e.g., $1M / $3M"
+              />
+              <TextField
+                id="ins_expiration_date"
+                label="Policy expiration date"
+                type="date"
+                value={insurance.expiration_date}
+                onChange={(x) => setIns('expiration_date', x)}
+                error={errors.expiration_date}
+              />
+            </div>
+          </div>
+        )}
+
+        {insurance.carries_liability_insurance === 'no' && malpracticeRequired && (
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-lg border border-[#f5d48a] bg-[#fff8e6] p-3 text-sm text-[#8a5a00]"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            {MALPRACTICE_REQUIRED_NOTICE}
+          </p>
+        )}
+      </section>
+
+      <section className="mt-8 space-y-3 border-t border-[#e4e5e7] pt-6">
+        <CheckRow
+          id="attest_accurate"
+          checked={attestAccurate}
+          onChange={(x) => {
+            setAttestAccurate(x)
+            if (errors.attest_accurate) setErrors((e) => ({ ...e, attest_accurate: '' }))
+          }}
+          label={ATTEST_ACCURATE_LABEL}
+          error={errors.attest_accurate}
+        />
+        <CheckRow
+          id="authorize_checks"
+          checked={authorizeChecks}
+          onChange={(x) => {
+            setAuthorizeChecks(x)
+            if (errors.authorize_checks) setErrors((e) => ({ ...e, authorize_checks: '' }))
+          }}
+          label={AUTHORIZE_CHECKS_LABEL}
+          error={errors.authorize_checks}
+        />
+      </section>
+
+      <p className="mt-6 rounded-lg bg-[#f7f7f7] p-3 text-center text-sm text-[#62646a]">
         {REVIEW_NOTE}
       </p>
 
@@ -116,11 +248,11 @@ export function StepDocuments({
         <Button
           type="button"
           onClick={submit}
-          disabled={pending || missing.length > 0}
+          disabled={pending || !ready}
           className={`flex-1 ${PRIMARY_BTN}`}
         >
           {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Continue
+          Submit for review
           <ArrowRight className="ml-2 size-4" />
         </Button>
       </div>

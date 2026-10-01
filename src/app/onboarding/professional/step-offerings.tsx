@@ -17,7 +17,7 @@ import { saveOfferings, skipOfferings } from './actions'
 import {
   ENGAGEMENT_TYPES,
   EVENT_TYPES,
-  PRICE_FEE_NOTE,
+  MEDICAL_PROCEDURES_LABEL,
   SERVICE_FORMATS,
   emptyOffering,
   type OfferingDraft,
@@ -253,8 +253,24 @@ export function StepOfferings({
   )
 }
 
-function FeeNote() {
-  return <p className="text-xs text-[#62646a]">{PRICE_FEE_NOTE}</p>
+/** Needed for the malpractice grace rule (requires_malpractice). */
+function MedicalProceduresToggle({
+  id,
+  checked,
+  onChange,
+}: {
+  id: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <Toggle
+      id={id}
+      checked={checked}
+      onChange={onChange}
+      label={MEDICAL_PROCEDURES_LABEL}
+    />
+  )
 }
 
 function OfferingFields({
@@ -279,7 +295,7 @@ function OfferingFields({
           <TextField id={id('price')} label="Price (USD)" value={item.price} onChange={(v) => onChange({ price: v })} error={err('price')} inputMode="decimal" placeholder="e.g., 120" />
           <TextField id={id('duration')} label="Duration (minutes)" value={item.duration_minutes} onChange={(v) => onChange({ duration_minutes: v.replace(/\D/g, '').slice(0, 4) })} error={err('duration_minutes')} inputMode="numeric" placeholder="e.g., 60" />
         </div>
-        <FeeNote />
+        <MedicalProceduresToggle id={id('medical')} checked={item.involves_medical_procedures} onChange={(v) => onChange({ involves_medical_procedures: v })} />
       </div>
     )
   }
@@ -301,7 +317,6 @@ function OfferingFields({
           disabled={item.custom_quote}
         />
         <Toggle id={id('custom_quote')} checked={item.custom_quote} onChange={(v) => onChange({ custom_quote: v })} label="I send custom quotes" />
-        <FeeNote />
       </div>
     )
   }
@@ -337,7 +352,7 @@ function OfferingFields({
         />
         <Toggle id={id('is_free')} checked={item.is_free} onChange={(v) => onChange({ is_free: v })} label="Free" />
       </div>
-      <FeeNote />
+      <MedicalProceduresToggle id={id('medical')} checked={item.involves_medical_procedures} onChange={(v) => onChange({ involves_medical_procedures: v })} />
     </div>
   )
 }
