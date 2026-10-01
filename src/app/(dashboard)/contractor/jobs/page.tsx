@@ -101,7 +101,7 @@ export default function ContractorJobsPage() {
         let query = supabase
           .from('jobs')
           .select(
-            'id, title, city, state, pay_rate_min, pay_rate_max, pay_rate_type, job_type, shift_type, urgency, published_at, created_at, total_applicants, is_remote, facility_profiles!inner(facility_name)'
+            'id, title, city, state, pay_rate_min:hourly_rate_min, pay_rate_max:hourly_rate_max, job_type, shift_type, urgency, published_at, created_at, total_applicants, is_remote, facility_profiles!inner(facility_name)'
           )
           .eq('status', 'open')
 
@@ -127,10 +127,10 @@ export default function ContractorJobsPage() {
           query = query.ilike('city', `%${filters.city}%`)
         }
         if (filters.pay_min) {
-          query = query.gte('pay_rate_max', parseFloat(filters.pay_min))
+          query = query.gte('hourly_rate_max', parseFloat(filters.pay_min))
         }
         if (filters.pay_max) {
-          query = query.lte('pay_rate_min', parseFloat(filters.pay_max))
+          query = query.lte('hourly_rate_min', parseFloat(filters.pay_max))
         }
         if (filters.start_date) {
           query = query.gte('start_date', filters.start_date)
@@ -142,7 +142,7 @@ export default function ContractorJobsPage() {
         // Sort
         switch (filters.sort) {
           case 'pay_high':
-            query = query.order('pay_rate_max', {
+            query = query.order('hourly_rate_max', {
               ascending: false,
               nullsFirst: false,
             })
@@ -181,7 +181,8 @@ export default function ContractorJobsPage() {
             state: row.state as string | null,
             pay_rate_min: row.pay_rate_min as number | null,
             pay_rate_max: row.pay_rate_max as number | null,
-            pay_rate_type: row.pay_rate_type as string | null,
+            // jobs only stores hourly rates
+            pay_rate_type: 'hourly',
             job_type: row.job_type as string | null,
             shift_type: row.shift_type as string | null,
             urgency: row.urgency as string | null,

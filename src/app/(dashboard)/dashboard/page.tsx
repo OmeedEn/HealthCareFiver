@@ -334,6 +334,10 @@ export default async function DashboardPage() {
       | 'facility'
       | 'admin'
       | 'client'
+    // Admins land in the admin console. Keyed off the profiles row only —
+    // user_metadata is user-editable.
+    if (profileData?.role === 'admin') redirect('/admin')
+
     firstName =
       profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
 
@@ -424,7 +428,7 @@ export default async function DashboardPage() {
       const { data: jobsData } = await supabase
         .from('jobs')
         .select(
-          'id, title, city, state, pay_rate_min, pay_rate_max, job_type, shift_type, urgency, published_at, facility_profiles(facility_name)'
+          'id, title, city, state, pay_rate_min:hourly_rate_min, pay_rate_max:hourly_rate_max, job_type, shift_type, urgency, published_at, facility_profiles(facility_name)'
         )
         .eq('status', 'open')
         .order('published_at', { ascending: false, nullsFirst: false })

@@ -60,7 +60,7 @@ interface JobSearchFiltersProps {
 }
 
 const URGENCY_LABELS: Record<string, string> = {
-  normal: 'Normal',
+  medium: 'Normal',
   high: 'High',
   critical: 'Critical',
 }
@@ -283,7 +283,7 @@ function FilterFields({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">Any urgency</SelectItem>
-            <SelectItem value="normal">Normal</SelectItem>
+            <SelectItem value="medium">Normal</SelectItem>
             <SelectItem value="high">High</SelectItem>
             <SelectItem value="critical">Critical</SelectItem>
           </SelectContent>

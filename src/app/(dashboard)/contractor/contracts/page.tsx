@@ -78,7 +78,7 @@ export default async function ContractorContractsPage() {
     const { data: contracts } = await supabase
       .from('contracts')
       .select(
-        'id, title, status, rate_amount, rate_type, start_date, end_date, created_at, facility_profiles!inner(facility_name)'
+        'id, title, status, rate_amount:agreed_rate, rate_type, start_date, end_date, created_at, facility_profiles!inner(facility_name)'
       )
       .eq('contractor_id', user.id)
       .order('created_at', { ascending: false })

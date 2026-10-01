@@ -103,7 +103,8 @@ export async function POST(request: NextRequest) {
       platform_fee: platformFeeAmountCents / 100,
       net_amount: netAmountCents / 100,
       stripe_payment_intent_id: paymentIntent.id,
-      description: `Payment for contract: ${contract.title}`,
+      // payments has no description column; keep it in metadata.
+      metadata: { description: `Payment for contract: ${contract.title}` },
     })
 
     if (insertError) {

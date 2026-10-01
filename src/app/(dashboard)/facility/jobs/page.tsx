@@ -177,7 +177,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
           STATUS_PILL[job.status] ??
           'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]'
         const urgencyClass =
-          job.urgency && job.urgency !== 'normal'
+          (job.urgency === 'high' || job.urgency === 'critical')
             ? URGENCY_PILL[job.urgency] ??
               'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]'
             : null
