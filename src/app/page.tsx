@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NavAuth } from '@/components/marketing/nav-auth'
 import {
   ArrowRight,
   BadgeCheck,
@@ -442,18 +443,20 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-[#6b7280] transition hover:text-[#111827]"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
-            >
-              Join Sanus
-            </Link>
+            <NavAuth>
+              <Link
+                href="/login"
+                className="text-sm font-medium text-[#6b7280] transition hover:text-[#111827]"
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
+              >
+                Join Sanus
+              </Link>
+            </NavAuth>
           </div>
         </div>
       </header>

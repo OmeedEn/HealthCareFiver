@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { Menu, User, Settings, LogOut } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { NotificationsBell } from './notifications-bell'
+import { profileHrefFor } from '@/components/marketing/nav-auth'
 
 interface HeaderProps {
   role: 'contractor' | 'facility' | 'admin'
@@ -79,7 +80,7 @@ export function Header({ role, userName, userEmail }: HeaderProps) {
             </div>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => router.push('/settings')}
+              onClick={() => router.push(profileHrefFor(role))}
             >
               <User className="mr-2 h-4 w-4" />
               Profile
