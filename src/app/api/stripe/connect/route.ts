@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createConnectAccount, createAccountLink } from '@/lib/stripe/connect'
+import { currentUser } from '@/lib/auth/roles'
 
 export async function POST() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // currentUser() enforces AAL2 (MFA) — API routes are outside the proxy,
+  // and this route writes a billing column with the service role below.
+  const user = await currentUser()
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const supabase = await createClient()
 
   // Check if user already has a Connect account
   const { data: profile } = await supabase
@@ -27,10 +30,12 @@ export async function POST() {
     let connectAccountId = profile?.stripe_connect_id
 
     if (!connectAccountId) {
-      const account = await createConnectAccount(user.email!, user.id)
+      const account = await createConnectAccount(user.email ?? '', user.id)
       connectAccountId = account.id
 
-      const { error: updateError } = await supabase
+      // stripe_connect_id is a protected billing column (trigger
+      // profiles_protect_privileged): only the service role may write it.
+      const { error: updateError } = await createAdminClient()
         .from('profiles')
         .update({ stripe_connect_id: account.id })
         .eq('id', user.id)
