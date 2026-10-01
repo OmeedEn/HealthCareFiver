@@ -26,7 +26,7 @@ import { FREE_EMAIL_DOMAINS, emailDomain } from '@/lib/org/red-flags'
 export const dynamic = 'force-dynamic'
 
 const OPEN: OrgStatus[] = ['pending_review', 'needs_info']
-type Filter = 'open' | 'all' | OrgStatus
+type Filter = 'open' | 'incomplete' | 'all' | OrgStatus
 
 interface Row {
   id: string
@@ -36,6 +36,8 @@ interface Row {
   state: string | null
   verification_status: string
   admin_checklist: OrgChecklist | null
+  onboarding_submitted_at: string | null
+  onboarding_step: number | null
   created_at: string
   updated_at: string
   profiles: { email: string | null } | null
@@ -48,33 +50,41 @@ export default async function AdminOrganizationsPage({
 }) {
   const { db } = await requireAdmin()
   const { status } = await searchParams
-  const filter: Filter = status === 'all' || isOrgStatus(status) ? (status as Filter) : 'open'
+  const filter: Filter =
+    status === 'all' || status === 'incomplete' || isOrgStatus(status) ? (status as Filter) : 'open'
 
   const { data, error } = await db
     .from('facility_profiles')
     .select(
-      'id, facility_name, facility_type, city, state, verification_status, admin_checklist, created_at, updated_at, profiles!facility_profiles_id_fkey(email)'
+      'id, facility_name, facility_type, city, state, verification_status, admin_checklist, onboarding_submitted_at, onboarding_step, created_at, updated_at, profiles!facility_profiles_id_fkey(email)'
     )
     .order('created_at', { ascending: true })
     .limit(500)
   if (error) console.error('[admin/organizations] load failed', error)
 
-  const all = (data ?? []) as unknown as Row[]
+  const everyone = (data ?? []) as unknown as Row[]
+  // Orgs still mid-signup aren't ready to review; they get their own tab.
+  const incomplete = everyone.filter((r) => !r.onboarding_submitted_at)
+  const all = everyone.filter((r) => r.onboarding_submitted_at)
   const counts = Object.fromEntries(
     ORG_STATUSES.map((s) => [s, all.filter((r) => r.verification_status === s).length])
   ) as Record<OrgStatus, number>
-  const rows = all.filter((r) =>
-    filter === 'all'
-      ? true
-      : filter === 'open'
-        ? OPEN.includes(r.verification_status as OrgStatus)
-        : r.verification_status === filter
-  )
+  const rows =
+    filter === 'incomplete'
+      ? incomplete
+      : all.filter((r) =>
+          filter === 'all'
+            ? true
+            : filter === 'open'
+              ? OPEN.includes(r.verification_status as OrgStatus)
+              : r.verification_status === filter
+        )
 
   const tabs: { key: Filter; label: string; count: number }[] = [
     { key: 'open', label: 'Needs review', count: counts.pending_review + counts.needs_info },
     ...ORG_STATUSES.map((s) => ({ key: s as Filter, label: ORG_STATUS_LABEL[s], count: counts[s] })),
-    { key: 'all', label: 'All', count: all.length },
+    { key: 'incomplete', label: 'Signup not finished', count: incomplete.length },
+    { key: 'all', label: 'All submitted', count: all.length },
   ]
 
   return (
@@ -150,7 +160,7 @@ export default async function AdminOrganizationsPage({
                         <Badge variant={ORG_STATUS_BADGE[s]}>{ORG_STATUS_LABEL[s]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {done}/{total}
+                        {r.onboarding_submitted_at ? `${done}/${total}` : `Step ${r.onboarding_step ?? 2} of 4`}
                       </TableCell>
                       <TableCell>
                         {freeEmail && <Badge variant="outline">Free email</Badge>}

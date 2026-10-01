@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { isDemoMode, DEMO_FACILITY } from '@/lib/demo/data'
 import { FacilityProfileEditForm } from './edit-form'
+import { OrgIntentsCard } from './intents-card'
+import { ORG_INTENT_KEYS, type OrgIntent } from '@/lib/onboarding/organization'
 
 interface FacilityProfile {
   id: string
@@ -39,6 +41,7 @@ interface FacilityProfile {
   average_rating: number | null
   total_reviews: number | null
   is_verified: boolean
+  intents?: string[] | null
 }
 
 export default async function FacilityProfilePage() {
@@ -398,6 +401,14 @@ export default async function FacilityProfilePage() {
           </Card>
         </div>
       </div>
+
+      {!demo && (
+        <OrgIntentsCard
+          initial={(facility?.intents ?? []).filter((i): i is OrgIntent =>
+            (ORG_INTENT_KEYS as readonly string[]).includes(i)
+          )}
+        />
+      )}
 
       {/* Inline Edit Form - real mode only */}
       {!demo && <FacilityProfileEditForm facility={facility} />}

@@ -36,6 +36,27 @@ function underPrefix(pathname: string, prefix: string): boolean {
 
 // Where a professional who hasn't finished steps 2–5 is sent.
 const PRO_ONBOARDING_PATH = '/onboarding/professional'
+// Where an organization that hasn't submitted steps 2–4 is sent.
+const ORG_ONBOARDING_PATH = '/onboarding/organization'
+// Google sign-ups land as professionals; this step turns a brand-new account
+// into an organization (src/app/onboarding/organization/account).
+const ORG_ACCOUNT_PATH = '/onboarding/organization/account'
+
+const ORG_ROLES = ['facility', 'staffing_agency']
+
+/** Same idea as contractorNeedsOnboarding, for organizations. */
+async function orgNeedsOnboarding(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('facility_profiles')
+    .select('onboarding_submitted_at')
+    .eq('id', userId)
+    .maybeSingle()
+  if (error || !data) return false
+  return data.onboarding_submitted_at === null
+}
 
 /**
  * True only when we positively know this contractor hasn't finished the
@@ -88,6 +109,12 @@ export async function proxy(request: NextRequest) {
           (await contractorNeedsOnboarding(supabase, user.id))
         ) {
           url.pathname = PRO_ONBOARDING_PATH
+          url.search = ''
+        } else if (
+          ORG_ROLES.includes(profile?.role ?? '') &&
+          (await orgNeedsOnboarding(supabase, user.id))
+        ) {
+          url.pathname = ORG_ONBOARDING_PATH
           url.search = ''
         }
       }
@@ -169,9 +196,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Professional onboarding (/onboarding/account, /onboarding/professional)
-  // is for contractors only.
-  if (underPrefix(pathname, '/onboarding') && role !== 'contractor') {
+  // Organization onboarding is for organizations, plus the account step a
+  // brand-new (Google) professional account uses to become one. Everything
+  // else under /onboarding is professional onboarding, contractors only.
+  const orgOnboardingAllowed =
+    ORG_ROLES.includes(role ?? '') ||
+    (role === 'contractor' && underPrefix(pathname, ORG_ACCOUNT_PATH))
+  if (
+    underPrefix(pathname, ORG_ONBOARDING_PATH)
+      ? !orgOnboardingAllowed
+      : underPrefix(pathname, '/onboarding') && role !== 'contractor'
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     url.search = ''
@@ -204,6 +239,18 @@ export async function proxy(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone()
     url.pathname = PRO_ONBOARDING_PATH
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+
+  // Organizations that haven't submitted steps 2–4 land in their wizard.
+  if (
+    ORG_ROLES.includes(role ?? '') &&
+    underPrefix(pathname, '/dashboard') &&
+    (await orgNeedsOnboarding(supabase, user.id))
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = ORG_ONBOARDING_PATH
     url.search = ''
     return NextResponse.redirect(url)
   }
