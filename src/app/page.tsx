@@ -43,112 +43,23 @@ const popularSearches = [
 ]
 
 const stats = [
-  { value: '4,800+', label: 'Verified professionals' },
-  { value: '65+', label: 'Service categories' },
-  { value: '4.8 / 5', label: 'Average rating' },
+  { value: 'Reviewed', label: 'Professionals approved before they can be booked' },
+  { value: 'All in one', label: 'Clinical, coaching, consulting & education' },
+  { value: 'Stripe', label: 'Secure payments, no card data stored by Sanus' },
 ]
 
-const featuredProfessionals = [
-  {
-    name: 'Dr. Amara Patel',
-    credential: 'MD',
-    specialty: 'Internal Medicine · Consulting',
-    rating: 4.9,
-    reviews: 142,
-    rate: 'From $220 per consult',
-    initials: 'AP',
-    color: 'bg-rose-100 text-rose-700',
-  },
-  {
-    name: 'Renee Jackson',
-    credential: 'RN, BSN',
-    specialty: 'Nursing Consultant',
-    rating: 5.0,
-    reviews: 87,
-    rate: 'From $150 per session',
-    initials: 'RJ',
-    color: 'bg-emerald-100 text-emerald-700',
-  },
-  {
-    name: 'Marcus Bell',
-    credential: 'NBC-HWC',
-    specialty: 'Health & Wellness Coach',
-    rating: 4.9,
-    reviews: 213,
-    rate: 'From $90 per session',
-    initials: 'MB',
-    color: 'bg-amber-100 text-amber-700',
-  },
-  {
-    name: 'Katherine Liu, Esq.',
-    credential: 'JD',
-    specialty: 'Healthcare Attorney',
-    rating: 5.0,
-    reviews: 56,
-    rate: 'From $450 per consult',
-    initials: 'KL',
-    color: 'bg-slate-100 text-slate-700',
-  },
-  {
-    name: 'David Park',
-    credential: 'NASM-CPT',
-    specialty: 'Personal Trainer · Corporate',
-    rating: 4.8,
-    reviews: 174,
-    rate: 'From $75 per session',
-    initials: 'DP',
-    color: 'bg-blue-100 text-blue-700',
-  },
-  {
-    name: 'Sofia Martinez',
-    credential: 'RDN',
-    specialty: 'Registered Dietitian',
-    rating: 4.9,
-    reviews: 192,
-    rate: 'From $110 per consult',
-    initials: 'SM',
-    color: 'bg-teal-100 text-teal-700',
-  },
-  {
-    name: 'Marcus T. Watts',
-    credential: 'CHC',
-    specialty: 'HIPAA Compliance Consultant',
-    rating: 5.0,
-    reviews: 41,
-    rate: 'From $1,500 per project',
-    initials: 'MW',
-    color: 'bg-indigo-100 text-indigo-700',
-  },
-  {
-    name: 'Linda Okafor',
-    credential: 'CPC',
-    specialty: 'Medical Billing & Coding',
-    rating: 4.9,
-    reviews: 109,
-    rate: 'From $250 per project',
-    initials: 'LO',
-    color: 'bg-purple-100 text-purple-700',
-  },
-  {
-    name: 'Dr. James Holloway',
-    credential: 'DPT',
-    specialty: 'CEU Course Creator',
-    rating: 4.9,
-    reviews: 318,
-    rate: 'From $129 per course',
-    initials: 'JH',
-    color: 'bg-fuchsia-100 text-fuchsia-700',
-  },
-  {
-    name: 'Priya Rao',
-    credential: 'NP, MSN',
-    specialty: 'Telehealth · Second Opinion',
-    rating: 4.9,
-    reviews: 261,
-    rate: 'From $185 per consult',
-    initials: 'PR',
-    color: 'bg-cyan-100 text-cyan-700',
-  },
+// Illustrative kinds of expertise — NOT real people, ratings, or prices.
+const featuredExpertise = [
+  { credential: 'MD', specialty: 'Physician consulting', icon: Stethoscope, color: 'bg-rose-100 text-rose-700' },
+  { credential: 'RN', specialty: 'Nursing consulting', icon: UserCheck, color: 'bg-emerald-100 text-emerald-700' },
+  { credential: 'NBC-HWC', specialty: 'Health & wellness coaching', icon: Sparkles, color: 'bg-amber-100 text-amber-700' },
+  { credential: 'JD', specialty: 'Healthcare legal', icon: Scale, color: 'bg-slate-100 text-slate-700' },
+  { credential: 'CPT', specialty: 'Personal & corporate training', icon: Users, color: 'bg-blue-100 text-blue-700' },
+  { credential: 'RDN', specialty: 'Nutrition & dietetics', icon: Heart, color: 'bg-teal-100 text-teal-700' },
+  { credential: 'CHC', specialty: 'HIPAA & compliance', icon: Shield, color: 'bg-indigo-100 text-indigo-700' },
+  { credential: 'CPC', specialty: 'Medical billing & coding', icon: ClipboardCheck, color: 'bg-purple-100 text-purple-700' },
+  { credential: 'CEU', specialty: 'Continuing education', icon: GraduationCap, color: 'bg-fuchsia-100 text-fuchsia-700' },
+  { credential: 'NP', specialty: 'Telehealth & second opinions', icon: Brain, color: 'bg-cyan-100 text-cyan-700' },
 ]
 
 const tierGroups = [
@@ -157,28 +68,28 @@ const tierGroups = [
     description:
       'MDs, NPs, PAs, RNs, PTs, OTs, psychologists, social workers, pharmacists, RDNs, and more.',
     icon: Stethoscope,
-    count: '2,400+ professionals',
+    count: 'Licensed & reviewed',
   },
   {
     title: 'Allied & certified practitioners',
     description:
       'Personal trainers, health coaches, nutritionists, doulas, lactation consultants, acupuncturists, chiropractors, athletic trainers.',
     icon: Heart,
-    count: '1,100+ professionals',
+    count: 'Certified & reviewed',
   },
   {
     title: 'Healthcare-adjacent services',
     description:
       'Healthcare attorneys, compliance consultants, medical billing experts, RCM specialists, EHR consultants, practice startup advisors.',
     icon: Briefcase,
-    count: '780+ professionals',
+    count: 'Consulting & advisory',
   },
   {
     title: 'Educators & trainers',
     description:
       'Any professional can offer CEU/CME courses, board prep, certifications, corporate wellness, and mentorship programs.',
     icon: GraduationCap,
-    count: '520+ educators',
+    count: 'Courses & training',
   },
 ]
 
@@ -230,38 +141,31 @@ const orgUseCases = [
   },
 ]
 
+// Example formats professionals can host — not scheduled events.
 const featuredEvents = [
   {
-    title: 'IV Therapy Fundamentals for Home Health Nurses',
+    title: 'Live webinars',
     type: 'Webinar',
-    host: 'Renee Jackson, RN BSN',
-    date: 'Dec 15, 2026 · 7:00 PM ET',
+    detail: 'Teach a topic live to a virtual audience, free or paid.',
     format: 'Virtual',
-    price: 'Free for members',
   },
   {
-    title: 'HIPAA Audit Bootcamp for Independent Practices',
+    title: 'Hands-on workshops',
     type: 'Workshop',
-    host: 'Marcus Watts, CHC',
-    date: 'Jan 8, 2027 · Full day',
-    format: 'Virtual',
-    price: '$249',
+    detail: 'Run half- or full-day sessions for practices and teams.',
+    format: 'Virtual or in person',
   },
   {
-    title: 'Nutrition for Chronic Disease Management (CEU)',
+    title: 'CEU & CME courses',
     type: 'CEU & CME',
-    host: 'Sofia Martinez, RDN',
-    date: 'Ongoing · Self-paced',
-    format: 'On-demand',
-    price: '$129',
+    detail: 'Publish self-paced or live continuing-education content.',
+    format: 'On-demand or live',
   },
   {
-    title: 'NCLEX Prep Intensive — 6 Week Live Cohort',
+    title: 'Certification & prep cohorts',
     type: 'Certification',
-    host: 'Dr. James Holloway, DPT',
-    date: 'Starts Feb 3, 2027',
+    detail: 'Lead multi-week cohorts for board prep or certifications.',
     format: 'Virtual',
-    price: '$499',
   },
 ]
 
@@ -290,8 +194,7 @@ const professionalPlans = [
       'Unlimited service & event listings',
       'Priority placement in search',
       'Analytics dashboard',
-      'HIPAA-compliant messaging',
-      'Superbill generation',
+      'In-platform messaging',
     ],
     cta: 'Start free trial',
     highlighted: true,
@@ -316,83 +219,76 @@ const professionalPlans = [
 
 const trustItems = [
   {
-    title: 'License verification',
+    title: 'Approval before booking',
     description:
-      'All licensed professionals verified against state licensing databases before they can accept any booking.',
-    icon: FileCheck,
-  },
-  {
-    title: 'NPI confirmed',
-    description:
-      'All clinical professionals verified against the federal NPI registry.',
+      'Professionals are reviewed and approved by the Sanus team before they can be booked.',
     icon: BadgeCheck,
   },
   {
-    title: 'OIG screened',
+    title: 'License review',
     description:
-      'All professionals screened against the HHS OIG exclusion database.',
+      'Licensed professionals submit their license details for review as part of onboarding.',
+    icon: FileCheck,
+  },
+  {
+    title: 'Background & identity checks',
+    description:
+      'Depending on profession, verification can include identity and background screening through trusted vendors.',
     icon: ShieldCheck,
-  },
-  {
-    title: 'Background checked',
-    description:
-      'Non-licensed professionals undergo a full criminal background check before listing.',
-    icon: Shield,
-  },
-  {
-    title: 'Identity verified',
-    description:
-      'Every professional confirms their identity with a government-issued ID.',
-    icon: UserCheck,
   },
   {
     title: 'Credential review',
     description:
-      'Certifications, malpractice insurance, and professional credentials reviewed at onboarding.',
+      'Certifications and professional credentials are reviewed at onboarding.',
     icon: ClipboardCheck,
   },
   {
-    title: 'HIPAA compliant',
+    title: 'HIPAA safeguards',
     description:
-      'Platform meets all HIPAA requirements. All data encrypted at rest and in transit.',
+      'Built with HIPAA safeguards — access controls, audit logging, and encryption in transit and at rest.',
     icon: Lock,
   },
   {
-    title: 'Verified reviews only',
+    title: 'Secure payments',
     description:
-      'Only clients who completed a booking or attended an event can leave a review.',
+      'Payments are processed by Stripe. Sanus never stores your full card details.',
+    icon: Wallet,
+  },
+  {
+    title: 'Reviews tied to real work',
+    description:
+      'Reviews are linked to an engagement completed through Sanus.',
     icon: Star,
+  },
+  {
+    title: 'You stay in control',
+    description:
+      'Choose who you work with and what you share. Message before you book.',
+    icon: UserCheck,
   },
 ]
 
-const testimonials = [
+// Honest, non-testimonial value props per audience (no fabricated quotes).
+const audienceValueProps = [
   {
-    quote:
-      "I found a nurse practitioner for a telehealth consult on a Friday night and had a prescription by Saturday morning. I didn't know something like this existed.",
-    name: 'Marcus T.',
-    role: 'Individual client',
-    rating: 5,
+    title: 'Individuals',
+    body: 'Find a reviewed professional for a consult, coaching, or guidance — virtually or in person — and book directly.',
+    icon: Users,
   },
   {
-    quote:
-      'We needed a registered dietitian to lead a 6-week nutrition program for our corporate wellness initiative. Found the right person on Sanus in under an hour.',
-    name: 'Stephanie R.',
-    role: 'Head of People · 200-person tech company',
-    rating: 5,
+    title: 'Businesses & employers',
+    body: 'Bring in a dietitian, trainer, or wellness expert for your team on a project or retainer basis.',
+    icon: Briefcase,
   },
   {
-    quote:
-      'Our clinic needed a HIPAA compliance consultant after a policy update. We posted our need on Sanus and had three qualified consultants respond within 24 hours. We hired one for an ongoing retainer.',
-    name: 'Dr. Kevin M.',
-    role: 'Medical Director · independent primary care clinic',
-    rating: 5,
+    title: 'Healthcare organizations',
+    body: 'Engage compliance, billing, clinical-leadership, or education expertise directly — without agency markups.',
+    icon: Building2,
   },
   {
-    quote:
-      'I listed my nursing consulting services and my CEU course on Sanus six months ago. I now have a full client roster and 340 CEU enrollments. I made more last quarter than I made in a full year at the bedside.',
-    name: 'Renee J., RN, BSN',
-    role: 'Nursing Consultant',
-    rating: 5,
+    title: 'Professionals',
+    body: 'List services, consulting, and events from one profile and get paid through Stripe.',
+    icon: Stethoscope,
   },
 ]
 
@@ -555,7 +451,9 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-4xl gap-8 px-4 sm:grid-cols-3 sm:px-6">
             {stats.map((s) => (
               <div key={s.label} className="text-center">
-                <p className="text-3xl font-bold text-[#1dbf73]">{s.value}</p>
+                <p className="text-2xl font-bold text-[#1dbf73] sm:text-3xl">
+                  {s.value}
+                </p>
                 <p className="mt-1 text-sm font-medium text-[#6b7280]">
                   {s.label}
                 </p>
@@ -570,11 +468,11 @@ export default function LandingPage() {
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
               <div>
                 <h2 className="font-heading text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl">
-                  Featured professionals
+                  Expertise you can find on Sanus
                 </h2>
                 <p className="mt-2 max-w-xl text-[#6b7280]">
                   Clinicians, coaches, consultants, and educators — all in one
-                  marketplace.
+                  marketplace, each reviewed before they can be booked.
                 </p>
               </div>
               <Link
@@ -587,38 +485,36 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {featuredProfessionals.map((p) => (
-                <div
-                  key={p.name}
-                  className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e5e7eb] transition hover:shadow-lg"
-                >
-                  <div
-                    className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-lg font-bold ${p.color}`}
+              {featuredExpertise.map((p) => {
+                const Icon = p.icon
+                return (
+                  <Link
+                    key={p.specialty}
+                    href={`/find-care?q=${encodeURIComponent(p.specialty)}`}
+                    className="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e5e7eb] transition hover:shadow-lg"
                   >
-                    {p.initials}
-                  </div>
-                  <div className="mt-4 text-center">
-                    <h3 className="font-semibold text-[#111827]">{p.name}</h3>
-                    <p className="text-xs text-[#6b7280]">
-                      {p.credential} · {p.specialty}
-                    </p>
-                  </div>
-                  <div className="mt-3 flex items-center justify-center gap-1 text-sm">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-[#111827]">
-                      {p.rating}
-                    </span>
-                    <span className="text-xs text-[#6b7280]">
-                      ({p.reviews})
-                    </span>
-                  </div>
-                  <div className="mt-3 text-center">
-                    <span className="text-sm font-semibold text-[#1dbf73]">
-                      {p.rate}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                    <div
+                      className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${p.color}`}
+                    >
+                      <Icon className="h-7 w-7" />
+                    </div>
+                    <div className="mt-4 text-center">
+                      <h3 className="font-semibold text-[#111827]">
+                        {p.specialty}
+                      </h3>
+                      <p className="text-xs text-[#6b7280]">
+                        e.g. {p.credential} professionals
+                      </p>
+                    </div>
+                    <div className="mt-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#1dbf73]">
+                        Browse
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </section>
@@ -778,9 +674,9 @@ export default function LandingPage() {
                 title="Grow your practice and reach"
                 steps={[
                   'Create your profile and list services, packages, and events',
-                  'Get verified — license check, NPI validation, credential review',
+                  'Submit your credentials for review — approval is required before you can be booked',
                   'Accept bookings, respond to inquiries, host events',
-                  'Get paid weekly, build your reputation, expand your reach',
+                  'Get paid through Stripe, build your reputation, expand your reach',
                 ]}
               />
             </div>
@@ -849,11 +745,11 @@ export default function LandingPage() {
               </span>
               <span className="inline-flex items-center gap-2">
                 <Check className="h-4 w-4 text-[#1dbf73]" />
-                All professionals verified
+                Professionals reviewed before booking
               </span>
               <span className="inline-flex items-center gap-2">
                 <Check className="h-4 w-4 text-[#1dbf73]" />
-                HIPAA-compliant platform
+                Built with HIPAA safeguards
               </span>
             </div>
           </div>
@@ -868,8 +764,8 @@ export default function LandingPage() {
               </h2>
               <p className="mt-3 text-[#6b7280]">
                 Live webinars, in-person workshops, CEU and CME courses, and
-                certification programs — created and taught by verified Sanus
-                professionals. Earn credits, build skills, grow your practice.
+                certification programs — created and taught by Sanus
+                professionals. Here&apos;s what professionals can host.
               </p>
             </div>
 
@@ -916,18 +812,16 @@ export default function LandingPage() {
                   <h3 className="mt-4 text-base font-semibold leading-snug text-[#111827]">
                     {e.title}
                   </h3>
-                  <p className="mt-2 text-xs text-[#6b7280]">
-                    Hosted by{' '}
-                    <span className="font-medium text-[#374151]">{e.host}</span>
+                  <p className="mt-2 text-xs leading-relaxed text-[#6b7280]">
+                    {e.detail}
                   </p>
                   <div className="mt-3 flex items-center gap-2 text-xs text-[#6b7280]">
                     <Calendar className="h-3.5 w-3.5" />
-                    {e.date}
+                    {e.format}
                   </div>
-                  <div className="mt-1 text-xs text-[#6b7280]">{e.format}</div>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-[#1dbf73]">
-                      {e.price}
+                    <span className="text-xs font-medium text-[#6b7280]">
+                      Example format
                     </span>
                     <Link
                       href="/events"
@@ -1001,21 +895,24 @@ export default function LandingPage() {
               </div>
 
               <div className="rounded-3xl bg-[#0f4c3a] p-8 text-white sm:p-10">
-                <p className="font-heading text-2xl italic leading-snug">
-                  &ldquo;I listed my nursing consulting services and my CEU
-                  course on Sanus six months ago. I now have a full client
-                  roster and 340 CEU enrollments. I made more last quarter than
-                  I made in a full year at the bedside.&rdquo;
+                <p className="font-heading text-2xl leading-snug">
+                  One profile for everything you offer — services, consulting
+                  engagements, and continuing education.
                 </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
-                    RJ
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">Renee J., RN, BSN</p>
-                    <p className="text-xs text-[#cfd4d0]">Nursing Consultant</p>
-                  </div>
-                </div>
+                <ul className="mt-6 space-y-3 text-sm text-[#cfd4d0]">
+                  <li className="flex items-start gap-3">
+                    <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
+                    Get reviewed once, then go live when you&apos;re ready
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
+                    Payouts handled through Stripe
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Lock className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
+                    Built with HIPAA safeguards
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1050,7 +947,7 @@ export default function LandingPage() {
                   >
                     {plan.highlighted && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#1dbf73] px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
-                        Most popular
+                        Recommended
                       </div>
                     )}
                     <h4 className="text-lg font-semibold text-[#111827]">
@@ -1150,8 +1047,8 @@ export default function LandingPage() {
                 Trust &amp; safety at every step
               </h2>
               <p className="mt-3 text-[#6b7280]">
-                Every professional on Sanus is rigorously vetted. Every booking
-                runs through a HIPAA-compliant platform.
+                Professionals are reviewed and approved before they can be
+                booked, and the platform is built with HIPAA safeguards.
               </p>
             </div>
 
@@ -1181,7 +1078,7 @@ export default function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="font-heading text-3xl font-bold tracking-tight text-[#111827] sm:text-4xl">
-                Real stories from every side of Sanus
+                Built for every side of health expertise
               </h2>
               <p className="mt-3 text-[#6b7280]">
                 Individuals, businesses, organizations, and professionals.
@@ -1189,30 +1086,25 @@ export default function LandingPage() {
             </div>
 
             <div className="mt-12 grid gap-6 md:grid-cols-2">
-              {testimonials.map((t) => (
-                <div
-                  key={t.name}
-                  className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-[#e5e7eb]"
-                >
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: t.rating }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-4 w-4 fill-amber-400 text-amber-400"
-                      />
-                    ))}
-                  </div>
-                  <p className="mt-4 text-base leading-relaxed text-[#374151]">
-                    &ldquo;{t.quote}&rdquo;
-                  </p>
-                  <div className="mt-6 border-t border-[#e5e7eb] pt-4">
-                    <p className="text-sm font-semibold text-[#111827]">
-                      {t.name}
+              {audienceValueProps.map((t) => {
+                const Icon = t.icon
+                return (
+                  <div
+                    key={t.title}
+                    className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-[#e5e7eb]"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-[#111827]">
+                      {t.title}
                     </p>
-                    <p className="text-xs text-[#6b7280]">{t.role}</p>
+                    <p className="mt-2 text-base leading-relaxed text-[#374151]">
+                      {t.body}
+                    </p>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>
@@ -1315,10 +1207,12 @@ export default function LandingPage() {
               title="Platform"
               links={[
                 { label: 'Trust & safety', href: '#trust' },
-                { label: 'HIPAA compliance', href: '#trust' },
+                { label: 'HIPAA safeguards', href: '#trust' },
                 { label: 'About Sanus', href: '/' },
                 { label: 'Contact', href: '/' },
                 { label: 'Sign in', href: '/login' },
+                { label: 'Terms of Service', href: '/terms' },
+                { label: 'Privacy Policy', href: '/privacy' },
               ]}
             />
           </div>

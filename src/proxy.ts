@@ -12,6 +12,8 @@ const PUBLIC_ROUTES = [
   '/forgot-password',
   '/callback',
   '/find-care',
+  '/terms',
+  '/privacy',
 ]
 
 function isPublicRoute(pathname: string): boolean {
