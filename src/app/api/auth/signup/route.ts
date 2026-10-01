@@ -10,6 +10,7 @@ import {
 } from '@/lib/onboarding/organization'
 import { TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
+import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -54,6 +55,20 @@ const stateCode = z
   .string()
   .trim()
   .regex(/^[A-Z]{2}$/, 'Select a valid state')
+// US phone, normalized to E.164 (+1XXXXXXXXXX) — see src/lib/phone.ts.
+const phone = z
+  .string({ error: 'Phone number is required' })
+  .trim()
+  .min(1, 'Phone number is required')
+  .max(32, PHONE_ERROR)
+  .transform((v, ctx) => {
+    const normalized = normalizeUsPhone(v)
+    if (!normalized) {
+      ctx.addIssue({ code: 'custom', message: PHONE_ERROR })
+      return z.NEVER
+    }
+    return normalized
+  })
 const zipCode = z
   .string()
   .trim()
@@ -79,7 +94,14 @@ const contractorSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
-  contractor_type: z.enum(CONTRACTOR_TYPES, 'Select a valid profession'),
+  phone,
+  // The granular license type is captured later in onboarding; 'other'
+  // keeps the contractor_type enum happy at signup.
+  contractor_type: z
+    .enum(CONTRACTOR_TYPES, 'Select a valid profession')
+    .default('other'),
+  // Category is chosen in step 2 of /onboarding/professional now; still
+  // accepted here for older clients.
   professional_category: z
     .enum(PROFESSIONAL_CATEGORIES, 'Select a valid professional category')
     .optional(),
@@ -195,6 +217,8 @@ export async function POST(request: NextRequest) {
       role: 'contractor' as const,
       first_name: body.first_name,
       last_name: body.last_name,
+      // handle_new_user copies this to profiles.phone.
+      phone: body.phone,
       contractor_type: body.contractor_type,
       ...(body.professional_category
         ? { professional_category: body.professional_category }
@@ -240,7 +264,11 @@ export async function POST(request: NextRequest) {
       data,
       // When email confirmations are on, the link must go through /callback
       // (PKCE code exchange) rather than the bare Site URL.
-      emailRedirectTo: authCallbackUrl(request, '/dashboard'),
+      // Professionals land straight in the onboarding wizard.
+      emailRedirectTo: authCallbackUrl(
+        request,
+        body.role === 'contractor' ? '/onboarding/professional' : '/dashboard'
+      ),
     },
   })
 
