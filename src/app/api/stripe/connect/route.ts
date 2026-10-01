@@ -8,6 +8,10 @@ import {
   type ConnectReturnTarget,
 } from '@/lib/stripe/connect'
 import { currentUser } from '@/lib/auth/roles'
+import {
+  PAYOUTS_LOCKED_MESSAGE,
+  isApprovedStatus,
+} from '@/lib/listings/status'
 
 /**
  * Starts (or resumes) Stripe Connect Express onboarding and returns a
@@ -41,6 +45,21 @@ export async function POST(request: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
 
   const supabase = await createClient()
+
+  // Payouts unlock only after an admin approves the application
+  // ('insurance_pending' = approved, inside the malpractice grace period).
+  // Under review / needs info / rejected / suspended: no Connect account.
+  const { data: contractor } = await supabase
+    .from('contractor_profiles')
+    .select('verification_status')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (!isApprovedStatus(contractor?.verification_status as string | null)) {
+    return NextResponse.json(
+      { error: PAYOUTS_LOCKED_MESSAGE, code: 'not_approved' },
+      { status: 403 }
+    )
+  }
 
   // Check if user already has a Connect account
   const { data: profile } = await supabase

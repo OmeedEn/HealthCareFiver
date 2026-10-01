@@ -9,6 +9,10 @@ import { Badge } from '@/components/ui/badge'
 import { StripeConnectButton } from '@/components/payments/stripe-connect-button'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import {
+  PAYOUTS_LOCKED_MESSAGE,
+  isApprovedStatus,
+} from '@/lib/listings/status'
+import {
   DollarSign,
   Clock,
   Lock,
@@ -121,6 +125,7 @@ export default function ContractorPaymentsPage() {
       : { totalEarned: 0, paidOut: 0, pending: 0, inEscrow: 0 }
   )
   const [isOnboarded, setIsOnboarded] = useState(isDemo)
+  const [payoutsUnlocked, setPayoutsUnlocked] = useState(isDemo)
   const [loading, setLoading] = useState(!isDemo)
 
   useEffect(() => {
@@ -141,6 +146,17 @@ export default function ContractorPaymentsPage() {
         .single()
 
       setIsOnboarded(!!profile?.stripe_connect_onboarded)
+
+      // Stripe Connect onboarding unlocks after approval (see
+      // /api/stripe/connect, which enforces the same rule).
+      const { data: contractor } = await supabase
+        .from('contractor_profiles')
+        .select('verification_status')
+        .eq('id', user.id)
+        .maybeSingle()
+      setPayoutsUnlocked(
+        isApprovedStatus(contractor?.verification_status as string | null)
+      )
 
       // Fetch payments
       const { data: paymentData } = await supabase
@@ -178,7 +194,24 @@ export default function ContractorPaymentsPage() {
         </p>
       </div>
 
-      <StripeConnectButton isOnboarded={isOnboarded} />
+      {isOnboarded || payoutsUnlocked ? (
+        <StripeConnectButton isOnboarded={isOnboarded} />
+      ) : (
+        <Card>
+          <CardContent className="flex items-start gap-3 py-4">
+            <Lock className="mt-0.5 size-5 shrink-0 text-[#62646a]" />
+            <div>
+              <p className="text-sm font-semibold text-[#404145]">
+                Payouts unlock after approval
+              </p>
+              <p className="text-sm text-[#62646a]">
+                {PAYOUTS_LOCKED_MESSAGE} We review applications within 24–48
+                hours and will email you.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard

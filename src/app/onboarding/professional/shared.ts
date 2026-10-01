@@ -6,9 +6,18 @@
 import { z } from 'zod'
 import { US_STATES } from '@/lib/utils/constants'
 import { isValidNpiFormat } from '@/lib/integrations/npi-registry'
+import {
+  branchHasComplianceQuestions,
+  type CredentialBasis,
+  type ProfessionalBranch,
+  type ProfessionalCategory,
+} from '@/lib/onboarding/professional-branch'
 
-export type ProCategory = 'clinical' | 'allied' | 'consultant' | 'educator'
+export type ProCategory = ProfessionalCategory
+export type Branch = ProfessionalBranch
+export type { CredentialBasis }
 export type WizardStep = 2 | 3 | 4 | 5
+export type YesNo = '' | 'yes' | 'no'
 
 export const TOTAL_STEPS = 5
 
@@ -31,10 +40,57 @@ export const CATEGORY_OPTIONS: { key: ProCategory; label: string }[] = [
     label:
       'Educator or trainer (CEU courses, workshops, certification programs)',
   },
+  {
+    key: 'other',
+    label: "Other (my profession isn't listed)",
+  },
 ]
 
-export const PRICE_FEE_NOTE =
-  "Sanus charges a small service fee on bookings. You'll see the exact amount before you publish."
+export const OTHER_PROFESSION_MAX = 100
+
+export const CREDENTIAL_BASIS_OPTIONS: { value: CredentialBasis; label: string }[] = [
+  { value: 'license', label: 'State license' },
+  { value: 'certification', label: 'Certification' },
+  { value: 'none', label: 'No' },
+]
+
+/* ───────────── Step 3 compliance questions (licensed + allied) ───────────── */
+
+export const PRACTICE_QUESTION =
+  'Will you offer any of these? In-person or hands-on care, home visits, prescribing, injectables, or IVs'
+
+export const DISCLOSURE_KEYS = [
+  'license_action',
+  'exclusion',
+  'conviction',
+  'malpractice',
+] as const
+export type DisclosureKey = (typeof DISCLOSURE_KEYS)[number]
+
+export const DISCLOSURE_QUESTIONS: Record<DisclosureKey, string> = {
+  license_action:
+    'Has any license or certification you hold or have held ever been suspended, revoked, restricted, surrendered, or under investigation?',
+  exclusion: 'Have you ever been excluded from Medicare or Medicaid?',
+  conviction: 'Have you ever had a felony or healthcare-related conviction?',
+  malpractice: 'Have you ever had any malpractice judgments or settlements?',
+}
+
+export const DISCLOSURE_DETAILS_MAX = 2000
+
+/* ───────────── Step 4 copy ───────────── */
+
+export const LIABILITY_QUESTION = 'Do you carry professional liability insurance?'
+
+export const MALPRACTICE_REQUIRED_NOTICE =
+  'Malpractice coverage is required for the services you selected. You have 30 days after approval to upload it.'
+
+export const ATTEST_ACCURATE_LABEL =
+  'I certify this information is accurate and will notify Sanus of any changes.'
+
+export const AUTHORIZE_CHECKS_LABEL =
+  'I authorize Sanus to verify my credentials with licensing boards and run exclusion screenings.'
+
+export const MEDICAL_PROCEDURES_LABEL = 'Involves prescribing, injectables, or IVs'
 
 export const REVIEW_NOTE =
   "We review every application within 24-48 hours. You'll get an email when you're approved."
@@ -98,10 +154,15 @@ export interface DocSlot {
   acceptsDocx?: boolean
 }
 
-export function docSlotsFor(category: ProCategory): DocSlot[] {
+/**
+ * The always-shown document slots for a branch. The malpractice certificate
+ * is NOT here: it is only collected when the professional answers "Yes" to the
+ * liability-insurance question (see MALPRACTICE_SLOT).
+ */
+export function docSlotsFor(branch: Branch): DocSlot[] {
   const slots: DocSlot[] = []
-  if (category !== 'consultant') {
-    const isClinical = category === 'clinical'
+  if (branch !== 'consultant') {
+    const isClinical = branch === 'clinical'
     slots.push({
       key: 'license',
       label: 'Photo of license or certification',
@@ -113,17 +174,7 @@ export function docSlotsFor(category: ProCategory): DocSlot[] {
       required: true,
     })
   }
-  if (category === 'clinical') {
-    slots.push({
-      key: 'malpractice',
-      label: 'Proof of malpractice insurance',
-      hint: 'Certificate of insurance or declarations page showing active coverage.',
-      credentialType: 'malpractice_insurance',
-      matches: ['malpractice_insurance'],
-      required: true,
-    })
-  }
-  if (category === 'consultant') {
+  if (branch === 'consultant') {
     slots.push({
       key: 'resume',
       label: 'Resume or CV',
@@ -145,6 +196,20 @@ export function docSlotsFor(category: ProCategory): DocSlot[] {
   return slots
 }
 
+export const MALPRACTICE_SLOT: DocSlot = {
+  key: 'malpractice',
+  label: 'Certificate of insurance',
+  hint: 'Certificate of insurance or declarations page showing active coverage.',
+  credentialType: 'malpractice_insurance',
+  matches: ['malpractice_insurance'],
+  required: true,
+}
+
+/** Every slot a branch may upload to during onboarding. */
+export function uploadableSlotsFor(branch: Branch): DocSlot[] {
+  return [...docSlotsFor(branch), MALPRACTICE_SLOT]
+}
+
 export const MAX_DOC_BYTES = 10 * 1024 * 1024
 // Matches the existing credential upload page (/contractor/credentials/upload).
 export const DOC_MIME = [
@@ -161,22 +226,72 @@ export const DOCX_MIME = [
 
 /* ───────────── Data shapes passed server → client ───────────── */
 
+export interface DisclosureAnswer {
+  answer: YesNo
+  details: string
+}
+
+export type DisclosuresData = Record<DisclosureKey, DisclosureAnswer>
+
+export function emptyDisclosures(): DisclosuresData {
+  return {
+    license_action: { answer: '', details: '' },
+    exclusion: { answer: '', details: '' },
+    conviction: { answer: '', details: '' },
+    malpractice: { answer: '', details: '' },
+  }
+}
+
 export interface CredentialsData {
+  /** clinical: name on license; allied: name on certification */
+  legal_name: string
+  other_names: string
   license_type: string
   specialty: string
   state_license_number: string
+  /** YYYY-MM-DD */
+  license_issue_date: string
+  /** YYYY-MM-DD */
+  license_expiration_date: string
   license_states: string[]
+  has_compact_license: YesNo
+  telehealth_states: string[]
   npi_number: string
   years_of_experience: string
   certification_type: string
   certifying_organization: string
-  certification_number: string
   consulting_background: string
   client_types: string[]
   website_url: string
   primary_background: string
   teaching_topics: string
   ceu_accreditation: '' | 'yes' | 'seeking' | 'no'
+  /** practice question (licensed + allied) */
+  offers_high_risk_services: YesNo
+  self_disclosures: DisclosuresData
+}
+
+/** Step 4 liability-insurance answers (metadata lives on the credentials row). */
+export interface InsuranceData {
+  carries_liability_insurance: YesNo
+  /** credentials.issuing_authority */
+  carrier: string
+  /** credentials.license_number */
+  policy_number: string
+  /** credentials.coverage_amount */
+  coverage_amount: string
+  /** credentials.expiration_date, YYYY-MM-DD */
+  expiration_date: string
+}
+
+export function emptyInsurance(): InsuranceData {
+  return {
+    carries_liability_insurance: '',
+    carrier: '',
+    policy_number: '',
+    coverage_amount: '',
+    expiration_date: '',
+  }
 }
 
 export interface UploadedDoc {
@@ -186,6 +301,13 @@ export interface UploadedDoc {
   document_filename: string | null
   document_url: string | null
   status: string
+  /** malpractice: carrier */
+  issuing_authority?: string | null
+  /** malpractice: policy number */
+  license_number?: string | null
+  coverage_amount?: string | null
+  /** YYYY-MM-DD */
+  expiration_date?: string | null
 }
 
 export type OfferingKind = 'service' | 'consulting' | 'event'
@@ -206,6 +328,8 @@ export interface OfferingDraft {
   /** dollars as typed */
   price: string
   is_free: boolean
+  /** prescribing, injectables or IVs (services + events; consulting is always false) */
+  involves_medical_procedures: boolean
 }
 
 export function emptyOffering(kind: OfferingKind): OfferingDraft {
@@ -223,6 +347,7 @@ export function emptyOffering(kind: OfferingKind): OfferingDraft {
     capacity: '',
     price: '',
     is_free: false,
+    involves_medical_procedures: false,
   }
 }
 
@@ -288,32 +413,127 @@ export function normalizeWebsiteUrl(raw: string): string | null {
   }
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+function isRealDate(v: string): boolean {
+  if (!ISO_DATE.test(v)) return false
+  const d = new Date(`${v}T00:00:00Z`)
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v
+}
+
+/** Today as YYYY-MM-DD (UTC). Good enough for day-granular date checks. */
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/** Tomorrow (UTC) — tolerance for "not in the future" across time zones. */
+function tomorrowIso(): string {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+const dateField = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, `${label} is required`)
+    .refine(isRealDate, `Enter a valid ${label.toLowerCase()}`)
+
+const yesNo = z.enum(['yes', 'no'], { error: 'Choose yes or no' })
+
+const stateList = (msg: string) =>
+  z
+    .array(z.string())
+    .min(1, msg)
+    .max(60)
+    .refine((a) => a.every((s) => STATE_CODES.has(s)), 'Invalid state')
+
+const disclosure = z.object({
+  answer: yesNo,
+  details: z
+    .string()
+    .trim()
+    .max(DISCLOSURE_DETAILS_MAX, `Keep this under ${DISCLOSURE_DETAILS_MAX} characters`),
+})
+
+/** Practice question + self-disclosures (licensed + allied branches). */
+const complianceShape = {
+  offers_high_risk_services: yesNo,
+  self_disclosures: z.object({
+    license_action: disclosure,
+    exclusion: disclosure,
+    conviction: disclosure,
+    malpractice: disclosure,
+  }),
+}
+
+type ValidatedDisclosures = Record<DisclosureKey, { answer: 'yes' | 'no'; details: string }>
+
+function requireDisclosureDetails(
+  v: { self_disclosures: ValidatedDisclosures },
+  ctx: z.RefinementCtx
+) {
+  for (const key of DISCLOSURE_KEYS) {
+    const d = v.self_disclosures[key]
+    if (d.answer === 'yes' && d.details.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['self_disclosures', key, 'details'],
+        message: 'Please explain',
+      })
+    }
+  }
+}
+
 export const credentialsSchemas = {
-  clinical: z.object({
-    license_type: req('Profession / license type', 100),
-    specialty: req('Specialty', 100),
-    state_license_number: req('License number', 50),
-    license_states: z
-      .array(z.string())
-      .min(1, 'Choose at least one licensing state')
-      .max(60)
-      .refine((a) => a.every((s) => STATE_CODES.has(s)), 'Invalid state'),
-    npi_number: z
-      .string()
-      .trim()
-      .refine(
-        (v) => v === '' || isValidNpiFormat(v),
-        'Enter a valid 10-digit NPI number'
-      ),
-    years_of_experience: years,
-  }),
-  allied: z.object({
-    certification_type: req('Certification type', 100),
-    certifying_organization: req('Certifying organization', 150),
-    certification_number: req('Certification number or ID', 50),
-    specialty: req('Specialty or focus', 100),
-    years_of_experience: years,
-  }),
+  clinical: z
+    .object({
+      legal_name: req('Legal name', 150),
+      other_names: z.string().trim().max(300, 'Must be 300 characters or fewer'),
+      license_type: req('Profession / license type', 100),
+      specialty: req('Specialty', 100),
+      state_license_number: req('License number', 50),
+      license_issue_date: dateField('Issue date'),
+      license_expiration_date: dateField('Expiration date'),
+      license_states: stateList('Choose at least one licensing state'),
+      has_compact_license: yesNo,
+      telehealth_states: stateList('Choose at least one state'),
+      npi_number: z
+        .string()
+        .trim()
+        .refine(
+          (v) => v === '' || isValidNpiFormat(v),
+          'Enter a valid 10-digit NPI number'
+        ),
+      years_of_experience: years,
+      ...complianceShape,
+    })
+    .superRefine((v, ctx) => {
+      if (v.license_issue_date > tomorrowIso()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['license_issue_date'],
+          message: "Issue date can't be in the future",
+        })
+      }
+      if (v.license_expiration_date <= v.license_issue_date) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['license_expiration_date'],
+          message: 'Expiration date must be after the issue date',
+        })
+      }
+      requireDisclosureDetails(v, ctx)
+    }),
+  allied: z
+    .object({
+      legal_name: req('Name as it appears on your certification', 150),
+      certification_type: req('Certification type', 100),
+      certifying_organization: req('Certifying organization', 150),
+      specialty: req('Specialty or focus', 100),
+      years_of_experience: years,
+      ...complianceShape,
+    })
+    .superRefine(requireDisclosureDetails),
   consultant: z.object({
     specialty: req('Consulting specialty', 100),
     consulting_background: req('Short background', CONSULTING_BACKGROUND_MAX),
@@ -338,6 +558,91 @@ export const credentialsSchemas = {
   }),
 } as const
 
+export { branchHasComplianceQuestions }
+
+/** Convert validated disclosure answers into the self_disclosures JSONB shape. */
+export function toSelfDisclosuresJson(
+  d: ValidatedDisclosures
+): Record<DisclosureKey, { answer: boolean; details: string | null }> {
+  const out = {} as Record<DisclosureKey, { answer: boolean; details: string | null }>
+  for (const key of DISCLOSURE_KEYS) {
+    const yes = d[key].answer === 'yes'
+    out[key] = { answer: yes, details: yes ? d[key].details : null }
+  }
+  return out
+}
+
+/* ───────────── Step 2 ───────────── */
+
+export const categoryInputSchema = z
+  .object({
+    category: z.enum(['clinical', 'allied', 'consultant', 'educator', 'other'], {
+      error: 'Choose a category',
+    }),
+    other_profession: z
+      .string()
+      .trim()
+      .max(OTHER_PROFESSION_MAX, `Must be ${OTHER_PROFESSION_MAX} characters or fewer`),
+    credential_basis: z.string(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.category !== 'other') return
+    if (v.other_profession.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['other_profession'],
+        message: 'Tell us your profession',
+      })
+    }
+    if (!['license', 'certification', 'none'].includes(v.credential_basis)) {
+      ctx.addIssue({ code: 'custom', path: ['credential_basis'], message: 'Choose an option' })
+    }
+  })
+
+/* ───────────── Step 4 ───────────── */
+
+export const documentsInputSchema = z
+  .object({
+    carries_liability_insurance: yesNo,
+    carrier: z.string().trim().max(150, 'Must be 150 characters or fewer'),
+    policy_number: z.string().trim().max(100, 'Must be 100 characters or fewer'),
+    coverage_amount: z.string().trim().max(100, 'Must be 100 characters or fewer'),
+    expiration_date: z.string().trim(),
+    attest_accurate: z.literal(true, { error: 'Required' }),
+    authorize_checks: z.literal(true, { error: 'Required' }),
+  })
+  .superRefine((v, ctx) => {
+    if (v.carries_liability_insurance !== 'yes') return
+    if (!v.carrier) {
+      ctx.addIssue({ code: 'custom', path: ['carrier'], message: 'Insurance carrier is required' })
+    }
+    if (!v.policy_number) {
+      ctx.addIssue({ code: 'custom', path: ['policy_number'], message: 'Policy number is required' })
+    }
+    if (!v.coverage_amount) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['coverage_amount'],
+        message: 'Coverage amount is required',
+      })
+    }
+    if (!v.expiration_date) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['expiration_date'],
+        message: 'Expiration date is required',
+      })
+    } else if (!isRealDate(v.expiration_date)) {
+      ctx.addIssue({ code: 'custom', path: ['expiration_date'], message: 'Enter a valid date' })
+    } else if (v.expiration_date < todayIso()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['expiration_date'],
+        message: 'This policy has already expired',
+      })
+    }
+  })
+
 const dollars = z
   .string()
   .trim()
@@ -353,6 +658,7 @@ export const offeringSchema = z.discriminatedUnion('kind', [
       error: 'Choose a format',
     }),
     price: dollars,
+    involves_medical_procedures: z.boolean().default(false),
     duration_minutes: z
       .string()
       .trim()
@@ -399,6 +705,7 @@ export const offeringSchema = z.discriminatedUnion('kind', [
         .refine((v) => v === '' || Number(v) >= 1, 'At least 1 attendee'),
       is_free: z.boolean(),
       price: z.string().trim(),
+      involves_medical_procedures: z.boolean().default(false),
     })
     .superRefine((v, ctx) => {
       if (!v.date_later) {

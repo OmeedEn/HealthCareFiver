@@ -450,7 +450,10 @@ export default async function ContractorJobDetailPage({
                 isSaved={isSaved}
                 applicationStatus={existingApplication?.status ?? null}
                 applicationDate={existingApplication?.created_at ?? null}
-                isVerified={verificationStatus === 'approved'}
+                isVerified={
+                  verificationStatus === 'approved' ||
+                  verificationStatus === 'insurance_pending'
+                }
               />
             </CardContent>
           </Card>

@@ -123,6 +123,42 @@ const sections: LegalSection[] = [
     ),
   },
   {
+    id: 'listings',
+    title: 'Listing review and scope of practice',
+    body: (
+      <>
+        <p>
+          [Attorney to finalize.] Every listing (service, consulting offer,
+          or event) is reviewed by Sanus before it is published, and may be
+          reviewed again after you edit it. Sanus may decline, pause, or
+          remove a listing that does not meet these rules:
+        </p>
+        <ul>
+          <li>
+            The listing must fall within the scope of practice of the license
+            or certification Sanus verified for you, in each state where the
+            client will be located.
+          </li>
+          <li>
+            You will not offer to diagnose or treat conditions outside your
+            scope, and will not offer prescribing, injectables, or IV therapy
+            unless you are licensed to do so (or are acting under legally
+            required supervision or orders) in the client&rsquo;s state.
+          </li>
+          <li>
+            Listings may not promise a cure or guaranteed results, or make
+            false, misleading, or unsupported health claims.
+          </li>
+          <li>
+            You must disclose in the listing whether it involves in-person or
+            hands-on care, home visits, prescribing, injectables, or IVs, and
+            keep that information accurate.
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
     id: 'insurance',
     title: 'Insurance',
     body: (
@@ -138,6 +174,114 @@ const sections: LegalSection[] = [
           You will provide proof of coverage on request and notify Sanus of
           any lapse or cancellation within [5] business days. [Additional
           insured / general liability requirements — pending counsel.]
+        </p>
+        <p>
+          <strong>Services that require malpractice coverage.</strong>{' '}
+          [Attorney to finalize.] Professional liability (malpractice)
+          insurance covering the services offered is required for any listing
+          that involves in-person or hands-on care, home visits, prescribing,
+          injectables, or IV therapy (&ldquo;Covered Services&rdquo;). A
+          Covered Services listing will not be published or bookable until
+          Sanus has reviewed a current certificate of insurance. The
+          &ldquo;Insured&rdquo; badge appears on your profile only after that
+          review.
+        </p>
+        <p>
+          <strong>Grace period.</strong> [Attorney to finalize.] If you
+          indicated you will offer Covered Services but did not provide a
+          certificate before approval, you have thirty (30) days from the date
+          Sanus approves your account to upload a certificate. During this
+          grace period you may go live and publish listings that are not
+          Covered Services (for example, consulting, telehealth or virtual
+          advisory, and educational listings); Covered Services listings stay
+          unpublished until the certificate is reviewed. Sanus will remind
+          you before the deadline.
+        </p>
+        <p>
+          <strong>Pause rule.</strong> [Attorney to finalize.] If the grace
+          period ends without a reviewed certificate, or if your coverage
+          later expires, lapses, or is cancelled, Sanus will pause and hide
+          your Covered Services listings (and may cancel affected upcoming
+          bookings [per the cancellation policy — pending counsel]) and
+          remove the Insured badge. Your other listings are not affected. Paused
+          listings are reactivated after you upload a current certificate and
+          Sanus reviews it.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'monitoring',
+    title: 'Ongoing screening and credential monitoring',
+    body: (
+      <>
+        <p>
+          [Attorney to finalize.] You authorize Sanus and its vendors to
+          verify your credentials with licensing boards and certifying bodies
+          and to screen you against federal and state exclusion and debarment
+          lists (including the HHS-OIG List of Excluded Individuals/Entities,
+          SAM.gov, and the Medi-Cal Suspended and Ineligible Provider List),
+          both at approval and on an ongoing basis (currently about monthly).
+        </p>
+        <ul>
+          <li>
+            Sanus tracks the expiration dates of your license or
+            certification, malpractice insurance, and government ID, and will
+            remind you approximately 60 and 30 days before each expires.
+          </li>
+          <li>
+            If a license, certification, or government ID expires or is no
+            longer active and in good standing, Sanus will hide your profile
+            and listings from search and stop new bookings until a current
+            credential is verified.
+          </li>
+          <li>
+            If screening shows you are excluded, debarred, or otherwise
+            ineligible, or contradicts information you provided, Sanus may
+            suspend or remove your account immediately.
+          </li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: 'self-disclosure',
+    title: 'Accuracy and duty to notify Sanus of changes',
+    body: (
+      <>
+        <p>
+          [Attorney to finalize.] You certify that the information you gave
+          Sanus, including your self-disclosure answers, is accurate and
+          complete. You will notify Sanus in writing within [5] business days
+          if:
+        </p>
+        <ul>
+          <li>
+            any license or certification is suspended, revoked, restricted,
+            surrendered, placed on probation, or becomes the subject of an
+            investigation or disciplinary action;
+          </li>
+          <li>
+            you are excluded, suspended, or debarred from Medicare, Medicaid
+            (including Medi-Cal), or any other federal or state program;
+          </li>
+          <li>
+            you are charged with or convicted of a felony or any
+            healthcare-related offense;
+          </li>
+          <li>
+            a malpractice claim, judgment, or settlement is made against you,
+            or your professional liability coverage changes, lapses, or is
+            cancelled; or
+          </li>
+          <li>
+            your name, practice locations, or any other information you
+            submitted for verification changes.
+          </li>
+        </ul>
+        <p>
+          An inaccurate or incomplete disclosure, or a failure to notify, is
+          a material breach of this Agreement.
         </p>
       </>
     ),
@@ -337,7 +481,7 @@ export default function ContractorAgreementPage() {
   return (
     <LegalPage
       title="Independent Contractor and Platform Agreement"
-      lastUpdated="September 30, 2026"
+      lastUpdated="October 1, 2026"
       intro={
         <p>
           This Agreement explains how professionals work with Sanus: you are

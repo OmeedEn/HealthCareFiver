@@ -29,6 +29,7 @@ import {
   LogOut,
   GraduationCap,
   Bell,
+  Store,
 } from 'lucide-react'
 
 type NavItem = {
@@ -40,6 +41,7 @@ type NavItem = {
 const CONTRACTOR_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Jobs', href: '/contractor/jobs', icon: Briefcase },
+  { label: 'Listings', href: '/contractor/listings', icon: Store },
   { label: 'My Credentials', href: '/contractor/credentials', icon: ShieldCheck },
   { label: 'Contracts', href: '/contractor/contracts', icon: FileText },
   { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
