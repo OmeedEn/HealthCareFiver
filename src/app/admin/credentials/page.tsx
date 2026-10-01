@@ -29,6 +29,7 @@ import {
   DEMO_CREDENTIALS,
   DEMO_CONTRACTOR,
 } from '@/lib/demo/data'
+import { credentialDocumentHref } from '@/lib/credentials/document'
 
 interface PendingCredential {
   id: string
@@ -264,7 +265,7 @@ export default function AdminCredentialsPage() {
                           size="xs"
                           render={
                             <a
-                              href={credential.document_url}
+                              href={credentialDocumentHref(credential.id)}
                               target="_blank"
                               rel="noopener noreferrer"
                             />

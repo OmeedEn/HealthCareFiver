@@ -18,6 +18,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { DocumentViewer } from '@/components/admin/document-viewer'
+import { credentialDocumentHref } from '@/lib/credentials/document'
 import { formatDateTime } from '@/lib/utils/format'
 import { toast } from 'sonner'
 import {
@@ -81,6 +82,7 @@ const CHECK_STATUS_BADGE: Record<string, 'default' | 'secondary' | 'outline' | '
 }
 
 const STATUS_BADGE: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
+  not_submitted: 'outline',
   pending_review: 'secondary',
   more_info_requested: 'outline',
   approved: 'default',
@@ -299,7 +301,11 @@ export default function AdminVerificationDetailPage({
           </CardHeader>
           <CardContent className="h-125">
             <DocumentViewer
-              documentUrl={selectedCredential?.document_url ?? null}
+              documentUrl={
+                selectedCredential?.document_url
+                  ? credentialDocumentHref(selectedCredential.id)
+                  : null
+              }
               filename={selectedCredential?.document_filename ?? null}
             />
           </CardContent>

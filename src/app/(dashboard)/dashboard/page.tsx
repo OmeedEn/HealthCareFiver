@@ -454,15 +454,31 @@ export default async function DashboardPage() {
 
 const VERIFICATION_BANNER: Record<
   string,
-  { title: string; className: string; iconClassName: string }
+  {
+    title: string
+    body?: string
+    cta?: { label: string; href: string }
+    className: string
+    iconClassName: string
+  }
 > = {
+  not_submitted: {
+    title: 'Get verified to go live',
+    body: 'Upload your license or certification and a government ID. Our team reviews within 24–48 hours.',
+    cta: { label: 'Upload documents', href: '/contractor/credentials/upload' },
+    className: 'border-[#bcebd5] bg-[#e8faf1]',
+    iconClassName: 'text-[#0f8f56]',
+  },
   pending_review: {
     title: 'Your account is pending verification',
+    body:
+      "An admin is reviewing your submitted documents. You'll be notified once you're approved to go live and apply to jobs.",
     className: 'border-[#f5deb3] bg-[#fdf6e3]',
     iconClassName: 'text-[#b8860b]',
   },
   more_info_requested: {
     title: 'Action needed: more information requested',
+    cta: { label: 'Upload Requested Document', href: '/contractor/credentials/upload' },
     className: 'border-[#f5c6cb] bg-[#fdecea]',
     iconClassName: 'text-[#c0392b]',
   },
@@ -497,20 +513,17 @@ function VerificationBanner({
             {notes}
           </CardDescription>
         )}
-        {status === 'pending_review' && !notes && (
-          <CardDescription>
-            An admin is reviewing your submitted documents. You&apos;ll be notified once
-            you&apos;re approved to go live and apply to jobs.
-          </CardDescription>
+        {config.body && !notes && (
+          <CardDescription>{config.body}</CardDescription>
         )}
       </CardHeader>
-      {status === 'more_info_requested' && (
+      {config.cta && (
         <CardContent>
           <Link
-            href="/contractor/credentials/upload"
+            href={config.cta.href}
             className="text-sm font-black text-[#1dbf73] hover:underline"
           >
-            Upload Requested Document &rarr;
+            {config.cta.label} &rarr;
           </Link>
         </CardContent>
       )}
