@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ORG_INTENTS, type OrgIntent } from '@/lib/onboarding/organization'
 import { FieldError, PRIMARY_BTN, StepHeading } from '../professional/ui'
-import { submitIntents } from './actions'
+import { saveIntents } from './actions'
 
 export function StepIntents({
   value,
@@ -29,14 +29,14 @@ export function StepIntents({
 
   async function submit() {
     setSaving(true)
-    const res = await submitIntents(value)
+    const res = await saveIntents(value)
     if (!res.ok) {
       setSaving(false)
       setError(res.error)
       toast.error(res.error)
       return
     }
-    toast.success('Application submitted. We’ll email you within 24-48 hours.')
+    setSaving(false)
     onDone()
   }
 
@@ -80,7 +80,7 @@ export function StepIntents({
         </Button>
         <Button type="button" onClick={submit} disabled={saving} className={PRIMARY_BTN}>
           {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Submit for review
+          Continue
         </Button>
       </div>
     </div>

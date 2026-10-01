@@ -31,7 +31,7 @@ function emptyVerify(): VerifyData {
 }
 
 /**
- * Organization onboarding, steps 2–4 (step 1 is /signup/organization).
+ * Organization onboarding, steps 2–5 (step 1 is /signup/organization).
  * Progress lives in facility_profiles.onboarding_step (the NEXT step to
  * show). Once onboarding_submitted_at is set this redirects to /dashboard,
  * which shows the "under review" banner.
@@ -113,7 +113,7 @@ export default async function OrganizationOnboardingPage() {
   const intents = ((org.intents ?? []) as string[]).filter((i): i is OrgIntent =>
     (ORG_INTENT_KEYS as readonly string[]).includes(i)
   )
-  const step = Math.min(Math.max(Number(org.onboarding_step ?? 2), 2), 4) as OrgWizardStep
+  const step = Math.min(Math.max(Number(org.onboarding_step ?? 2), 2), 5) as OrgWizardStep
 
   return (
     <OrgOnboardingWizard

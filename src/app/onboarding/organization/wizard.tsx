@@ -5,13 +5,14 @@ import { ORG_TOTAL_STEPS, type OrgIntent, type OrgWizardStep } from '@/lib/onboa
 import { StepAbout } from './step-about'
 import { StepVerify } from './step-verify'
 import { StepIntents } from './step-intents'
+import { StepQuickSetup } from './step-quick-setup'
 import type { AboutData, OrgDoc, VerifyData } from './shared'
 
 /**
- * Client shell for organization onboarding steps 2–4 (step 1 is
+ * Client shell for organization onboarding steps 2–5 (step 1 is
  * /signup/organization). Each step saves before advancing, which also bumps
  * facility_profiles.onboarding_step, so a refresh resumes where they left
- * off. Submitting step 4 sends them to /dashboard with the review banner.
+ * off. Submitting step 5 sends them to /dashboard with the review banner.
  */
 export function OrgOnboardingWizard({
   userId,
@@ -59,6 +60,14 @@ export function OrgOnboardingWizard({
           value={intents}
           onChange={setIntents}
           onBack={() => go(3)}
+          onDone={() => go(5)}
+        />
+      )}
+      {step === 5 && (
+        <StepQuickSetup
+          intents={intents}
+          location={{ city: about.city, state: about.state, zip_code: about.zip_code }}
+          onBack={() => go(4)}
           // Full load so the dashboard (and proxy) see the submitted state.
           onDone={() => window.location.assign('/dashboard')}
         />

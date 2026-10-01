@@ -33,7 +33,7 @@ export function OrgAccountForm({
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-[#e4e5e7] bg-white p-6 sm:p-8">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#1dbf73]">Step 1 of 4 · Organization</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#1dbf73]">Step 1 of 5 · Organization</p>
       <h1 className="mt-1 text-2xl font-bold tracking-tight text-[#404145]">Finish creating your account</h1>
       <p className="mt-1.5 text-sm text-[#62646a]">A few details Google didn&apos;t give us.</p>
 
