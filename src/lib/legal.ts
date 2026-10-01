@@ -8,3 +8,14 @@ export const TERMS_VERSION = '2026-09-30'
 
 export const TERMS_PATH = '/terms'
 export const PRIVACY_PATH = '/privacy'
+
+/**
+ * Version of the Independent Contractor and Platform Agreement a professional
+ * accepts at /go-live. Passed to the accept_contractor_agreement(p_version)
+ * RPC, which stamps contractor_profiles.contractor_agreement_accepted_at /
+ * contractor_agreement_version. Bump when /legal/contractor-agreement
+ * materially changes.
+ */
+export const CONTRACTOR_AGREEMENT_VERSION = '2026-09-30'
+
+export const CONTRACTOR_AGREEMENT_PATH = '/legal/contractor-agreement'

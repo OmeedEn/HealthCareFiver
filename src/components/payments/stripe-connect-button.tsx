@@ -7,33 +7,67 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Loader2, CreditCard, CheckCircle } from 'lucide-react'
 
+import type { ConnectReturnTarget } from '@/lib/stripe/connect'
+
 interface StripeConnectButtonProps {
   isOnboarded: boolean
+  /** Page Stripe-hosted onboarding returns to. Defaults to /contractor/payments. */
+  returnTo?: ConnectReturnTarget
+  /** 'card' (default) renders the full card; 'button' renders only the CTA. */
+  variant?: 'card' | 'button'
+  label?: string
+  className?: string
 }
 
-export function StripeConnectButton({ isOnboarded }: StripeConnectButtonProps) {
+export function StripeConnectButton({
+  isOnboarded,
+  returnTo = 'payments',
+  variant = 'card',
+  label = 'Set Up Payments',
+  className,
+}: StripeConnectButtonProps) {
   const [loading, setLoading] = useState(false)
 
   async function handleSetupPayments() {
     setLoading(true)
     try {
-      const res = await fetch('/api/stripe/connect', { method: 'POST' })
+      const res = await fetch('/api/stripe/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnTo }),
+      })
       const data = await res.json()
 
       if (!res.ok) {
         throw new Error(data.error ?? 'Failed to create Stripe Connect account')
       }
 
-      if (data.url) {
-        window.location.href = data.url
+      if (!data.url) {
+        throw new Error('Failed to start Stripe onboarding')
       }
+      // Keep the spinner while the browser navigates to Stripe.
+      window.location.href = data.url
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : 'Failed to set up payments'
       )
-    } finally {
       setLoading(false)
     }
+  }
+
+  if (variant === 'button') {
+    return (
+      <Button
+        onClick={handleSetupPayments}
+        disabled={loading || isOnboarded}
+        className={className}
+      >
+        {loading && (
+          <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
+        )}
+        {loading ? 'Redirecting to Stripe...' : label}
+      </Button>
+    )
   }
 
   if (isOnboarded) {
@@ -67,7 +101,7 @@ export function StripeConnectButton({ isOnboarded }: StripeConnectButtonProps) {
           {loading && (
             <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
           )}
-          Set Up Payments
+          {label}
         </Button>
       </CardContent>
     </Card>
