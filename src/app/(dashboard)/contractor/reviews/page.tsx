@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { PROFILE_NAME_SELECT, profileName, type ProfileWithNames } from '@/lib/profile-name'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Star } from 'lucide-react'
@@ -11,10 +12,7 @@ interface ReviewRow {
   content: string
   category_ratings: Record<string, number> | null
   created_at: string
-  profiles: {
-    first_name: string
-    last_name: string
-  } | null
+  profiles: ProfileWithNames | null
 }
 
 interface ReviewData {
@@ -56,7 +54,7 @@ export default async function ContractorReviewsPage() {
 
     const { data: reviewData } = await supabase
       .from('reviews')
-      .select('id, rating, title, content, category_ratings, created_at, profiles!reviewer_id(first_name, last_name)')
+      .select(`id, rating, title, content, category_ratings, created_at, profiles!reviewer_id(${PROFILE_NAME_SELECT})`)
       .eq('reviewee_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -67,8 +65,8 @@ export default async function ContractorReviewsPage() {
       rating: r.rating,
       title: r.title,
       content: r.content,
-      reviewer_first_name: r.profiles?.first_name ?? 'Anonymous',
-      reviewer_last_name: r.profiles?.last_name ?? '',
+      reviewer_first_name: r.profiles ? profileName(r.profiles).first_name : 'Anonymous',
+      reviewer_last_name: r.profiles ? profileName(r.profiles).last_name : '',
       created_at: r.created_at,
       category_ratings: r.category_ratings ?? undefined,
     }))

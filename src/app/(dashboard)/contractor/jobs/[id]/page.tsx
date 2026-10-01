@@ -5,6 +5,7 @@ import { isDemoMode, DEMO_JOBS } from '@/lib/demo/data'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency, formatDate, formatRelativeTime } from '@/lib/utils/format'
+import { normalizeJobRow } from '@/lib/jobs/normalize'
 import {
   CONTRACTOR_TYPE_LABELS,
   JOB_TYPE_LABELS,
@@ -47,6 +48,7 @@ interface JobDetail {
   end_date: string | null
   shifts_per_week: number | null
   hours_per_shift: number | null
+  hours_per_week?: number | null
   years_experience_min: number | null
   required_credentials: string[] | null
   required_certifications: string[] | null
@@ -122,7 +124,7 @@ export default async function ContractorJobDetailPage({
       notFound()
     }
 
-    typedJob = job as unknown as JobDetail
+    typedJob = normalizeJobRow<JobDetail>(job)
 
     const {
       data: { user },
@@ -217,7 +219,7 @@ export default async function ContractorJobDetailPage({
                 {SHIFT_TYPE_LABELS[typedJob.shift_type] ?? typedJob.shift_type}
               </Badge>
             )}
-            {typedJob.urgency && typedJob.urgency !== 'normal' && (
+            {(typedJob.urgency === 'high' || typedJob.urgency === 'critical') && (
               <Badge
                 variant={
                   typedJob.urgency === 'critical' ? 'destructive' : 'secondary'
@@ -366,6 +368,14 @@ export default async function ContractorJobDetailPage({
                     <dt className="text-xs text-[#6b7280]">Shifts / Week</dt>
                     <dd className="text-sm text-[#111827]">
                       {typedJob.shifts_per_week}
+                    </dd>
+                  </div>
+                )}
+                {typedJob.hours_per_week != null && (
+                  <div className="space-y-1">
+                    <dt className="text-xs text-[#6b7280]">Hours / Week</dt>
+                    <dd className="text-sm text-[#111827]">
+                      {typedJob.hours_per_week}
                     </dd>
                   </div>
                 )}

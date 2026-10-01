@@ -80,7 +80,8 @@ export default async function FacilityProfilePage() {
 
     const { data } = await supabase
       .from('facility_profiles')
-      .select('*')
+      // The table uses address_line_1/2; the UI type uses address_line1/2.
+      .select('*, address_line1:address_line_1, address_line2:address_line_2')
       .eq('id', user.id)
       .single()
 

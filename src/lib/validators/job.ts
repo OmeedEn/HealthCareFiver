@@ -7,7 +7,7 @@ export const jobPostSchema = z.object({
   specialties_required: z.array(z.string()).default([]),
   job_type: z.string().min(1, 'Job type is required'),
   shift_type: z.string().optional(),
-  urgency: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
+  urgency: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
   positions_available: z.coerce.number().min(1).default(1),
 
   // Location
