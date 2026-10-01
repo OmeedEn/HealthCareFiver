@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { SUBSCRIPTION_REQUIRED } from '@/lib/billing'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
@@ -63,7 +64,11 @@ export default async function DashboardLayout({
       | 'admin'
 
     // Contractors must have an active subscription to access the dashboard
-    if (role === 'contractor' && profile?.subscription_status !== 'active') {
+    if (
+      SUBSCRIPTION_REQUIRED &&
+      role === 'contractor' &&
+      profile?.subscription_status !== 'active'
+    ) {
       redirect('/subscribe')
     }
 

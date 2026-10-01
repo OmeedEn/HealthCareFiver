@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SUBSCRIPTION_REQUIRED } from '@/lib/billing'
 
 // Only allow internal-path redirects to avoid an open redirect via `?next=`
 function safeNext(target: string | null): string | null {
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
 
   // Contractors need an active subscription to use the platform
   if (
+    SUBSCRIPTION_REQUIRED &&
     profile?.role === 'contractor' &&
     profile.subscription_status !== 'active'
   ) {
