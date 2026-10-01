@@ -14,23 +14,6 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * them transact (applying to jobs, listings).
  */
 
-/**
- * @deprecated The $29/mo subscription is no longer part of go-live. Kept only
- * until remaining call sites are removed.
- */
-export const LIVE_SUBSCRIPTION_STATUSES = ['active', 'trialing'] as const
-
-/**
- * @deprecated The $29/mo subscription is no longer part of go-live. Kept only
- * until remaining call sites are removed.
- */
-export function isLiveSubscription(status: string | null | undefined): boolean {
-  return (
-    status != null &&
-    (LIVE_SUBSCRIPTION_STATUSES as readonly string[]).includes(status)
-  )
-}
-
 export type GoLiveState = {
   isContractor: boolean
   verificationStatus: string | null
@@ -40,10 +23,6 @@ export type GoLiveState = {
   hasAcceptedAgreement: boolean
   /** True when the professional can go live (approved + agreement). */
   isLive: boolean
-  /** @deprecated Subscription no longer gates go-live. */
-  subscriptionStatus: string | null
-  /** @deprecated Subscription no longer gates go-live. */
-  isSubscribed: boolean
 }
 
 /** Raw state behind canGoLive — for UI that needs to branch on each part. */
@@ -54,7 +33,7 @@ export async function getGoLiveState(
   const [{ data: profile }, { data: contractor }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('role, subscription_status')
+      .select('role')
       .eq('id', userId)
       .maybeSingle(),
     supabase
@@ -77,8 +56,6 @@ export async function getGoLiveState(
   const agreementVersion =
     (contractor?.contractor_agreement_version as string | null | undefined) ??
     null
-  const subscriptionStatus =
-    (profile?.subscription_status as string | null | undefined) ?? null
 
   const isApproved = verificationStatus === 'approved'
   const hasAcceptedAgreement = agreementAcceptedAt != null
@@ -91,8 +68,6 @@ export async function getGoLiveState(
     agreementVersion,
     hasAcceptedAgreement,
     isLive: isContractor && isApproved && hasAcceptedAgreement,
-    subscriptionStatus,
-    isSubscribed: isLiveSubscription(subscriptionStatus),
   }
 }
 

@@ -26,8 +26,6 @@ export type ApplyToJobResult =
         | 'invalid'
         | 'not_verified'
         | 'agreement_required'
-        /** @deprecated never returned; kept until job-application-form drops it */
-        | 'not_subscribed'
         | 'duplicate'
         | 'error'
       message: string
