@@ -39,15 +39,17 @@ export async function audit(entry: AuditEntry): Promise<void> {
 
   try {
     const admin = createAdminClient()
+    // Column names match the live table (resource_type/resource_id/ip), which
+    // differs from the original 20260624000001 migration.
     const { error } = await admin.from('audit_log').insert({
       actor_id: entry.actorId,
       actor_role: entry.actorRole ?? null,
       action: entry.action,
-      target_table: entry.targetTable ?? null,
-      target_id: entry.targetId ?? null,
+      resource_type: entry.targetTable ?? 'system',
+      resource_id: entry.targetId ?? null,
       phi_accessed: entry.phiAccessed ?? false,
-      metadata: entry.metadata ?? null,
-      ip_address: ipAddress,
+      metadata: entry.metadata ?? {},
+      ip: ipAddress,
       user_agent: userAgent,
     })
     if (error) {

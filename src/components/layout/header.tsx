@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { Menu, User, Settings, LogOut } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { NotificationsBell } from './notifications-bell'
+import { ReportBugButton } from '@/components/bugs/report-bug-button'
 import { profileHrefFor } from '@/components/marketing/nav-auth'
 
 interface HeaderProps {
@@ -62,6 +63,8 @@ export function Header({ role, userName, userEmail }: HeaderProps) {
         </Button>
 
         <div className="flex-1" />
+
+        <ReportBugButton />
 
         <NotificationsBell />
 
