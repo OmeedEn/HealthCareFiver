@@ -19,7 +19,7 @@ import { Sidebar } from './sidebar'
 import { NotificationsBell } from './notifications-bell'
 
 interface HeaderProps {
-  role: 'contractor' | 'facility' | 'admin'
+  role: 'contractor' | 'facility' | 'admin' | 'client'
   userName: string
   userEmail: string
 }

@@ -4,7 +4,7 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
 
-type DashboardRole = 'contractor' | 'facility' | 'admin'
+type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
 
 export default async function DashboardLayout({
   children,
@@ -58,9 +58,7 @@ export default async function DashboardLayout({
       .single()
 
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
-      | 'contractor'
-      | 'facility'
-      | 'admin'
+      DashboardRole
 
     // Contractors must have an active subscription to access the dashboard
     if (role === 'contractor' && profile?.subscription_status !== 'active') {

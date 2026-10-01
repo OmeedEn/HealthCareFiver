@@ -1,7 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from './mfa'
 
-export type Role = 'contractor' | 'facility' | 'staffing_agency' | 'admin'
+export type Role =
+  | 'contractor'
+  | 'facility'
+  | 'staffing_agency'
+  | 'admin'
+  | 'client'
 
 export interface SessionUser {
   id: string
