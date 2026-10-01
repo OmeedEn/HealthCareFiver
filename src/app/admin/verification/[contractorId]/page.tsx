@@ -1,436 +1,225 @@
-'use client'
-
-import { use, useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { isDemoMode } from '@/lib/demo/data'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { audit } from '@/lib/audit/log'
+import { credentialStoragePath } from '@/lib/credentials/document'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { DocumentViewer } from '@/components/admin/document-viewer'
-import { credentialDocumentHref } from '@/lib/credentials/document'
-import { formatDateTime } from '@/lib/utils/format'
-import { toast } from 'sonner'
-import {
-  ArrowLeft,
-  CheckCircle,
-  FileText,
-  Loader2,
-  MessageCircleQuestion,
-  RefreshCw,
-  XCircle,
-} from 'lucide-react'
+  evidenceFilename,
+  type AdminChecklist,
+  type ApplicantCheck,
+  type ApplicantCredential,
+  type ApplicantData,
+  type ApplicantDuplicate,
+  type ApplicantOffering,
+  type ApplicantProfile,
+  type EvidenceItem,
+} from '../_lib/shared'
+import { fetchDuplicateFlags, requireAdminPage } from '../_lib/server'
+import { DEMO_APPLICANT } from '../_lib/demo'
+import { ApplicantClient } from './applicant-client'
 
-interface ProviderDetail {
-  id: string
-  first_name: string
-  last_name: string
-  contractor_type: string
-  npi_number: string | null
-  state_license_number: string | null
-  license_state: string | null
-  city: string | null
-  state: string | null
-  verification_status: string
-  verification_notes: string | null
-  verification_reviewed_at: string | null
-  baa_sent_at: string | null
-  approval_email_sent_at: string | null
-  profiles: { email: string | null } | null
+export const dynamic = 'force-dynamic'
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+type Row = Record<string, unknown>
+
+function str(v: unknown): string | null {
+  return typeof v === 'string' ? v : null
+}
+function arr(v: unknown): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+function bool(v: unknown): boolean | null {
+  return typeof v === 'boolean' ? v : null
 }
 
-interface CredentialDoc {
-  id: string
-  credential_type: string
-  name: string
-  document_url: string | null
-  document_filename: string | null
-  status: string
-  created_at: string
-}
-
-interface VerificationCheck {
-  id: string
-  check_type: 'medallion' | 'checkr' | 'stripe_identity'
-  status: string
-  result_summary: Record<string, unknown> | null
-  checked_at: string | null
-}
-
-const CHECK_LABELS: Record<VerificationCheck['check_type'], string> = {
-  medallion: 'Medallion',
-  checkr: 'Checkr Background Check',
-  stripe_identity: 'Stripe Identity',
-}
-
-const CHECK_STATUS_BADGE: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  not_started: 'outline',
-  pending: 'secondary',
-  passed: 'default',
-  failed: 'destructive',
-  needs_review: 'secondary',
-}
-
-const STATUS_BADGE: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-  not_submitted: 'outline',
-  pending_review: 'secondary',
-  more_info_requested: 'outline',
-  approved: 'default',
-  rejected: 'destructive',
-}
-
-export default function AdminVerificationDetailPage({
+export default async function AdminApplicantPage({
   params,
 }: {
   params: Promise<{ contractorId: string }>
 }) {
-  const { contractorId } = use(params)
-  const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
+  const { contractorId } = await params
 
-  const [provider, setProvider] = useState<ProviderDetail | null>(null)
-  const [credentials, setCredentials] = useState<CredentialDoc[]>([])
-  const [checks, setChecks] = useState<VerificationCheck[]>([])
-  const [selectedCredentialId, setSelectedCredentialId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [runningCheck, setRunningCheck] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [dialogAction, setDialogAction] = useState<'request_info' | 'reject' | null>(null)
-  const [dialogNotes, setDialogNotes] = useState('')
+  if (isDemoMode()) {
+    return <ApplicantClient data={DEMO_APPLICANT} demo />
+  }
 
-  useEffect(() => {
-    async function fetchAll() {
-      const [providerRes, credentialsRes, checksRes] = await Promise.all([
-        supabase
-          .from('contractor_profiles')
-          .select(
-            'id, first_name, last_name, contractor_type, npi_number, state_license_number, license_state, city, state, verification_status, verification_notes, verification_reviewed_at, baa_sent_at, approval_email_sent_at, profiles(email)'
-          )
-          .eq('id', contractorId)
-          .single(),
-        supabase
-          .from('credentials')
-          .select('id, credential_type, name, document_url, document_filename, status, created_at')
-          .eq('contractor_id', contractorId)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('provider_verification_checks')
-          .select('id, check_type, status, result_summary, checked_at')
-          .eq('contractor_id', contractorId),
-      ])
+  const viewer = await requireAdminPage()
+  if (!UUID_RE.test(contractorId)) return <NotFound />
 
-      setProvider((providerRes.data ?? null) as unknown as ProviderDetail | null)
-      const docs = (credentialsRes.data ?? []) as unknown as CredentialDoc[]
-      setCredentials(docs)
-      setSelectedCredentialId(docs[0]?.id ?? null)
-      setChecks((checksRes.data ?? []) as unknown as VerificationCheck[])
-      setLoading(false)
+  const adminSupabase = createAdminClient()
+
+  const [profileRes, credentialsRes, evidenceRes, checksRes, offeringsRes, duplicateMap] =
+    await Promise.all([
+      adminSupabase
+        .from('contractor_profiles')
+        .select('*, profiles(email, phone)')
+        .eq('id', contractorId)
+        .maybeSingle(),
+      adminSupabase
+        .from('credentials')
+        .select('*')
+        .eq('contractor_id', contractorId)
+        .order('created_at', { ascending: false }),
+      adminSupabase
+        .from('verification_evidence')
+        .select('id, check_key, storage_path, note, created_by, created_at')
+        .eq('contractor_id', contractorId)
+        .order('created_at', { ascending: false }),
+      adminSupabase
+        .from('provider_verification_checks')
+        .select('id, check_type, status, result_summary, checked_at')
+        .eq('contractor_id', contractorId),
+      adminSupabase
+        .from('professional_offerings')
+        .select('id, title, status, format, requires_malpractice')
+        .eq('contractor_id', contractorId)
+        .order('created_at', { ascending: true }),
+      fetchDuplicateFlags([contractorId]),
+    ])
+
+  const p = profileRes.data as Row | null
+  if (!p) {
+    if (profileRes.error) console.error('[admin/verification] load failed', profileRes.error)
+    return <NotFound />
+  }
+  const joined = (p.profiles ?? null) as { email?: string | null; phone?: string | null } | null
+
+  const profile: ApplicantProfile = {
+    id: contractorId,
+    first_name: str(p.first_name) ?? '',
+    last_name: str(p.last_name) ?? '',
+    email: joined?.email ?? null,
+    phone: joined?.phone ?? null,
+    contractor_type: str(p.contractor_type),
+    professional_category: str(p.professional_category),
+    other_profession: str(p.other_profession),
+    credential_basis: str(p.credential_basis),
+    legal_name: str(p.legal_name),
+    other_names: str(p.other_names),
+    license_type: str(p.license_type),
+    specialties: arr(p.specialties),
+    state_license_number: str(p.state_license_number),
+    license_states: arr(p.license_states),
+    license_issue_date: str(p.license_issue_date),
+    license_expiration_date: str(p.license_expiration_date),
+    has_compact_license: bool(p.has_compact_license),
+    telehealth_states: arr(p.telehealth_states),
+    npi_number: str(p.npi_number),
+    years_of_experience: typeof p.years_of_experience === 'number' ? p.years_of_experience : null,
+    certification_type: str(p.certification_type),
+    certifying_organization: str(p.certifying_organization),
+    consulting_background: str(p.consulting_background),
+    client_types: arr(p.client_types),
+    website_url: str(p.website_url),
+    primary_background: str(p.primary_background),
+    teaching_topics: str(p.teaching_topics),
+    ceu_accreditation: str(p.ceu_accreditation),
+    offers_high_risk_services: bool(p.offers_high_risk_services),
+    self_disclosures: (p.self_disclosures ?? null) as ApplicantProfile['self_disclosures'],
+    carries_liability_insurance: bool(p.carries_liability_insurance),
+    attested_accurate_at: str(p.attested_accurate_at),
+    authorized_checks_at: str(p.authorized_checks_at),
+    verification_status: str(p.verification_status) ?? 'not_submitted',
+    verification_notes: str(p.verification_notes),
+    verification_reviewed_at: str(p.verification_reviewed_at),
+    approved_at: str(p.approved_at),
+    insurance_due_at: str(p.insurance_due_at),
+    insured_verified_at: str(p.insured_verified_at),
+    compliance_hold_reason: str(p.compliance_hold_reason),
+    last_exclusion_check_at: str(p.last_exclusion_check_at),
+    admin_checklist: (p.admin_checklist ?? {}) as AdminChecklist,
+    contractor_agreement_accepted_at: str(p.contractor_agreement_accepted_at),
+    city: str(p.city),
+    state: str(p.state),
+    created_at: str(p.created_at),
+    onboarding_completed_at: str(p.onboarding_completed_at),
+  }
+
+  const credentials: ApplicantCredential[] = ((credentialsRes.data ?? []) as Row[]).map((c) => ({
+    id: String(c.id),
+    credential_type: str(c.credential_type) ?? 'other',
+    name: str(c.name) ?? 'Document',
+    issuing_authority: str(c.issuing_authority),
+    license_number: str(c.license_number),
+    issued_date: str(c.issued_date),
+    expiration_date: str(c.expiration_date),
+    coverage_amount: str(c.coverage_amount),
+    status: str(c.status) ?? 'pending_review',
+    has_document: !!credentialStoragePath(str(c.document_url)),
+    document_filename: str(c.document_filename),
+    verified_at: str(c.verified_at),
+    created_at: str(c.created_at) ?? '',
+  }))
+
+  const evidence: EvidenceItem[] = ((evidenceRes.data ?? []) as Row[]).map((e) => ({
+    id: String(e.id),
+    check_key: str(e.check_key) ?? '',
+    note: str(e.note),
+    created_by: str(e.created_by),
+    created_at: str(e.created_at) ?? '',
+    filename: evidenceFilename(str(e.storage_path) ?? ''),
+  }))
+
+  // Duplicate flags + the names of the other accounts.
+  let duplicates: ApplicantDuplicate[] | null = null
+  const flags = duplicateMap.get(contractorId)
+  if (flags) {
+    const otherIds = [...new Set(flags.map((f) => f.other_contractor))]
+    const names = new Map<string, string>()
+    if (otherIds.length) {
+      const { data: others } = await adminSupabase
+        .from('contractor_profiles')
+        .select('id, first_name, last_name')
+        .in('id', otherIds)
+      for (const o of others ?? []) names.set(o.id, `${o.first_name} ${o.last_name}`.trim())
     }
-
-    fetchAll()
-  }, [supabase, contractorId])
-
-  const selectedCredential = credentials.find((c) => c.id === selectedCredentialId) ?? null
-
-  function checkFor(type: VerificationCheck['check_type']): VerificationCheck | null {
-    return checks.find((c) => c.check_type === type) ?? null
+    duplicates = flags.map((f) => ({
+      kind: f.kind,
+      other_contractor: f.other_contractor,
+      other_name: names.get(f.other_contractor) ?? null,
+    }))
   }
 
-  async function runCheck(checkType: VerificationCheck['check_type']) {
-    setRunningCheck(checkType)
-    try {
-      const res = await fetch(`/api/admin/verification/${contractorId}/checks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ checkType }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Failed to run check')
-
-      setChecks((prev) => {
-        const next = prev.filter((c) => c.check_type !== checkType)
-        return [...next, data.check as VerificationCheck]
-      })
-      toast.success(`${CHECK_LABELS[checkType]} check updated`)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to run check')
-    } finally {
-      setRunningCheck(null)
-    }
+  // Display names for whoever ticked checklist items / uploaded evidence.
+  const adminIds = new Set<string>()
+  for (const entry of Object.values(profile.admin_checklist ?? {})) {
+    if (entry?.by) adminIds.add(entry.by)
+  }
+  for (const e of evidence) if (e.created_by) adminIds.add(e.created_by)
+  const adminNames: Record<string, string> = {}
+  if (adminIds.size) {
+    const { data: admins } = await adminSupabase
+      .from('profiles')
+      .select('id, email')
+      .in('id', [...adminIds])
+    for (const a of admins ?? []) adminNames[a.id] = a.email
   }
 
-  async function submitAction(action: 'approve' | 'request_info' | 'reject', notes?: string) {
-    setSubmitting(true)
-    try {
-      const res = await fetch(`/api/admin/verification/${contractorId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, notes }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Failed to submit decision')
+  await audit({
+    actorId: viewer.id,
+    actorRole: viewer.role,
+    action: 'verification_applicant_viewed',
+    targetTable: 'contractor_profiles',
+    targetId: contractorId,
+    phiAccessed: true,
+  })
 
-      if (data.warnings?.length) {
-        data.warnings.forEach((w: string) => toast.warning(w))
-      }
-      toast.success('Verification decision saved')
-      router.push('/admin/verification')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to submit decision')
-      setSubmitting(false)
-    }
+  const data: ApplicantData = {
+    profile,
+    credentials,
+    evidence,
+    duplicates,
+    checks: (checksRes.data ?? []) as ApplicantCheck[],
+    offerings: (offeringsRes.data ?? []) as ApplicantOffering[],
+    adminNames,
   }
 
-  function openDialog(action: 'request_info' | 'reject') {
-    setDialogNotes('')
-    setDialogAction(action)
-  }
+  return <ApplicantClient data={data} />
+}
 
-  async function confirmDialog() {
-    if (!dialogAction || !dialogNotes.trim()) return
-    await submitAction(dialogAction, dialogNotes.trim())
-    setDialogAction(null)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
-  if (!provider) {
-    return (
-      <div className="py-12 text-center text-sm text-muted-foreground">
-        Provider not found.
-      </div>
-    )
-  }
-
-  const isDecided = provider.verification_status === 'approved' || provider.verification_status === 'rejected'
-
+function NotFound() {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" render={<Link href="/admin/verification" />}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">
-              {provider.first_name} {provider.last_name}
-            </h1>
-            <Badge variant={STATUS_BADGE[provider.verification_status] ?? 'secondary'}>
-              {provider.verification_status.replace(/_/g, ' ')}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {provider.contractor_type.toUpperCase()} · {provider.profiles?.email ?? 'no email on file'}
-            {provider.city && provider.state ? ` · ${provider.city}, ${provider.state}` : ''}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">NPI Number</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">{provider.npi_number ?? '—'}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">License</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            {provider.state_license_number
-              ? `${provider.state_license_number} (${provider.license_state ?? '—'})`
-              : '—'}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Prior Notes</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">{provider.verification_notes ?? '—'}</CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Documents</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {credentials.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No documents uploaded.</p>
-            ) : (
-              credentials.map((doc) => (
-                <button
-                  key={doc.id}
-                  onClick={() => setSelectedCredentialId(doc.id)}
-                  className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors ${
-                    doc.id === selectedCredentialId
-                      ? 'border-primary bg-primary/5'
-                      : 'border-transparent hover:bg-muted'
-                  }`}
-                >
-                  <FileText className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="flex-1 truncate">{doc.name}</span>
-                  <Badge variant="outline">{doc.status.replace(/_/g, ' ')}</Badge>
-                </button>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="h-125">
-            <DocumentViewer
-              documentUrl={
-                selectedCredential?.document_url
-                  ? credentialDocumentHref(selectedCredential.id)
-                  : null
-              }
-              filename={selectedCredential?.document_filename ?? null}
-            />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        {(['medallion', 'checkr', 'stripe_identity'] as const).map((type) => {
-          const check = checkFor(type)
-          return (
-            <Card key={type}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">{CHECK_LABELS[type]}</CardTitle>
-                <Badge variant={CHECK_STATUS_BADGE[check?.status ?? 'not_started']}>
-                  {(check?.status ?? 'not_started').replace(/_/g, ' ')}
-                </Badge>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {check?.result_summary ? (
-                  <pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs whitespace-pre-wrap">
-                    {JSON.stringify(check.result_summary, null, 2)}
-                  </pre>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No result yet.</p>
-                )}
-                {check?.checked_at && (
-                  <p className="text-xs text-muted-foreground">
-                    Checked {formatDateTime(check.checked_at)}
-                  </p>
-                )}
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={runningCheck === type}
-                  onClick={() => runCheck(type)}
-                >
-                  {runningCheck === type ? (
-                    <Loader2 className="size-3 animate-spin" data-icon="inline-start" />
-                  ) : (
-                    <RefreshCw className="size-3" data-icon="inline-start" />
-                  )}
-                  {check ? 'Refresh' : 'Run check'}
-                </Button>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
-
-      {!isDecided && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center justify-end gap-2 py-4">
-            <Button
-              variant="outline"
-              disabled={submitting}
-              onClick={() => openDialog('request_info')}
-            >
-              <MessageCircleQuestion className="size-4" data-icon="inline-start" />
-              Request More Info
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={submitting}
-              onClick={() => openDialog('reject')}
-            >
-              <XCircle className="size-4" data-icon="inline-start" />
-              Reject
-            </Button>
-            <Button
-              disabled={submitting}
-              onClick={() => submitAction('approve')}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {submitting ? (
-                <Loader2 className="size-4 animate-spin" data-icon="inline-start" />
-              ) : (
-                <CheckCircle className="size-4" data-icon="inline-start" />
-              )}
-              Approve
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Dialog open={dialogAction !== null} onOpenChange={(open) => !open && setDialogAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {dialogAction === 'reject' ? 'Reject Provider' : 'Request More Information'}
-            </DialogTitle>
-            <DialogDescription>
-              {dialogAction === 'reject'
-                ? 'Provide a reason for rejecting this provider. They will be notified by email.'
-                : 'Describe what additional information or documents are needed. The provider will be notified by email.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="dialog-notes">Message</Label>
-            <Textarea
-              id="dialog-notes"
-              value={dialogNotes}
-              onChange={(e) => setDialogNotes(e.target.value)}
-              rows={4}
-              placeholder={
-                dialogAction === 'reject'
-                  ? 'Reason for rejection...'
-                  : 'What do you need from the provider?'
-              }
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogAction(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant={dialogAction === 'reject' ? 'destructive' : 'default'}
-              disabled={submitting || !dialogNotes.trim()}
-              onClick={confirmDialog}
-            >
-              {submitting && <Loader2 className="size-4 animate-spin" data-icon="inline-start" />}
-              {dialogAction === 'reject' ? 'Reject Provider' : 'Send Request'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    <div className="py-12 text-center text-sm text-muted-foreground">Provider not found.</div>
   )
 }
