@@ -51,6 +51,18 @@ export async function POST(request: NextRequest) {
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
+    // Supabase only reports email_not_confirmed after the password checks
+    // out, so telling the user doesn't reveal whether an email is registered.
+    if (error.code === 'email_not_confirmed') {
+      return NextResponse.json(
+        {
+          error:
+            'Your account isn’t confirmed yet. Check your email for the confirmation link.',
+          code: 'email_not_confirmed',
+        },
+        { status: 403 }
+      )
+    }
     // Don't leak whether the email exists; keep the message generic.
     return NextResponse.json(
       { error: 'Invalid email or password' },
