@@ -16,6 +16,6 @@ export const PRIVACY_PATH = '/privacy'
  * contractor_agreement_version. Bump when /legal/contractor-agreement
  * materially changes.
  */
-export const CONTRACTOR_AGREEMENT_VERSION = '2026-09-30'
+export const CONTRACTOR_AGREEMENT_VERSION = '2026-10-01'
 
 export const CONTRACTOR_AGREEMENT_PATH = '/legal/contractor-agreement'

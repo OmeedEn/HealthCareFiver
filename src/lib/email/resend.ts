@@ -3,7 +3,12 @@
  * Docs: https://resend.com/docs/api-reference/emails/send-email
  *
  * Used to notify providers about the outcome of their admin
- * verification review (approved / more info needed / rejected).
+ * verification review (approved / more info needed / rejected) and about
+ * compliance lifecycle events (malpractice grace period, expiring or lapsed
+ * credentials), plus the admin exclusion re-screen digest.
+ *
+ * Without RESEND_API_KEY every send is a logged no-op. Callers must treat
+ * send failures as non-fatal (an unverified sending domain makes Resend 4xx).
  */
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
@@ -121,34 +126,214 @@ function layout(body: string): string {
 
 export const APPROVAL_EMAIL_SUBJECT = "You're live on Sanus."
 
+/** Listing types that need a reviewed malpractice certificate. */
+const HIGH_RISK_LISTINGS_PHRASE =
+  'in-person or hands-on care, home visits, prescribing, injectables, and IVs'
+
+function formatEmailDate(value: string): string {
+  const date = value.length === 10 ? new Date(`${value}T12:00:00Z`) : new Date(value)
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
+function uploadUrl(appUrl: string): string {
+  return `${normalizeAppUrl(appUrl)}/contractor/credentials/upload`
+}
+
+function greeting(provider: ProviderEmailContext): string {
+  return `<p>Hi ${escapeHtml(provider.firstName || 'there')},</p>`
+}
+
+export interface ApprovalEmailOptions {
+  /**
+   * Set when the provider was approved as "Insurance pending": the ISO
+   * timestamp their malpractice grace period ends.
+   */
+  insuranceDueAt?: string | null
+}
+
 /**
- * Sent when an admin approves a provider's verification review. Links to
- * /go-live, where they accept the contractor agreement and set up payouts.
+ * "You're live on Sanus." — sent when an admin approves a provider's
+ * verification review (via applyApproval in src/lib/compliance/transitions).
+ * Links to /go-live, where they accept the contractor agreement and set up
+ * payouts. When approved as Insurance pending, the email also gives the
+ * malpractice deadline and which listings stay unpublished until then.
  *
  * `appUrl` should be NEXT_PUBLIC_APP_URL (callers fall back to the request
  * origin) — emails need absolute links.
  */
 export async function sendProviderApprovalEmail(
   provider: ProviderEmailContext,
-  appUrl: string
+  appUrl: string,
+  options: ApprovalEmailOptions = {}
 ): Promise<SendEmailResponse> {
   const goLiveUrl = `${normalizeAppUrl(appUrl)}/go-live`
-  const firstName = escapeHtml(provider.firstName || 'there')
+  const insuranceBlock = options.insuranceDueAt
+    ? `
+      <div style="margin:20px 0;padding:14px 16px;background:#fffbeb;border-left:3px solid #f59e0b;">
+        <p style="margin:0 0 8px;"><strong>Malpractice coverage due by ${escapeHtml(formatEmailDate(options.insuranceDueAt))}.</strong></p>
+        <p style="margin:0;">The services you selected require professional liability (malpractice) insurance. You have 30 days after approval to upload your certificate. Until our team reviews it, listings for ${HIGH_RISK_LISTINGS_PHRASE} stay unpublished. You can publish consulting, telehealth or virtual advisory, and educational listings now.</p>
+        <p style="margin:8px 0 0;"><a href="${escapeHtml(uploadUrl(appUrl))}" style="color:#0f8f56;font-weight:700;">Upload your certificate</a></p>
+      </div>`
+    : ''
 
   return sendEmail({
     to: provider.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
       <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re live on Sanus.</h1>
-      <p>Hi ${firstName},</p>
+      ${greeting(provider)}
       <p>Congratulations — our team has reviewed and approved your credentials. Welcome to Sanus.</p>
       <p>Two quick steps to finish going live:</p>
       <ol style="padding-left:20px;">
-        <li>Accept the Independent Contractor and Platform Agreement.</li>
-        <li>Set up payouts through Stripe so you can get paid for your bookings.</li>
+        <li>Accept the Independent Contractor and Platform Agreement — required before your first listing is published.</li>
+        <li>Set up payouts through Stripe Connect so you can get paid for your bookings.</li>
       </ol>
+      ${insuranceBlock}
       ${ctaButton(goLiveUrl, 'Finish going live')}
       <p style="color:#62646a;font-size:13px;">Free to join. A small service fee applies to each booking.</p>
+    `),
+  })
+}
+
+/** Sent when an admin verifies a provider's malpractice certificate. */
+export async function sendInsuranceVerifiedEmail(
+  provider: ProviderEmailContext,
+  appUrl: string,
+  resumedListings: number
+): Promise<SendEmailResponse> {
+  const resumed =
+    resumedListings > 0
+      ? `<p>${resumedListings} paused listing${resumedListings === 1 ? ' is' : 's are'} back in review and will go live once approved.</p>`
+      : ''
+  return sendEmail({
+    to: provider.email,
+    subject: 'Your malpractice certificate is verified',
+    html: layout(`
+      ${greeting(provider)}
+      <p>Our team reviewed and verified your malpractice certificate. Your profile now shows the <strong>Insured</strong> badge, and you can publish listings for ${HIGH_RISK_LISTINGS_PHRASE}.</p>
+      ${resumed}
+      ${ctaButton(`${normalizeAppUrl(appUrl)}/dashboard`, 'Go to dashboard')}
+    `),
+  })
+}
+
+/** Malpractice grace-period reminder (14, 7, 1 days left). */
+export async function sendInsuranceGraceReminderEmail(
+  provider: ProviderEmailContext,
+  appUrl: string,
+  daysLeft: number,
+  dueAt: string
+): Promise<SendEmailResponse> {
+  const left = `${daysLeft} day${daysLeft === 1 ? '' : 's'}`
+  return sendEmail({
+    to: provider.email,
+    subject: `${left} left to upload your malpractice certificate`,
+    html: layout(`
+      ${greeting(provider)}
+      <p>You have <strong>${left}</strong> (until ${escapeHtml(formatEmailDate(dueAt))}) to upload your professional liability (malpractice) certificate.</p>
+      <p>Listings for ${HIGH_RISK_LISTINGS_PHRASE} stay unpublished until our team reviews it. If the deadline passes without a certificate, those listings are paused. Your other listings are not affected.</p>
+      ${ctaButton(uploadUrl(appUrl), 'Upload certificate')}
+    `),
+  })
+}
+
+/** Grace deadline passed without a reviewed certificate. */
+export async function sendInsuranceDeadlinePassedEmail(
+  provider: ProviderEmailContext,
+  appUrl: string,
+  pausedListings: number
+): Promise<SendEmailResponse> {
+  const paused =
+    pausedListings > 0
+      ? `We paused ${pausedListings} listing${pausedListings === 1 ? '' : 's'} that need${pausedListings === 1 ? 's' : ''} malpractice coverage; ${pausedListings === 1 ? 'it is' : 'they are'} hidden from clients.`
+      : `Listings for ${HIGH_RISK_LISTINGS_PHRASE} can&#39;t be published until coverage is reviewed.`
+  return sendEmail({
+    to: provider.email,
+    subject: 'Your malpractice deadline has passed',
+    html: layout(`
+      ${greeting(provider)}
+      <p>Your 30-day window to upload a malpractice certificate has ended. ${paused}</p>
+      <p>You&#39;re still live for consulting, telehealth or virtual advisory, and educational listings. Upload your certificate and, once our team reviews it, we&#39;ll reactivate the paused listings.</p>
+      ${ctaButton(uploadUrl(appUrl), 'Upload certificate')}
+    `),
+  })
+}
+
+/** 60 / 30-day expiry reminder for a license, certification, malpractice or ID. */
+export async function sendCredentialExpiringEmail(
+  provider: ProviderEmailContext,
+  appUrl: string,
+  credential: { label: string; expirationDate: string; daysLeft: number }
+): Promise<SendEmailResponse> {
+  return sendEmail({
+    to: provider.email,
+    subject: `Your ${credential.label} expires in ${credential.daysLeft} days`,
+    html: layout(`
+      ${greeting(provider)}
+      <p>Your <strong>${escapeHtml(credential.label)}</strong> expires on ${escapeHtml(formatEmailDate(credential.expirationDate))}. Upload the renewed document before then so there&#39;s no interruption to your profile or listings.</p>
+      ${ctaButton(uploadUrl(appUrl), 'Upload renewal')}
+    `),
+  })
+}
+
+/**
+ * A credential lapsed. `effect`:
+ *  - 'hold': license / certification / ID — hidden from search until re-verified
+ *  - 'listings_paused': malpractice — Insured badge off, hands-on listings paused
+ */
+export async function sendCredentialLapsedEmail(
+  provider: ProviderEmailContext,
+  appUrl: string,
+  credential: { label: string; expirationDate: string; effect: 'hold' | 'listings_paused' }
+): Promise<SendEmailResponse> {
+  const effect =
+    credential.effect === 'hold'
+      ? 'Your profile and listings are hidden from search, and you can&#39;t take new bookings, until our team verifies a current document.'
+      : `Your Insured badge has been removed and listings for ${HIGH_RISK_LISTINGS_PHRASE} are paused until our team verifies a current certificate. Your other listings are not affected.`
+  return sendEmail({
+    to: provider.email,
+    subject: `Action needed: your ${credential.label} has expired`,
+    html: layout(`
+      ${greeting(provider)}
+      <p>Your <strong>${escapeHtml(credential.label)}</strong> expired on ${escapeHtml(formatEmailDate(credential.expirationDate))}.</p>
+      <p>${effect}</p>
+      ${ctaButton(uploadUrl(appUrl), 'Upload renewal')}
+    `),
+  })
+}
+
+export interface ExclusionDigestProvider {
+  id: string
+  name: string
+  lastCheckedAt: string | null
+}
+
+/** Weekly admin digest: live providers due for their exclusion re-screen. */
+export async function sendExclusionRescreenDigestEmail(
+  to: string,
+  appUrl: string,
+  providers: ExclusionDigestProvider[]
+): Promise<SendEmailResponse> {
+  const base = normalizeAppUrl(appUrl)
+  const rows = providers
+    .map((p) => {
+      const last = p.lastCheckedAt ? escapeHtml(formatEmailDate(p.lastCheckedAt)) : 'never'
+      const href = escapeHtml(`${base}/admin/verification/${p.id}`)
+      return `<li><a href="${href}" style="color:#0f8f56;">${escapeHtml(p.name || p.id)}</a> — last checked ${last}</li>`
+    })
+    .join('')
+  return sendEmail({
+    to,
+    subject: `Exclusion re-screen due: ${providers.length} provider${providers.length === 1 ? '' : 's'}`,
+    html: layout(`
+      <p>These live providers are due for their monthly exclusion re-screen (OIG LEIE, SAM.gov, Medi-Cal Suspended &amp; Ineligible):</p>
+      <ul style="padding-left:20px;">${rows}</ul>
+      <p>Record each lookup (with a screenshot) on the provider&#39;s verification page.</p>
     `),
   })
 }
