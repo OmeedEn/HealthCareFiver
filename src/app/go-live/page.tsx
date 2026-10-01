@@ -8,6 +8,7 @@ import {
   FileSignature,
   Landmark,
   Lock,
+  ShieldAlert,
   ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,14 @@ import { AgreementForm } from './agreement-form'
 
 export const metadata: Metadata = {
   title: 'Go live — Sanus',
+}
+
+function formatDate(value: string): string {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 const FEE_LINE = 'Free to join. A small service fee applies to each booking.'
@@ -40,6 +49,8 @@ type GoLiveData = {
   agreementVersion: string | null
   hasConnectAccount: boolean
   payoutsOnboarded: boolean
+  /** Set while Insurance pending: when the malpractice grace period ends. */
+  insuranceDueAt: string | null
 }
 
 async function loadGoLiveData(payoutsReturn: boolean): Promise<GoLiveData> {
@@ -51,6 +62,7 @@ async function loadGoLiveData(payoutsReturn: boolean): Promise<GoLiveData> {
       agreementVersion: null,
       hasConnectAccount: false,
       payoutsOnboarded: false,
+      insuranceDueAt: null,
     }
   }
 
@@ -116,6 +128,10 @@ async function loadGoLiveData(payoutsReturn: boolean): Promise<GoLiveData> {
       (contractor?.contractor_agreement_version as string | null | undefined) ?? null,
     hasConnectAccount: connectId !== null,
     payoutsOnboarded,
+    insuranceDueAt:
+      contractor?.verification_status === 'insurance_pending'
+        ? ((contractor?.insurance_due_at as string | null | undefined) ?? null)
+        : null,
   }
 }
 
@@ -211,7 +227,13 @@ export default async function GoLivePage({
   const payoutsReturn = payouts === 'done'
   const data = await loadGoLiveData(payoutsReturn)
 
-  if (data.verificationStatus !== 'approved') {
+  // 'insurance_pending' providers are approved and live for listings that
+  // don't need malpractice coverage.
+  const isApproved =
+    data.verificationStatus === 'approved' ||
+    data.verificationStatus === 'insurance_pending'
+
+  if (!isApproved) {
     const copy =
       (data.verificationStatus && NOT_APPROVED_COPY[data.verificationStatus]) ||
       DEFAULT_NOT_APPROVED
@@ -272,6 +294,31 @@ export default async function GoLivePage({
       </div>
 
       <div className="mt-8 space-y-5">
+        {data.verificationStatus === 'insurance_pending' && (
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-bold">
+                Malpractice coverage due
+                {data.insuranceDueAt ? ` by ${formatDate(data.insuranceDueAt)}` : ' within 30 days of approval'}
+              </p>
+              <p className="mt-1">
+                The services you selected require malpractice coverage. Until
+                our team reviews your certificate, in-person, home-visit,
+                prescribing, injectable, and IV listings stay unpublished. You
+                can publish consulting, telehealth, and educational listings
+                now.
+              </p>
+              <Link
+                href="/contractor/credentials/upload"
+                className="mt-2 inline-block font-semibold text-amber-900 underline"
+              >
+                Upload your certificate
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Step 1 — agreement */}
         <StepCard
           step={1}
@@ -282,13 +329,7 @@ export default async function GoLivePage({
           {agreementCurrent ? (
             <p className="text-sm text-[#62646a]">
               You accepted the Independent Contractor and Platform Agreement
-              {data.agreementAcceptedAt
-                ? ` on ${new Date(data.agreementAcceptedAt).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}`
-                : ''}
+              {data.agreementAcceptedAt ? ` on ${formatDate(data.agreementAcceptedAt)}` : ''}
               .{' '}
               <Link
                 href={CONTRACTOR_AGREEMENT_PATH}
@@ -300,6 +341,10 @@ export default async function GoLivePage({
             </p>
           ) : (
             <div className="space-y-4">
+              <p className="text-sm text-[#404145]">
+                You need to accept the agreement before your first listing can
+                be published.
+              </p>
               {agreementOutdated && (
                 <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
                   We&apos;ve updated the agreement since you last accepted it.
