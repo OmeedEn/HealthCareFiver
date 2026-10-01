@@ -4,7 +4,7 @@ import {
   BadgeCheck,
   Layers,
   Users,
-  Star,
+  HeartHandshake,
 } from 'lucide-react'
 
 export default function AuthLayout({
@@ -42,8 +42,8 @@ export default function AuthLayout({
           <div className="mt-12 space-y-5">
             <Feature
               icon={BadgeCheck}
-              title="Verified professionals"
-              description="Every professional credential-checked and license-confirmed before listing"
+              title="Reviewed before booking"
+              description="Professionals are verified by our team before they can be booked"
             />
             <Feature
               icon={Layers}
@@ -58,33 +58,21 @@ export default function AuthLayout({
             <Feature
               icon={ShieldCheck}
               title="Secure payments"
-              description="Escrow-protected with automatic superbill generation"
+              description="Payments are processed by Stripe — we never store your card details"
             />
           </div>
         </div>
 
         <div className="mt-12 rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur">
           <div className="flex items-start gap-3">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[#0f4c3a] bg-emerald-100 text-sm font-semibold text-emerald-700">
-              RJ
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10">
+              <HeartHandshake className="h-5 w-5 text-[#8ee7bf]" />
             </div>
             <div>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-3.5 w-3.5 fill-[#ffd700] text-[#ffd700]"
-                  />
-                ))}
-                <span className="ml-1 text-sm font-bold">5.0</span>
-              </div>
+              <p className="text-sm font-bold">Built for trust from day one</p>
               <p className="mt-1 text-sm leading-relaxed text-[#b8e6d0]">
-                &ldquo;I listed my nursing consulting services on Sanus and
-                had my first three clients within a week. It changed what I
-                thought was possible as an independent professional.&rdquo;
-              </p>
-              <p className="mt-1 text-xs font-semibold text-[#8ee7bf]">
-                — Renee J., RN, Nursing Consultant
+                Health information is handled with HIPAA safeguards, and you
+                stay in control of who you work with and what you share.
               </p>
             </div>
           </div>
@@ -111,8 +99,16 @@ export default function AuthLayout({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-[#e4e5e7] px-6 py-4 text-center text-xs text-[#95979d]">
-          &copy; {new Date().getFullYear()} Sanus. All rights reserved.
+        <div className="flex flex-col items-center justify-center gap-1.5 border-t border-[#e4e5e7] px-6 py-4 text-center text-xs text-[#95979d] sm:flex-row sm:gap-4">
+          <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
+          <span className="flex gap-4">
+            <Link href="/terms" className="transition hover:text-[#404145]">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="transition hover:text-[#404145]">
+              Privacy Policy
+            </Link>
+          </span>
         </div>
       </div>
     </div>
