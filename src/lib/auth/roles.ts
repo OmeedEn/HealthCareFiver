@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { mfaGate } from './mfa'
 
 export type Role = 'contractor' | 'facility' | 'staffing_agency' | 'admin'
 
@@ -10,7 +11,9 @@ export interface SessionUser {
 
 /**
  * Resolve the current session user with their role. Returns null if not
- * authenticated, or if Supabase is not configured (demo mode).
+ * authenticated, if the session hasn't completed MFA (AAL2), or if Supabase
+ * is not configured (demo mode). API routes are outside the proxy matcher, so
+ * this is where they get the MFA requirement.
  *
  * Throws if the user is authenticated but has no profile row — that is a data
  * integrity violation (handle_new_user should always create one).
@@ -21,6 +24,7 @@ export async function currentUser(): Promise<SessionUser | null> {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return null
+  if ((await mfaGate(supabase)) !== 'ok') return null
 
   const { data: profile, error } = await supabase
     .from('profiles')

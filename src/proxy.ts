@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getSupabaseConfig } from '@/lib/supabase/config'
+import { mfaGate } from '@/lib/auth/mfa'
 
 const PUBLIC_ROUTES = [
   '/',
@@ -10,6 +11,7 @@ const PUBLIC_ROUTES = [
   '/signup/facility',
   '/forgot-password',
   '/callback',
+  '/find-care',
 ]
 
 function isPublicRoute(pathname: string): boolean {
@@ -54,6 +56,32 @@ export async function proxy(request: NextRequest) {
     url.pathname = '/login'
     url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
+  }
+
+  // MFA gate: every session must be AAL2 before reaching any app page.
+  // /mfa/* is where an AAL1 session enrolls or verifies.
+  const gate = await mfaGate(supabase)
+  const isMfaRoute = pathname === '/mfa' || pathname.startsWith('/mfa/')
+
+  if (gate !== 'ok' && !isMfaRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify'
+    url.search = ''
+    url.searchParams.set('redirectTo', pathname)
+    return NextResponse.redirect(url)
+  }
+
+  if (isMfaRoute) {
+    // Keep users on the step that matches their state.
+    const target =
+      gate === 'ok' ? '/dashboard' : gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify'
+    if (pathname !== target) {
+      const url = request.nextUrl.clone()
+      url.pathname = target
+      if (gate === 'ok') url.search = ''
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
   }
 
   // Fetch user role from profiles table

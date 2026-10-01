@@ -12,6 +12,7 @@ import {
   Menu,
 } from 'lucide-react'
 import { DEMO_PROVIDERS } from '@/lib/demo/data'
+import { NavAuth } from '@/components/marketing/nav-auth'
 import { Input } from '@/components/ui/input'
 import {
   Sheet,
@@ -560,18 +561,20 @@ function FindCarePageContent() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden text-sm font-medium text-[#6b7280] transition hover:text-[#111827] sm:block"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-[#1dbf73] px-4 text-sm font-semibold text-white transition hover:bg-[#19a463]"
-            >
-              Get Started
-            </Link>
+            <NavAuth>
+              <Link
+                href="/login"
+                className="hidden text-sm font-medium text-[#6b7280] transition hover:text-[#111827] sm:block"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-9 items-center justify-center rounded-lg bg-[#1dbf73] px-4 text-sm font-semibold text-white transition hover:bg-[#19a463]"
+              >
+                Get Started
+              </Link>
+            </NavAuth>
             {/* Mobile nav toggle */}
             <button
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
@@ -604,12 +607,14 @@ function FindCarePageContent() {
               >
                 Membership
               </Link>
-              <Link
-                href="/login"
-                className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827] sm:hidden"
-              >
-                Sign In
-              </Link>
+              <NavAuth hideWhenSignedIn>
+                <Link
+                  href="/login"
+                  className="rounded-lg px-3 py-2 text-[#6b7280] hover:text-[#111827] sm:hidden"
+                >
+                  Sign In
+                </Link>
+              </NavAuth>
             </nav>
           </div>
         )}
