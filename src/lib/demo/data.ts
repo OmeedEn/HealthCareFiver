@@ -986,7 +986,7 @@ export const DEMO_MEMBERSHIP = {
       features: [
         'Browse jobs & facilities',
         'Access public events & webinars',
-        'Basic profile listing',
+        'Free credential verification',
         'Book up to 3 sessions/month',
       ],
     },
@@ -998,7 +998,8 @@ export const DEMO_MEMBERSHIP = {
       popular: true,
       features: [
         'Everything in Basic',
-        'Post your services on marketplace',
+        'Go live: visible & bookable profile',
+        'Apply to jobs',
         'Priority search placement',
         'Superbill generation',
         'HIPAA-compliant messaging',

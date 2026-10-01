@@ -14,8 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
+import { applyToJob } from '@/app/(dashboard)/contractor/jobs/actions'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
 
@@ -50,30 +50,25 @@ export function JobApplicationForm({
     }
 
     try {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        toast.error('You must be logged in to apply.')
-        return
-      }
-
-      const { error } = await supabase.from('job_applications').insert({
-        job_id: jobId,
-        contractor_id: user.id,
-        status: 'applied',
-        cover_letter: coverLetter || null,
-        proposed_rate: proposedRate ? parseFloat(proposedRate) : null,
-        available_start_date: availableStartDate || null,
+      const result = await applyToJob({
+        jobId,
+        coverLetter: coverLetter || null,
+        proposedRate: proposedRate ? parseFloat(proposedRate) : null,
+        availableStartDate: availableStartDate || null,
       })
 
-      if (error) {
-        if (error.code === '23505') {
-          toast.error('You have already applied to this job.')
+      if (!result.ok) {
+        if (result.reason === 'not_subscribed') {
+          toast.error(result.message, {
+            action: {
+              label: 'Activate',
+              onClick: () => {
+                window.location.href = '/subscribe'
+              },
+            },
+          })
         } else {
-          toast.error('Failed to submit application. Please try again.')
+          toast.error(result.message)
         }
         return
       }

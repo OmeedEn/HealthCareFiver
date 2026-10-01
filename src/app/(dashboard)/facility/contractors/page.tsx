@@ -15,6 +15,7 @@ import {
 import { ContractorProfileCard } from '@/components/contractor/profile-card'
 import { CONTRACTOR_TYPE_LABELS, US_STATES } from '@/lib/utils/constants'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { LIVE_SUBSCRIPTION_STATUSES } from '@/lib/auth/can-go-live'
 
 interface ContractorProfile {
   id: string
@@ -60,8 +61,10 @@ export default function FindContractorsPage() {
     const supabase = createClient()
     let query = supabase
       .from('contractor_profiles')
-      .select('*, profiles!inner(avatar_url)')
+      .select('*, profiles!inner(avatar_url, subscription_status)')
+      // Only "live" professionals: verified AND subscribed (see can-go-live.ts).
       .eq('verification_status', 'approved')
+      .in('profiles.subscription_status', [...LIVE_SUBSCRIPTION_STATUSES])
       .order('average_rating', { ascending: false })
       .limit(50)
 

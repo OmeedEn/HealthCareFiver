@@ -25,34 +25,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login`)
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.redirect(`${origin}/login`)
-  }
-
-  // The handle_new_user trigger inserts the profile row; that runs in the same
-  // transaction as auth.users insert so it must be visible here, but treat a
-  // missing row as a soft failure rather than a 500.
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role, subscription_status')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (profileError) {
-    console.error('Profile lookup after auth failed:', profileError)
-  }
-
-  // Contractors need an active subscription to use the platform
-  if (
-    profile?.role === 'contractor' &&
-    profile.subscription_status !== 'active'
-  ) {
-    return NextResponse.redirect(`${origin}/subscribe`)
-  }
-
+  // No subscription gate here: joining and verification are free. The
+  // dashboard layout nudges verified professionals to subscribe to go live.
+  // The proxy's MFA gate takes over from whatever page we land on.
   return NextResponse.redirect(`${origin}${next ?? '/dashboard'}`)
 }
