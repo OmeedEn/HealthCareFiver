@@ -8,6 +8,7 @@ const EnvSchema = z.object({
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+  NEXT_PUBLIC_SUPPORT_EMAIL: z.string().email().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 })
 
@@ -27,3 +28,11 @@ export function env(): Env {
   cached = parsed.data
   return cached
 }
+
+/**
+ * Where users go when they're locked out (e.g. lost their authenticator).
+ * Read via a literal `process.env.NEXT_PUBLIC_*` access so Next inlines it
+ * into client bundles — `env()` only sees it on the server.
+ */
+export const SUPPORT_EMAIL =
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@sanus.health'
