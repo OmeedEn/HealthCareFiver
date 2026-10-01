@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { TwoFactorSettings } from '@/components/settings/two-factor-settings'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -26,7 +27,6 @@ import {
   DollarSign,
   Star,
   KeyRound,
-  Smartphone,
   Monitor,
   Lock,
 } from 'lucide-react'
@@ -710,32 +710,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* 2FA placeholder — surfaces the work even though it isn't wired
-                yet, so users know it's coming. */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Smartphone className="size-4 text-[#1dbf73]" />
-                  Two-factor authentication
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-[#404145]">
-                      Add an extra step at sign-in using an authenticator app.
-                    </p>
-                    <p className="text-xs text-[#62646a]">
-                      Two-factor authentication is coming soon. We&apos;ll
-                      notify you when enrollment opens.
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm" disabled>
-                    Set up
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <TwoFactorSettings />
 
             {/* Sessions placeholder */}
             <Card>
