@@ -64,7 +64,7 @@ AS $$
         FROM credentials c
         WHERE c.contractor_id = cp.id
           AND c.credential_type = 'malpractice_insurance'
-          AND c.status = 'verified'
+          AND c.status IN ('verified', 'expiring_soon')
           AND (c.expiration_date IS NULL OR c.expiration_date >= CURRENT_DATE)
       )
   );
