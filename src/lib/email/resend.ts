@@ -379,3 +379,88 @@ export async function sendVerificationActionEmail(
     `),
   })
 }
+
+// ---------------------------------------------------------------------------
+// Organization verification
+// ---------------------------------------------------------------------------
+
+export interface OrgEmailContext {
+  /** Person who signed up for the org (contact name or account first name). */
+  contactName: string | null
+  orgName: string
+  email: string
+}
+
+/**
+ * "You're live on Sanus." for organizations — sent when an admin approves an
+ * organization (src/app/admin/organizations/actions.ts).
+ */
+export async function sendOrgApprovalEmail(
+  org: OrgEmailContext,
+  appUrl: string
+): Promise<SendEmailResponse> {
+  const dashboardUrl = `${normalizeAppUrl(appUrl)}/dashboard`
+  return sendEmail({
+    to: org.email,
+    subject: APPROVAL_EMAIL_SUBJECT,
+    html: layout(`
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re live on Sanus.</h1>
+      <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
+      <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
+      <p>You can now publish posts, message professionals, and review applicants. Any drafts you saved while we reviewed are ready to publish from your dashboard.</p>
+      ${ctaButton(dashboardUrl, 'Go to your dashboard')}
+    `),
+  })
+}
+
+/** Needs info / suspended / rejected, with the reviewer's message. */
+export async function sendOrgReviewActionEmail(
+  org: OrgEmailContext,
+  action: 'needs_info' | 'suspended' | 'rejected',
+  notes: string,
+  appUrl: string
+): Promise<SendEmailResponse> {
+  const hi = `<p>Hi ${escapeHtml(org.contactName || 'there')},</p>`
+  const orgName = escapeHtml(org.orgName)
+  const quote = (border: string) =>
+    `<p><strong>Message from our review team:</strong></p>
+     <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid ${border};">${escapeHtml(notes).replace(/\n/g, '<br />')}</blockquote>`
+
+  if (action === 'needs_info') {
+    return sendEmail({
+      to: org.email,
+      subject: 'Action needed: your Sanus organization application',
+      html: layout(`
+        ${hi}
+        <p>We need a bit more information before we can approve <strong>${orgName}</strong>.</p>
+        ${quote('#1dbf73')}
+        <p>Update your organization profile and we&#39;ll pick your review back up.</p>
+        ${ctaButton(`${normalizeAppUrl(appUrl)}/facility/profile`, 'Update your profile')}
+      `),
+    })
+  }
+
+  if (action === 'suspended') {
+    return sendEmail({
+      to: org.email,
+      subject: 'Your Sanus organization account is suspended',
+      html: layout(`
+        ${hi}
+        <p><strong>${orgName}</strong> has been suspended on Sanus. Your posts are hidden, and you can&#39;t message professionals or review applicants for now.</p>
+        ${quote('#d1d5db')}
+        <p>Reply to this email to resolve it.</p>
+      `),
+    })
+  }
+
+  return sendEmail({
+    to: org.email,
+    subject: 'Update on your Sanus organization application',
+    html: layout(`
+      ${hi}
+      <p>Thank you for applying to Sanus. We&#39;re unable to approve <strong>${orgName}</strong> at this time.</p>
+      ${quote('#d1d5db')}
+      <p>If you have questions, just reply to this email.</p>
+    `),
+  })
+}

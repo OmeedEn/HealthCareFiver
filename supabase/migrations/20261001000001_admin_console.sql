@@ -59,6 +59,13 @@ CREATE POLICY "bug_reports_update_admin"
 -- ---------------------------------------------------------------------------
 ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS phi_accessed BOOLEAN NOT NULL DEFAULT FALSE;
 
+-- The live columns were never created by a migration, so a fresh database
+-- (supabase db reset) failed on the index below. No-op where they exist.
+ALTER TABLE audit_log
+  ADD COLUMN IF NOT EXISTS resource_type TEXT,
+  ADD COLUMN IF NOT EXISTS resource_id TEXT,
+  ADD COLUMN IF NOT EXISTS ip TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_audit_log_resource ON audit_log(resource_type, resource_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at DESC);
 

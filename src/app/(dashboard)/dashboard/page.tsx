@@ -42,6 +42,7 @@ import {
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
+import { OrgReviewBanner } from '@/components/org/org-review-banner'
 import { SUPPORT_EMAIL } from '@/lib/env'
 import {
   buildContractorChecklist,
@@ -173,6 +174,8 @@ export default async function DashboardPage() {
   let facilityApplicants: FacilityApplicantRow[] = []
   let facilityContracts: FacilityContractRow[] = []
   let facilitySetup: FacilitySetup | null = null
+  let orgStatus: string | null = null
+  let orgNotes: string | null = null
 
   if (isDemoMode()) {
     // Read the demo role override cookie set by DemoRoleSwitcher.
@@ -551,7 +554,7 @@ export default async function DashboardPage() {
       ] = await Promise.all([
         supabase
           .from('facility_profiles')
-          .select('description, phone, city, state, contact_name')
+          .select('description, phone, city, state, contact_name, verification_status, verification_notes')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -592,6 +595,8 @@ export default async function DashboardPage() {
         spendThisMonth: 0,
       }
       activity = (notifData ?? []) as DashboardNotification[]
+      orgStatus = (facilityRow?.verification_status as string | null) ?? null
+      orgNotes = (facilityRow?.verification_notes as string | null) ?? null
       facilitySetup = {
         hasPostedJob: facilityJobs.length > 0,
         orgProfileMissing: missingFacilityFields(
@@ -643,6 +648,7 @@ export default async function DashboardPage() {
           previewHref={previewHref}
         />
       )}
+      {role === 'facility' && <OrgReviewBanner status={orgStatus} notes={orgNotes} />}
       {role === 'facility' && (
         <FacilityDashboard
           kpis={facilityKpis}

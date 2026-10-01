@@ -57,7 +57,11 @@ export async function setAccountVerified(userId: string, verified: boolean) {
 
   const { error } = await db.from('profiles').update({ is_verified: verified }).eq('id', userId)
   if (error) throw new Error(`Failed to update verification: ${error.message}`)
-  await db.from('facility_profiles').update({ is_verified: verified }).eq('id', userId)
+  // For organizations, verification is the review status (is_verified syncs from it).
+  await db
+    .from('facility_profiles')
+    .update({ verification_status: verified ? 'approved' : 'pending_review' })
+    .eq('id', userId)
 
   await logAdminAction(
     db, admin.id, verified ? 'account_verified' : 'account_unverified',

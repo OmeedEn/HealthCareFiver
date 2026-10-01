@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
 import { formatCurrency, getInitials } from '@/lib/utils/format'
+import { isOrgStatus, orgBlockedReason } from '@/lib/org/review'
 import {
   ArrowLeft,
   Star,
@@ -62,6 +63,8 @@ export default async function ContractorDetailPage({
   let contractor: ContractorView
   let reviews: ReviewView[] = []
   let verifiedCredentials = 0
+  // Messaging and invites unlock once the viewing org is approved.
+  let contactBlockedReason: string | null = null
 
   if (isDemoMode()) {
     const provider = DEMO_PROVIDERS.find((p) => p.id === id)
@@ -130,6 +133,15 @@ export default async function ContractorDetailPage({
     } = await supabase.auth.getUser()
 
     if (!user) redirect('/login')
+
+    const { data: viewerOrg } = await supabase
+      .from('facility_profiles')
+      .select('verification_status')
+      .eq('id', user.id)
+      .maybeSingle()
+    contactBlockedReason = orgBlockedReason(
+      isOrgStatus(viewerOrg?.verification_status) ? viewerOrg.verification_status : null
+    )
 
     const { data: row } = await supabase
       .from('contractor_profiles')
@@ -288,6 +300,21 @@ export default async function ContractorDetailPage({
               </div>
             </div>
 
+            {contactBlockedReason ? (
+              <div className="flex max-w-xs shrink-0 flex-col items-end gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" disabled>
+                    <MessageSquare className="size-4" data-icon="inline-start" />
+                    Message
+                  </Button>
+                  <Button disabled>
+                    <UserPlus className="size-4" data-icon="inline-start" />
+                    Invite to apply
+                  </Button>
+                </div>
+                <p className="text-right text-xs text-[#62646a]">{contactBlockedReason}</p>
+              </div>
+            ) : (
             <div className="flex shrink-0 flex-wrap gap-2">
               <Button
                 variant="outline"
@@ -307,6 +334,7 @@ export default async function ContractorDetailPage({
                 Invite to apply
               </Button>
             </div>
+            )}
           </div>
         </CardContent>
       </Card>

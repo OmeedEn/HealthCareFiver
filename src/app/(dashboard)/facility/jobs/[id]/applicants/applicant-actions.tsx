@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
+import { useOrgStatus } from '@/lib/org/use-org-status'
+import { orgBlockedReason } from '@/lib/org/review'
 import { toast } from 'sonner'
 import { Loader2Icon } from 'lucide-react'
 
@@ -40,10 +42,15 @@ export function ApplicantActions({
 }: ApplicantActionsProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  // Only approved orgs can move applicants (also enforced by RLS).
+  const blockedReason = orgBlockedReason(useOrgStatus())
 
   const actions = ACTIONS[currentStatus]
 
   if (!actions || actions.length === 0) return null
+  if (blockedReason) {
+    return <p className="max-w-xs text-xs text-[#62646a]">{blockedReason}</p>
+  }
 
   const handleAction = async (newStatus: string) => {
     setLoading(true)
@@ -55,12 +62,14 @@ export function ApplicantActions({
         return
       }
       const supabase = createClient()
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('job_applications')
         .update({ status: newStatus })
         .eq('id', applicationId)
+        .select('id')
 
-      if (error) {
+      // RLS filters the row out (no error) when the org isn't approved.
+      if (error || !data?.length) {
         toast.error('Failed to update application status.')
         return
       }

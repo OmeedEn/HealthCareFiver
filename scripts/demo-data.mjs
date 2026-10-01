@@ -210,7 +210,7 @@ async function seed() {
       zip_code: f.zip_code,
     })
     facilityIds[key] = id
-    must(`facility_profiles ${f.facility_name}`, await db.from('facility_profiles').update({ ...row, is_verified: true }).eq('id', id))
+    must(`facility_profiles ${f.facility_name}`, await db.from('facility_profiles').update({ ...row, verification_status: 'approved', approved_at: iso(-90) }).eq('id', id))
   }
   const fac = (key) => facilityIds[key] ?? facilityIds['demo-facility-1']
 
