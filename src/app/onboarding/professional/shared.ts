@@ -16,10 +16,10 @@ import {
 export type ProCategory = ProfessionalCategory
 export type Branch = ProfessionalBranch
 export type { CredentialBasis }
-export type WizardStep = 2 | 3 | 4 | 5
+export type WizardStep = 2 | 3 | 4 | 5 | 6
 export type YesNo = '' | 'yes' | 'no'
 
-export const TOTAL_STEPS = 5
+export const TOTAL_STEPS = 6
 
 export const CATEGORY_OPTIONS: { key: ProCategory; label: string }[] = [
   {
@@ -741,4 +741,39 @@ export function firstErrors(
     if (key && !out[key]) out[key] = i.message
   }
   return out
+}
+
+/* ───────────── Step 6: Want to explore Sanus too? ───────────── */
+
+export const EXPLORE_INTERESTS = [
+  { value: 'book_services', label: 'Booking services from other professionals', sub: 'Wellness, care, coaching, bodywork, and more' },
+  { value: 'attend_events', label: 'Attending events and trainings', sub: 'CEU courses, workshops, certifications' },
+  { value: 'find_collaborators', label: 'Finding professionals to collaborate with or refer to', sub: '' },
+  { value: 'urgent_needs', label: 'Seeing urgent needs and staffing opportunities from organizations', sub: '' },
+  { value: 'offering_only', label: 'Just offering my services for now', sub: '' },
+] as const
+export type ExploreInterest = (typeof EXPLORE_INTERESTS)[number]['value']
+
+export const INTEREST_TILES = [
+  { value: 'clinical_care', label: 'Clinical care' },
+  { value: 'mental_health', label: 'Mental health' },
+  { value: 'nutrition', label: 'Nutrition' },
+  { value: 'wellness', label: 'Wellness' },
+  { value: 'rehab', label: 'Rehab' },
+  { value: 'fitness', label: 'Fitness' },
+  { value: 'bodywork', label: 'Bodywork' },
+  { value: 'consulting', label: 'Consulting' },
+  { value: 'events_education', label: 'Events and education' },
+] as const
+export type InterestTile = (typeof INTEREST_TILES)[number]['value']
+
+export const LANGUAGE_SUGGESTIONS = [
+  'English', 'Spanish', 'Mandarin', 'Cantonese', 'Vietnamese', 'Tagalog', 'Korean', 'Farsi', 'Arabic', 'Hindi', 'Russian', 'ASL',
+]
+
+export interface ExploreData {
+  interests: string[]
+  tiles: string[]
+  location: string
+  languages: string[]
 }

@@ -1,6 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { startInsuranceGraceForListing } from '@/lib/compliance/transitions'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { currentUser, requireRole, type SessionUser } from '@/lib/auth/roles'
@@ -64,6 +67,13 @@ export async function saveListing(
       fieldErrors: firstErrors(parsed.error.issues),
     }
   }
+  {
+    const d = parsed.data as { title?: string; description?: string | null }
+    const claims = findBlockedClaims(d.title, d.description)
+    if (claims.length) {
+      return { ok: false, error: blockedClaimsMessage(claims), fieldErrors: { description: blockedClaimsMessage(claims) } }
+    }
+  }
   if (isDemoMode()) {
     return { ok: true, id: id ?? '00000000-0000-4000-8000-000000000002' }
   }
@@ -92,6 +102,7 @@ export async function saveListing(
       return { ok: false, error: "We couldn't save this listing. Please try again." }
     }
     if (!data) return { ok: false, error: 'Listing not found.' }
+    await maybeStartInsuranceGrace(user.id, columns)
     revalidatePath('/contractor/listings')
     return { ok: true, id }
   }
@@ -109,6 +120,7 @@ export async function saveListing(
     return { ok: false, error: "We couldn't save this listing. Please try again." }
   }
   revalidatePath('/contractor/listings')
+  await maybeStartInsuranceGrace(user.id, columns)
   return { ok: true, id: data.id as string }
 }
 
@@ -196,4 +208,21 @@ export async function deleteListing(
   }
   revalidatePath('/contractor/listings')
   return { ok: true }
+}
+
+/**
+ * Saving an in-person / home-visit / medical-procedure listing when they told
+ * us in onboarding they don't offer high-risk services: start the insurance
+ * grace period so they get the deadline, banner and reminders instead of a
+ * listing that silently never publishes. Failures are logged, never thrown.
+ */
+async function maybeStartInsuranceGrace(userId: string, columns: Record<string, unknown>) {
+  const needsMalpractice =
+    columns.format === 'in_person' || columns.format === 'home_visit' || columns.involves_medical_procedures === true
+  if (!needsMalpractice) return
+  try {
+    await startInsuranceGraceForListing(createAdminClient(), userId)
+  } catch (err) {
+    console.error('[listings] could not start insurance grace period', err)
+  }
 }

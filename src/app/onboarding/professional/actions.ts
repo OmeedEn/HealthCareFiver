@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { currentUser, requireRole, type SessionUser } from '@/lib/auth/roles'
@@ -29,6 +30,10 @@ import {
   type DocSlotKey,
   type ProCategory,
   type UploadedDoc,
+  EXPLORE_INTERESTS,
+  INTEREST_TILES,
+  type ExploreInterest,
+  type InterestTile,
 } from './shared'
 
 /*
@@ -249,7 +254,7 @@ export async function saveCredentialDetails(
 
   const { error } = await supabase
     .from('contractor_profiles')
-    .update({ ...update, onboarding_step: Math.max(4, Math.min(profile.step, 5)) })
+    .update({ ...update, onboarding_step: Math.max(4, Math.min(profile.step, 6)) })
     .eq('id', user.id)
   if (error) return GENERIC_ERROR
   return { ok: true }
@@ -482,10 +487,12 @@ export async function submitDocuments(input: Record<string, unknown>): Promise<A
   const submitted = await submitContractorForReview(user.id)
   if (!submitted.ok) return GENERIC_ERROR
 
+  // Never move someone already on step 6 back to 5.
   const { error: stepError } = await supabase
     .from('contractor_profiles')
     .update({ onboarding_step: 5 })
     .eq('id', user.id)
+    .lt('onboarding_step', 5)
   if (stepError) return GENERIC_ERROR
   return { ok: true }
 }
@@ -509,6 +516,11 @@ export async function saveOfferings(input: unknown[]): Promise<ActionResult> {
       return
     }
     const v = r.data
+    const claims = findBlockedClaims(v.title, v.description)
+    if (claims.length) {
+      fieldErrors[`${i}.description`] = blockedClaimsMessage(claims)
+      return
+    }
     if (v.kind === 'service') {
       rows.push({
         kind: 'service',
@@ -572,7 +584,7 @@ export async function saveOfferings(input: unknown[]): Promise<ActionResult> {
     .insert(rows.map((r) => ({ ...r, contractor_id: user.id, status: 'draft' })))
   if (error) return GENERIC_ERROR
 
-  return completeOnboarding(supabase, user.id)
+  return advanceToExplore(supabase, user.id)
 }
 
 export async function skipOfferings(): Promise<ActionResult> {
@@ -581,7 +593,63 @@ export async function skipOfferings(): Promise<ActionResult> {
   if ('error' in a) return a.error
   const gate = await requireStep5(a.supabase, a.user.id)
   if (gate) return gate
+  return advanceToExplore(a.supabase, a.user.id)
+}
+
+/** Step 5 → step 6 ("Want to explore Sanus too?"). */
+async function advanceToExplore(supabase: Supa, userId: string): Promise<ActionResult> {
+  const { error } = await supabase
+    .from('contractor_profiles')
+    .update({ onboarding_step: 6 })
+    .eq('id', userId)
+    .lt('onboarding_step', 6)
+  if (error) return GENERIC_ERROR
+  return { ok: true }
+}
+
+const exploreSchema = z.object({
+  interests: z.array(z.enum(EXPLORE_INTERESTS.map((i) => i.value) as [ExploreInterest, ...ExploreInterest[]])).max(5),
+  tiles: z.array(z.enum(INTEREST_TILES.map((t) => t.value) as [InterestTile, ...InterestTile[]])).max(9),
+  location: z.string().trim().max(100),
+  languages: z.array(z.string().trim().min(1).max(40)).max(20),
+})
+
+/** Step 6: save what they'd like to explore as a client, then finish. */
+export async function saveExplore(input: unknown): Promise<ActionResult> {
+  const parsed = exploreSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: 'Please check your choices and try again.' }
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return a.error
+  const gate = await requireStep6(a.supabase, a.user.id)
+  if (gate) return gate
+  const d = parsed.data
+  const update: Record<string, unknown> = {
+    explore_interests: Array.from(new Set(d.interests)),
+    interest_tiles: Array.from(new Set(d.tiles)),
+    explore_location: d.location || null,
+  }
+  // Languages also appear on the provider profile; only overwrite when given.
+  if (d.languages.length) update.languages = Array.from(new Set(d.languages))
+  const { error } = await a.supabase.from('contractor_profiles').update(update).eq('id', a.user.id)
+  if (error) return GENERIC_ERROR
   return completeOnboarding(a.supabase, a.user.id)
+}
+
+export async function skipExplore(): Promise<ActionResult> {
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return a.error
+  const gate = await requireStep6(a.supabase, a.user.id)
+  if (gate) return gate
+  return completeOnboarding(a.supabase, a.user.id)
+}
+
+async function requireStep6(supabase: Supa, userId: string): Promise<ActionResult | null> {
+  const profile = await loadProfile(supabase, userId)
+  if (!profile) return GENERIC_ERROR
+  if (profile.step < 6) return { ok: false, error: 'Please finish the earlier steps first.' }
+  return null
 }
 
 /** Offerings/completion are only reachable after documents were submitted. */

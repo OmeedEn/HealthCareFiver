@@ -1,6 +1,8 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
+import { useState, useSyncExternalStore } from 'react'
+import { readModeCookie, writeModeCookie, type AppMode } from '@/lib/mode'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
@@ -33,6 +35,7 @@ import {
   Store,
   Megaphone,
   Siren,
+  CalendarCheck,
 } from 'lucide-react'
 
 type NavItem = {
@@ -96,6 +99,41 @@ const CLIENT_NAV: NavItem[] = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
+// Professionals in browse mode: using Sanus as a client.
+const BROWSE_NAV: NavItem[] = [
+  { label: 'Find professionals', href: '/browse', icon: Search },
+  { label: 'Events & trainings', href: '/events', icon: GraduationCap },
+  { label: 'My bookings', href: '/browse/bookings', icon: CalendarCheck },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
+  { label: 'Settings', href: '/settings', icon: Settings },
+]
+
+const noopSubscribe = () => () => {}
+
+/** Provider / Browse switch for professionals. */
+function ModeSwitch({ mode, onChange }: { mode: AppMode; onChange: (m: AppMode) => void }) {
+  return (
+    <div className="px-3 pt-3">
+      <div role="tablist" aria-label="Mode" className="grid grid-cols-2 rounded-lg bg-[#f5f5f5] p-1 text-xs font-semibold">
+        {(['provider', 'browse'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => onChange(m)}
+            className={`rounded-md px-2 py-1.5 transition ${
+              mode === m ? 'bg-white text-[#0f8f56] shadow-sm' : 'text-[#62646a] hover:text-[#404145]'
+            }`}
+          >
+            {m === 'provider' ? 'Provider' : 'Browse'}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function getNavItems(role: string): NavItem[] {
   switch (role) {
     case 'facility':
@@ -155,7 +193,24 @@ interface SidebarProps {
 export function Sidebar({ role, userName, userEmail, variant, open, onOpenChange }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const navItems = getNavItems(role)
+  const isPro = role === 'contractor'
+  // Cookie-backed mode (server render assumes provider); /browse pages are
+  // always browse mode; a click overrides until the next navigation.
+  const cookieMode = useSyncExternalStore(
+    noopSubscribe,
+    () => readModeCookie(document.cookie),
+    () => 'provider' as AppMode
+  )
+  const [picked, setPicked] = useState<AppMode | null>(null)
+  const mode: AppMode = pathname.startsWith('/browse') ? 'browse' : (picked ?? cookieMode)
+  const navItems = isPro && mode === 'browse' ? BROWSE_NAV : getNavItems(role)
+
+  function switchMode(m: AppMode) {
+    writeModeCookie(m)
+    setPicked(m)
+    onOpenChange?.(false)
+    router.push(m === 'browse' ? '/browse' : '/dashboard')
+  }
 
   async function handleLogout() {
     if (isDemoMode()) {
@@ -187,6 +242,7 @@ export function Sidebar({ role, userName, userEmail, variant, open, onOpenChange
         </span>
       </div>
       <Separator />
+      {isPro && <ModeSwitch mode={mode} onChange={switchMode} />}
       <NavLinks items={navItems} pathname={pathname} onClick={() => onOpenChange?.(false)} />
       <Separator />
       <div className="p-3 space-y-2">

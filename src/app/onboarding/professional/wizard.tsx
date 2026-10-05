@@ -8,10 +8,12 @@ import { StepCategory } from './step-category'
 import { StepCredentials } from './step-credentials'
 import { StepDocuments } from './step-documents'
 import { StepOfferings } from './step-offerings'
+import { StepExplore } from './step-explore'
 import {
   branchHasComplianceQuestions,
   type CredentialBasis,
   type CredentialsData,
+  type ExploreData,
   type InsuranceData,
   type OfferingDraft,
   type ProCategory,
@@ -25,7 +27,7 @@ import {
  * server page can resume on refresh. Going Back is purely client-side.
  *
  * The application is submitted for review at the end of step 4; step 5
- * (offerings) then marks onboarding complete and sends the professional
+ * (offerings) moves on to step 6 (explore as a client), which marks onboarding complete and sends the professional
  * straight to /dashboard, which shows the "under review" banner.
  */
 export function OnboardingWizard({
@@ -38,6 +40,7 @@ export function OnboardingWizard({
   initialDocs,
   initialInsurance,
   initialOfferings,
+  initialExplore,
 }: {
   userId: string
   initialStep: WizardStep
@@ -48,6 +51,7 @@ export function OnboardingWizard({
   initialDocs: UploadedDoc[]
   initialInsurance: InsuranceData
   initialOfferings: OfferingDraft[]
+  initialExplore: ExploreData
 }) {
   const router = useRouter()
   const [step, setStep] = useState<WizardStep>(initialStep)
@@ -129,8 +133,11 @@ export function OnboardingWizard({
           <StepOfferings
             initial={initialOfferings}
             onBack={() => setStep(4)}
-            onDone={finish}
+            onDone={() => setStep(6)}
           />
+        )}
+        {step === 6 && (
+          <StepExplore initial={initialExplore} onBack={() => setStep(5)} onDone={finish} />
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
@@ -246,6 +247,10 @@ export async function saveListing(kind: 'service' | 'event', input: unknown): Pr
       is_free: d.is_free, price_cents: d.is_free ? null : toCents(d.price),
       offers_ceu: d.offers_ceu === 'yes', audiences: d.audiences,
     }
+  }
+  const claims = findBlockedClaims(row.title as string, row.description as string)
+  if (claims.length) {
+    return { ok: false, error: blockedClaimsMessage(claims), fields: { description: blockedClaimsMessage(claims) } }
   }
   if (!a) return { ok: true }
 
