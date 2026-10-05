@@ -21,11 +21,14 @@ import { Loader2Icon } from 'lucide-react'
 
 interface JobApplicationFormProps {
   jobId: string
+  /** Up to 3 questions the organization asks every applicant. */
+  screeningQuestions?: string[]
   onSuccess?: () => void
 }
 
 export function JobApplicationForm({
   jobId,
+  screeningQuestions = [],
   onSuccess,
 }: JobApplicationFormProps) {
   const [open, setOpen] = useState(false)
@@ -33,6 +36,8 @@ export function JobApplicationForm({
   const [coverLetter, setCoverLetter] = useState('')
   const [proposedRate, setProposedRate] = useState('')
   const [availableStartDate, setAvailableStartDate] = useState('')
+  const [availability, setAvailability] = useState('')
+  const [answers, setAnswers] = useState<string[]>(() => screeningQuestions.map(() => ''))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +60,8 @@ export function JobApplicationForm({
         coverLetter: coverLetter || null,
         proposedRate: proposedRate ? parseFloat(proposedRate) : null,
         availableStartDate: availableStartDate || null,
+        availability: availability || null,
+        screeningAnswers: screeningQuestions.map((question, i) => ({ question, answer: answers[i] ?? '' })),
       })
 
       if (!result.ok) {
@@ -78,6 +85,8 @@ export function JobApplicationForm({
       setCoverLetter('')
       setProposedRate('')
       setAvailableStartDate('')
+      setAvailability('')
+      setAnswers(screeningQuestions.map(() => ''))
       onSuccess?.()
     } catch {
       toast.error('An unexpected error occurred.')
@@ -93,17 +102,40 @@ export function JobApplicationForm({
         <DialogHeader>
           <DialogTitle>Apply for this Job</DialogTitle>
           <DialogDescription>
-            Submit your application. You can include an optional cover letter and
-            proposed rate.
+            We&apos;ll send your Sanus profile. Add an optional note, your availability, and
+            answers to any screening questions.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {screeningQuestions.map((q, i) => (
+            <div key={i} className="space-y-1.5">
+              <Label htmlFor={`screening_${i}`}>{q}</Label>
+              <Textarea
+                id={`screening_${i}`}
+                required
+                rows={2}
+                maxLength={2000}
+                value={answers[i] ?? ''}
+                onChange={(e) => setAnswers((a) => a.map((x, j) => (j === i ? e.target.value : x)))}
+              />
+            </div>
+          ))}
           <div className="space-y-1.5">
-            <Label htmlFor="cover_letter">Cover Letter</Label>
+            <Label htmlFor="availability">Your availability</Label>
+            <Input
+              id="availability"
+              placeholder="e.g. Weekends, Tue/Thu evenings"
+              maxLength={500}
+              value={availability}
+              onChange={(e) => setAvailability(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="cover_letter">Note (optional)</Label>
             <Textarea
               id="cover_letter"
-              placeholder="Tell the facility why you're a great fit..."
-              rows={5}
+              placeholder="Anything you'd like the organization to know"
+              rows={4}
               value={coverLetter}
               onChange={(e) => setCoverLetter(e.target.value)}
             />

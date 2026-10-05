@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { PIPELINE_LABEL, type ScreeningAnswer } from '@/lib/jobs/pipeline'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +16,8 @@ interface Applicant {
   cover_letter: string | null
   proposed_rate: number | null
   available_start_date: string | null
+  availability?: string | null
+  screening_answers?: ScreeningAnswer[] | null
   created_at: string
   contractor_profiles: {
     id: string
@@ -28,15 +31,7 @@ interface Applicant {
   } | null
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  applied: 'Applied',
-  shortlisted: 'Shortlisted',
-  interviewing: 'Interviewing',
-  offered: 'Offered',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-}
+const STATUS_LABELS = PIPELINE_LABEL
 
 const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
   applied: 'secondary',
@@ -133,7 +128,7 @@ export default async function ApplicantsPage({
   const { data: applicants } = await supabase
     .from('job_applications')
     .select(
-      'id, status, cover_letter, proposed_rate, available_start_date, created_at, contractor_profiles(id, first_name, last_name, contractor_type, years_experience:years_of_experience, average_rating, city, state)'
+      'id, status, cover_letter, proposed_rate, available_start_date, availability, screening_answers, created_at, contractor_profiles(id, first_name, last_name, contractor_type, years_experience:years_of_experience, average_rating, city, state)'
     )
     .eq('job_id', id)
     .order('created_at', { ascending: false })
@@ -276,10 +271,27 @@ function ApplicantsView({
                     </div>
                   </div>
 
+                  {applicant.availability && (
+                    <p className="text-sm text-[#404145]">
+                      <span className="font-medium">Availability:</span> {applicant.availability}
+                    </p>
+                  )}
+
+                  {(applicant.screening_answers ?? []).length > 0 && (
+                    <dl className="space-y-2 rounded-md border border-[#e4e5e7] p-3 text-sm">
+                      {(applicant.screening_answers ?? []).map((qa, qi) => (
+                        <div key={qi}>
+                          <dt className="font-medium text-[#404145]">{qa.question}</dt>
+                          <dd className="whitespace-pre-line text-[#62646a]">{qa.answer}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
+
                   {applicant.cover_letter && (
                     <div className="rounded-md bg-[#e8faf1]/60 p-3 text-sm text-[#62646a]">
                       <p className="mb-1 text-xs font-medium text-[#0f8f56]">
-                        Cover Letter
+                        Note
                       </p>
                       <p className="line-clamp-3">{applicant.cover_letter}</p>
                     </div>
