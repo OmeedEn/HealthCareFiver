@@ -69,6 +69,7 @@ interface JobDetail {
     average_rating: number | null
   } | null
   post_type?: string | null
+  screening_questions?: string[] | null
 }
 
 export default async function ContractorJobDetailPage({
@@ -457,6 +458,7 @@ export default async function ContractorJobDetailPage({
                   verificationStatus === 'approved' ||
                   verificationStatus === 'insurance_pending'
                 }
+                screeningQuestions={typedJob.screening_questions ?? []}
               />
             </CardContent>
           </Card>

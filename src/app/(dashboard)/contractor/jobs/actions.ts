@@ -13,6 +13,11 @@ const applySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .nullable(),
+  availability: z.string().trim().max(500).nullable().default(null),
+  screeningAnswers: z
+    .array(z.object({ question: z.string().max(300), answer: z.string().trim().max(2000) }))
+    .max(3)
+    .default([]),
 })
 
 export type ApplyToJobInput = z.input<typeof applySchema>
@@ -27,6 +32,8 @@ export type ApplyToJobResult =
         | 'not_verified'
         | 'agreement_required'
         | 'duplicate'
+        | 'closed'
+        | 'screening_required'
         | 'error'
       message: string
       /** Where the user can resolve the problem (e.g. /go-live). */
@@ -74,7 +81,8 @@ export async function applyToJob(
     return { ok: false, reason: live.reason, message: live.message }
   }
 
-  const { jobId, coverLetter, proposedRate, availableStartDate } = parsed.data
+  const { jobId, coverLetter, proposedRate, availableStartDate, availability, screeningAnswers } =
+    parsed.data
   const { error } = await supabase.from('job_applications').insert({
     job_id: jobId,
     contractor_id: user.id,
@@ -82,6 +90,8 @@ export async function applyToJob(
     cover_letter: coverLetter || null,
     proposed_rate: proposedRate,
     available_start_date: availableStartDate,
+    availability: availability || null,
+    screening_answers: screeningAnswers,
   })
 
   if (error) {
@@ -98,6 +108,13 @@ export async function applyToJob(
     // between the canGoLive() pre-check and the insert. The DB messages are
     // written to be user-facing.
     if (error.hint === 'agreement_required') return AGREEMENT_REQUIRED
+    // job_applications_limits trigger: post closed, deadline, cap, screening.
+    if (error.hint === 'not_open' || error.hint === 'deadline_passed' || error.hint === 'cap_reached') {
+      return { ok: false, reason: 'closed', message: error.message }
+    }
+    if (error.hint === 'screening_required') {
+      return { ok: false, reason: 'screening_required', message: error.message }
+    }
     if (error.hint === 'not_verified') {
       return { ok: false, reason: 'not_verified', message: error.message }
     }

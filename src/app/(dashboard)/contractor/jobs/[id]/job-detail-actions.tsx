@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { MY_APPLICATION_LABEL } from '@/lib/jobs/pipeline'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { JobApplicationForm } from '@/components/jobs/job-application-form'
@@ -18,17 +19,10 @@ interface JobDetailActionsProps {
   applicationStatus: string | null
   applicationDate: string | null
   isVerified: boolean
+  screeningQuestions?: string[]
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  applied: 'Applied',
-  shortlisted: 'Shortlisted',
-  interviewing: 'Interviewing',
-  offered: 'Offer Received',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn',
-}
+const STATUS_LABELS = MY_APPLICATION_LABEL
 
 export function JobDetailActions({
   jobId,
@@ -37,6 +31,7 @@ export function JobDetailActions({
   applicationStatus,
   applicationDate,
   isVerified,
+  screeningQuestions = [],
 }: JobDetailActionsProps) {
   const [saved, setSaved] = useState(initialSaved)
   const router = useRouter()
@@ -91,6 +86,7 @@ export function JobDetailActions({
         ) : (
           <JobApplicationForm
             jobId={jobId}
+            screeningQuestions={screeningQuestions}
             onSuccess={() => router.refresh()}
           />
         )}

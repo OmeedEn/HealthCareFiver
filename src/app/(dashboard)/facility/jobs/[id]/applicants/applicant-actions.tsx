@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { PIPELINE_LABEL } from '@/lib/jobs/pipeline'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
@@ -19,19 +20,19 @@ interface ApplicantActionsProps {
 const ACTIONS: Record<string, { label: string; newStatus: string; variant: 'default' | 'outline' | 'destructive' | 'secondary' }[]> = {
   applied: [
     { label: 'Shortlist', newStatus: 'shortlisted', variant: 'secondary' },
-    { label: 'Reject', newStatus: 'rejected', variant: 'destructive' },
+    { label: 'Not selected', newStatus: 'rejected', variant: 'destructive' },
   ],
   shortlisted: [
     { label: 'Schedule Interview', newStatus: 'interviewing', variant: 'secondary' },
-    { label: 'Reject', newStatus: 'rejected', variant: 'destructive' },
+    { label: 'Not selected', newStatus: 'rejected', variant: 'destructive' },
   ],
   interviewing: [
     { label: 'Make Offer', newStatus: 'offered', variant: 'default' },
-    { label: 'Reject', newStatus: 'rejected', variant: 'destructive' },
+    { label: 'Not selected', newStatus: 'rejected', variant: 'destructive' },
   ],
   offered: [
-    { label: 'Mark Accepted', newStatus: 'accepted', variant: 'default' },
-    { label: 'Reject', newStatus: 'rejected', variant: 'destructive' },
+    { label: 'Mark hired', newStatus: 'accepted', variant: 'default' },
+    { label: 'Not selected', newStatus: 'rejected', variant: 'destructive' },
   ],
 }
 
@@ -56,7 +57,7 @@ export function ApplicantActions({
     setLoading(true)
     try {
       if (isDemoMode()) {
-        toast.success(`Application status updated to "${newStatus}". (demo mode)`)
+        toast.success(`Moved to “${PIPELINE_LABEL[newStatus] ?? newStatus}”. (demo mode)`)
         router.refresh()
         setLoading(false)
         return
@@ -74,7 +75,7 @@ export function ApplicantActions({
         return
       }
 
-      toast.success(`Application status updated to "${newStatus}".`)
+      toast.success(`Moved to “${PIPELINE_LABEL[newStatus] ?? newStatus}”.`)
       router.refresh()
     } catch {
       toast.error('An unexpected error occurred.')
