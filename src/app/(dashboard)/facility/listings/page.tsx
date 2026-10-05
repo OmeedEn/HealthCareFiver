@@ -11,7 +11,8 @@ import {
   SERVICE_AUDIENCES,
   labelFor,
 } from '@/lib/onboarding/organization'
-import { AddListing, DeleteListingButton } from './listings-client'
+import { AddListing, DeleteListingButton, ListingStatusButton } from './listings-client'
+import { OrgAgreementCard } from '@/components/org/org-agreement-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,6 +32,7 @@ interface Listing {
   starts_at: string | null
   capacity: number | null
   offers_ceu: boolean | null
+  review_notes: string | null
 }
 
 const STATUS_LABEL: Record<string, string> = { draft: 'Draft', in_review: 'In review', published: 'Live' }
@@ -53,21 +55,24 @@ export default async function FacilityListingsPage() {
 
   const [{ data: rows }, { data: org }] = await Promise.all([
     supabase.from('org_listings').select('*').eq('facility_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('facility_profiles').select('verification_status').eq('id', user.id).maybeSingle(),
+    supabase.from('facility_profiles').select('verification_status, org_agreement_accepted_at').eq('id', user.id).maybeSingle(),
   ])
   const listings = (rows ?? []) as Listing[]
   const approved = org?.verification_status === 'approved'
+  const agreed = !!org?.org_agreement_accepted_at
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-[#404145]">Services & events</h1>
         <p className="text-sm text-[#62646a]">
-          {approved
-            ? 'Listings are saved as drafts. Publishing opens once listing review launches — we’ll let you know.'
-            : 'Save listings as drafts now. Nothing goes live until your organization is approved.'}
+          {!approved
+            ? 'Save listings as drafts now. Nothing goes live until your organization is approved.'
+            : 'Submit a draft for review when it’s ready. Our team reviews every listing before it goes live.'}
         </p>
       </div>
+
+      {approved && !agreed && <OrgAgreementCard />}
 
       <AddListing />
 
@@ -104,12 +109,31 @@ export default async function FacilityListingsPage() {
                         .join(' · ')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={l.status === 'published' ? 'default' : 'secondary'}>
-                      {STATUS_LABEL[l.status] ?? l.status}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={l.status === 'published' ? 'default' : l.status === 'draft' && l.review_notes ? 'destructive' : 'secondary'}>
+                      {l.status === 'draft' && l.review_notes ? 'Changes requested' : (STATUS_LABEL[l.status] ?? l.status)}
                     </Badge>
+                    {l.status === 'draft' && (
+                      <ListingStatusButton
+                        id={l.id}
+                        action="submit"
+                        disabledReason={
+                          !approved
+                            ? 'Available once your organization is approved'
+                            : !agreed
+                              ? 'Accept the Organization Agreement first'
+                              : null
+                        }
+                      />
+                    )}
+                    {l.status === 'in_review' && <ListingStatusButton id={l.id} action="withdraw" />}
                     {l.status === 'draft' && <DeleteListingButton id={l.id} />}
                   </div>
+                  {l.status === 'draft' && l.review_notes && (
+                    <p className="w-full rounded-md bg-[#fdecea] p-2 text-sm text-[#404145]">
+                      <span className="font-semibold">Changes requested:</span> {l.review_notes}
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>

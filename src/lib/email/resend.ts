@@ -407,7 +407,7 @@ export async function sendOrgApprovalEmail(
       <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re live on Sanus.</h1>
       <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
       <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
-      <p>You can now publish posts, message professionals, and review applicants. Any drafts you saved while we reviewed are ready to publish from your dashboard.</p>
+      <p>You can now message professionals and review applicants. One last step before your first listing or post goes live: accept the Organization Agreement on your dashboard, then submit your drafts for review.</p>
       ${ctaButton(dashboardUrl, 'Go to your dashboard')}
     `),
   })
