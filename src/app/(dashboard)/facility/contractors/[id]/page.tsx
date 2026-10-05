@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { InquiryPanel, type LatestInquiry } from './inquiry-panel'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,8 +15,6 @@ import {
   MapPin,
   Clock,
   CheckCircle2,
-  MessageSquare,
-  UserPlus,
 } from 'lucide-react'
 import {
   isDemoMode,
@@ -65,6 +64,8 @@ export default async function ContractorDetailPage({
   let verifiedCredentials = 0
   // Messaging and invites unlock once the viewing org is approved.
   let contactBlockedReason: string | null = null
+  let acceptsInquiries = true
+  let latestInquiry: LatestInquiry | null = null
 
   if (isDemoMode()) {
     const provider = DEMO_PROVIDERS.find((p) => p.id === id)
@@ -143,6 +144,16 @@ export default async function ContractorDetailPage({
       isOrgStatus(viewerOrg?.verification_status) ? viewerOrg.verification_status : null
     )
 
+    const { data: lastInq } = await supabase
+      .from('org_inquiries')
+      .select('kind, status, created_at, conversation_id')
+      .eq('facility_id', user.id)
+      .eq('contractor_id', id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    latestInquiry = (lastInq as LatestInquiry | null) ?? null
+
     const { data: row } = await supabase
       .from('contractor_profiles')
       .select('*, profiles!contractor_profiles_id_fkey!inner(avatar_url, email)')
@@ -166,6 +177,7 @@ export default async function ContractorDetailPage({
       avatar_url: string | null
       email: string
     }
+    acceptsInquiries = row.accepts_inquiries !== false
     contractor = {
       id: row.id,
       first_name: row.first_name,
@@ -300,41 +312,13 @@ export default async function ContractorDetailPage({
               </div>
             </div>
 
-            {contactBlockedReason ? (
-              <div className="flex max-w-xs shrink-0 flex-col items-end gap-2">
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" disabled>
-                    <MessageSquare className="size-4" data-icon="inline-start" />
-                    Message
-                  </Button>
-                  <Button disabled>
-                    <UserPlus className="size-4" data-icon="inline-start" />
-                    Invite to apply
-                  </Button>
-                </div>
-                <p className="text-right text-xs text-[#62646a]">{contactBlockedReason}</p>
-              </div>
-            ) : (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button
-                variant="outline"
-                className="border-[#bcebd5] text-[#0f8f56] hover:bg-[#e8faf1]"
-                render={<Link href={`/messages?start=${contractor.id}`} />}
-              >
-                <MessageSquare className="size-4" data-icon="inline-start" />
-                Message
-              </Button>
-              <Button
-                className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
-                render={
-                  <Link href={`/facility/jobs?invite=${contractor.id}`} />
-                }
-              >
-                <UserPlus className="size-4" data-icon="inline-start" />
-                Invite to apply
-              </Button>
-            </div>
-            )}
+            <InquiryPanel
+              contractorId={contractor.id}
+              firstName={contractor.first_name}
+              blockedReason={contactBlockedReason}
+              acceptsInquiries={acceptsInquiries}
+              latest={latestInquiry}
+            />
           </div>
         </CardContent>
       </Card>
