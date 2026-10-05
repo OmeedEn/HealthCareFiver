@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { redirect } from 'next/navigation'
 import {
   Card,
@@ -551,6 +552,7 @@ export default async function DashboardPage() {
         { data: openJobs },
         { count: activeContractCount },
         { data: notifData },
+        { count: listingCount },
       ] = await Promise.all([
         supabase
           .from('facility_profiles')
@@ -581,6 +583,10 @@ export default async function DashboardPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5),
+        supabase
+          .from('org_listings')
+          .select('id', { count: 'exact', head: true })
+          .eq('facility_id', user.id),
       ])
 
       facilityJobs = (recentJobs ?? []) as FacilityJobRow[]
@@ -598,7 +604,8 @@ export default async function DashboardPage() {
       orgStatus = (facilityRow?.verification_status as string | null) ?? null
       orgNotes = (facilityRow?.verification_notes as string | null) ?? null
       facilitySetup = {
-        hasPostedJob: facilityJobs.length > 0,
+        // While job posting is switched off, a first service or event counts.
+        hasPostedJob: STAFFING_POSTS_ENABLED ? facilityJobs.length > 0 : (listingCount ?? 0) > 0,
         orgProfileMissing: missingFacilityFields(
           facilityRow as Record<string, unknown> | null,
         ),
@@ -1413,13 +1420,23 @@ function FacilityDashboard({
           </CardHeader>
           <CardContent>
             <ul className="space-y-3">
-              <FirstRunItem
-                done={hasPostedJob}
-                title="Post your first job"
-                detail="Describe the role, schedule, and pay."
-                href="/facility/jobs/new"
-                cta="Post a job"
-              />
+              {STAFFING_POSTS_ENABLED ? (
+                <FirstRunItem
+                  done={hasPostedJob}
+                  title="Post your first job"
+                  detail="Describe the role, schedule, and pay."
+                  href="/facility/jobs/new"
+                  cta="Post a job"
+                />
+              ) : (
+                <FirstRunItem
+                  done={hasPostedJob}
+                  title="Add your services or events"
+                  detail="Save them as drafts — they go live after review."
+                  href="/facility/listings"
+                  cta="Add a listing"
+                />
+              )}
               <FirstRunItem
                 done={orgProfileMissing.length === 0}
                 title="Complete your organization profile"
@@ -1507,14 +1524,19 @@ function FacilityDashboard({
             <CardContent>
               {jobs.length === 0 ? (
                 <p className="text-sm text-[#62646a]">
-                  No jobs posted yet.{' '}
-                  <Link
-                    href="/facility/jobs/new"
-                    className="font-medium text-[#1dbf73] hover:underline"
-                  >
-                    Post your first job
-                  </Link>
-                  .
+                  No jobs posted yet.
+                  {STAFFING_POSTS_ENABLED && (
+                    <>
+                      {' '}
+                      <Link
+                        href="/facility/jobs/new"
+                        className="font-medium text-[#1dbf73] hover:underline"
+                      >
+                        Post your first job
+                      </Link>
+                      .
+                    </>
+                  )}
                 </p>
               ) : (
                 <ul className="divide-y divide-[#f1f3f5]">

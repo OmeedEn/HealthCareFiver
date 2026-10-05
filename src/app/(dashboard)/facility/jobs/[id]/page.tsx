@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { NotEmployerNotice } from '@/components/jobs/not-employer-notice'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -218,6 +219,7 @@ export default async function FacilityJobDetailPage({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {STAFFING_POSTS_ENABLED && (
           <Button
             variant="outline"
             render={<Link href={`/facility/jobs/new?edit=${id}`} />}
@@ -225,6 +227,7 @@ export default async function FacilityJobDetailPage({
             <Pencil className="size-4" />
             Edit
           </Button>
+          )}
           <Button
             className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
             render={<Link href={`/facility/jobs/${id}/applicants`} />}
@@ -417,6 +420,7 @@ export default async function FacilityJobDetailPage({
                 <Users className="size-4" />
                 Review Applicants
               </Button>
+              {STAFFING_POSTS_ENABLED && (
               <Button
                 variant="outline"
                 className="w-full"
@@ -425,6 +429,7 @@ export default async function FacilityJobDetailPage({
                 <Pencil className="size-4" />
                 Edit Job
               </Button>
+              )}
             </CardContent>
           </Card>
 

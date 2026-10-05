@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_PAYMENTS, DEMO_CONTRACTOR } from '@/lib/demo/data'
@@ -233,10 +234,10 @@ export default function FacilityPaymentsPage() {
                 here.
               </p>
               <Link
-                href="/facility/jobs/new"
+                href={STAFFING_POSTS_ENABLED ? '/facility/jobs/new' : '/facility/listings'}
                 className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#1dbf73] px-4 text-sm font-medium text-white transition-colors hover:bg-[#19a463]"
               >
-                Post a job
+                {STAFFING_POSTS_ENABLED ? 'Post a job' : 'Add services or events'}
               </Link>
             </div>
           ) : (

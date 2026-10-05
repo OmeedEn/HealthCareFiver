@@ -56,12 +56,14 @@ const CONTRACTOR_NAV: NavItem[] = [
 
 const FACILITY_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Post a Job', href: '/facility/jobs/new', icon: PlusCircle },
   { label: 'My Jobs', href: '/facility/jobs', icon: Briefcase },
   { label: 'Services & Events', href: '/facility/listings', icon: Megaphone },
   // Spec staffing posts stay off until the legal review (STAFFING_POSTS_ENABLED).
   ...(STAFFING_POSTS_ENABLED
-    ? [{ label: 'Post an Urgent Need', href: '/facility/needs/new', icon: Siren }]
+    ? [
+        { label: 'Post a Job', href: '/facility/jobs/new', icon: PlusCircle },
+        { label: 'Post an Urgent Need', href: '/facility/needs/new', icon: Siren },
+      ]
     : []),
   { label: 'Find Contractors', href: '/facility/contractors', icon: Search },
   { label: 'Contracts', href: '/facility/contracts', icon: FileText },
