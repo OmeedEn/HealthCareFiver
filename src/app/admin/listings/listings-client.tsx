@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { RISKY_CLAIMS_RE, riskyClaimWords } from '@/lib/listings/claims'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -49,12 +50,8 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUSES = ['pending_review', 'published', 'paused', 'rejected']
 
 /** Claims we never allow: cures, guarantees, miracle/reversal language. */
-const RISKY_RE =
-  /\b(cur(?:e|es|ed|ing)|guarantee(?:s|d)?|miracle(?:s)?|miraculous|revers(?:e|es|ed|ing|al))\b|100\s?%/gi
-
-function riskyWords(text: string): string[] {
-  return [...new Set((text.match(RISKY_RE) ?? []).map((w) => w.toLowerCase()))]
-}
+const RISKY_RE = RISKY_CLAIMS_RE
+const riskyWords = riskyClaimWords
 
 function Highlighted({ text }: { text: string }) {
   const parts: React.ReactNode[] = []

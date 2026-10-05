@@ -69,6 +69,12 @@ export default async function ProfessionalOnboardingPage({
         'credential_basis',
         'onboarding_step',
         'onboarding_completed_at',
+        'explore_interests',
+        'interest_tiles',
+        'explore_location',
+        'languages',
+        'city',
+        'zip_code',
         'legal_name',
         'other_names',
         'license_type',
@@ -140,12 +146,18 @@ export default async function ProfessionalOnboardingPage({
       initialDocs={docs}
       initialInsurance={toInsuranceData(p, docs)}
       initialOfferings={(offerings ?? []).map(toOfferingDraft)}
+      initialExplore={{
+        interests: strArr(p.explore_interests),
+        tiles: strArr(p.interest_tiles),
+        location: str(p.explore_location) || str(p.zip_code) || str(p.city),
+        languages: strArr(p.languages),
+      }}
     />
   )
 }
 
 /**
- * Clamp the stored step to 2..5; nothing past step 2 without a category
+ * Clamp the stored step to 2..6; nothing past step 2 without a category
  * (and, for "Other", a credential basis — it decides the step-3 branch).
  */
 function resolveStep(
@@ -154,7 +166,7 @@ function resolveStep(
   basis: CredentialBasis | null
 ): WizardStep {
   const n = Number.isFinite(raw) ? Math.round(raw) : 2
-  const step = Math.min(5, Math.max(2, n)) as WizardStep
+  const step = Math.min(6, Math.max(2, n)) as WizardStep
   if (!category || (category === 'other' && !basis)) return 2
   return step
 }
@@ -285,7 +297,7 @@ const DEMO_CREDENTIALS: CredentialsData = {
 }
 
 /**
- * Demo previews: ?step=2..5, optionally &category=clinical|allied|consultant|
+ * Demo previews: ?step=2..6, optionally &category=clinical|allied|consultant|
  * educator|other and (for other) &basis=license|certification|none.
  */
 function renderDemo(
@@ -295,7 +307,7 @@ function renderDemo(
 ) {
   if (stepParam === 'done') redirect('/dashboard')
   const n = Number(stepParam)
-  const step: WizardStep = n === 3 || n === 4 || n === 5 ? n : 2
+  const step: WizardStep = n === 3 || n === 4 || n === 5 || n === 6 ? n : 2
   const category: ProCategory = isProfessionalCategory(categoryParam)
     ? categoryParam
     : 'clinical'
@@ -312,6 +324,7 @@ function renderDemo(
       initialDocs={[]}
       initialInsurance={emptyInsurance()}
       initialOfferings={[]}
+      initialExplore={{ interests: [], tiles: [], location: '', languages: [] }}
     />
   )
 }

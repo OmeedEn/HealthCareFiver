@@ -483,9 +483,11 @@ function FiltersPanel({
 type FindCareProps = {
   providers: PublicProvider[]
   isDemo: boolean
+  /** Inside the signed-in app (browse mode): no public header/footer. */
+  embedded?: boolean
 }
 
-function FindCarePageContent({ providers, isDemo }: FindCareProps) {
+function FindCarePageContent({ providers, isDemo, embedded = false }: FindCareProps) {
   const searchParams = useSearchParams()
   const initialQuery = searchParams?.get('q') ?? ''
   // Search & filter state
@@ -631,10 +633,10 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
   ])
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] text-[#111827]">
-      <SiteHeader />
+    <div className={embedded ? 'text-[#111827]' : 'min-h-screen bg-[#f9fafb] text-[#111827]'}>
+      {!embedded && <SiteHeader />}
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <main className={embedded ? '' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
         {/* ── Page Heading ── */}
         <h1 className="font-heading text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl md:text-4xl">
           Find Healthcare Professionals
@@ -841,6 +843,7 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
       </main>
 
       {/* ── Footer ── */}
+      {!embedded && (
       <footer className="mt-16 border-t border-[#e5e7eb] bg-white py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 text-center text-sm text-[#6b7280] sm:flex-row sm:gap-4 sm:px-6">
           <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
@@ -854,6 +857,7 @@ function FindCarePageContent({ providers, isDemo }: FindCareProps) {
           </span>
         </div>
       </footer>
+      )}
     </div>
   )
 }

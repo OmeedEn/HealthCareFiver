@@ -260,3 +260,47 @@ export async function clearComplianceHold(
   if (error) throw new Error(`Failed to clear compliance hold: ${error.message}`)
   return { cleared: true, blockingReason: null }
 }
+
+/**
+ * A provider saved a listing that needs malpractice coverage (in-person, home
+ * visit, or medical procedures) but said "no" to the practice question in
+ * onboarding. Record that they now offer high-risk services, and if they're
+ * already approved and not insured, start the same grace period approval
+ * would have: status 'insurance_pending' with a deadline (an existing one is
+ * kept, never extended), which drives the banner, reminders and auto-pause.
+ *
+ * No-op when they already declared high-risk services. Pass the service-role
+ * client. Returns the deadline when a grace period was started.
+ */
+export async function startInsuranceGraceForListing(
+  admin: SupabaseClient,
+  contractorId: string
+): Promise<{ insuranceDueAt: string | null }> {
+  const now = new Date()
+  const provider = await loadProvider(admin, contractorId)
+  if (provider.offers_high_risk_services === true) return { insuranceDueAt: null }
+
+  const creds = await loadComplianceCredentials(admin, contractorId)
+  const update: Record<string, unknown> = { offers_high_risk_services: true }
+  let insuranceDueAt: string | null = null
+
+  if (provider.verification_status === 'approved' && !isInsured(provider, creds, now)) {
+    insuranceDueAt = provider.insurance_due_at ?? graceDeadline(now).toISOString()
+    update.verification_status = 'insurance_pending'
+    update.insurance_due_at = insuranceDueAt
+  }
+
+  const { error } = await admin.from('contractor_profiles').update(update).eq('id', contractorId)
+  if (error) throw new Error(`Failed to start insurance grace period: ${error.message}`)
+
+  if (insuranceDueAt) {
+    await notify(admin, {
+      userId: contractorId,
+      type: 'system',
+      title: 'Malpractice coverage needed for this listing',
+      body: `In-person, home-visit, prescribing, injectable and IV listings need professional liability insurance. Upload your certificate by ${new Date(insuranceDueAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} to publish them. Your other listings aren't affected.`,
+      href: '/contractor/credentials/upload?type=malpractice_insurance',
+    })
+  }
+  return { insuranceDueAt }
+}
