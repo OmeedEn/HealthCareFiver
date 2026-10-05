@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -309,10 +310,10 @@ function EmptyState({ kind }: { kind: 'active' | 'completed' | 'all' }) {
         </div>
         <Button
           className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
-          render={<Link href="/facility/jobs/new" />}
+          render={<Link href={STAFFING_POSTS_ENABLED ? '/facility/jobs/new' : '/facility/listings'} />}
         >
           <PlusIcon className="size-4" />
-          Post a job
+          {STAFFING_POSTS_ENABLED ? 'Post a job' : 'Add services or events'}
         </Button>
       </CardContent>
     </Card>

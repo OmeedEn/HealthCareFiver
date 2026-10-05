@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
@@ -114,13 +115,15 @@ export default async function FacilityJobsPage() {
             View and manage your job postings
           </p>
         </div>
-        <Button
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
-          render={<Link href="/facility/jobs/new" />}
-        >
-          <PlusIcon className="size-4" />
-          Post New Job
-        </Button>
+        {STAFFING_POSTS_ENABLED && (
+          <Button
+            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            render={<Link href="/facility/jobs/new" />}
+          >
+            <PlusIcon className="size-4" />
+            Post New Job
+          </Button>
+        )}
       </div>
 
       <FacilityJobsTabs
@@ -151,11 +154,13 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
               No {label} jobs yet
             </h3>
             <p className="mt-1 text-sm text-[#62646a]">
-              {status === 'all'
-                ? 'Post your first job to start receiving applicants.'
-                : 'Jobs with this status will appear here.'}
+              {status !== 'all'
+                ? 'Jobs with this status will appear here.'
+                : STAFFING_POSTS_ENABLED
+                  ? 'Post your first job to start receiving applicants.'
+                  : 'Posting jobs and staffing opportunities is coming soon.'}
             </p>
-            {status === 'all' && (
+            {status === 'all' && STAFFING_POSTS_ENABLED && (
               <Button
                 className="mt-4 bg-[#1dbf73] text-white hover:bg-[#19a463]"
                 render={<Link href="/facility/jobs/new" />}
@@ -269,6 +274,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                     <UsersIcon className="size-4" />
                     Applicants
                   </Button>
+                  {STAFFING_POSTS_ENABLED && (
                   <Button
                     variant="ghost"
                     size="icon-sm"
@@ -280,6 +286,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                   >
                     <PencilIcon className="size-4" />
                   </Button>
+                  )}
                 </div>
               </div>
             </CardContent>
