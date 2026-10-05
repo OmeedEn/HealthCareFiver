@@ -19,3 +19,13 @@ export const PRIVACY_PATH = '/privacy'
 export const CONTRACTOR_AGREEMENT_VERSION = '2026-10-01'
 
 export const CONTRACTOR_AGREEMENT_PATH = '/legal/contractor-agreement'
+
+/**
+ * Version of the Organization Agreement an organization accepts before its
+ * first listing or post publishes (accept_org_agreement RPC stamps
+ * facility_profiles.org_agreement_accepted_at / _version). Bump when
+ * /legal/organization-agreement materially changes.
+ */
+export const ORG_AGREEMENT_VERSION = '2026-10-05'
+
+export const ORG_AGREEMENT_PATH = '/legal/organization-agreement'

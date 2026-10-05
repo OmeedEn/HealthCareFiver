@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ServiceForm } from '@/app/onboarding/organization/sections/service-form'
 import { EventForm } from '@/app/onboarding/organization/sections/event-form'
-import { deleteOrgListing } from './actions'
+import { deleteOrgListing, submitOrgListing, withdrawOrgListing } from './actions'
 
 /** "Add a service" / "Add an event" using the same forms as onboarding step 5. */
 export function AddListing() {
@@ -57,5 +57,36 @@ export function DeleteListingButton({ id }: { id: string }) {
     >
       <Trash2 className="size-4" />
     </button>
+  )
+}
+
+export function ListingStatusButton({
+  id,
+  action,
+  disabledReason = null,
+}: {
+  id: string
+  action: 'submit' | 'withdraw'
+  disabledReason?: string | null
+}) {
+  const [busy, setBusy] = useState(false)
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={action === 'submit' ? 'default' : 'outline'}
+      disabled={busy || !!disabledReason}
+      title={disabledReason ?? undefined}
+      className={action === 'submit' ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]' : ''}
+      onClick={async () => {
+        setBusy(true)
+        const res = action === 'submit' ? await submitOrgListing(id) : await withdrawOrgListing(id)
+        setBusy(false)
+        if (!res.ok) toast.error(res.error ?? 'Something went wrong')
+        else toast.success(action === 'submit' ? 'Submitted for review' : 'Moved back to drafts')
+      }}
+    >
+      {action === 'submit' ? 'Submit for review' : 'Withdraw'}
+    </Button>
   )
 }

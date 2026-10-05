@@ -44,6 +44,7 @@ import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
+import { OrgAgreementCard } from '@/components/org/org-agreement-card'
 import { SUPPORT_EMAIL } from '@/lib/env'
 import {
   buildContractorChecklist,
@@ -177,6 +178,7 @@ export default async function DashboardPage() {
   let facilitySetup: FacilitySetup | null = null
   let orgStatus: string | null = null
   let orgNotes: string | null = null
+  let orgNeedsAgreement = false
 
   if (isDemoMode()) {
     // Read the demo role override cookie set by DemoRoleSwitcher.
@@ -556,7 +558,7 @@ export default async function DashboardPage() {
       ] = await Promise.all([
         supabase
           .from('facility_profiles')
-          .select('description, phone, city, state, contact_name, verification_status, verification_notes')
+          .select('description, phone, city, state, contact_name, verification_status, verification_notes, org_agreement_accepted_at')
           .eq('id', user.id)
           .maybeSingle(),
         supabase
@@ -603,6 +605,7 @@ export default async function DashboardPage() {
       activity = (notifData ?? []) as DashboardNotification[]
       orgStatus = (facilityRow?.verification_status as string | null) ?? null
       orgNotes = (facilityRow?.verification_notes as string | null) ?? null
+      orgNeedsAgreement = orgStatus === 'approved' && !facilityRow?.org_agreement_accepted_at
       facilitySetup = {
         // While job posting is switched off, a first service or event counts.
         hasPostedJob: STAFFING_POSTS_ENABLED ? facilityJobs.length > 0 : (listingCount ?? 0) > 0,
@@ -656,6 +659,7 @@ export default async function DashboardPage() {
         />
       )}
       {role === 'facility' && <OrgReviewBanner status={orgStatus} notes={orgNotes} />}
+      {role === 'facility' && orgNeedsAgreement && <OrgAgreementCard />}
       {role === 'facility' && (
         <FacilityDashboard
           kpis={facilityKpis}

@@ -40,7 +40,7 @@ const NOTIFICATION: Record<
   approve: {
     type: 'verification_approved',
     title: 'Your organization is approved',
-    body: 'You can now publish posts, message professionals, and review applicants.',
+    body: 'You can now message professionals and review applicants. Accept the Organization Agreement on your dashboard before your first listing or post goes live.',
   },
   needs_info: {
     type: 'verification_more_info_requested',
