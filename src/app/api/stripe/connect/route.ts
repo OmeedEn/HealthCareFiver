@@ -5,6 +5,7 @@ import {
   createConnectAccount,
   createAccountLink,
   isConnectReturnTarget,
+  isStripeConfigured,
   type ConnectReturnTarget,
 } from '@/lib/stripe/connect'
 import { currentUser } from '@/lib/auth/roles'
@@ -16,7 +17,9 @@ import {
 /**
  * Starts (or resumes) Stripe Connect Express onboarding and returns a
  * Stripe-hosted Account Link URL. Optional JSON body `{ returnTo }` picks a
- * whitelisted return page: 'payments' (default) or 'go-live'.
+ * whitelisted return page: 'payments' (default) or 'go-live'. Approved
+ * organizations can connect too (to be paid for bookings); they always
+ * return to /facility/payouts.
  */
 export async function POST(request: NextRequest) {
   // currentUser() enforces AAL2 (MFA) — API routes are outside the proxy,
@@ -27,10 +30,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (user.role !== 'contractor') {
+  const isOrg = user.role === 'facility' || user.role === 'staffing_agency'
+  if (user.role !== 'contractor' && !isOrg) {
     return NextResponse.json(
-      { error: 'Only professionals can set up payouts' },
+      { error: 'Only professionals and organizations can set up payouts' },
       { status: 403 }
+    )
+  }
+
+  if (!isStripeConfigured()) {
+    return NextResponse.json(
+      { error: 'Payouts aren’t switched on yet. Please check back soon.', code: 'stripe_not_configured' },
+      { status: 503 }
     )
   }
 
@@ -39,26 +50,43 @@ export async function POST(request: NextRequest) {
     body && typeof body === 'object' && 'returnTo' in body
       ? (body as { returnTo: unknown }).returnTo
       : undefined
-  const target: ConnectReturnTarget = isConnectReturnTarget(requested)
-    ? requested
-    : 'payments'
+  // Organizations always come back to their payouts page.
+  const target: ConnectReturnTarget = isOrg
+    ? 'org-payouts'
+    : isConnectReturnTarget(requested) && requested !== 'org-payouts'
+      ? requested
+      : 'payments'
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
 
   const supabase = await createClient()
 
   // Payouts unlock only after an admin approves the application
-  // ('insurance_pending' = approved, inside the malpractice grace period).
-  // Under review / needs info / rejected / suspended: no Connect account.
-  const { data: contractor } = await supabase
-    .from('contractor_profiles')
-    .select('verification_status')
-    .eq('id', user.id)
-    .maybeSingle()
-  if (!isApprovedStatus(contractor?.verification_status as string | null)) {
-    return NextResponse.json(
-      { error: PAYOUTS_LOCKED_MESSAGE, code: 'not_approved' },
-      { status: 403 }
-    )
+  // (professionals: 'insurance_pending' = approved, inside the malpractice
+  // grace period; organizations: 'approved'). Otherwise no Connect account.
+  if (isOrg) {
+    const { data: org } = await supabase
+      .from('facility_profiles')
+      .select('verification_status')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (org?.verification_status !== 'approved') {
+      return NextResponse.json(
+        { error: 'You can set up payouts once your organization is approved.', code: 'not_approved' },
+        { status: 403 }
+      )
+    }
+  } else {
+    const { data: contractor } = await supabase
+      .from('contractor_profiles')
+      .select('verification_status')
+      .eq('id', user.id)
+      .maybeSingle()
+    if (!isApprovedStatus(contractor?.verification_status as string | null)) {
+      return NextResponse.json(
+        { error: PAYOUTS_LOCKED_MESSAGE, code: 'not_approved' },
+        { status: 403 }
+      )
+    }
   }
 
   // Check if user already has a Connect account

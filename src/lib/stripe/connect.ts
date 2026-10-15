@@ -2,10 +2,10 @@ import type Stripe from 'stripe'
 import { getStripe } from './client'
 
 /**
- * Where Stripe-hosted onboarding sends the professional back to. Whitelisted
- * so the API route never builds return URLs from arbitrary client input.
+ * Where Stripe-hosted onboarding sends people back to. Whitelisted so the
+ * API route never builds return URLs from arbitrary client input.
  */
-export type ConnectReturnTarget = 'payments' | 'go-live'
+export type ConnectReturnTarget = 'payments' | 'go-live' | 'org-payouts'
 
 const CONNECT_RETURN_PATHS: Record<
   ConnectReturnTarget,
@@ -19,6 +19,16 @@ const CONNECT_RETURN_PATHS: Record<
     returnPath: '/go-live?payouts=done',
     refreshPath: '/go-live#payouts',
   },
+  // Organizations: paid for bookings of their services and events.
+  'org-payouts': {
+    returnPath: '/facility/payouts?onboarded=true',
+    refreshPath: '/facility/payouts?refresh=true',
+  },
+}
+
+/** False until STRIPE_SECRET_KEY is set (payouts and payments are off). */
+export function isStripeConfigured(): boolean {
+  return !!process.env.STRIPE_SECRET_KEY
 }
 
 export function isConnectReturnTarget(value: unknown): value is ConnectReturnTarget {
@@ -77,6 +87,12 @@ export async function createAccountLink(
     type: 'account_onboarding',
   })
   return accountLink
+}
+
+/** One-time link into the account's Stripe Express Dashboard (payouts, bank). */
+export async function createExpressDashboardLink(accountId: string): Promise<string> {
+  const link = await getStripe().accounts.createLoginLink(accountId)
+  return link.url
 }
 
 export async function getAccountStatus(accountId: string) {

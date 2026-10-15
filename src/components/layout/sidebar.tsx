@@ -36,6 +36,7 @@ import {
   Megaphone,
   Siren,
   CalendarCheck,
+  Landmark,
   Inbox,
 } from 'lucide-react'
 
@@ -64,6 +65,7 @@ const FACILITY_NAV: NavItem[] = [
   { label: 'My Jobs', href: '/facility/jobs', icon: Briefcase },
   { label: 'Services & Events', href: '/facility/listings', icon: Megaphone },
   { label: 'Bookings', href: '/facility/bookings', icon: CalendarCheck },
+  { label: 'Payouts', href: '/facility/payouts', icon: Landmark },
   // Spec staffing posts stay off until the legal review (STAFFING_POSTS_ENABLED).
   ...(STAFFING_POSTS_ENABLED
     ? [

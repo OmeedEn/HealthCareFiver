@@ -79,6 +79,11 @@ export function rowToEvent(r: ListingRow): EventDraft {
   }
 }
 
+/** Customers pay for it (everything except free events), so payouts must be set up. */
+export function listingNeedsPayouts(r: Pick<ListingRow, 'kind' | 'is_free'>): boolean {
+  return !(r.kind === 'event' && r.is_free)
+}
+
 /** True when the row passes the same checks as a full save. */
 export function listingIsComplete(r: ListingRow): boolean {
   if (r.kind === 'service') return serviceSchema.safeParse(rowToService(r)).success

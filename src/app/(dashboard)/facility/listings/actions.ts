@@ -7,7 +7,12 @@ import { isDemoMode } from '@/lib/demo/data'
 import { ORG_AGREEMENT_VERSION } from '@/lib/legal'
 import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { checkFields, eventSchema, serviceSchema } from '@/app/onboarding/organization/shared'
-import { draftToColumns, listingIsComplete, type ListingRow } from '@/app/onboarding/organization/listing-draft'
+import {
+  draftToColumns,
+  listingIsComplete,
+  listingNeedsPayouts,
+  type ListingRow,
+} from '@/app/onboarding/organization/listing-draft'
 
 export type DraftResult = { ok: true; id: string | null } | { ok: false; error: string; fields?: Record<string, string> }
 
@@ -122,6 +127,13 @@ async function setListingStatus(id: string, status: 'draft' | 'in_review') {
     if (!row) return { ok: false, error: 'Listing not found.' }
     if (!listingIsComplete(row as ListingRow)) {
       return { ok: false, error: 'Finish this listing first: open it with “Continue” and answer the remaining questions.' }
+    }
+    // Anything customers pay for needs payouts set up first (free events don't).
+    if (listingNeedsPayouts(row as ListingRow)) {
+      const { data: profile } = await supabase.from('profiles').select('stripe_connect_onboarded').eq('id', user.id).single()
+      if (!profile?.stripe_connect_onboarded) {
+        return { ok: false, error: 'Set up payouts before submitting paid services or events. Go to Payouts.' }
+      }
     }
   }
   const { data, error } = await supabase
