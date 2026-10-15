@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { TERMS_VERSION } from '@/lib/legal'
 import { computeGaps, hasGaps, namePrefill } from '@/lib/onboarding/account-gaps'
+import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 import { FinishAccountForm } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your account — Sanus' }
@@ -49,7 +51,11 @@ export default async function FinishAccountPage() {
   if (profile?.role !== 'contractor') redirect('/dashboard')
 
   const gaps = computeGaps(user, profile.phone, contractor)
-  if (!hasGaps(gaps)) redirect('/onboarding/professional')
+  if (!hasGaps(gaps)) {
+    // Nothing to collect, so finishAccount won't run: record the door here.
+    await setSignupPathIfUnset(createAdminClient(), user.id, 'INDEPENDENT')
+    redirect('/onboarding/professional')
+  }
 
   return (
     <Shell>

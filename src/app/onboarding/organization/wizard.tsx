@@ -21,7 +21,6 @@ import {
   ORG_EVENT_TYPES,
   ORG_INTENTS,
   ORG_SIZES,
-  ORG_TYPES,
   ORG_TYPE_OTHER_MAX,
   PROFESSIONAL_TIERS,
   REACH_VIA,
@@ -68,9 +67,13 @@ import { EMPTY_EVENT } from './sections/event-form'
 import { EMPTY_LOOKING_FOR } from './sections/looking-for-form'
 import { EMPTY_SERVICE } from './sections/service-form'
 import { StaffingForm } from './sections/staffing-form'
+import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
 import {
   aboutFields,
+  asksFacilityLicense,
   checkFields,
+  orgTypeOptionsFor,
+  URL_LIKE,
   eventSchema,
   lookingForSchema,
   serviceSchema,
@@ -112,6 +115,7 @@ const SECTION = {
  */
 export function OrgOnboardingWizard({
   userId,
+  door,
   initialStep,
   initialAbout,
   initialVerify,
@@ -119,6 +123,8 @@ export function OrgOnboardingWizard({
   initialIntents,
 }: {
   userId: string
+  /** Signup door (profiles.signup_path); null legacy accounts arrive as HIRING. */
+  door: OrgSignupPath
   initialStep: OrgWizardStep
   initialAbout: AboutData
   initialVerify: VerifyData
@@ -153,7 +159,13 @@ export function OrgOnboardingWizard({
     saveAboutDraft(Object.fromEntries(keys.map((k) => [k, about[k]])) as Partial<AboutData>)
   const verifyDraft = (keys: (keyof VerifyData)[]) => () =>
     saveVerifyDraft(Object.fromEntries(keys.map((k) => [k, verify[k]])))
-  const hasLicense = verify.has_facility_license === 'yes'
+  // Company orgs answer the lead person's credential question instead of
+  // the facility license one.
+  const facility = asksFacilityLicense(door)
+  const hasLicense = facility && verify.has_facility_license === 'yes'
+  const leadHasCredential = !facility && verify.lead_has_credential === 'yes'
+  // Fixed per account, so computing from the first-render value is fine.
+  const [orgTypeOptions] = useState(() => orgTypeOptionsFor(door, initialAbout.org_type))
   const docSlot = (kind: (typeof ORG_DOCUMENT_KINDS)[number]['kind'], error?: string) => {
     const meta = ORG_DOCUMENT_KINDS.find((k) => k.kind === kind)!
     return (
@@ -201,7 +213,7 @@ export function OrgOnboardingWizard({
           <IconChoices
             legend="Organization type"
             hideLegend
-            options={ORG_TYPES}
+            options={orgTypeOptions}
             icons={ORG_TYPE_ICONS}
             value={about.org_type}
             onChange={(v) => {
@@ -302,60 +314,14 @@ export function OrgOnboardingWizard({
   ]
 
   /* ───────────── Step 3: Verify ───────────── */
-  const verifyScreens: Screen[] = [
-    {
-      id: 'legal_name',
-      section: SECTION[3],
-      title: 'What’s your legal business name?',
-      sub: 'Only if it’s different from your organization name.',
-      optional: true,
-      fields: ['legal_name'],
-      validate: () => verifyCheck(['legal_name']),
-      save: verifyDraft(['legal_name']),
-      render: ({ errors }) => (
-        <TextField id="legal_name" label="Legal business name" value={verify.legal_name} onChange={(v) => setV('legal_name', v)} error={errors.legal_name} />
-      ),
-    },
-    {
-      id: 'business_structure',
-      section: SECTION[3],
-      title: 'How is your business structured?',
-      fields: ['business_structure'],
-      validate: () => verifyCheck(['business_structure']),
-      save: verifyDraft(['business_structure']),
-      render: ({ errors, advance }) => (
-        <IconChoices
-          legend="Business structure"
-          hideLegend
-          options={BUSINESS_STRUCTURES}
-          icons={BUSINESS_STRUCTURE_ICONS}
-          value={verify.business_structure}
-          onChange={(v) => {
-            setV('business_structure', v)
-            advance()
-          }}
-          error={errors.business_structure}
-          columns={2}
-        />
-      ),
-    },
-    {
-      id: 'registration_state',
-      section: SECTION[3],
-      title: 'Which state is it registered in?',
-      fields: ['registration_state'],
-      validate: () => verifyCheck(['registration_state']),
-      save: verifyDraft(['registration_state']),
-      render: ({ errors }) => (
-        <SelectField id="registration_state" label="State of registration" value={verify.registration_state} onChange={(v) => setV('registration_state', v)} options={US_STATES} error={errors.registration_state} />
-      ),
-    },
+  // Practice and Hiring doors: the facility license question (+ details).
+  const facilityScreens: Screen[] = [
     {
       id: 'has_facility_license',
       section: SECTION[3],
       title: 'Does your organization hold a facility or operating license?',
       fields: ['has_facility_license'],
-      validate: () => verifyCheck(['has_facility_license']),
+      validate: () => need(!!verify.has_facility_license, 'has_facility_license', 'Answer yes or no'),
       save: verifyDraft(['has_facility_license']),
       render: ({ errors, advance }) => (
         <IconChoices
@@ -420,6 +386,133 @@ export function OrgOnboardingWizard({
           },
         ] satisfies Screen[])
       : []),
+  ]
+
+  // Company door: the lead person's credential, and LinkedIn.
+  const companyScreens: Screen[] = [
+    {
+      id: 'lead_has_credential',
+      section: SECTION[3],
+      title: 'Does the lead person at your company hold a professional license or certification?',
+      fields: ['lead_has_credential'],
+      validate: () => need(!!verify.lead_has_credential, 'lead_has_credential', 'Answer yes or no'),
+      save: verifyDraft(['lead_has_credential']),
+      render: ({ errors, advance }) => (
+        <IconChoices
+          legend="Lead person's credential"
+          hideLegend
+          options={YES_NO}
+          icons={YES_NO_ICONS}
+          value={verify.lead_has_credential}
+          onChange={(v) => {
+            setV('lead_has_credential', v as YesNo)
+            advance()
+          }}
+          error={errors.lead_has_credential}
+          columns={2}
+        />
+      ),
+    },
+    ...(leadHasCredential
+      ? ([
+          {
+            id: 'lead_credential',
+            section: SECTION[3],
+            title: 'What license or certification do they hold?',
+            fields: ['lead_credential_type', 'lead_credential_number'],
+            validate: () => ({
+              ...need(!!verify.lead_credential_type.trim(), 'lead_credential_type', 'License or certification type is required'),
+              ...need(!!verify.lead_credential_number.trim(), 'lead_credential_number', 'License or certification number is required'),
+            }),
+            save: verifyDraft(['lead_credential_type', 'lead_credential_number']),
+            render: ({ errors }) => (
+              <>
+                <TextField id="lead_credential_type" label="License or certification type" value={verify.lead_credential_type} onChange={(v) => setV('lead_credential_type', v)} error={errors.lead_credential_type} placeholder="e.g. RN, bar admission, CPC" />
+                <TextField id="lead_credential_number" label="License or certification number" value={verify.lead_credential_number} onChange={(v) => setV('lead_credential_number', v)} error={errors.lead_credential_number} />
+              </>
+            ),
+          },
+          {
+            id: 'lead_credential_state',
+            section: SECTION[3],
+            title: 'Which state issued it?',
+            fields: ['lead_credential_state'],
+            validate: () => need(/^[A-Z]{2}$/.test(verify.lead_credential_state), 'lead_credential_state', 'Choose a state'),
+            save: verifyDraft(['lead_credential_state']),
+            render: ({ errors }) => (
+              <SelectField id="lead_credential_state" label="State" value={verify.lead_credential_state} onChange={(v) => setV('lead_credential_state', v)} options={US_STATES} error={errors.lead_credential_state} />
+            ),
+          },
+        ] satisfies Screen[])
+      : []),
+    {
+      id: 'lead_linkedin',
+      section: SECTION[3],
+      title: 'What’s the lead person’s LinkedIn?',
+      sub: verify.lead_has_credential === 'no' ? 'We use it to verify who runs the company.' : undefined,
+      optional: verify.lead_has_credential !== 'no',
+      fields: ['lead_linkedin'],
+      validate: () => {
+        const v = verify.lead_linkedin.trim()
+        if (!v) return need(verify.lead_has_credential !== 'no', 'lead_linkedin', 'Add the lead person’s LinkedIn')
+        return need(URL_LIKE.test(v), 'lead_linkedin', 'Enter a valid link, like linkedin.com/in/name')
+      },
+      save: verifyDraft(['lead_linkedin']),
+      render: ({ errors }) => (
+        <TextField id="lead_linkedin" label="LinkedIn profile" value={verify.lead_linkedin} onChange={(v) => setV('lead_linkedin', v)} error={errors.lead_linkedin} placeholder="linkedin.com/in/name" type="url" inputMode="url" autoComplete="url" />
+      ),
+    },
+  ]
+
+  const verifyScreens: Screen[] = [
+    {
+      id: 'legal_name',
+      section: SECTION[3],
+      title: 'What’s your legal business name?',
+      sub: 'Only if it’s different from your organization name.',
+      optional: true,
+      fields: ['legal_name'],
+      validate: () => verifyCheck(['legal_name']),
+      save: verifyDraft(['legal_name']),
+      render: ({ errors }) => (
+        <TextField id="legal_name" label="Legal business name" value={verify.legal_name} onChange={(v) => setV('legal_name', v)} error={errors.legal_name} />
+      ),
+    },
+    {
+      id: 'business_structure',
+      section: SECTION[3],
+      title: 'How is your business structured?',
+      fields: ['business_structure'],
+      validate: () => verifyCheck(['business_structure']),
+      save: verifyDraft(['business_structure']),
+      render: ({ errors, advance }) => (
+        <IconChoices
+          legend="Business structure"
+          hideLegend
+          options={BUSINESS_STRUCTURES}
+          icons={BUSINESS_STRUCTURE_ICONS}
+          value={verify.business_structure}
+          onChange={(v) => {
+            setV('business_structure', v)
+            advance()
+          }}
+          error={errors.business_structure}
+          columns={2}
+        />
+      ),
+    },
+    {
+      id: 'registration_state',
+      section: SECTION[3],
+      title: 'Which state is it registered in?',
+      fields: ['registration_state'],
+      validate: () => verifyCheck(['registration_state']),
+      save: verifyDraft(['registration_state']),
+      render: ({ errors }) => (
+        <SelectField id="registration_state" label="State of registration" value={verify.registration_state} onChange={(v) => setV('registration_state', v)} options={US_STATES} error={errors.registration_state} />
+      ),
+    },
+    ...(facility ? facilityScreens : companyScreens),
     {
       id: 'doc_business_registration',
       section: SECTION[3],

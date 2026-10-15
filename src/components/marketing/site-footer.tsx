@@ -58,7 +58,7 @@ export function SiteFooter() {
             title="For businesses & organizations"
             links={[
               { label: 'Hire expertise', href: '/for-organizations' },
-              { label: 'Post a project', href: '/signup?as=organization' },
+              { label: 'Post a project', href: '/signup/organization?source=HIRING' },
               { label: 'Organization pricing', href: '/for-organizations#pricing' },
               { label: 'How it works', href: '/how-it-works' },
             ]}
@@ -68,7 +68,7 @@ export function SiteFooter() {
             title="For professionals"
             links={[
               { label: 'Why Sanus', href: '/for-professionals' },
-              { label: 'List your services', href: '/signup?as=professional' },
+              { label: 'List your services', href: '/signup/offer' },
               { label: 'Host an event', href: '/events-and-training' },
               { label: 'Professional pricing', href: '/for-professionals#pricing' },
             ]}

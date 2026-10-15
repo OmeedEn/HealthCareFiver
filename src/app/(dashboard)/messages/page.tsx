@@ -19,6 +19,7 @@ import {
   SearchIcon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 
 export default function MessagesPage() {
   const isDemo = isDemoMode()
@@ -30,6 +31,9 @@ export default function MessagesPage() {
   )
   const [loading, setLoading] = useState(!isDemo)
   const [search, setSearch] = useState('')
+  // Not sure accounts awaiting placement (or rejected) can't message
+  // professionals (also enforced by RLS).
+  const [restricted, setRestricted] = useState(false)
 
   const fetchConversations = useCallback(async () => {
     const supabase = createClient()
@@ -39,6 +43,13 @@ export default function MessagesPage() {
     if (!user) return
 
     setCurrentUserId(user.id)
+
+    const { data: me } = await supabase
+      .from('profiles')
+      .select('signup_path, classification_status')
+      .eq('id', user.id)
+      .maybeSingle()
+    setRestricted(!!me && isClassificationRestricted(me))
 
     const { data, error } = await supabase
       .from('conversations')
@@ -157,6 +168,16 @@ export default function MessagesPage() {
           New Conversation
         </Button>
       </div>
+
+      {restricted && (
+        <p
+          role="status"
+          className="rounded-md border border-[#e4e5e7] bg-white px-4 py-3 text-sm text-[#62646a]"
+        >
+          Messaging professionals isn&apos;t available on your account.
+          You can still browse, save, and book.
+        </p>
+      )}
 
       <Card>
         <CardContent>

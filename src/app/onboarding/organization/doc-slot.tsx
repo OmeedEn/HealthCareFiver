@@ -92,7 +92,7 @@ export function DocSlot({
         </span>
         <span>
           <span className="block text-base font-semibold text-[#404145]">
-            {busy ? 'Uploading…' : docs.length ? 'Upload another file' : `Upload ${label.toLowerCase()}`}
+            {busy ? 'Uploading…' : docs.length ? 'Upload another file' : 'Choose a file to upload'}
           </span>
           <span className="mt-1 block text-sm text-[#62646a]">PDF, JPG, PNG, GIF or WebP, up to 10 MB</span>
         </span>

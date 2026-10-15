@@ -40,7 +40,7 @@ interface Row {
   onboarding_step: number | null
   created_at: string
   updated_at: string
-  profiles: { email: string | null } | null
+  profiles: { email: string | null; signup_path: string | null } | null
 }
 
 export default async function AdminOrganizationsPage({
@@ -56,7 +56,7 @@ export default async function AdminOrganizationsPage({
   const { data, error } = await db
     .from('facility_profiles')
     .select(
-      'id, facility_name, facility_type, city, state, verification_status, admin_checklist, onboarding_submitted_at, onboarding_step, created_at, updated_at, profiles!facility_profiles_id_fkey(email)'
+      'id, facility_name, facility_type, city, state, verification_status, admin_checklist, onboarding_submitted_at, onboarding_step, created_at, updated_at, profiles!facility_profiles_id_fkey(email, signup_path)'
     )
     .order('created_at', { ascending: true })
     .limit(500)
@@ -140,7 +140,7 @@ export default async function AdminOrganizationsPage({
               <TableBody>
                 {rows.map((r) => {
                   const s = isOrgStatus(r.verification_status) ? r.verification_status : 'pending_review'
-                  const { done, total } = checklistProgress(r.admin_checklist)
+                  const { done, total } = checklistProgress(r.admin_checklist, r.profiles?.signup_path)
                   const freeEmail = FREE_EMAIL_DOMAINS.has(emailDomain(r.profiles?.email))
                   return (
                     <TableRow key={r.id}>

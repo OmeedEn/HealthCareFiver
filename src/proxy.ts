@@ -41,6 +41,13 @@ const ORG_ONBOARDING_PATH = '/onboarding/organization'
 // Google sign-ups land as professionals; this step turns a brand-new account
 // into an organization (src/app/onboarding/organization/account).
 const ORG_ACCOUNT_PATH = '/onboarding/organization/account'
+// Same for /signup/client: turns a brand-new account into a client
+// (src/app/onboarding/client/account).
+const CLIENT_ACCOUNT_PATH = '/onboarding/client/account'
+// Same for /signup/unsure: turns a brand-new account into a Not sure (client,
+// pending classification) account and asks the step 2 questions
+// (src/app/onboarding/unsure).
+const UNSURE_ACCOUNT_PATH = '/onboarding/unsure'
 
 const ORG_ROLES = ['facility', 'staffing_agency']
 
@@ -197,15 +204,19 @@ export async function proxy(request: NextRequest) {
   }
 
   // Organization onboarding is for organizations, plus the account step a
-  // brand-new (Google) professional account uses to become one. Everything
-  // else under /onboarding is professional onboarding, contractors only.
+  // brand-new (Google) professional account uses to become one. The client
+  // account step is for clients and brand-new professionals. Everything else
+  // under /onboarding is professional onboarding, contractors only.
   const orgOnboardingAllowed =
     ORG_ROLES.includes(role ?? '') ||
     (role === 'contractor' && underPrefix(pathname, ORG_ACCOUNT_PATH))
+  const clientAccountAllowed =
+    (role === 'contractor' || role === 'client') &&
+    (underPrefix(pathname, CLIENT_ACCOUNT_PATH) || underPrefix(pathname, UNSURE_ACCOUNT_PATH))
   if (
     underPrefix(pathname, ORG_ONBOARDING_PATH)
       ? !orgOnboardingAllowed
-      : underPrefix(pathname, '/onboarding') && role !== 'contractor'
+      : underPrefix(pathname, '/onboarding') && role !== 'contractor' && !clientAccountAllowed
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'

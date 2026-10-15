@@ -153,8 +153,11 @@ export function QuestionFlow({
         </p>
       </div>
 
+      {/* noValidate: screens validate themselves; the browser's checks would
+          block e.g. a scheme-less "linkedin.com/in/name" in a type=url field. */}
       <form
         key={screen.id}
+        noValidate
         className="mt-10 animate-in fade-in slide-in-from-right-4 duration-300"
         onSubmit={(e) => {
           e.preventDefault()

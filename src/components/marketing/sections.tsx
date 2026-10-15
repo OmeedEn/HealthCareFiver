@@ -332,19 +332,19 @@ export function HeroSection() {
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <BuyerPathButton
-                href="/signup?as=individual"
+                href="/signup/client"
                 icon={Users}
                 title="Individual"
                 subtitle="Seeking care or guidance"
               />
               <BuyerPathButton
-                href="/signup?as=business"
+                href="/signup/organization?source=HIRING"
                 icon={Briefcase}
                 title="Business or employer"
                 subtitle="Need health expertise"
               />
               <BuyerPathButton
-                href="/signup?as=organization"
+                href="/signup/organization?source=HIRING"
                 icon={Building2}
                 title="Healthcare organization"
                 subtitle="Hospital, clinic, practice"
@@ -646,7 +646,7 @@ export function OrganizationsSection() {
 
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/signup?as=organization"
+            href="/signup/organization?source=HIRING"
             className="inline-flex h-12 items-center justify-center rounded-xl bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463]"
           >
             Post your project need
@@ -771,7 +771,7 @@ export function EventsSection() {
 
         <div className="mt-10 text-center">
           <Link
-            href="/signup?as=professional"
+            href="/signup/offer"
             className="inline-flex items-center gap-1 text-sm font-semibold text-[#1dbf73] transition hover:text-[#19a463]"
           >
             Are you a health professional? Host your event on Sanus
@@ -816,7 +816,7 @@ export function ProfessionalsSection() {
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
-                href="/signup?as=professional"
+                href="/signup/offer"
                 className="inline-flex h-12 items-center justify-center rounded-xl bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463]"
               >
                 Offer your expertise
@@ -954,13 +954,13 @@ export function BottomCta() {
             Find a professional
           </Link>
           <Link
-            href="/signup?as=organization"
+            href="/signup/organization?source=HIRING"
             className="inline-flex h-12 items-center justify-center rounded-xl border border-white/30 px-5 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/5"
           >
             Hire for your organization
           </Link>
           <Link
-            href="/signup?as=professional"
+            href="/signup/offer"
             className="inline-flex h-12 items-center justify-center rounded-xl border border-white/30 px-5 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/5"
           >
             Offer your expertise
@@ -1011,7 +1011,7 @@ export function PricingSection({
                   booking.
                 </p>
                 <Link
-                  href="/signup?as=professional"
+                  href="/signup/offer"
                   className="mt-6 inline-flex h-11 items-center justify-center rounded-lg bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463]"
                 >
                   Get started
@@ -1070,7 +1070,7 @@ export function PricingSection({
               team accounts, and organization-level search.
             </p>
             <Link
-              href="/signup?as=organization"
+              href="/signup/organization?source=HIRING"
               className="mt-6 inline-flex h-11 items-center justify-center rounded-lg border border-[#e5e7eb] px-5 text-sm font-semibold text-[#111827] transition hover:border-[#1dbf73] hover:text-[#1dbf73]"
             >
               Contact us for organization pricing

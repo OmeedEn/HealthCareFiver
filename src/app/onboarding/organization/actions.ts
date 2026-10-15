@@ -25,7 +25,13 @@ import {
   staffingSchema,
   toCents,
   verifyFields,
-  verifySchema,
+  verifySchemaFor,
+  asksFacilityLicense,
+  isOrgTypeAllowed,
+  ORG_TYPE_NOT_OFFERED,
+  orgDoorFor,
+  URL_LIKE,
+  withScheme,
   type AboutData,
   type OrgDoc,
   type VerifyData,
@@ -42,12 +48,15 @@ async function authed() {
   } = await supabase.auth.getUser()
   if (!user) return { error: SESSION_EXPIRED } as const
   if ((await mfaGate(supabase)) !== 'ok') return { error: SESSION_EXPIRED } as const
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, signup_path').eq('id', user.id).single()
   if (profile?.role !== 'facility' && profile?.role !== 'staffing_agency') {
     return { error: 'Only organization accounts can do this.' } as const
   }
-  return { user, supabase } as const
+  return { user, supabase, door: orgDoorFor(profile.signup_path) } as const
 }
+
+/** Demo mode has no stored door; it behaves like Hiring (both type lists, facility license). */
+const DEMO_DOOR = 'HIRING' as const
 
 async function bumpStep(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -66,12 +75,21 @@ export async function saveAbout(input: unknown): Promise<ActionResult> {
   }
   const phone = normalizeUsPhone(parsed.data.phone)
   if (!phone) return { ok: false, error: 'Please fix the highlighted fields.', fields: { phone: `${PHONE_ERROR}.` } }
-  if (isDemoMode()) return { ok: true }
+  if (isDemoMode()) {
+    if (!isOrgTypeAllowed(DEMO_DOOR, parsed.data.org_type)) {
+      return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+    }
+    return { ok: true }
+  }
 
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
   const d = parsed.data
-  const website = /^https?:\/\//i.test(d.website) ? d.website : `https://${d.website}`
+  // The type list depends on the door; trust the stored door, not the client.
+  if (!isOrgTypeAllowed(a.door, d.org_type)) {
+    return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+  }
+  const website = withScheme(d.website)
 
   const { error } = await a.supabase
     .from('facility_profiles')
@@ -129,13 +147,17 @@ export async function saveAboutDraft(input: Partial<AboutData>): Promise<ActionR
     if (!phone) return { ok: false, error: FIX_FIELDS, fields: { phone: `${PHONE_ERROR}.` } }
     update.phone = phone
   }
-  if ('website' in update && parsed.website) {
-    update.website = /^https?:\/\//i.test(parsed.website) ? parsed.website : `https://${parsed.website}`
+  if ('website' in update && parsed.website) update.website = withScheme(parsed.website)
+  const typeOffered = (door: Parameters<typeof isOrgTypeAllowed>[0]) =>
+    !parsed.org_type || isOrgTypeAllowed(door, parsed.org_type)
+  if (isDemoMode()) {
+    return typeOffered(DEMO_DOOR) ? { ok: true } : { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
   }
-  if (isDemoMode()) return { ok: true }
 
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
+  // The type list depends on the door; trust the stored door, not the client.
+  if (!typeOffered(a.door)) return { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
   const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
   if (error) {
     console.error('[onboarding/organization] saveAboutDraft failed', error)
@@ -169,13 +191,21 @@ export async function saveVerifyDraft(
   if (Object.keys(fields).length) return { ok: false, error: FIX_FIELDS, fields }
   const parsed = z.object(draftFields).partial().parse(data)
 
+  if (parsed.lead_linkedin && !URL_LIKE.test(parsed.lead_linkedin)) {
+    return { ok: false, error: FIX_FIELDS, fields: { lead_linkedin: 'Enter a valid link, like linkedin.com/in/name' } }
+  }
+
+  const YES_NO_COLUMNS = ['has_facility_license', 'lead_has_credential'] as const
   const update: Record<string, unknown> = {}
   for (const k of keys) {
-    if (k === 'disclosures' || k === 'has_facility_license') continue
+    if (k === 'disclosures' || (YES_NO_COLUMNS as readonly string[]).includes(k)) continue
     const v = parsed[k]
     update[k] = typeof v === 'string' && v === '' ? null : v
   }
-  if (keys.includes('has_facility_license')) update.has_facility_license = parsed.has_facility_license === 'yes'
+  for (const k of YES_NO_COLUMNS) {
+    if (keys.includes(k)) update[k] = parsed[k] === '' ? null : parsed[k] === 'yes'
+  }
+  if (typeof update.lead_linkedin === 'string') update.lead_linkedin = withScheme(update.lead_linkedin)
   if (isDemoMode()) return { ok: true }
 
   const a = await authed()
@@ -239,18 +269,21 @@ export async function removeOrgDocument(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Step 3. */
+/** Step 3. Which license question applies depends on the door, read from the database. */
 export async function saveVerification(input: unknown): Promise<ActionResult> {
-  const parsed = verifySchema.safeParse(input)
+  const a = isDemoMode() ? null : await authed()
+  if (a && 'error' in a) return { ok: false, error: a.error as string }
+  const door = a ? a.door : DEMO_DOOR
+  const parsed = verifySchemaFor(door).safeParse(input)
   if (!parsed.success) {
     return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(parsed.error) }
   }
-  if (isDemoMode()) return { ok: true }
+  if (!a) return { ok: true }
 
-  const a = await authed()
-  if ('error' in a) return { ok: false, error: a.error as string }
   const d = parsed.data
-  const hasLicense = d.has_facility_license === 'yes'
+  const facility = asksFacilityLicense(door)
+  const hasLicense = facility && d.has_facility_license === 'yes'
+  const leadHasCredential = !facility && d.lead_has_credential === 'yes'
 
   const { data: docs } = await a.supabase.from('org_documents').select('kind').eq('facility_id', a.user.id)
   const kinds = new Set((docs ?? []).map((x) => x.kind))
@@ -284,6 +317,11 @@ export async function saveVerification(input: unknown): Promise<ActionResult> {
       facility_license_number: hasLicense ? d.facility_license_number : null,
       facility_license_agency: hasLicense ? d.facility_license_agency : null,
       facility_license_expires: hasLicense ? d.facility_license_expires : null,
+      lead_has_credential: facility ? null : leadHasCredential,
+      lead_credential_type: leadHasCredential ? d.lead_credential_type : null,
+      lead_credential_number: leadHasCredential ? d.lead_credential_number : null,
+      lead_credential_state: leadHasCredential ? d.lead_credential_state : null,
+      lead_linkedin: !facility && d.lead_linkedin ? withScheme(d.lead_linkedin) : null,
       org_npi: d.org_npi || null,
       self_disclosures: disclosures,
       attested_authorized_at: now,

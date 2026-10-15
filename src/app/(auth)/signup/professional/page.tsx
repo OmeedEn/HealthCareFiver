@@ -17,6 +17,10 @@ import {
   type SignupResponse,
 } from '@/components/auth/signup-shared'
 import { Loader2, ArrowLeft } from 'lucide-react'
+import {
+  trackSignupCompleted,
+  useSignupStepViewed,
+} from '@/components/auth/signup-tracking'
 
 // Step 1 of professional onboarding: create the account. Everything else
 // (category, credentials, documents, offerings) happens in the wizard at
@@ -38,6 +42,7 @@ export default function ProfessionalSignupPage() {
 
   // Set when Supabase requires email confirmation (no session yet)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
+  useSignupStepViewed('professional', needsConfirmation ? 'check_email' : 'account')
 
   const normalizedPhone = normalizeUsPhone(phone)
   const canSubmit =
@@ -62,6 +67,7 @@ export default function ProfessionalSignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           role: 'contractor',
+          signup_path: 'INDEPENDENT',
           email: email.trim().toLowerCase(),
           password,
           first_name: firstName.trim(),
@@ -78,6 +84,7 @@ export default function ProfessionalSignupPage() {
         setLoading(false)
         return
       }
+      trackSignupCompleted('INDEPENDENT')
       if (body.needsEmailConfirmation) {
         setNeedsConfirmation(true)
         setLoading(false)
@@ -136,7 +143,7 @@ export default function ProfessionalSignupPage() {
   return (
     <div>
       <Link
-        href="/signup"
+        href="/signup/offer"
         className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
       >
         <ArrowLeft className="size-3.5" />

@@ -13,6 +13,7 @@ import {
   type MessageItem,
 } from '@/components/messaging/message-thread'
 import { MessageInput } from '@/components/messaging/message-input'
+import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -74,6 +75,10 @@ export default function ConversationPage() {
     initialDemo.otherUser
   )
   const [loading, setLoading] = useState(!isDemo)
+  // Not sure accounts awaiting placement (or rejected) can't message
+  // professionals; only staff threads stay open. Enforced by RLS too
+  // (supabase/migrations/20261014000300_unsure_messaging_gate.sql).
+  const [sendBlocked, setSendBlocked] = useState(false)
 
   const fetchMessages = useCallback(async () => {
     const supabase = createClient()
@@ -98,6 +103,15 @@ export default function ConversationPage() {
       const otherProfile = isP1
         ? (convo.participant_2_profile as ProfileWithNames | null)
         : (convo.participant_1_profile as ProfileWithNames | null)
+
+      const { data: me } = await supabase
+        .from('profiles')
+        .select('signup_path, classification_status')
+        .eq('id', user.id)
+        .maybeSingle()
+      setSendBlocked(
+        !!me && isClassificationRestricted(me) && otherProfile?.role !== 'admin'
+      )
 
       if (otherProfile) {
         setOtherUser({
@@ -273,7 +287,17 @@ export default function ConversationPage() {
                 : undefined
             }
           />
-          <MessageInput onSend={handleSend} />
+          {sendBlocked ? (
+            <p
+              role="status"
+              className="border-t border-[#e4e5e7] px-4 py-3 text-center text-sm text-[#62646a]"
+            >
+              Messaging professionals isn&apos;t available on your account.
+              You can still browse, save, and book.
+            </p>
+          ) : (
+            <MessageInput onSend={handleSend} />
+          )}
         </>
       ) : null}
     </div>

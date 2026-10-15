@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { TERMS_VERSION } from '@/lib/legal'
-import { canConvertToOrg } from '@/lib/onboarding/org-account'
+import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
+import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
 import { OrgAccountForm } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your organization account — Sanus' }
@@ -14,9 +16,26 @@ export const metadata: Metadata = { title: 'Finish creating your organization ac
  * /callback). Google signups skip step 1's form, so collect name, title,
  * phone and Terms consent here, then hand off to the wizard.
  */
-export default async function OrgAccountPage() {
+export default async function OrgAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  // The signup door (PRACTICE / COMPANY / HIRING): from ?source= when it
+  // survived the trip, else the cookie /signup/organization set.
+  const source =
+    parseOrgSignupSource((await searchParams).source) ??
+    parseOrgSignupSource((await cookies()).get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
+
   if (!getSupabaseConfig()) {
-    return <OrgAccountForm prefill={{ firstName: '', lastName: '', title: '' }} needsTerms termsVersion={TERMS_VERSION} />
+    return (
+      <OrgAccountForm
+        prefill={{ firstName: '', lastName: '', title: '' }}
+        needsTerms
+        termsVersion={TERMS_VERSION}
+        source={source}
+      />
+    )
   }
 
   const supabase = await createClient()
@@ -31,7 +50,7 @@ export default async function OrgAccountPage() {
 
   if (role === 'contractor') {
     // An established professional account can't be turned into an org.
-    if (!(await canConvertToOrg(admin, user))) redirect('/dashboard')
+    if (!(await canConvertNewProfessional(admin, user))) redirect('/dashboard')
   } else if (role === 'facility' || role === 'staffing_agency') {
     const { data: org } = await admin
       .from('facility_profiles')
@@ -57,6 +76,7 @@ export default async function OrgAccountPage() {
       }}
       needsTerms={!meta.terms_accepted_at || !meta.terms_version}
       termsVersion={TERMS_VERSION}
+      source={source}
     />
   )
 }

@@ -10,7 +10,6 @@ import { formatDateTime } from '@/lib/utils/format'
 import { EVIDENCE_BUCKET } from '@/app/api/admin/verification/_lib/evidence'
 import {
   ORG_ALLOWED_DECISIONS,
-  ORG_CHECKLIST,
   ORG_DECISION_LABEL,
   ORG_DECISION_NEEDS_NOTE,
   ORG_RED_FLAGS,
@@ -18,6 +17,7 @@ import {
   ORG_STATUS_LABEL,
   checklistProgress,
   isOrgStatus,
+  orgChecklistFor,
   type OrgChecklist,
   type OrgStatus,
 } from '@/lib/org/review'
@@ -36,6 +36,7 @@ import {
   labelFor,
   orgTypeLabel,
 } from '@/lib/onboarding/organization'
+import { SIGNUP_PATH_SHORT_LABELS, isSignupPath } from '@/lib/onboarding/signup-path'
 import { addEvidence, decideOrganization, setChecklistItem } from '../actions'
 
 export const dynamic = 'force-dynamic'
@@ -62,20 +63,54 @@ const DETAIL_FIELDS: [string, string][] = [
   ['contact_title', 'Contact title'],
 ]
 
-const VERIFY_FIELDS: [string, string][] = [
-  ['legal_name', 'Legal business name'],
-  ['business_structure', 'Business structure'],
-  ['registration_state', 'State of registration'],
+const FACILITY_LICENSE_FIELDS: [string, string][] = [
   ['has_facility_license', 'Holds a facility license'],
   ['facility_license_type', 'License type'],
   ['facility_license_number', 'License number'],
   ['facility_license_agency', 'Issuing agency'],
   ['facility_license_expires', 'License expires'],
-  ['org_npi', 'Organization NPI'],
-  ['ein', 'EIN'],
-  ['attested_authorized_at', 'Attested authorized & accurate'],
-  ['authorized_checks_at', 'Authorized verification & screening'],
 ]
+
+/** Company door: asked instead of the facility license. */
+const LEAD_CREDENTIAL_FIELDS: [string, string][] = [
+  ['lead_has_credential', 'Lead person holds a license or certification'],
+  ['lead_credential_type', 'Lead credential type'],
+  ['lead_credential_number', 'Lead credential number'],
+  ['lead_credential_state', 'Lead credential state'],
+  ['lead_linkedin', 'Lead person’s LinkedIn'],
+]
+
+/**
+ * Practice/Hiring (and legacy) orgs answer the facility license question;
+ * Company orgs answer the lead-person credential question. Show whichever
+ * was asked, plus the other set if it somehow has answers.
+ */
+function verifyFields(org: Record<string, unknown>, company: boolean): [string, string][] {
+  const showFacility = !company || org.has_facility_license != null
+  const showLead = company || org.lead_has_credential != null || !!org.lead_linkedin
+  return [
+    ['legal_name', 'Legal business name'],
+    ['business_structure', 'Business structure'],
+    ['registration_state', 'State of registration'],
+    ...(showFacility ? FACILITY_LICENSE_FIELDS : []),
+    ...(showLead ? LEAD_CREDENTIAL_FIELDS : []),
+    ['org_npi', 'Organization NPI'],
+    ['ein', 'EIN'],
+    ['attested_authorized_at', 'Attested authorized & accurate'],
+    ['authorized_checks_at', 'Authorized verification & screening'],
+  ]
+}
+
+/** Only http(s) links are rendered as anchors. */
+function safeHref(v: unknown): string | null {
+  if (typeof v !== 'string') return null
+  try {
+    const u = new URL(v)
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null
+  } catch {
+    return null
+  }
+}
 
 function display(org: Record<string, unknown>, key: string): string {
   const v = org[key]
@@ -98,7 +133,7 @@ export default async function AdminOrganizationPage({
   const [{ data: org }, { data: account }, { data: evidenceRows }, { count: draftCount }, { data: orgDocs }, { data: listings }] =
     await Promise.all([
       db.from('facility_profiles').select('*').eq('id', id).maybeSingle(),
-      db.from('profiles').select('email, phone, created_at').eq('id', id).maybeSingle(),
+      db.from('profiles').select('email, phone, created_at, signup_path').eq('id', id).maybeSingle(),
       db
         .from('org_verification_evidence')
         .select('id, check_key, storage_path, note, created_at')
@@ -120,7 +155,11 @@ export default async function AdminOrganizationPage({
 
   const status: OrgStatus = isOrgStatus(org.verification_status) ? org.verification_status : 'pending_review'
   const checklist = (org.admin_checklist ?? {}) as OrgChecklist
-  const progress = checklistProgress(checklist)
+  const signupPath = account?.signup_path ?? null
+  const isCompany = signupPath === 'COMPANY'
+  const checklistItems = orgChecklistFor(signupPath)
+  const progress = checklistProgress(checklist, signupPath)
+  const linkedinHref = safeHref(org.lead_linkedin)
   const flags = detectOrgRedFlags({ email: account?.email ?? null, website: org.website })
 
   // Short-lived links to evidence files in the private bucket.
@@ -156,6 +195,12 @@ export default async function AdminOrganizationPage({
           <h1 className="text-2xl font-bold text-[#404145]">{org.facility_name || 'Unnamed organization'}</h1>
           <p className="text-sm text-[#62646a]">
             {account?.email} · signed up {account?.created_at ? formatDateTime(account.created_at) : '—'}
+          </p>
+          <p className="text-sm text-[#62646a]">
+            Signup door:{' '}
+            <span className="font-semibold text-[#404145]">
+              {isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : 'Not recorded (legacy signup)'}
+            </span>
           </p>
         </div>
         <Badge variant={ORG_STATUS_BADGE[status]} className="text-sm">
@@ -215,10 +260,18 @@ export default async function AdminOrganizationPage({
             </CardHeader>
             <CardContent className="space-y-5">
               <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[220px_1fr]">
-                {VERIFY_FIELDS.map(([key, label]) => (
+                {verifyFields(org as Record<string, unknown>, isCompany).map(([key, label]) => (
                   <div key={key} className="contents">
                     <dt className="text-[#62646a]">{label}</dt>
-                    <dd className="break-words text-[#404145]">{display(org as Record<string, unknown>, key)}</dd>
+                    <dd className="break-words text-[#404145]">
+                      {key === 'lead_linkedin' && linkedinHref ? (
+                        <a href={linkedinHref} target="_blank" rel="noreferrer noopener" className="font-semibold text-[#1dbf73] hover:underline">
+                          {String(org.lead_linkedin)}
+                        </a>
+                      ) : (
+                        display(org as Record<string, unknown>, key)
+                      )}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -332,7 +385,7 @@ export default async function AdminOrganizationPage({
               <CardDescription>Save a dated screenshot or PDF of every lookup.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              {ORG_CHECKLIST.map((item, i) => {
+              {checklistItems.map((item, i) => {
                 const entry = checklist[item.key]
                 const itemEvidence = evidence.filter((e) => e.check_key === item.key)
                 return (

@@ -19,7 +19,7 @@ export default function ForProfessionalsPage() {
         kicker="For professionals"
         title="Grow your practice beyond your own network"
         description="Reach individuals, businesses, and healthcare organizations from one verified profile — services, consulting, and continuing education."
-        primary={{ label: 'Offer your expertise', href: '/signup?as=professional' }}
+        primary={{ label: 'Offer your expertise', href: '/signup/offer' }}
         secondary={{ label: 'See pricing', href: '#pricing' }}
       />
       <ProfessionalsSection />

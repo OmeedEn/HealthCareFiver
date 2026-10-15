@@ -794,7 +794,7 @@ function FindCarePageContent({ providers, isDemo, embedded = false }: FindCarePr
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
                   <Link
-                    href="/signup"
+                    href="/signup/looking"
                     className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
                   >
                     Create an account

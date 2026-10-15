@@ -15,7 +15,7 @@ export default function EventsAndTrainingPage() {
         title="Learn from verified health professionals"
         description="Live webinars, hands-on workshops, CEU and CME courses, and certification cohorts — created and taught by professionals on Sanus."
         primary={{ label: 'Browse events', href: '/events' }}
-        secondary={{ label: 'Host an event', href: '/signup?as=professional' }}
+        secondary={{ label: 'Host an event', href: '/signup/offer' }}
       />
       <EventsSection />
       <BottomCta />
