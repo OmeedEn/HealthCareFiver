@@ -23,15 +23,23 @@ export function websiteDomain(url: string | null | undefined): string {
 export interface OrgRedFlagInput {
   email: string | null
   website: string | null
+  /** They chose "We don't have a website" (facility_profiles.has_no_website). */
+  hasNoWebsite?: boolean
 }
 
 /** Flags we can detect from what the org entered. */
-export function detectOrgRedFlags({ email, website }: OrgRedFlagInput): string[] {
+export function detectOrgRedFlags({ email, website, hasNoWebsite = false }: OrgRedFlagInput): string[] {
   const flags: string[] = []
   const eDomain = emailDomain(email)
   const wDomain = websiteDomain(website)
   if (FREE_EMAIL_DOMAINS.has(eDomain)) flags.push(`Signed up with a free email address (${eDomain})`)
-  if (!wDomain) flags.push('No website given')
+  if (!wDomain) {
+    flags.push(
+      hasNoWebsite
+        ? 'Said they don’t have a website: lean harder on the registration and a call'
+        : 'No website given'
+    )
+  }
   else if (eDomain && !FREE_EMAIL_DOMAINS.has(eDomain) && !eDomain.endsWith(wDomain) && !wDomain.endsWith(eDomain)) {
     flags.push(`Email domain (${eDomain}) doesn’t match the website (${wDomain})`)
   }

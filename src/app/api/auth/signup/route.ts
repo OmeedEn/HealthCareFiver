@@ -4,10 +4,16 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
 import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
-import { TERMS_VERSION } from '@/lib/legal'
+import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
+import {
+  ORG_TYPE_KEYS,
+  ORG_TYPE_OTHER_MAX,
+  facilityTypeEnumFor,
+  orgTypesForPath,
+} from '@/lib/onboarding/organization'
 import { classificationRequestRow, unsureAnswersSchema } from '@/lib/onboarding/unsure'
 import { proAnswersSchema } from '@/lib/onboarding/questions/professional'
 import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
@@ -107,26 +113,47 @@ const contractorSchema = z.object({
   answers: proAnswersSchema.optional(),
 })
 
-// Organization signup is step 1 of the Organization Onboarding spec: just
-// the account. Steps 2-4 (organization details, verification, intents)
-// happen in /onboarding/organization after the email is confirmed.
-const facilitySchema = z.object({
-  ...consent,
-  role: z.literal('facility'),
-  email,
-  password,
-  first_name: firstName,
-  last_name: lastName,
-  title: z
-    .string({ error: 'Your role or title is required' })
-    .trim()
-    .min(1, 'Your role or title is required')
-    .max(100, 'Keep your title to 100 characters or fewer'),
-  phone,
-  // Which door they came through (/signup/organization?source=…). Drives
-  // the org type list, step 3 questions and pre-selected goals.
-  signup_path: z.enum(ORG_SIGNUP_PATHS, 'Choose how you work on the previous screen'),
-})
+// Organization signup (Single-Question Onboarding spec): screens 1–2
+// (organization type and name, held in the browser until now) plus the
+// account screen. No title or phone (dashboard items now). One checkbox
+// covers the Terms, Privacy Policy and Organization Terms (the Organization
+// Agreement), so its version is recorded too. Screens 4–8 happen in
+// /onboarding/organization.
+const facilitySchema = z
+  .object({
+    ...consent,
+    role: z.literal('facility'),
+    email,
+    password,
+    first_name: firstName,
+    last_name: lastName,
+    org_terms_version: z.literal(ORG_AGREEMENT_VERSION, {
+      error:
+        'Our Organization Terms were updated — please refresh the page and review them',
+    }),
+    // Which door they came through (/signup/organization?source=…). Drives
+    // the org type list, the license question and the first-run cards.
+    signup_path: z.enum(ORG_SIGNUP_PATHS, 'Choose how you work on the previous screen'),
+    org_type: z.enum(ORG_TYPE_KEYS, 'Choose your organization type'),
+    org_type_other: z
+      .string()
+      .trim()
+      .max(ORG_TYPE_OTHER_MAX, `Keep it to ${ORG_TYPE_OTHER_MAX} characters`)
+      .optional(),
+    facility_name: z
+      .string({ error: 'Organization name is required' })
+      .trim()
+      .min(1, 'Organization name is required')
+      .max(200, 'Keep the organization name to 200 characters or fewer'),
+  })
+  .superRefine((d, ctx) => {
+    if (!orgTypesForPath(d.signup_path).some((t) => t.value === d.org_type)) {
+      ctx.addIssue({ code: 'custom', path: ['org_type'], message: 'Choose one of the listed organization types' })
+    }
+    if (d.org_type === 'other' && !d.org_type_other) {
+      ctx.addIssue({ code: 'custom', path: ['org_type_other'], message: 'Tell us what kind of organization you are' })
+    }
+  })
 
 const clientSchema = z.object({
   ...consent,
@@ -234,11 +261,19 @@ export async function POST(request: NextRequest) {
       role: 'facility' as const,
       first_name: body.first_name,
       last_name: body.last_name,
-      // handle_new_user copies contact_name to facility_profiles and phone to
-      // profiles.phone; the wizard copies contact_title on its first load.
+      // handle_new_user copies contact_name, facility_name and facility_type
+      // to facility_profiles; org_type is written below (and again by
+      // /onboarding/organization from this metadata if that write fails).
       contact_name: `${body.first_name} ${body.last_name}`,
-      contact_title: body.title,
-      phone: body.phone,
+      facility_name: body.facility_name,
+      facility_type: facilityTypeEnumFor(body.org_type),
+      org_type: body.org_type,
+      ...(body.org_type === 'other' ? { org_type_other: body.org_type_other } : {}),
+      // Organization Terms (Organization Agreement) accepted on the account
+      // screen; the post-approval click-through still stamps
+      // facility_profiles.org_agreement_accepted_at.
+      org_terms_accepted_at: new Date().toISOString(),
+      org_terms_version: body.org_terms_version,
     }
   } else if (body.role === 'unsure') {
     signupPath = 'UNSURE'
@@ -337,6 +372,27 @@ export async function POST(request: NextRequest) {
       { error: 'We couldn’t create your account. Please try again.' },
       { status: 500 }
     )
+  }
+
+  // Organization: store screen 1 (handle_new_user doesn't copy org_type).
+  // Best effort — /onboarding/organization fills it from metadata otherwise.
+  if (body.role === 'facility' && result.user && result.user.identities?.length !== 0) {
+    try {
+      const admin = createAdminClient()
+      const { error: orgError } = await admin
+        .from('facility_profiles')
+        .update({
+          org_type: body.org_type,
+          org_type_other: body.org_type === 'other' ? body.org_type_other : null,
+        })
+        .eq('id', result.user.id)
+      if (orgError) throw new Error(`${orgError.code}: ${orgError.message}`)
+    } catch (err) {
+      console.error('[signup] facility_profiles org_type write failed', {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : 'unknown error',
+      })
+    }
   }
 
   // Not sure: file the step 2 answers for the staff classification queue.

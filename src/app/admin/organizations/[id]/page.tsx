@@ -22,6 +22,9 @@ import {
   type OrgStatus,
 } from '@/lib/org/review'
 import { detectOrgRedFlags } from '@/lib/org/red-flags'
+import { orgMissingForApproval } from '@/lib/onboarding/checklist-organization'
+import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
+import { orgDoorFor } from '@/app/onboarding/organization/shared'
 import { CREDENTIALS_BUCKET } from '@/lib/credentials/document'
 import {
   BUSINESS_STRUCTURES,
@@ -54,6 +57,7 @@ const DETAIL_FIELDS: [string, string][] = [
   ['org_size', 'Size'],
   ['description', 'Description'],
   ['website', 'Website'],
+  ['has_no_website', 'Said they have no website'],
   ['phone', 'Organization phone'],
   ['city', 'City'],
   ['state', 'State'],
@@ -160,7 +164,17 @@ export default async function AdminOrganizationPage({
   const checklistItems = orgChecklistFor(signupPath)
   const progress = checklistProgress(checklist, signupPath)
   const linkedinHref = safeHref(org.lead_linkedin)
-  const flags = detectOrgRedFlags({ email: account?.email ?? null, website: org.website })
+  const flags = detectOrgRedFlags({
+    email: account?.email ?? null,
+    website: org.website,
+    hasNoWebsite: org.has_no_website === true,
+  })
+  const kinds = (orgDocs ?? []).map((d) => d.kind as string)
+  const missing = orgMissingForApproval({ org, docKinds: kinds })
+  const flowData = orgFlowDataFromRow(org as Record<string, unknown>, kinds)
+  const answeredCount = ORG_FLOW_IDS.filter(
+    (q) => q !== 'submit' && orgAnswerOnFile(q, flowData, orgDoorFor(signupPath))
+  ).length
 
   // Short-lived links to evidence files in the private bucket.
   const evidence = (evidenceRows ?? []) as EvidenceRow[]
@@ -211,8 +225,24 @@ export default async function AdminOrganizationPage({
       {!org.onboarding_submitted_at && (
         <Card className="border-[#f5deb3] bg-[#fdf6e3]">
           <CardContent className="pt-6 text-sm text-[#404145]">
-            <span className="font-semibold">Application not submitted yet.</span> They&apos;re on step{' '}
-            {org.onboarding_step ?? 2} of 5 of signup. Review once they submit.
+            <span className="font-semibold">Application not submitted yet.</span> They&apos;ve answered{' '}
+            {answeredCount} of {ORG_FLOW_IDS.length - 1} signup questions. Review once they submit.
+          </CardContent>
+        </Card>
+      )}
+
+      {missing.length > 0 && (
+        <Card className="border-[#f5c6cb] bg-[#fdecea]">
+          <CardContent className="space-y-2 pt-6 text-sm text-[#404145]">
+            <p className="font-semibold text-[#c0392b]">Missing — can&apos;t be approved until these are in</p>
+            <div className="flex flex-wrap gap-2">
+              {missing.map((m) => (
+                <Badge key={m.id} variant="destructive">
+                  Missing: {m.label}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-[#62646a]">They see these in their dashboard under Needed for approval. Use Request more info to nudge them.</p>
           </CardContent>
         </Card>
       )}

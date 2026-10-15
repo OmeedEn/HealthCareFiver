@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
-import { OrganizationSignupForm } from './signup-form'
+import { OrganizationSignupFlow } from './signup-flow'
 
 export const metadata: Metadata = { title: 'Create your organization account — Sanus' }
 
@@ -14,5 +14,5 @@ export default async function OrganizationSignupPage({
 }) {
   const source = parseOrgSignupSource((await searchParams).source)
   if (!source) redirect('/signup')
-  return <OrganizationSignupForm source={source} />
+  return <OrganizationSignupFlow source={source} />
 }
