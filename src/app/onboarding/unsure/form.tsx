@@ -1,138 +1,106 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { TermsConsent } from '@/components/auth/signup-shared'
+import { trackSignupCompleted } from '@/components/auth/signup-tracking'
+import { CheckRow, TextField } from '@/app/onboarding/professional/ui'
+import { QuestionFlow, SINGLE_STEP, type Screen } from '@/components/onboarding/question-flow'
 import {
-  EMPTY_UNSURE_ANSWERS,
-  UnsureAnswersFields,
-  unsureAnswersComplete,
+  EMPTY_UNSURE_DRAFT,
+  UNSURE_DRAFT_KEY,
   unsureAnswersPayload,
-  type UnsureAnswersDraft,
-} from '@/components/auth/unsure-answers'
-import { formatUsPhoneInput, normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
-import { trackEvent } from '@/lib/analytics/posthog'
-import { SIGNUP_EVENTS } from '@/lib/onboarding/signup-path'
+  unsureQuestionScreens,
+  unsureResumeIndex,
+} from '@/components/onboarding/unsure-questions'
+import { usePreAccountAnswers } from '@/lib/onboarding/pre-account'
+import { UNSURE_QUESTIONS } from '@/lib/onboarding/questions/unsure'
+import { UNSURE_REVIEW_CONSENT_LABEL, type UnsureAnswers } from '@/lib/onboarding/unsure'
 import { isDemoMode } from '@/lib/demo/data'
 import { finishUnsureAccount } from './actions'
 
-export function UnsureAccountForm({
+/**
+ * Google path of the Not sure signup. With the hand-off cookie's answers
+ * this is a single screen (the consents Google skipped). Without them, the
+ * four questions come first — resuming from this tab's stored answers when
+ * they're still there.
+ */
+export function UnsureFinishFlow({
+  answers,
   prefill,
   needsTerms,
   termsVersion,
 }: {
+  answers: UnsureAnswers | null
   prefill: { firstName: string; lastName: string }
   needsTerms: boolean
   termsVersion: string
 }) {
   const router = useRouter()
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
+  const [draft, setDraft, { hydrated, clear }] = usePreAccountAnswers(UNSURE_DRAFT_KEY, EMPTY_UNSURE_DRAFT)
+  const needsName = !prefill.firstName || !prefill.lastName
   const [firstName, setFirstName] = useState(prefill.firstName)
   const [lastName, setLastName] = useState(prefill.lastName)
-  const [phone, setPhone] = useState('')
-  const [phoneTouched, setPhoneTouched] = useState(false)
   const [accepted, setAccepted] = useState(false)
-  const [answers, setAnswers] = useState<UnsureAnswersDraft>(EMPTY_UNSURE_ANSWERS)
+  const [reviewConsent, setReviewConsent] = useState(false)
 
-  useEffect(() => {
-    // Google path: step 1 happened on /signup/unsure; this is step 2.
-    trackEvent(SIGNUP_EVENTS.stepViewed, { flow: 'unsure', step: 2 })
-  }, [])
+  if (!answers && !hydrated) return null
 
-  const phoneOk = normalizeUsPhone(phone) !== null
-  const phoneInvalid = phoneTouched && phone.trim() !== '' && !phoneOk
-  const canSubmit =
-    !!firstName.trim() &&
-    !!lastName.trim() &&
-    phoneOk &&
-    (!needsTerms || accepted) &&
-    unsureAnswersComplete(answers)
+  const canFinish =
+    firstName.trim() !== '' && lastName.trim() !== '' && (!needsTerms || accepted) && reviewConsent
 
-  function submit() {
-    if (!canSubmit || pending) return
-    setError(null)
-    if (isDemoMode()) {
-      router.push('/dashboard')
-      return
-    }
-    startTransition(async () => {
+  const finishScreen: Screen = {
+    id: UNSURE_QUESTIONS.account.id,
+    title: 'Finish creating your account',
+    continueLabel: 'Finish',
+    canContinue: () => canFinish,
+    save: async () => {
+      if (isDemoMode()) return { ok: true }
       const result = await finishUnsureAccount({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        phone,
         ...(needsTerms ? { accepted_terms: accepted, terms_version: termsVersion } : {}),
-        answers: unsureAnswersPayload(answers),
+        review_consent: reviewConsent,
+        answers: answers ?? unsureAnswersPayload(draft),
       })
-      if ('error' in result) {
-        setError(result.error)
-        return
-      }
-      trackEvent(SIGNUP_EVENTS.completed, { signup_path: 'UNSURE' })
-      router.push('/dashboard')
-    })
+      if (!result.ok) return result
+      trackSignupCompleted('UNSURE')
+      return { ok: true }
+    },
+    render: () => (
+      <div className="space-y-4">
+        {needsName && (
+          <div className="grid grid-cols-2 gap-3">
+            <TextField id="unsure-first" label="First name" value={firstName} onChange={setFirstName} autoComplete="given-name" maxLength={100} />
+            <TextField id="unsure-last" label="Last name" value={lastName} onChange={setLastName} autoComplete="family-name" maxLength={100} />
+          </div>
+        )}
+        <div className="space-y-3">
+          {needsTerms && <TermsConsent checked={accepted} onChange={setAccepted} id="unsure-terms" />}
+          <CheckRow
+            id="unsure-review-consent"
+            checked={reviewConsent}
+            onChange={setReviewConsent}
+            label={UNSURE_REVIEW_CONSENT_LABEL}
+          />
+        </div>
+      </div>
+    ),
   }
 
+  const screens = answers ? [finishScreen] : [...unsureQuestionScreens(draft, setDraft), finishScreen]
+
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        submit()
+    <QuestionFlow
+      screens={screens}
+      initialIndex={answers ? 0 : unsureResumeIndex(draft)}
+      stepWeights={SINGLE_STEP}
+      chrome="minimal"
+      flowId="unsure"
+      onFinish={() => {
+        clear()
+        router.push('/dashboard')
       }}
-    >
-      <h1 className="text-2xl font-bold tracking-tight text-[#404145]">Tell us about you</h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
-        A few details so our team can place you in the right category.
-      </p>
-
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="first_name" className="text-sm font-semibold text-[#404145]">First name</Label>
-          <Input id="first_name" value={firstName} onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" className="h-11" />
-        </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="last_name" className="text-sm font-semibold text-[#404145]">Last name</Label>
-          <Input id="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" className="h-11" />
-        </div>
-      </div>
-
-      <div className="mt-3 mb-6 space-y-1.5">
-        <Label htmlFor="phone" className="text-sm font-semibold text-[#404145]">Phone number</Label>
-        <Input
-          id="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel-national"
-          placeholder="(555) 123-4567"
-          value={phone}
-          onChange={(e) => setPhone(formatUsPhoneInput(e.target.value))}
-          onBlur={() => setPhoneTouched(true)}
-          aria-invalid={phoneInvalid || undefined}
-          className="h-11"
-        />
-        {phoneInvalid && <p className="text-xs text-red-600">{PHONE_ERROR}.</p>}
-      </div>
-
-      <UnsureAnswersFields value={answers} onChange={setAnswers} />
-
-      {needsTerms && <TermsConsent checked={accepted} onChange={setAccepted} />}
-
-      {error && (
-        <p role="alert" className="mt-4 text-sm text-red-600">{error}</p>
-      )}
-
-      <Button
-        type="submit"
-        disabled={!canSubmit || pending}
-        className="mt-6 h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
-      >
-        {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-        Finish
-      </Button>
-    </form>
+    />
   )
 }
