@@ -16,6 +16,7 @@ import {
   type ClassifyDecision,
   type SignupPath,
 } from '@/lib/onboarding/signup-path'
+import { recordAssignmentPrefill } from '@/lib/onboarding/unsure-prefill'
 
 // Staff placement of signups (Signup Routing Update): the "Needs
 // classification" queue (/admin/classification) and the "Change category"
@@ -421,6 +422,17 @@ export async function assignSignupPath(db: AdminDb, input: AssignInput): Promise
     }
   }
 
+  // The deep link resumes the new flow at the first unanswered screen: mark
+  // what we already know (account, and the org website / city+state when
+  // prefilled) as answered. Best effort; logged on failure.
+  if (!rejected) {
+    await recordAssignmentPrefill(db, input.userId, input.path as AssignablePath, {
+      website: snap.prefill.website,
+      city: snap.prefill.city,
+      state: snap.prefill.state,
+    })
+  }
+
   const action = input.decision
     ? rejected
       ? 'classification_rejected'
@@ -487,16 +499,22 @@ export async function assignSignupPath(db: AdminDb, input: AssignInput): Promise
 
 /* ───────────── Read models for /admin/classification ───────────── */
 
+/**
+ * A Not sure answers row. has_location / wants / city / state are only set
+ * on rows filed before the single-question flow (now asked from the
+ * dashboard after placement); review_consent_at only on rows filed after.
+ */
 export interface ClassificationRequestRow {
   user_id: string
   what_you_do: string
   team_size: string
-  has_location: boolean
+  has_location: boolean | null
   credential: string
   website: string | null
-  wants: string[]
-  city: string
-  state: string
+  wants: string[] | null
+  city: string | null
+  state: string | null
+  review_consent_at?: string | null
   created_at: string
   decision: string | null
   decision_note: string | null

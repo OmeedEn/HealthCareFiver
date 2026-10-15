@@ -52,16 +52,33 @@ function WebsiteAnswer({ value }: { value: string | null }) {
   )
 }
 
+/** Shown for questions the single-question flow no longer asks (collected after placement). */
+function AskedLater() {
+  return <span className="text-[#9ca3af]">Asked later</span>
+}
+
+/** "City, ST", whichever part is known, or null. */
+function cityState(r: Pick<ClassificationRequestRow, 'city' | 'state'>): string | null {
+  return [r.city, r.state].filter(Boolean).join(', ') || null
+}
+
 function Answers({ r }: { r: ClassificationRequestRow }) {
+  const where = cityState(r)
+  const wants = r.wants ?? []
   return (
     <>
-      <Field name="City / state">{r.city}, {r.state}</Field>
       <Field name="Team size">{label(UNSURE_TEAM_SIZES, r.team_size)}</Field>
-      <Field name="Physical location">{r.has_location ? 'Yes' : 'No'}</Field>
       <Field name="License or certification">{label(UNSURE_CREDENTIALS, r.credential)}</Field>
       <Field name="Website / LinkedIn"><WebsiteAnswer value={r.website} /></Field>
+      <Field name="City / state">{where ?? <AskedLater />}</Field>
+      <Field name="Physical location">
+        {r.has_location === null ? <AskedLater /> : r.has_location ? 'Yes' : 'No'}
+      </Field>
       <Field name="Wants to">
-        {r.wants.length ? r.wants.map((w) => label(UNSURE_WANTS, w)).join(', ') : '—'}
+        {wants.length ? wants.map((w) => label(UNSURE_WANTS, w)).join(', ') : <AskedLater />}
+      </Field>
+      <Field name="Review consent">
+        {r.review_consent_at ? formatDateTime(r.review_consent_at) : '—'}
       </Field>
     </>
   )
@@ -236,7 +253,8 @@ export default async function ClassificationPage() {
                     <p className="whitespace-pre-wrap break-words text-[#404145]">{a.what_you_do}</p>
                     <p className="mt-1 text-xs text-[#6b7280]">
                       <Link href={`/admin/users/${a.user_id}`} className="hover:text-[#1dbf73]">{a.name}</Link>
-                      {' · '}{label(UNSURE_TEAM_SIZES, a.team_size)} · {a.city}, {a.state} · {formatDateTime(a.created_at)}
+                      {' · '}{label(UNSURE_TEAM_SIZES, a.team_size)}
+                      {cityState(a) ? ` · ${cityState(a)}` : ''} · {formatDateTime(a.created_at)}
                     </p>
                     {a.decision_note && <p className="mt-1 text-xs text-[#62646a]">Note: {a.decision_note}</p>}
                   </div>
