@@ -22,6 +22,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
+import {
+  trackSignupCompleted,
+  useSignupStepViewed,
+} from '@/components/auth/signup-tracking'
 import { TERMS_VERSION } from '@/lib/legal'
 import {
   CheckEmailStep,
@@ -67,6 +71,7 @@ const INTEREST_TILES = CLIENT_INTERESTS.map((i) => ({
 export default function ClientSignupPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
+  useSignupStepViewed('client', step)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
@@ -153,6 +158,7 @@ export default function ClientSignupPage() {
         toast.error(body.error || 'Could not create account')
         return
       }
+      trackSignupCompleted('CLIENT')
       setNeedsConfirmation(Boolean(body.needsEmailConfirmation))
       setStep(3)
     } catch {
@@ -428,7 +434,7 @@ function GoogleIcon() {
 function BackToPicker() {
   return (
     <Link
-      href="/signup"
+      href="/signup/looking"
       className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#62646a] hover:text-[#404145]"
     >
       <ArrowLeft className="size-3.5" />

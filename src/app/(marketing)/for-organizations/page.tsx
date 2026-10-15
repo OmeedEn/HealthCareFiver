@@ -20,7 +20,7 @@ export default function ForOrganizationsPage() {
         kicker="For organizations"
         title="Specialized health expertise, without agency markups"
         description="Engage compliance, billing, clinical-leadership, nutrition, and education expertise directly — for a project, a retainer, or a one-time consult."
-        primary={{ label: 'Post your project need', href: '/signup?as=organization' }}
+        primary={{ label: 'Post your project need', href: '/signup/organization?source=HIRING' }}
         secondary={{ label: 'Browse professionals', href: '/find-care' }}
       />
       <OrganizationsSection />

@@ -7,16 +7,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TermsConsent } from '@/components/auth/signup-shared'
 import { formatUsPhoneInput, normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
+import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
 import { finishOrgAccount, type OrgAccountState } from './actions'
 
 export function OrgAccountForm({
   prefill,
   needsTerms,
   termsVersion,
+  source,
 }: {
   prefill: { firstName: string; lastName: string; title: string }
   needsTerms: boolean
   termsVersion: string
+  source: OrgSignupPath | null
 }) {
   const [state, formAction, pending] = useActionState<OrgAccountState, FormData>(finishOrgAccount, null)
   const [firstName, setFirstName] = useState(prefill.firstName)
@@ -38,6 +41,7 @@ export function OrgAccountForm({
       <p className="mt-1.5 text-sm text-[#62646a]">A few details Google didn&apos;t give us.</p>
 
       <form action={formAction} className="mt-6 space-y-3">
+        {source && <input type="hidden" name="source" value={source} />}
         <div className="grid gap-3 sm:grid-cols-2">
           <Field id="first_name" label="First name" value={firstName} onChange={setFirstName} autoComplete="given-name" />
           <Field id="last_name" label="Last name" value={lastName} onChange={setLastName} autoComplete="family-name" />

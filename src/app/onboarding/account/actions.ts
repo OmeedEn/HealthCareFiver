@@ -3,10 +3,12 @@
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { mfaGate } from '@/lib/auth/mfa'
 import { TERMS_VERSION } from '@/lib/legal'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { computeGaps } from '@/lib/onboarding/account-gaps'
+import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 
 export type FinishAccountState = { error?: string } | null
 
@@ -114,6 +116,10 @@ export async function finishAccount(
       return { error: 'We couldn’t save your details. Please try again.' }
     }
   }
+
+  // Google accounts are created without a signup door; this is the
+  // professional (INDEPENDENT) path.
+  await setSignupPathIfUnset(createAdminClient(), user.id, 'INDEPENDENT')
 
   redirect('/onboarding/professional')
 }

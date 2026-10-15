@@ -253,7 +253,7 @@ export default async function ProProfilePage({ params }: Props) {
                   footer={
                     isOwner ? null : (
                       <Link
-                        href="/signup"
+                        href="/signup/looking"
                         className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-[#1dbf73] text-sm font-semibold text-[#1dbf73] transition hover:bg-[#1dbf73] hover:text-white"
                       >
                         {o.kind === 'event' ? 'Sign up to register' : 'Sign up to book'}
