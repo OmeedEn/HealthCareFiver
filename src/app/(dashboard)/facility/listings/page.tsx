@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { isDemoMode } from '@/lib/demo/data'
@@ -54,7 +56,16 @@ export default async function FacilityListingsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Services & events</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-[#404145]">Services & events</h1>
+          <Link
+            href={`/orgs/${user.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1dbf73] hover:underline"
+          >
+            <ExternalLink className="size-4" aria-hidden="true" />
+            {approved ? 'View your public page' : 'Preview your public page'}
+          </Link>
+        </div>
         <p className="text-sm text-[#62646a]">
           {!approved
             ? 'Save listings as drafts now. Nothing goes live until your organization is approved.'

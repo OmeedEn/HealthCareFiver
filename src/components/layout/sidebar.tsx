@@ -63,6 +63,7 @@ const FACILITY_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'My Jobs', href: '/facility/jobs', icon: Briefcase },
   { label: 'Services & Events', href: '/facility/listings', icon: Megaphone },
+  { label: 'Bookings', href: '/facility/bookings', icon: CalendarCheck },
   // Spec staffing posts stay off until the legal review (STAFFING_POSTS_ENABLED).
   ...(STAFFING_POSTS_ENABLED
     ? [
@@ -96,6 +97,7 @@ const ADMIN_NAV: NavItem[] = [
 const CLIENT_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Find care', href: '/find-care', icon: Search },
+  { label: 'My bookings', href: '/bookings', icon: CalendarCheck },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Notifications', href: '/notifications', icon: Bell },
   { label: 'Settings', href: '/settings', icon: Settings },
@@ -105,7 +107,7 @@ const CLIENT_NAV: NavItem[] = [
 const BROWSE_NAV: NavItem[] = [
   { label: 'Find professionals', href: '/browse', icon: Search },
   { label: 'Events & trainings', href: '/events', icon: GraduationCap },
-  { label: 'My bookings', href: '/browse/bookings', icon: CalendarCheck },
+  { label: 'My bookings', href: '/bookings', icon: CalendarCheck },
   { label: 'Messages', href: '/messages', icon: MessageSquare },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
