@@ -54,8 +54,6 @@ import { OrgFinishSection } from '@/components/org/org-finish-section'
 import { SUPPORT_EMAIL } from '@/lib/env'
 import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
 import { buildProfessionalChecklist } from '@/lib/onboarding/checklist-professional'
-import type { ChecklistItem as FinishItem } from '@/lib/onboarding/checklist'
-import { FinishProfileCard } from '@/components/onboarding/finish-profile-card'
 import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
 
 type DashboardJob = {

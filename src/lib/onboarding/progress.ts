@@ -64,9 +64,19 @@ export async function markSubmitted(
   userId: string,
   flow: OnboardingFlow
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { error } = await supabase
+  // Insert first without submitted_at (the insert policy only allows NULL),
+  // then set it with an update — so this works whether or not the person
+  // has a progress row yet.
+  const { error: insertError } = await supabase
     .from('onboarding_progress')
-    .upsert({ user_id: userId, flow, submitted_at: new Date().toISOString() }, { onConflict: 'user_id,flow' })
+    .upsert({ user_id: userId, flow }, { onConflict: 'user_id,flow', ignoreDuplicates: true })
+  const { error } = insertError
+    ? { error: insertError }
+    : await supabase
+        .from('onboarding_progress')
+        .update({ submitted_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('flow', flow)
   if (error) {
     console.error('[onboarding/progress] submit failed', { flow, code: error.code })
     return { ok: false, error: 'We couldn’t submit. Please try again.' }
