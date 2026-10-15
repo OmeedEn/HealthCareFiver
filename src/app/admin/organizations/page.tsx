@@ -22,13 +22,16 @@ import {
   type OrgStatus,
 } from '@/lib/org/review'
 import { FREE_EMAIL_DOMAINS, emailDomain } from '@/lib/org/red-flags'
+import { ORG_CHECKLIST_COLUMNS, orgMissingForApproval, type OrgChecklistRow } from '@/lib/onboarding/checklist-organization'
+import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
+import { orgDoorFor } from '@/app/onboarding/organization/shared'
 
 export const dynamic = 'force-dynamic'
 
 const OPEN: OrgStatus[] = ['pending_review', 'needs_info']
 type Filter = 'open' | 'incomplete' | 'all' | OrgStatus
 
-interface Row {
+interface Row extends OrgChecklistRow {
   id: string
   facility_name: string
   facility_type: string
@@ -56,13 +59,19 @@ export default async function AdminOrganizationsPage({
   const { data, error } = await db
     .from('facility_profiles')
     .select(
-      'id, facility_name, facility_type, city, state, verification_status, admin_checklist, onboarding_submitted_at, onboarding_step, created_at, updated_at, profiles!facility_profiles_id_fkey(email, signup_path)'
+      `id, facility_name, facility_type, org_type, org_type_other, website, has_no_website, city, state, facility_license_type, facility_license_number, facility_license_agency, lead_credential_type, lead_credential_number, lead_credential_state, admin_checklist, onboarding_submitted_at, onboarding_step, created_at, updated_at, ${ORG_CHECKLIST_COLUMNS}, profiles!facility_profiles_id_fkey(email, signup_path)`
     )
     .order('created_at', { ascending: true })
     .limit(500)
   if (error) console.error('[admin/organizations] load failed', error)
 
   const everyone = (data ?? []) as unknown as Row[]
+  // Document kinds per org, for the Needed for approval ("Missing") items.
+  const { data: docRows } = everyone.length
+    ? await db.from('org_documents').select('facility_id, kind').in('facility_id', everyone.map((r) => r.id))
+    : { data: [] as { facility_id: string; kind: string }[] }
+  const docKinds = new Map<string, string[]>()
+  for (const d of docRows ?? []) docKinds.set(d.facility_id, [...(docKinds.get(d.facility_id) ?? []), d.kind])
   // Orgs still mid-signup aren't ready to review; they get their own tab.
   const incomplete = everyone.filter((r) => !r.onboarding_submitted_at)
   const all = everyone.filter((r) => r.onboarding_submitted_at)
@@ -133,6 +142,7 @@ export default async function AdminOrganizationsPage({
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Checklist</TableHead>
+                  <TableHead>Missing</TableHead>
                   <TableHead>Flags</TableHead>
                   <TableHead>Signed up</TableHead>
                 </TableRow>
@@ -142,6 +152,11 @@ export default async function AdminOrganizationsPage({
                   const s = isOrgStatus(r.verification_status) ? r.verification_status : 'pending_review'
                   const { done, total } = checklistProgress(r.admin_checklist, r.profiles?.signup_path)
                   const freeEmail = FREE_EMAIL_DOMAINS.has(emailDomain(r.profiles?.email))
+                  const kinds = docKinds.get(r.id) ?? []
+                  const missing = orgMissingForApproval({ org: r, docKinds: kinds })
+                  const door = orgDoorFor(r.profiles?.signup_path)
+                  const flow = orgFlowDataFromRow(r as unknown as Record<string, unknown>, kinds)
+                  const answered = ORG_FLOW_IDS.filter((q) => q !== 'submit' && orgAnswerOnFile(q, flow, door)).length
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
@@ -160,7 +175,16 @@ export default async function AdminOrganizationsPage({
                         <Badge variant={ORG_STATUS_BADGE[s]}>{ORG_STATUS_LABEL[s]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {r.onboarding_submitted_at ? `${done}/${total}` : `Step ${r.onboarding_step ?? 2} of 5`}
+                        {r.onboarding_submitted_at ? `${done}/${total}` : `Signup: ${answered} of ${ORG_FLOW_IDS.length - 1} answered`}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {missing.map((m) => (
+                            <Badge key={m.id} variant="destructive" title={m.label}>
+                              Missing: {m.id === 'registration_doc' ? 'registration upload' : 'disclosures'}
+                            </Badge>
+                          ))}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {freeEmail && <Badge variant="outline">Free email</Badge>}

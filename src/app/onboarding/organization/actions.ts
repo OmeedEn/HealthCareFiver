@@ -1,45 +1,44 @@
 'use server'
 
 import { z } from 'zod'
+import { refresh } from 'next/cache'
 import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import {
-  DISCLOSURE_DETAILS_MAX,
-  ORG_DISCLOSURES,
   ORG_DOCUMENT_KINDS,
+  ORG_INTENT_KEYS,
+  STAFFING_POSTS_ENABLED,
   facilityTypeEnumFor,
 } from '@/lib/onboarding/organization'
-import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
+import { markSubmitted, recordProgress } from '@/lib/onboarding/progress'
+import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
+import { disclosureKeysFor } from '@/lib/onboarding/checklist-organization'
 import {
-  aboutFields,
-  aboutSchema,
   checkFields,
   eventSchema,
   fieldErrors,
-  intentsSchema,
+  isOrgTypeAllowed,
   lookingForSchema,
+  orgDoorFor,
+  orgFieldRules,
+  ORG_TYPE_NOT_OFFERED,
   serviceSchema,
   staffingSchema,
   toCents,
-  verifyFields,
-  verifySchemaFor,
-  asksFacilityLicense,
-  isOrgTypeAllowed,
-  ORG_TYPE_NOT_OFFERED,
-  orgDoorFor,
-  URL_LIKE,
   withScheme,
-  type AboutData,
   type OrgDoc,
-  type VerifyData,
+  type OrgFieldInput,
+  type OrgFieldKey,
 } from './shared'
 
 export type ActionResult = { ok: true } | { ok: false; error: string; fields?: Record<string, string> }
 
 const SESSION_EXPIRED = 'Your session expired. Please sign in again.'
+const FIX_FIELDS = 'Please fix the highlighted fields.'
+const SAVE_FAILED = 'We couldn’t save that. Please try again.'
 
 async function authed() {
   const supabase = await createClient()
@@ -58,174 +57,146 @@ async function authed() {
 /** Demo mode has no stored door; it behaves like Hiring (both type lists, facility license). */
 const DEMO_DOOR = 'HIRING' as const
 
-async function bumpStep(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  next: number
-) {
-  const { data } = await supabase.from('facility_profiles').select('onboarding_step').eq('id', userId).single()
-  return Math.max(Number(data?.onboarding_step ?? 2), next)
-}
+/** Question ids the flow and the dashboard items record (onboarding_progress, flow 'organization'). */
+const QUESTION_ID = z.string().regex(/^[a-z_]{1,40}$/)
 
-/** Step 2. */
-export async function saveAbout(input: unknown): Promise<ActionResult> {
-  const parsed = aboutSchema.safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(parsed.error) }
-  }
-  const phone = normalizeUsPhone(parsed.data.phone)
-  if (!phone) return { ok: false, error: 'Please fix the highlighted fields.', fields: { phone: `${PHONE_ERROR}.` } }
-  if (isDemoMode()) {
-    if (!isOrgTypeAllowed(DEMO_DOOR, parsed.data.org_type)) {
-      return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
-    }
-    return { ok: true }
-  }
-
-  const a = await authed()
-  if ('error' in a) return { ok: false, error: a.error as string }
-  const d = parsed.data
-  // The type list depends on the door; trust the stored door, not the client.
-  if (!isOrgTypeAllowed(a.door, d.org_type)) {
-    return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
-  }
-  const website = withScheme(d.website)
-
-  const { error } = await a.supabase
-    .from('facility_profiles')
-    .update({
-      facility_name: d.facility_name,
-      org_type: d.org_type,
-      org_type_other: d.org_type === 'other' ? d.org_type_other : null,
-      facility_type: facilityTypeEnumFor(d.org_type),
-      org_size: d.org_size,
-      city: d.city,
-      state: d.state,
-      zip_code: d.zip_code,
-      location_count: d.location_count,
-      website,
-      phone,
-      description: d.description,
-      onboarding_step: await bumpStep(a.supabase, a.user.id, 3),
-    })
-    .eq('id', a.user.id)
-  if (error) {
-    console.error('[onboarding/organization] saveAbout failed', error)
-    return { ok: false, error: 'We couldn’t save that. Please try again.' }
-  }
-  return { ok: true }
-}
-
-const FIX_FIELDS = 'Please fix the highlighted fields.'
+const blankToNull = (v: string) => (v === '' ? null : v)
 
 /**
- * Step 2, one question at a time: save just the answered fields. Same rules
- * as saveAbout, but nothing else is required and the step isn't advanced —
- * saveAbout still runs on the step's last question.
+ * Save one screen's answers (onboarding screens 1–2 and 4–6, and the
+ * dashboard's Finish your profile items). Only the fields given are
+ * checked and written; `answered` marks the question ids done in
+ * onboarding_progress so a refresh resumes after them.
  */
-export async function saveAboutDraft(input: Partial<AboutData>): Promise<ActionResult> {
-  const keys = Object.keys(input ?? {}).filter((k): k is keyof AboutData & string => k in aboutFields)
-  if (!keys.length) return { ok: true }
-  const data = input as Record<string, unknown>
-  const fields = checkFields(aboutFields, keys, data)
-  if (Object.keys(fields).length) return { ok: false, error: FIX_FIELDS, fields }
-  const parsed = z.object(aboutFields).partial().parse(data)
-
-  const update: Record<string, unknown> = {}
-  for (const k of keys) {
-    if (k === 'org_type_other') continue
-    update[k] = parsed[k]
-  }
-  if ('org_type' in update && parsed.org_type) {
-    update.facility_type = facilityTypeEnumFor(parsed.org_type)
-    update.org_type_other = parsed.org_type === 'other' ? parsed.org_type_other || null : null
-  } else if (keys.includes('org_type_other')) {
-    update.org_type_other = parsed.org_type_other || null
-  }
-  if ('phone' in update) {
-    const phone = normalizeUsPhone(parsed.phone)
-    if (!phone) return { ok: false, error: FIX_FIELDS, fields: { phone: `${PHONE_ERROR}.` } }
-    update.phone = phone
-  }
-  if ('website' in update && parsed.website) update.website = withScheme(parsed.website)
-  const typeOffered = (door: Parameters<typeof isOrgTypeAllowed>[0]) =>
-    !parsed.org_type || isOrgTypeAllowed(door, parsed.org_type)
-  if (isDemoMode()) {
-    return typeOffered(DEMO_DOOR) ? { ok: true } : { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
-  }
-
-  const a = await authed()
-  if ('error' in a) return { ok: false, error: a.error as string }
-  // The type list depends on the door; trust the stored door, not the client.
-  if (!typeOffered(a.door)) return { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
-  const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
-  if (error) {
-    console.error('[onboarding/organization] saveAboutDraft failed', error)
-    return { ok: false, error: 'We couldn’t save that. Please try again.' }
-  }
-  return { ok: true }
-}
-
-/**
- * Step 3, one question at a time. Attestations are never saved here: they
- * are recorded (with timestamps) only by saveVerification at the end.
- */
-export async function saveVerifyDraft(
-  input: Partial<Omit<VerifyData, 'attest_authorized' | 'attest_checks'>>
-): Promise<ActionResult> {
+export async function saveOrgFields(input: OrgFieldInput, answered: string[] = []): Promise<ActionResult> {
   const data = (input ?? {}) as Record<string, unknown>
-  const keys = Object.keys(data).filter(
-    (k): k is keyof typeof verifyFields & string =>
-      k in verifyFields && k !== 'attest_authorized' && k !== 'attest_checks'
-  )
-  if (!keys.length) return { ok: true }
-  // Answered disclosures only; a partial set is fine mid-flow.
-  const draftFields = {
-    ...verifyFields,
-    disclosures: z.record(
-      z.string(),
-      z.object({ answer: z.enum(['', 'yes', 'no']), details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
-    ),
+  const keys = Object.keys(data).filter((k): k is OrgFieldKey => k in orgFieldRules)
+  if (!z.array(QUESTION_ID).max(10).safeParse(answered).success) return { ok: false, error: 'Invalid question.' }
+  const fields = checkFields(orgFieldRules, keys, data)
+  if (data.org_type === 'other' && !String(data.org_type_other ?? '').trim()) {
+    fields.org_type_other = 'Tell us what kind of organization you are'
   }
-  const fields = checkFields(draftFields, keys, data)
   if (Object.keys(fields).length) return { ok: false, error: FIX_FIELDS, fields }
-  const parsed = z.object(draftFields).partial().parse(data)
+  const d = z.object(orgFieldRules).partial().parse(data)
 
-  if (parsed.lead_linkedin && !URL_LIKE.test(parsed.lead_linkedin)) {
-    return { ok: false, error: FIX_FIELDS, fields: { lead_linkedin: 'Enter a valid link, like linkedin.com/in/name' } }
-  }
-
-  const YES_NO_COLUMNS = ['has_facility_license', 'lead_has_credential'] as const
   const update: Record<string, unknown> = {}
   for (const k of keys) {
-    if (k === 'disclosures' || (YES_NO_COLUMNS as readonly string[]).includes(k)) continue
-    const v = parsed[k]
-    update[k] = typeof v === 'string' && v === '' ? null : v
+    const v = d[k]
+    switch (k) {
+      case 'org_type':
+        update.org_type = v
+        update.facility_type = facilityTypeEnumFor(d.org_type!)
+        update.org_type_other = d.org_type === 'other' ? d.org_type_other || null : null
+        break
+      case 'org_type_other':
+        if (!keys.includes('org_type')) update.org_type_other = blankToNull(d.org_type_other ?? '')
+        break
+      case 'website':
+        update.website = d.website ? withScheme(d.website) : null
+        break
+      case 'lead_linkedin':
+        update.lead_linkedin = d.lead_linkedin ? withScheme(d.lead_linkedin) : null
+        break
+      case 'has_facility_license':
+      case 'lead_has_credential':
+        update[k] = v === 'yes'
+        break
+      case 'phone': {
+        if (!d.phone) {
+          update.phone = null
+          break
+        }
+        const phone = normalizeUsPhone(d.phone)
+        if (!phone) return { ok: false, error: FIX_FIELDS, fields: { phone: `${PHONE_ERROR}.` } }
+        update.phone = phone
+        break
+      }
+      case 'location_count':
+        update.location_count = d.location_count ? Number(d.location_count) : null
+        break
+      case 'disclosures':
+        break // merged below, needs the saved row
+      default:
+        update[k] = typeof v === 'string' ? blankToNull(v) : v
+    }
   }
-  for (const k of YES_NO_COLUMNS) {
-    if (keys.includes(k)) update[k] = parsed[k] === '' ? null : parsed[k] === 'yes'
+  // A "no" on screen 6 clears the details it would have asked for.
+  if (update.has_facility_license === false) {
+    Object.assign(update, {
+      facility_license_type: null,
+      facility_license_number: null,
+      facility_license_agency: null,
+      facility_license_expires: null,
+    })
   }
-  if (typeof update.lead_linkedin === 'string') update.lead_linkedin = withScheme(update.lead_linkedin)
-  if (isDemoMode()) return { ok: true }
+  if (update.lead_has_credential === false) {
+    Object.assign(update, { lead_credential_type: null, lead_credential_number: null, lead_credential_state: null })
+  }
+  // Typing a website un-declares "We don't have a website", and vice versa.
+  if (typeof update.website === 'string' && !keys.includes('has_no_website')) update.has_no_website = false
+  if (update.has_no_website === true) update.website = null
+
+  if (isDemoMode()) {
+    return d.org_type && !isOrgTypeAllowed(DEMO_DOOR, d.org_type)
+      ? { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+      : { ok: true }
+  }
 
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
-  if (parsed.disclosures) {
-    const { data: org } = await a.supabase.rpc('my_facility_profile').select('self_disclosures').single()
-    const merged = { ...((org?.self_disclosures ?? {}) as Record<string, unknown>) }
-    for (const q of ORG_DISCLOSURES) {
-      const ans = parsed.disclosures[q.key]
-      if (!ans?.answer) continue
-      merged[q.key] = { answer: ans.answer === 'yes', details: ans.answer === 'yes' ? ans.details || null : null }
+  // The type list depends on the door; trust the stored door, not the client.
+  if (d.org_type && !isOrgTypeAllowed(a.door, d.org_type)) {
+    return { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+  }
+
+  if (d.disclosures) {
+    const { data: org } = await a.supabase
+      .rpc('my_facility_profile')
+      .select('self_disclosures, has_facility_license')
+      .single<{ self_disclosures: Record<string, unknown> | null; has_facility_license: boolean | null }>()
+    const asked = disclosureKeysFor({ has_facility_license: org?.has_facility_license ?? null })
+    const picked = d.disclosures.picked.filter((k) => (asked as readonly string[]).includes(k))
+    if (picked.length && !d.disclosures.details) {
+      return { ok: false, error: FIX_FIELDS, fields: { 'disclosures.details': 'Tell us a bit more' } }
+    }
+    const merged: Record<string, unknown> = { ...(org?.self_disclosures ?? {}) }
+    for (const k of asked) {
+      const yes = picked.includes(k)
+      merged[k] = { answer: yes, details: yes ? d.disclosures.details : null }
     }
     update.self_disclosures = merged
   }
-  const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
-  if (error) {
-    console.error('[onboarding/organization] saveVerifyDraft failed', error)
-    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+
+  if (Object.keys(update).length) {
+    const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
+    if (error) {
+      console.error('[onboarding/organization] saveOrgFields failed', { code: error.code, keys })
+      return { ok: false, error: SAVE_FAILED }
+    }
+  }
+  if (answered.length) {
+    const res = await recordProgress(a.supabase, a.user.id, 'organization', { answered })
+    if (!res.ok) return res
   }
   return { ok: true }
+}
+
+/** "Skip for now": the question becomes a Finish your profile item. */
+export async function skipOrgQuestion(id: string): Promise<ActionResult> {
+  if (!QUESTION_ID.safeParse(id).success) return { ok: false, error: 'Invalid question.' }
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  return recordProgress(a.supabase, a.user.id, 'organization', { skipped: [id] })
+}
+
+/** Mark questions answered without changing any profile field (e.g. an upload screen, or "same as our name"). */
+export async function markOrgAnswered(ids: string[]): Promise<ActionResult> {
+  if (!z.array(QUESTION_ID).min(1).max(10).safeParse(ids).success) return { ok: false, error: 'Invalid question.' }
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  return recordProgress(a.supabase, a.user.id, 'organization', { answered: ids })
 }
 
 const recordDocSchema = z.object({
@@ -234,7 +205,7 @@ const recordDocSchema = z.object({
   filename: z.string().min(1).max(255),
 })
 
-/** Step 3 upload: record a file the browser already put in storage. */
+/** Record a file the browser already put in storage. */
 export async function recordOrgDocument(
   input: unknown
 ): Promise<{ ok: true; doc: OrgDoc } | { ok: false; error: string }> {
@@ -269,97 +240,73 @@ export async function removeOrgDocument(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Step 3. Which license question applies depends on the door, read from the database. */
-export async function saveVerification(input: unknown): Promise<ActionResult> {
-  const a = isDemoMode() ? null : await authed()
-  if (a && 'error' in a) return { ok: false, error: a.error as string }
-  const door = a ? a.door : DEMO_DOOR
-  const parsed = verifySchemaFor(door).safeParse(input)
-  if (!parsed.success) {
-    return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(parsed.error) }
-  }
-  if (!a) return { ok: true }
+const submitSchema = z.object({
+  attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
+  attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
+})
 
-  const d = parsed.data
-  const facility = asksFacilityLicense(door)
-  const hasLicense = facility && d.has_facility_license === 'yes'
-  const leadHasCredential = !facility && d.lead_has_credential === 'yes'
-
-  const { data: docs } = await a.supabase.from('org_documents').select('kind').eq('facility_id', a.user.id)
-  const kinds = new Set((docs ?? []).map((x) => x.kind))
-  const docErrors: Record<string, string> = {}
-  if (!kinds.has('business_registration')) {
-    docErrors['doc.business_registration'] = 'Upload your business license or Secretary of State registration'
-  }
-  if (hasLicense && !kinds.has('facility_license')) {
-    docErrors['doc.facility_license'] = 'Upload your facility license'
-  }
-  if (Object.keys(docErrors).length) {
-    return { ok: false, error: 'Please upload the required documents.', fields: docErrors }
-  }
-
-  const disclosures = Object.fromEntries(
-    ORG_DISCLOSURES.map((q) => {
-      const ans = d.disclosures[q.key]
-      return [q.key, { answer: ans.answer === 'yes', details: ans.answer === 'yes' ? ans.details : null }]
-    })
-  )
-  const now = new Date().toISOString()
-
-  const { error } = await a.supabase
-    .from('facility_profiles')
-    .update({
-      legal_name: d.legal_name || null,
-      business_structure: d.business_structure,
-      registration_state: d.registration_state,
-      has_facility_license: hasLicense,
-      facility_license_type: hasLicense ? d.facility_license_type : null,
-      facility_license_number: hasLicense ? d.facility_license_number : null,
-      facility_license_agency: hasLicense ? d.facility_license_agency : null,
-      facility_license_expires: hasLicense ? d.facility_license_expires : null,
-      lead_has_credential: facility ? null : leadHasCredential,
-      lead_credential_type: leadHasCredential ? d.lead_credential_type : null,
-      lead_credential_number: leadHasCredential ? d.lead_credential_number : null,
-      lead_credential_state: leadHasCredential ? d.lead_credential_state : null,
-      lead_linkedin: !facility && d.lead_linkedin ? withScheme(d.lead_linkedin) : null,
-      org_npi: d.org_npi || null,
-      self_disclosures: disclosures,
-      attested_authorized_at: now,
-      authorized_checks_at: now,
-      onboarding_step: await bumpStep(a.supabase, a.user.id, 4),
-    })
-    .eq('id', a.user.id)
-  if (error) {
-    console.error('[onboarding/organization] saveVerification failed', error)
-    return { ok: false, error: 'We couldn’t save that. Please try again.' }
-  }
-  return { ok: true }
-}
-
-/** Step 4: save what they want to do, then on to quick setup. */
-export async function saveIntents(input: unknown): Promise<ActionResult> {
-  const parsed = intentsSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
+/**
+ * Screen 8: record both attestations and submit the application for review.
+ * Needs the answers screens 1–6 ask; the registration upload is skippable
+ * (a Needed for approval item if skipped), and disclosures and the rest
+ * are dashboard items. Skipping never blocks submission.
+ */
+export async function submitOrgApplication(input: unknown): Promise<ActionResult> {
+  const parsed = submitSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: FIX_FIELDS, fields: fieldErrors(parsed.error) }
   if (isDemoMode()) return { ok: true }
-
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
 
-  const { data: org } = await a.supabase.rpc('my_facility_profile').select('attested_authorized_at').single()
-  if (!org?.attested_authorized_at) return { ok: false, error: 'Finish verifying your organization first.' }
+  const [{ data: org }, { data: docs }] = await Promise.all([
+    a.supabase.rpc('my_facility_profile').select('*').single<Record<string, unknown>>(),
+    a.supabase.from('org_documents').select('kind').eq('facility_id', a.user.id),
+  ])
+  if (!org) return { ok: false, error: 'We couldn’t find your organization. Please refresh and try again.' }
+  const flow = orgFlowDataFromRow(org, (docs ?? []).map((x) => x.kind as string))
+  const open = ORG_FLOW_IDS.filter(
+    (id) => id !== 'registration_doc' && id !== 'submit' && !orgAnswerOnFile(id, flow, a.door)
+  )
+  if (open.length) return { ok: false, error: 'A few earlier questions still need an answer. Go back to finish them.' }
 
+  const now = new Date().toISOString()
   const { error } = await a.supabase
     .from('facility_profiles')
-    .update({ intents: Array.from(new Set(parsed.data)), onboarding_step: 5 })
+    .update({
+      attested_authorized_at: now,
+      authorized_checks_at: now,
+      onboarding_step: 5,
+      onboarding_submitted_at: (org.onboarding_submitted_at as string | null) ?? now,
+    })
     .eq('id', a.user.id)
   if (error) {
-    console.error('[onboarding/organization] saveIntents failed', error)
-    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+    console.error('[onboarding/organization] submit failed', { code: error.code })
+    return { ok: false, error: 'We couldn’t submit your application. Please try again.' }
   }
+  const progress = await recordProgress(a.supabase, a.user.id, 'organization', { answered: ['submit'] })
+  if (!progress.ok) return progress
+  return markSubmitted(a.supabase, a.user.id, 'organization')
+}
+
+/**
+ * A "What do you want to do first?" card was opened: remember the intent
+ * (shapes suggestions; editable on the profile page).
+ */
+export async function recordOrgIntent(intent: string): Promise<ActionResult> {
+  const parsed = z.enum(ORG_INTENT_KEYS).safeParse(intent)
+  if (!parsed.success) return { ok: false, error: 'Unknown option.' }
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  const { data: org } = await a.supabase.rpc('my_facility_profile').select('intents').single<{ intents: string[] | null }>()
+  const intents = Array.from(new Set([...(org?.intents ?? []), parsed.data]))
+  const { error } = await a.supabase.from('facility_profiles').update({ intents }).eq('id', a.user.id)
+  if (error) return { ok: false, error: SAVE_FAILED }
+  refresh()
   return { ok: true }
 }
 
-/* ───────────── Step 5: Quick setup ───────────── */
+/* ───────────── Setup from the first-run cards (drafts) ───────────── */
 
 function invalid(error: z.ZodError): ActionResult {
   return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(error) }
@@ -496,26 +443,3 @@ export async function saveStaffingPost(input: unknown): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Finish: submit the application for review. */
-export async function finishOnboarding(): Promise<ActionResult> {
-  if (isDemoMode()) return { ok: true }
-  const a = await authed()
-  if ('error' in a) return { ok: false, error: a.error as string }
-
-  const { data: org } = await a.supabase
-    .rpc('my_facility_profile')
-    .select('onboarding_submitted_at, attested_authorized_at, intents')
-    .single()
-  if (!org?.attested_authorized_at || !(org.intents ?? []).length) {
-    return { ok: false, error: 'Finish the earlier steps first.' }
-  }
-  const { error } = await a.supabase
-    .from('facility_profiles')
-    .update({ onboarding_step: 5, onboarding_submitted_at: org.onboarding_submitted_at ?? new Date().toISOString() })
-    .eq('id', a.user.id)
-  if (error) {
-    console.error('[onboarding/organization] finishOnboarding failed', error)
-    return { ok: false, error: 'We couldn’t submit your application. Please try again.' }
-  }
-  return { ok: true }
-}

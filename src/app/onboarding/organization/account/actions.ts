@@ -6,10 +6,15 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { mfaGate } from '@/lib/auth/mfa'
-import { TERMS_VERSION } from '@/lib/legal'
-import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
+import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { canConvertNewProfessional, convertToOrg } from '@/lib/onboarding/google-account'
-import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
+import { ORG_TYPE_KEYS, facilityTypeEnumFor, orgTypesForPath, type OrgTypeKey } from '@/lib/onboarding/organization'
+import {
+  ORG_SIGNUP_ANSWERS_COOKIE,
+  ORG_SIGNUP_SOURCE_COOKIE,
+  parseOrgSignupAnswers,
+  parseOrgSignupSource,
+} from '@/lib/onboarding/org-signup-source'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 
 export type OrgAccountState = { error?: string } | null
@@ -18,14 +23,13 @@ const text = (label: string, max: number) =>
   z.string().trim().min(1, `${label} is required`).max(max, `${label} must be ${max} characters or fewer`)
 
 /**
- * Organization account step after "Continue with Google": turn the new
- * account into an organization (if it was created as a professional) and
- * collect name, title, phone and Terms consent. Then on to the wizard.
+ * Organization account screen after "Continue with Google": turn the new
+ * account into an organization (if it was created as a professional), save
+ * screens 1–2 carried in the cookie, and record the one consent checkbox
+ * (Terms of Service, Privacy Policy, Organization Terms). No title or
+ * phone: those are dashboard items now. Then on to screens 4–8.
  */
-export async function finishOrgAccount(
-  _prev: OrgAccountState,
-  formData: FormData
-): Promise<OrgAccountState> {
+export async function finishOrgAccount(_prev: OrgAccountState, formData: FormData): Promise<OrgAccountState> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -38,17 +42,11 @@ export async function finishOrgAccount(
   if (!first.success) return { error: first.error.issues[0].message }
   const last = text('Last name', 100).safeParse(formData.get('last_name') ?? '')
   if (!last.success) return { error: last.error.issues[0].message }
-  const title = text('Your role or title', 100).safeParse(formData.get('title') ?? '')
-  if (!title.success) return { error: title.error.issues[0].message }
-  const phone = normalizeUsPhone(String(formData.get('phone') ?? ''))
-  if (!phone) return { error: `${PHONE_ERROR}.` }
 
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
-  const needsTerms = !meta.terms_accepted_at || !meta.terms_version
-  if (needsTerms && formData.get('accepted_terms') !== 'on') {
-    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' }
+  if (formData.get('accepted_terms') !== 'on') {
+    return { error: 'Please agree to the Terms of Service, Privacy Policy, and Organization Terms to continue.' }
   }
-  if (needsTerms && formData.get('terms_version') !== TERMS_VERSION) {
+  if (formData.get('terms_version') !== TERMS_VERSION || formData.get('org_terms_version') !== ORG_AGREEMENT_VERSION) {
     return { error: 'Our Terms were updated — please refresh the page and review them.' }
   }
 
@@ -73,36 +71,55 @@ export async function finishOrgAccount(
     redirect('/dashboard')
   }
 
-  const [{ error: phoneError }, { error: orgError }, { error: metaError }] = await Promise.all([
-    admin.from('profiles').update({ phone }).eq('id', user.id),
-    admin
-      .from('facility_profiles')
-      .update({ contact_name: contactName, contact_title: title.data })
-      .eq('id', user.id),
-    supabase.auth.updateUser({
-      data: {
-        first_name: first.data,
-        last_name: last.data,
-        ...(needsTerms
-          ? { terms_accepted_at: new Date().toISOString(), terms_version: TERMS_VERSION }
-          : {}),
-      },
-    }),
-  ])
-  if (phoneError || orgError || metaError) {
-    console.error('[onboarding/organization/account] save failed', phoneError ?? orgError ?? metaError)
-    return { error: 'We couldn’t save your details. Please try again.' }
-  }
-
-  // Record the door they came through (Google accounts are created without
-  // one). Validated against the org doors; if it was lost, leave it unset
-  // rather than guess.
+  // The door they came through (Google accounts are created without one).
+  // Validated against the org doors; if it was lost, leave it unset.
   const cookieStore = await cookies()
   const source =
     parseOrgSignupSource(formData.get('source')) ??
     parseOrgSignupSource(cookieStore.get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
   if (source) await setSignupPathIfUnset(admin, user.id, source)
-  cookieStore.delete(ORG_SIGNUP_SOURCE_COOKIE)
 
+  // Screens 1–2 from before the Google round trip. Re-validated here; if
+  // anything's off, /onboarding/organization asks them again.
+  const orgUpdate: Record<string, unknown> = { contact_name: contactName }
+  const answers = parseOrgSignupAnswers(cookieStore.get(ORG_SIGNUP_ANSWERS_COOKIE)?.value)
+  const { data: org } = await admin.from('facility_profiles').select('org_type, facility_name').eq('id', user.id).single()
+  if (answers && source) {
+    const type = answers.org_type as OrgTypeKey
+    const typeOk =
+      (ORG_TYPE_KEYS as readonly string[]).includes(type) &&
+      orgTypesForPath(source).some((t) => t.value === type) &&
+      (type !== 'other' || !!answers.org_type_other)
+    if (typeOk && !org?.org_type) {
+      orgUpdate.org_type = type
+      orgUpdate.facility_type = facilityTypeEnumFor(type)
+      orgUpdate.org_type_other = type === 'other' ? answers.org_type_other : null
+    }
+    if (answers.facility_name && !org?.facility_name) orgUpdate.facility_name = answers.facility_name
+  }
+
+  const now = new Date().toISOString()
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  const [{ error: orgError }, { error: metaError }] = await Promise.all([
+    admin.from('facility_profiles').update(orgUpdate).eq('id', user.id),
+    supabase.auth.updateUser({
+      data: {
+        first_name: first.data,
+        last_name: last.data,
+        ...(!meta.terms_accepted_at || meta.terms_version !== TERMS_VERSION
+          ? { terms_accepted_at: now, terms_version: TERMS_VERSION }
+          : {}),
+        org_terms_accepted_at: now,
+        org_terms_version: ORG_AGREEMENT_VERSION,
+      },
+    }),
+  ])
+  if (orgError || metaError) {
+    console.error('[onboarding/organization/account] save failed', orgError ?? metaError)
+    return { error: 'We couldn’t save your details. Please try again.' }
+  }
+
+  cookieStore.delete(ORG_SIGNUP_SOURCE_COOKIE)
+  cookieStore.delete(ORG_SIGNUP_ANSWERS_COOKIE)
   redirect('/onboarding/organization')
 }

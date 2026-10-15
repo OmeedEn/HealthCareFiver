@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   FileText,
   CreditCard,
-  PlusCircle,
   Users,
   ClipboardList,
   AlertCircle,
@@ -46,6 +45,7 @@ import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
+import { OrgFinishSection } from '@/components/org/org-finish-section'
 import { SUPPORT_EMAIL } from '@/lib/env'
 import {
   buildContractorChecklist,
@@ -182,6 +182,7 @@ export default async function DashboardPage() {
   let orgStatus: string | null = null
   let orgNotes: string | null = null
   let orgNeedsAgreement = false
+  let orgUserId: string | null = null
 
   if (isDemoMode()) {
     // Read the demo role override cookie set by DemoRoleSwitcher.
@@ -555,6 +556,7 @@ export default async function DashboardPage() {
     }
 
     if (role === 'facility') {
+      orgUserId = user.id
       const [
         { data: facilityRow },
         { data: recentJobs },
@@ -666,7 +668,12 @@ export default async function DashboardPage() {
         />
       )}
       {role === 'facility' && <OrgReviewBanner status={orgStatus} notes={orgNotes} />}
-      {role === 'facility' && orgNeedsAgreement && <OrgAgreementCard />}
+      {role === 'facility' && orgUserId && <OrgFinishSection userId={orgUserId} />}
+      {role === 'facility' && orgNeedsAgreement && (
+        <div id="org-agreement" className="scroll-mt-20">
+          <OrgAgreementCard />
+        </div>
+      )}
       {role === 'facility' && (
         <FacilityDashboard
           kpis={facilityKpis}
@@ -1410,61 +1417,12 @@ function FacilityDashboard({
   })
   // Demo mode has no real setup state; fall back to "has jobs" there.
   const hasPostedJob = setup ? setup.hasPostedJob : jobs.length > 0
-  const orgProfileMissing = setup?.orgProfileMissing ?? []
-  const showFirstRun = !hasPostedJob || orgProfileMissing.length > 0
   // Hide the stat row for a brand-new facility rather than show zeros.
   const showRealStats =
     !isDemo && (hasPostedJob || kpis.activeContracts > 0)
 
   return (
     <div className="space-y-6">
-      {showFirstRun && (
-        <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
-              <PlusCircle className="h-5 w-5" />
-              Get started
-            </CardTitle>
-            <CardDescription className="font-semibold text-[#0f8f56]">
-              Two quick steps to start finding qualified healthcare
-              professionals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {STAFFING_POSTS_ENABLED ? (
-                <FirstRunItem
-                  done={hasPostedJob}
-                  title="Post your first job"
-                  detail="Describe the role, schedule, and pay."
-                  href="/facility/jobs/new"
-                  cta="Post a job"
-                />
-              ) : (
-                <FirstRunItem
-                  done={hasPostedJob}
-                  title="Add your services or events"
-                  detail="Save them as drafts — they go live after review."
-                  href="/facility/listings"
-                  cta="Add a listing"
-                />
-              )}
-              <FirstRunItem
-                done={orgProfileMissing.length === 0}
-                title="Complete your organization profile"
-                detail={
-                  orgProfileMissing.length > 0
-                    ? `Add your ${orgProfileMissing.join(', ')}.`
-                    : 'Professionals can see who they would work with.'
-                }
-                href="/facility/profile"
-                cta="Edit profile"
-              />
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
       {isDemo && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -1807,50 +1765,6 @@ function FacilityDashboard({
         </div>
       </div>
     </div>
-  )
-}
-
-function FirstRunItem({
-  done,
-  title,
-  detail,
-  href,
-  cta,
-}: {
-  done: boolean
-  title: string
-  detail: string
-  href: string
-  cta: string
-}) {
-  return (
-    <li className="flex items-start gap-3">
-      <CheckCircle2
-        className={`mt-0.5 size-5 shrink-0 ${
-          done ? 'text-[#1dbf73]' : 'text-[#c5c6c9]'
-        }`}
-        aria-hidden="true"
-      />
-      <div className="min-w-0 flex-1">
-        <p
-          className={`text-sm font-medium ${
-            done ? 'text-[#62646a] line-through' : 'text-[#404145]'
-          }`}
-        >
-          {title}
-          {done && <span className="sr-only"> (done)</span>}
-        </p>
-        {!done && <p className="text-sm text-[#62646a]">{detail}</p>}
-      </div>
-      {!done && (
-        <Link
-          href={href}
-          className="shrink-0 text-sm font-semibold text-[#1dbf73] hover:underline"
-        >
-          {cta} &rarr;
-        </Link>
-      )}
-    </li>
   )
 }
 

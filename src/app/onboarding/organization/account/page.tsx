@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseConfig } from '@/lib/supabase/config'
-import { TERMS_VERSION } from '@/lib/legal'
+import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
 import { OrgAccountForm } from './form'
@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: 'Finish creating your organization ac
 
 /**
  * Landing page after "Continue with Google" on /signup/organization (via
- * /callback). Google signups skip step 1's form, so collect name, title,
- * phone and Terms consent here, then hand off to the wizard.
+ * /callback): the account screen's name and consent checkbox, then on to
+ * screens 4–8 at /onboarding/organization.
  */
 export default async function OrgAccountPage({
   searchParams,
@@ -27,16 +27,15 @@ export default async function OrgAccountPage({
     parseOrgSignupSource((await searchParams).source) ??
     parseOrgSignupSource((await cookies()).get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
 
-  if (!getSupabaseConfig()) {
-    return (
-      <OrgAccountForm
-        prefill={{ firstName: '', lastName: '', title: '' }}
-        needsTerms
-        termsVersion={TERMS_VERSION}
-        source={source}
-      />
-    )
-  }
+  const form = (firstName: string, lastName: string) => (
+    <OrgAccountForm
+      prefill={{ firstName, lastName }}
+      termsVersion={TERMS_VERSION}
+      orgTermsVersion={ORG_AGREEMENT_VERSION}
+      source={source}
+    />
+  )
+  if (!getSupabaseConfig()) return form('', '')
 
   const supabase = await createClient()
   const {
@@ -45,38 +44,27 @@ export default async function OrgAccountPage({
   if (!user) redirect('/login?redirectTo=/onboarding/organization/account')
 
   const admin = createAdminClient()
-  const { data: profile } = await admin.from('profiles').select('role, phone').eq('id', user.id).single()
+  const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single()
   const role = profile?.role
+  const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>
 
   if (role === 'contractor') {
     // An established professional account can't be turned into an org.
     if (!(await canConvertNewProfessional(admin, user))) redirect('/dashboard')
   } else if (role === 'facility' || role === 'staffing_agency') {
-    const { data: org } = await admin
-      .from('facility_profiles')
-      .select('contact_title')
-      .eq('id', user.id)
-      .single()
-    const meta = (user.user_metadata ?? {}) as Record<string, unknown>
-    const complete = org?.contact_title && profile?.phone && meta.terms_accepted_at && meta.terms_version
-    if (complete) redirect('/onboarding/organization')
+    // Already an organization that agreed (email signup, or this step done): carry on.
+    const { data: org } = await admin.from('facility_profiles').select('onboarding_submitted_at').eq('id', user.id).single()
+    if ((meta.terms_accepted_at && meta.org_terms_accepted_at) || org?.onboarding_submitted_at) {
+      redirect('/onboarding/organization')
+    }
   } else {
     redirect('/dashboard')
   }
 
-  const meta = (user.user_metadata ?? {}) as Record<string, string | undefined>
   const fullName = (meta.full_name || meta.name || '').trim()
   const [firstFromFull, ...rest] = fullName.split(/\s+/)
-  return (
-    <OrgAccountForm
-      prefill={{
-        firstName: meta.first_name || meta.given_name || firstFromFull || '',
-        lastName: meta.last_name || meta.family_name || rest.join(' ') || '',
-        title: '',
-      }}
-      needsTerms={!meta.terms_accepted_at || !meta.terms_version}
-      termsVersion={TERMS_VERSION}
-      source={source}
-    />
+  return form(
+    meta.first_name || meta.given_name || firstFromFull || '',
+    meta.last_name || meta.family_name || rest.join(' ') || ''
   )
 }
