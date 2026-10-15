@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   '/callback',
   '/find-care',
   '/pros',
+  '/orgs',
   '/events-and-training',
   '/for-organizations',
   '/for-professionals',
