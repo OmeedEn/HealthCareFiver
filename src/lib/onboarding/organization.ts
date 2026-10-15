@@ -15,28 +15,49 @@ export const DISCLOSURE_DETAILS_MAX = 2000
 /**
  * Step 2 organization types. `enumValue` is the closest legacy
  * `facility_type` enum value (still NOT NULL on facility_profiles).
+ * `door` says which signup door lists it (Signup Routing Update): Practice
+ * shows 'practice', Company shows 'company', Hiring (and accounts with no
+ * door) show both. 'other' is in every list. 'startup' is legacy — kept so
+ * existing rows still label correctly, but no longer offered.
  */
 export const ORG_TYPES = [
-  { value: 'hospital', label: 'Hospital or health system', enumValue: 'hospital' },
-  { value: 'clinic', label: 'Clinic or medical practice', enumValue: 'clinic' },
-  { value: 'urgent_care', label: 'Urgent care or ambulatory surgery center', enumValue: 'urgent_care' },
-  { value: 'nursing_home', label: 'Nursing home or long-term care', enumValue: 'nursing_home' },
-  { value: 'home_health', label: 'Home health or hospice agency', enumValue: 'home_health' },
-  { value: 'telehealth', label: 'Telehealth company', enumValue: 'telehealth' },
-  { value: 'med_spa', label: 'Med spa, aesthetics, or wellness/longevity center', enumValue: 'other' },
-  { value: 'gym', label: 'Gym or fitness studio', enumValue: 'other' },
-  { value: 'school', label: 'School, university, or training program', enumValue: 'other' },
-  { value: 'nonprofit', label: 'Nonprofit, community, or public health organization', enumValue: 'other' },
-  { value: 'employer', label: 'Corporate employer (wellness programs)', enumValue: 'other' },
-  { value: 'law_firm', label: 'Law firm', enumValue: 'other' },
-  { value: 'startup', label: 'Healthcare startup or tech company', enumValue: 'other' },
-  { value: 'staffing', label: 'Staffing or recruiting firm', enumValue: 'staffing_agency' },
-  { value: 'government', label: 'Government agency', enumValue: 'other' },
-  { value: 'other', label: 'Other', enumValue: 'other' },
+  { value: 'hospital', label: 'Hospital or health system', enumValue: 'hospital', door: 'practice' },
+  { value: 'clinic', label: 'Clinic or medical practice', enumValue: 'clinic', door: 'practice' },
+  { value: 'urgent_care', label: 'Urgent care or ambulatory surgery center', enumValue: 'urgent_care', door: 'practice' },
+  { value: 'nursing_home', label: 'Nursing home or long-term care', enumValue: 'nursing_home', door: 'practice' },
+  { value: 'home_health', label: 'Home health or hospice agency', enumValue: 'home_health', door: 'practice' },
+  { value: 'telehealth', label: 'Telehealth company', enumValue: 'telehealth', door: 'practice' },
+  { value: 'med_spa', label: 'Med spa or wellness/longevity center', enumValue: 'other', door: 'practice' },
+  { value: 'gym', label: 'Gym or fitness studio', enumValue: 'other', door: 'practice' },
+  { value: 'school', label: 'School, university, or training program', enumValue: 'other', door: 'practice' },
+  { value: 'nonprofit', label: 'Nonprofit, community, or public health organization', enumValue: 'other', door: 'practice' },
+  { value: 'employer', label: 'Corporate employer (wellness programs)', enumValue: 'other', door: 'practice' },
+  { value: 'government', label: 'Government agency', enumValue: 'other', door: 'practice' },
+  { value: 'consulting', label: 'Consulting firm', enumValue: 'other', door: 'company' },
+  { value: 'law_firm', label: 'Law firm', enumValue: 'other', door: 'company' },
+  { value: 'billing_rcm', label: 'Billing, RCM, or credentialing company', enumValue: 'other', door: 'company' },
+  { value: 'ceu_training', label: 'CEU or training company', enumValue: 'other', door: 'company' },
+  { value: 'health_tech', label: 'Health tech or software vendor', enumValue: 'other', door: 'company' },
+  { value: 'staffing', label: 'Staffing or recruiting firm', enumValue: 'staffing_agency', door: 'company' },
+  { value: 'marketing', label: 'Marketing or media agency', enumValue: 'other', door: 'company' },
+  { value: 'startup', label: 'Healthcare startup or tech company', enumValue: 'other', door: 'legacy' },
+  { value: 'other', label: 'Other', enumValue: 'other', door: 'all' },
 ] as const
 
 export type OrgTypeKey = (typeof ORG_TYPES)[number]['value']
 export const ORG_TYPE_KEYS = ORG_TYPES.map((t) => t.value) as [OrgTypeKey, ...OrgTypeKey[]]
+
+/**
+ * Step 2 options for a signup door. Practice → practice list, Company →
+ * company list, Hiring or no door → both combined. Other is always last.
+ */
+export function orgTypesForPath(path: string | null | undefined) {
+  const want = path === 'PRACTICE' ? ['practice'] : path === 'COMPANY' ? ['company'] : ['practice', 'company']
+  return [
+    ...ORG_TYPES.filter((t) => want.includes(t.door)),
+    ...ORG_TYPES.filter((t) => t.door === 'all'),
+  ]
+}
 
 export function orgTypeLabel(key: string | null | undefined, other?: string | null): string | null {
   if (!key) return null

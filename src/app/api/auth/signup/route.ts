@@ -6,6 +6,7 @@ import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
 import { TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
+import { ORG_SIGNUP_PATHS } from '@/lib/onboarding/signup-path'
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -95,6 +96,7 @@ const contractorSchema = z.object({
   professional_category: z
     .enum(PROFESSIONAL_CATEGORIES, 'Select a valid professional category')
     .optional(),
+  signup_path: z.literal('INDEPENDENT').default('INDEPENDENT'),
 })
 
 // Organization signup is step 1 of the Organization Onboarding spec: just
@@ -113,6 +115,9 @@ const facilitySchema = z.object({
     .min(1, 'Your role or title is required')
     .max(100, 'Keep your title to 100 characters or fewer'),
   phone,
+  // Which door they came through (/signup/organization?source=…). Drives
+  // the org type list, step 3 questions and pre-selected goals.
+  signup_path: z.enum(ORG_SIGNUP_PATHS, 'Choose how you work on the previous screen'),
 })
 
 const clientSchema = z.object({
@@ -133,6 +138,7 @@ const clientSchema = z.object({
     .optional(),
   state: stateCode.optional(),
   zip_code: zipCode.optional(),
+  signup_path: z.literal('CLIENT').default('CLIENT'),
 })
 
 const schema = z.discriminatedUnion(
@@ -217,6 +223,10 @@ export async function POST(request: NextRequest) {
       ...(body.zip_code ? { zip_code: body.zip_code } : {}),
     }
   }
+
+  // handle_new_user stores this on profiles.signup_path (only when it
+  // matches the role).
+  data.signup_path = body.signup_path
 
   // Consent record: server timestamp (never trust a client clock) plus the
   // exact terms version shown.
