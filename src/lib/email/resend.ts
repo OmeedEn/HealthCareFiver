@@ -464,3 +464,77 @@ export async function sendOrgReviewActionEmail(
     `),
   })
 }
+
+// ---------------------------------------------------------------------------
+// Signup classification (Signup Routing Update)
+// ---------------------------------------------------------------------------
+
+export interface ClassificationEmailContext {
+  firstName: string | null
+  email: string
+}
+
+function staffNoteBlock(note: string | null | undefined): string {
+  const trimmed = (note ?? '').trim()
+  if (!trimmed) return ''
+  return `
+      <p><strong>A note from our team:</strong></p>
+      <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid #1dbf73;">${escapeHtml(trimmed).replace(/\n/g, '<br />')}</blockquote>`
+}
+
+/** Subject for the staff-placement email ("Welcome to Sanus, [first name]. …"). */
+export function classificationAssignedSubject(firstName: string | null): string {
+  const name = (firstName ?? '').trim()
+  return name
+    ? `Welcome to Sanus, ${name}. Here's your next step.`
+    : "Welcome to Sanus. Here's your next step."
+}
+
+/**
+ * Sent when staff place a Not sure signup (or change an account's category)
+ * from /admin/classification or the admin user page. `category` is the
+ * SIGNUP_PATH_LABELS phrase (e.g. "an independent professional");
+ * `setupPath` is ONBOARDING_PATH_FOR[path]. Clients have nothing to verify,
+ * so their copy swaps the "verify you and get you listed" line.
+ */
+export async function sendClassificationAssignedEmail(
+  person: ClassificationEmailContext,
+  assignment: { category: string; setupPath: string; isClient: boolean; note?: string | null },
+  appUrl: string
+): Promise<SendEmailResponse> {
+  const setupUrl = `${normalizeAppUrl(appUrl)}${assignment.setupPath}`
+  const next = assignment.isClient
+    ? 'Finish a few more details and you can start browsing and booking.'
+    : 'Finish a few more details so we can verify you and get you listed.'
+  return sendEmail({
+    to: person.email,
+    subject: classificationAssignedSubject(person.firstName),
+    html: layout(`
+      <p>Hi ${escapeHtml(person.firstName?.trim() || 'there')},</p>
+      <p>Thanks for signing up. Based on what you told us, we&#39;ve set you up as ${escapeHtml(assignment.category)}. ${next}</p>
+      ${staffNoteBlock(assignment.note)}
+      ${ctaButton(setupUrl, 'Finish setup')}
+      <p>Questions? Reply to this email.</p>
+    `),
+  })
+}
+
+/**
+ * Sent when staff decline to place a Not sure signup. Neutral: the account
+ * stays open as a client.
+ */
+export async function sendClassificationRejectedEmail(
+  person: ClassificationEmailContext,
+  note: string | null | undefined
+): Promise<SendEmailResponse> {
+  return sendEmail({
+    to: person.email,
+    subject: 'An update on your Sanus account',
+    html: layout(`
+      <p>Hi ${escapeHtml(person.firstName?.trim() || 'there')},</p>
+      <p>Thanks for signing up and telling us about what you do. We&#39;re not able to set you up to offer services on Sanus right now. Your account stays open, so you can still browse and book services as a client.</p>
+      ${staffNoteBlock(note)}
+      <p>Questions? Reply to this email.</p>
+    `),
+  })
+}

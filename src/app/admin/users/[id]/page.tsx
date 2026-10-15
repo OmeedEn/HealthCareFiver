@@ -15,6 +15,12 @@ import {
   VerificationBadge,
 } from '@/components/admin/status-badges'
 import { AccountActions } from './account-actions'
+import { CategoryControl } from './category-control'
+import {
+  SIGNUP_PATH_SHORT_LABELS,
+  accountTypeFor,
+  isSignupPath,
+} from '@/lib/onboarding/signup-path'
 import { addAdminNote } from './actions'
 import { ArrowLeft, ExternalLink, ShieldCheck } from 'lucide-react'
 
@@ -75,7 +81,7 @@ export default async function AdminUserDetailPage({
   if (authError || !authData?.user) notFound()
   const authUser = authData.user
 
-  const [profile, contractor, facility, client, credentials, checks, memberships, applications, bugs, adminLog, auditLog] =
+  const [profile, contractor, facility, client, credentials, checks, memberships, applications, bugs, adminLog, auditLog, classification] =
     await Promise.all([
       db.from('profiles').select('*').eq('id', id).maybeSingle(),
       db.from('contractor_profiles').select('*').eq('id', id).maybeSingle(),
@@ -88,6 +94,7 @@ export default async function AdminUserDetailPage({
       db.from('bug_reports').select('id, title, severity, status, created_at').eq('user_id', id).order('created_at', { ascending: false }),
       db.from('admin_audit_log').select('id, admin_id, action, notes, new_value, created_at').eq('entity_id', id).order('created_at', { ascending: false }).limit(50),
       db.from('audit_log').select('id, action, resource_type, ip, created_at').eq('actor_id', id).order('created_at', { ascending: false }).limit(50),
+      db.from('classification_requests').select('what_you_do, decision, decision_note, decided_at, created_at').eq('user_id', id).maybeSingle(),
     ])
 
   // Viewing a provider's license / NPI / documents is PHI-adjacent access.
@@ -110,6 +117,9 @@ export default async function AdminUserDetailPage({
     authUser.email ||
     id
   const role = (profile.data?.role as string | undefined) ?? (meta.role as string | undefined) ?? 'no profile'
+  const signupPath = (profile.data?.signup_path as string | null | undefined) ?? null
+  const classificationStatus = (profile.data?.classification_status as string | null | undefined) ?? null
+  const accountType = profile.data ? accountTypeFor(profile.data) : null
 
   const adminEmails = new Map<string, string>()
   const adminIds = [...new Set((adminLog.data ?? []).map((r) => r.admin_id).filter(Boolean))]
@@ -129,6 +139,10 @@ export default async function AdminUserDetailPage({
           <h1 className="text-2xl font-bold text-[#404145]">{name}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#62646a]">
             <Badge variant="outline">{role}</Badge>
+            {signupPath && (
+              <Badge variant="outline">Door: {isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : signupPath}</Badge>
+            )}
+            {classificationStatus && <Badge variant="outline">Classification: {classificationStatus.replace('_', ' ')}</Badge>}
             <EmailConfirmedBadge at={authUser.email_confirmed_at ?? null} />
             {c && <VerificationBadge status={c.verification_status as string} />}
             {profile.data?.is_verified && <Badge className="bg-[#e8faf1] text-[#0f8f56]">Account verified</Badge>}
@@ -160,6 +174,47 @@ export default async function AdminUserDetailPage({
             This auth account has no row in <code>profiles</code> — the signup trigger failed for this user.
           </CardContent>
         </Card>
+      )}
+
+      {profile.data && (
+        <Section title="Signup category">
+          <dl className="mb-4 grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Signup path</dt>
+              <dd className="text-sm text-[#404145]">
+                {signupPath ? `${isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : signupPath} (${signupPath})` : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Account type</dt>
+              <dd className="text-sm text-[#404145]">{accountType?.replaceAll('_', ' ').toLowerCase()} · role {role}</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Classification</dt>
+              <dd className="text-sm text-[#404145]">{classificationStatus?.replace('_', ' ') ?? '—'}</dd>
+            </div>
+            {classification.data && (
+              <div className="sm:col-span-2 lg:col-span-4">
+                <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">
+                  &ldquo;What do you do?&rdquo;{' '}
+                  {classification.data.decision ? `· decided ${classification.data.decision.toLowerCase()}` : '· '}
+                  {!classification.data.decision && (
+                    <Link href="/admin/classification" className="normal-case text-[#1dbf73] hover:underline">waiting in the queue</Link>
+                  )}
+                </dt>
+                <dd className="whitespace-pre-wrap break-words text-sm text-[#404145]">{classification.data.what_you_do}</dd>
+                {classification.data.decision_note && (
+                  <dd className="mt-1 text-xs text-[#62646a]">Note: {classification.data.decision_note}</dd>
+                )}
+              </div>
+            )}
+          </dl>
+          {role === 'admin' ? (
+            <p className="text-sm text-[#6b7280]">Admin accounts can&apos;t be reassigned.</p>
+          ) : (
+            <CategoryControl userId={id} currentPath={signupPath} />
+          )}
+        </Section>
       )}
 
       <Section title="Login & account">
