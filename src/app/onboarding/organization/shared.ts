@@ -83,8 +83,8 @@ export interface AboutData {
   description: string
 }
 
-export const aboutSchema = z
-  .object({
+/** Per-field rules, so the wizard can check (and save) one question at a time. */
+export const aboutFields = {
     facility_name: z.string().trim().min(1, 'Organization name is required').max(200),
     org_type: z.enum(ORG_TYPE_KEYS, 'Choose your organization type'),
     org_type_other: z.string().trim().max(ORG_TYPE_OTHER_MAX).default(''),
@@ -109,7 +109,10 @@ export const aboutSchema = z
       .trim()
       .min(1, 'Add a short description')
       .max(ORG_DESCRIPTION_MAX, `Keep it to ${ORG_DESCRIPTION_MAX} characters`),
-  })
+}
+
+export const aboutSchema = z
+  .object(aboutFields)
   .refine((d) => d?.org_type !== 'other' || (d.org_type_other ?? '').trim().length > 0, {
     path: ['org_type_other'],
     message: 'Tell us what kind of organization you are',
@@ -151,6 +154,34 @@ export function withScheme(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
+/** Per-field rules, so the wizard can check (and save) one question at a time. */
+export const verifyFields = {
+  legal_name: z.string().trim().max(200).default(''),
+  business_structure: z.enum(BUSINESS_STRUCTURE_KEYS, 'Choose a business structure'),
+  registration_state: z.string().trim().regex(/^[A-Z]{2}$/, 'Choose the state of registration'),
+  has_facility_license: yesNoOrBlank,
+  facility_license_type: z.string().trim().max(200).default(''),
+  facility_license_number: z.string().trim().max(100).default(''),
+  facility_license_agency: z.string().trim().max(200).default(''),
+  facility_license_expires: z.string().trim().default(''),
+  org_npi: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || /^\d{10}$/.test(v), 'An NPI is 10 digits')
+    .default(''),
+  lead_has_credential: yesNoOrBlank,
+  lead_credential_type: z.string().trim().max(200).default(''),
+  lead_credential_number: z.string().trim().max(100).default(''),
+  lead_credential_state: z.string().trim().default(''),
+  lead_linkedin: z.string().trim().max(300, 'Keep the link under 300 characters').default(''),
+  disclosures: z.record(
+    z.string(),
+    z.object({ answer: yesNo, details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
+  ),
+  attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
+  attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
+}
+
 /**
  * Step 3. The door decides which license question applies: Practice and
  * Hiring answer the facility license question; Company answers the lead
@@ -161,32 +192,7 @@ export function withScheme(url: string): string {
 export function verifySchemaFor(door: OrgSignupPath) {
   const facility = asksFacilityLicense(door)
   return z
-    .object({
-      legal_name: z.string().trim().max(200).default(''),
-      business_structure: z.enum(BUSINESS_STRUCTURE_KEYS, 'Choose a business structure'),
-      registration_state: z.string().trim().regex(/^[A-Z]{2}$/, 'Choose the state of registration'),
-      has_facility_license: yesNoOrBlank,
-      facility_license_type: z.string().trim().max(200).default(''),
-      facility_license_number: z.string().trim().max(100).default(''),
-      facility_license_agency: z.string().trim().max(200).default(''),
-      facility_license_expires: z.string().trim().default(''),
-      org_npi: z
-        .string()
-        .trim()
-        .refine((v) => v === '' || /^\d{10}$/.test(v), 'An NPI is 10 digits')
-        .default(''),
-      lead_has_credential: yesNoOrBlank,
-      lead_credential_type: z.string().trim().max(200).default(''),
-      lead_credential_number: z.string().trim().max(100).default(''),
-      lead_credential_state: z.string().trim().default(''),
-      lead_linkedin: z.string().trim().max(300, 'Keep the link under 300 characters').default(''),
-      disclosures: z.record(
-        z.string(),
-        z.object({ answer: yesNo, details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
-      ),
-      attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
-      attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
-    })
+    .object(verifyFields)
     .superRefine((d, ctx) => {
       const require = (pairs: [string, string][]) => {
         for (const [key, message] of pairs) {
@@ -262,6 +268,20 @@ export const DOC_MAX_BYTES = 10 * 1024 * 1024
 export const intentsSchema = z
   .array(z.enum(ORG_INTENT_KEYS))
   .min(1, 'Pick at least one — you can change this anytime')
+
+/**
+ * Validate just `keys` of `data` against a field map (aboutFields /
+ * verifyFields) and return the first message per field. Empty = all good.
+ */
+export function checkFields<F extends z.ZodRawShape>(
+  fields: F,
+  keys: (keyof F & string)[],
+  data: Record<string, unknown>
+): Record<string, string> {
+  const shape = Object.fromEntries(keys.map((k) => [k, fields[k]])) as z.ZodRawShape
+  const res = z.object(shape).safeParse(data)
+  return res.success ? {} : fieldErrors(res.error)
+}
 
 /** First validation message per field, for inline errors. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {

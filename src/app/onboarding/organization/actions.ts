@@ -6,10 +6,17 @@ import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
-import { ORG_DISCLOSURES, ORG_DOCUMENT_KINDS, facilityTypeEnumFor } from '@/lib/onboarding/organization'
+import {
+  DISCLOSURE_DETAILS_MAX,
+  ORG_DISCLOSURES,
+  ORG_DOCUMENT_KINDS,
+  facilityTypeEnumFor,
+} from '@/lib/onboarding/organization'
 import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import {
+  aboutFields,
   aboutSchema,
+  checkFields,
   eventSchema,
   fieldErrors,
   intentsSchema,
@@ -17,13 +24,17 @@ import {
   serviceSchema,
   staffingSchema,
   toCents,
+  verifyFields,
   verifySchemaFor,
   asksFacilityLicense,
   isOrgTypeAllowed,
   ORG_TYPE_NOT_OFFERED,
   orgDoorFor,
+  URL_LIKE,
   withScheme,
+  type AboutData,
   type OrgDoc,
+  type VerifyData,
 } from './shared'
 
 export type ActionResult = { ok: true } | { ok: false; error: string; fields?: Record<string, string> }
@@ -100,6 +111,118 @@ export async function saveAbout(input: unknown): Promise<ActionResult> {
     .eq('id', a.user.id)
   if (error) {
     console.error('[onboarding/organization] saveAbout failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+const FIX_FIELDS = 'Please fix the highlighted fields.'
+
+/**
+ * Step 2, one question at a time: save just the answered fields. Same rules
+ * as saveAbout, but nothing else is required and the step isn't advanced —
+ * saveAbout still runs on the step's last question.
+ */
+export async function saveAboutDraft(input: Partial<AboutData>): Promise<ActionResult> {
+  const keys = Object.keys(input ?? {}).filter((k): k is keyof AboutData & string => k in aboutFields)
+  if (!keys.length) return { ok: true }
+  const data = input as Record<string, unknown>
+  const fields = checkFields(aboutFields, keys, data)
+  if (Object.keys(fields).length) return { ok: false, error: FIX_FIELDS, fields }
+  const parsed = z.object(aboutFields).partial().parse(data)
+
+  const update: Record<string, unknown> = {}
+  for (const k of keys) {
+    if (k === 'org_type_other') continue
+    update[k] = parsed[k]
+  }
+  if ('org_type' in update && parsed.org_type) {
+    update.facility_type = facilityTypeEnumFor(parsed.org_type)
+    update.org_type_other = parsed.org_type === 'other' ? parsed.org_type_other || null : null
+  } else if (keys.includes('org_type_other')) {
+    update.org_type_other = parsed.org_type_other || null
+  }
+  if ('phone' in update) {
+    const phone = normalizeUsPhone(parsed.phone)
+    if (!phone) return { ok: false, error: FIX_FIELDS, fields: { phone: `${PHONE_ERROR}.` } }
+    update.phone = phone
+  }
+  if ('website' in update && parsed.website) update.website = withScheme(parsed.website)
+  const typeOffered = (door: Parameters<typeof isOrgTypeAllowed>[0]) =>
+    !parsed.org_type || isOrgTypeAllowed(door, parsed.org_type)
+  if (isDemoMode()) {
+    return typeOffered(DEMO_DOOR) ? { ok: true } : { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+  }
+
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  // The type list depends on the door; trust the stored door, not the client.
+  if (!typeOffered(a.door)) return { ok: false, error: FIX_FIELDS, fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+  const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
+  if (error) {
+    console.error('[onboarding/organization] saveAboutDraft failed', error)
+    return { ok: false, error: 'We couldn’t save that. Please try again.' }
+  }
+  return { ok: true }
+}
+
+/**
+ * Step 3, one question at a time. Attestations are never saved here: they
+ * are recorded (with timestamps) only by saveVerification at the end.
+ */
+export async function saveVerifyDraft(
+  input: Partial<Omit<VerifyData, 'attest_authorized' | 'attest_checks'>>
+): Promise<ActionResult> {
+  const data = (input ?? {}) as Record<string, unknown>
+  const keys = Object.keys(data).filter(
+    (k): k is keyof typeof verifyFields & string =>
+      k in verifyFields && k !== 'attest_authorized' && k !== 'attest_checks'
+  )
+  if (!keys.length) return { ok: true }
+  // Answered disclosures only; a partial set is fine mid-flow.
+  const draftFields = {
+    ...verifyFields,
+    disclosures: z.record(
+      z.string(),
+      z.object({ answer: z.enum(['', 'yes', 'no']), details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
+    ),
+  }
+  const fields = checkFields(draftFields, keys, data)
+  if (Object.keys(fields).length) return { ok: false, error: FIX_FIELDS, fields }
+  const parsed = z.object(draftFields).partial().parse(data)
+
+  if (parsed.lead_linkedin && !URL_LIKE.test(parsed.lead_linkedin)) {
+    return { ok: false, error: FIX_FIELDS, fields: { lead_linkedin: 'Enter a valid link, like linkedin.com/in/name' } }
+  }
+
+  const YES_NO_COLUMNS = ['has_facility_license', 'lead_has_credential'] as const
+  const update: Record<string, unknown> = {}
+  for (const k of keys) {
+    if (k === 'disclosures' || (YES_NO_COLUMNS as readonly string[]).includes(k)) continue
+    const v = parsed[k]
+    update[k] = typeof v === 'string' && v === '' ? null : v
+  }
+  for (const k of YES_NO_COLUMNS) {
+    if (keys.includes(k)) update[k] = parsed[k] === '' ? null : parsed[k] === 'yes'
+  }
+  if (typeof update.lead_linkedin === 'string') update.lead_linkedin = withScheme(update.lead_linkedin)
+  if (isDemoMode()) return { ok: true }
+
+  const a = await authed()
+  if ('error' in a) return { ok: false, error: a.error as string }
+  if (parsed.disclosures) {
+    const { data: org } = await a.supabase.from('facility_profiles').select('self_disclosures').eq('id', a.user.id).single()
+    const merged = { ...((org?.self_disclosures ?? {}) as Record<string, unknown>) }
+    for (const q of ORG_DISCLOSURES) {
+      const ans = parsed.disclosures[q.key]
+      if (!ans?.answer) continue
+      merged[q.key] = { answer: ans.answer === 'yes', details: ans.answer === 'yes' ? ans.details || null : null }
+    }
+    update.self_disclosures = merged
+  }
+  const { error } = await a.supabase.from('facility_profiles').update(update).eq('id', a.user.id)
+  if (error) {
+    console.error('[onboarding/organization] saveVerifyDraft failed', error)
     return { ok: false, error: 'We couldn’t save that. Please try again.' }
   }
   return { ok: true }
