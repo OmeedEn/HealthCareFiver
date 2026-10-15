@@ -3,7 +3,16 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
-import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
+import {
+  CLIENT_INTEREST_KEYS,
+  HELP_TIMELINE_VALUES,
+  LEGACY_CLIENT_INTERESTS,
+  MEETING_FORMAT_VALUES,
+  normalizeClientInterests,
+} from '@/lib/onboarding/client-interests'
+import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
+
+const LEGACY_INTEREST_KEYS = Object.keys(LEGACY_CLIENT_INTERESTS)
 import { TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
@@ -129,10 +138,20 @@ const clientSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
+  // The 11 tiles; legacy keys from a stale tab map forward.
   interests: z
-    .array(z.enum(CLIENT_INTEREST_KEYS, 'Select a valid interest'))
+    .array(
+      z.enum([...CLIENT_INTEREST_KEYS, ...LEGACY_INTEREST_KEYS], 'Select a valid interest')
+    )
     .min(1, 'Pick at least one thing you are looking for')
-    .max(10, 'Pick up to 10 interests'),
+    .max(11, 'Pick up to 11 interests')
+    .transform((keys) => normalizeClientInterests(keys)),
+  help_timeline: z.enum(HELP_TIMELINE_VALUES, 'Choose how soon you need help'),
+  meeting_formats: z
+    .array(z.enum(MEETING_FORMAT_VALUES, 'Choose how you’d like to meet'))
+    .max(4)
+    .default([]),
+  adult_attested: z.literal(true, { error: 'Please confirm you’re 18 or older' }),
   city: z
     .string()
     .trim()
@@ -249,7 +268,7 @@ export async function POST(request: NextRequest) {
       role: 'client' as const,
       first_name: body.first_name,
       last_name: body.last_name,
-      interests: Array.from(new Set(body.interests)),
+      interests: body.interests,
       ...(body.city ? { city: body.city } : {}),
       ...(body.state ? { state: body.state } : {}),
       ...(body.zip_code ? { zip_code: body.zip_code } : {}),
@@ -353,6 +372,17 @@ export async function POST(request: NextRequest) {
         error: err instanceof Error ? err.message : 'unknown error',
       })
     }
+  }
+
+  // Client: the answers handle_new_user doesn't copy (how soon, how to meet,
+  // the 18+ attestation). Same new-account check as above; a failure is
+  // logged and never fails the signup (they can be filled in later).
+  if (body.role === 'client' && result.user && result.user.identities?.length !== 0) {
+    await writeClientSignupAnswers(createAdminClient(), result.user.id, {
+      help_timeline: body.help_timeline,
+      meeting_formats: body.meeting_formats,
+      adult_attested: body.adult_attested,
+    })
   }
 
   // No session means Supabase is waiting on email confirmation (or, with

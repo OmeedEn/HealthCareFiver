@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TermsConsent } from '@/components/auth/signup-shared'
+import { CheckRow } from '@/app/onboarding/professional/ui'
 import { finishClientAccount, type ClientAccountState } from './actions'
 
 export function ClientAccountForm({
@@ -21,19 +22,23 @@ export function ClientAccountForm({
   const [firstName, setFirstName] = useState(prefill.firstName)
   const [lastName, setLastName] = useState(prefill.lastName)
   const [accepted, setAccepted] = useState(false)
+  const [adult, setAdult] = useState(false)
 
-  const canSubmit = firstName.trim() && lastName.trim() && (!needsTerms || accepted)
+  const canSubmit = firstName.trim() && lastName.trim() && adult && (!needsTerms || accepted)
 
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-[#e4e5e7] bg-white p-6 sm:p-8">
       <h1 className="text-2xl font-bold tracking-tight text-[#404145]">Finish creating your account</h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">Confirm your name and you&apos;re all set.</p>
+      <p className="mt-1.5 text-sm text-[#62646a]">Confirm your name and you&apos;re all set. Your answers stay private.</p>
 
       <form action={formAction} className="mt-6 space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <Field id="first_name" label="First name" value={firstName} onChange={setFirstName} autoComplete="given-name" />
           <Field id="last_name" label="Last name" value={lastName} onChange={setLastName} autoComplete="family-name" />
         </div>
+
+        <CheckRow id="adult_attested" checked={adult} onChange={setAdult} label="I'm 18 or older." />
+        {adult && <input type="hidden" name="adult_attested" value="on" />}
 
         {needsTerms && (
           <>

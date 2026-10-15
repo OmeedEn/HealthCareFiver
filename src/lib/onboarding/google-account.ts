@@ -74,6 +74,10 @@ export async function convertToClient(
     city: string | null
     state: string | null
     zip_code: string | null
+    // Client signup answers (Single-Question Onboarding).
+    help_timeline?: string | null
+    meeting_formats?: string[]
+    adult_attested_at?: string | null
   }
 ): Promise<void> {
   const { error: delError } = await admin.from('contractor_profiles').delete().eq('id', userId)

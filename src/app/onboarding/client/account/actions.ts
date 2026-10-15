@@ -9,7 +9,9 @@ import { mfaGate } from '@/lib/auth/mfa'
 import { TERMS_VERSION } from '@/lib/legal'
 import { canConvertNewProfessional, convertToClient } from '@/lib/onboarding/google-account'
 import { CLIENT_SIGNUP_COOKIE, parseClientSignupCookie } from '@/lib/onboarding/client-google'
+import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
+import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 
 export type ClientAccountState = { error?: string } | null
 
@@ -17,9 +19,9 @@ const text = (label: string, max: number) =>
   z.string().trim().min(1, `${label} is required`).max(max, `${label} must be ${max} characters or fewer`)
 
 /**
- * Client account step after "Continue with Google": record Terms consent,
- * turn the new account into a client (with step 1's interests + location
- * from the signup cookie), then on to the dashboard.
+ * Client account step after "Continue with Google": record Terms consent
+ * and the 18+ attestation, turn the new account into a client (with the
+ * signup answers from the cookie), then on to their matches.
  */
 export async function finishClientAccount(
   _prev: ClientAccountState,
@@ -37,6 +39,9 @@ export async function finishClientAccount(
   if (!first.success) return { error: first.error.issues[0].message }
   const last = text('Last name', 100).safeParse(formData.get('last_name') ?? '')
   if (!last.success) return { error: last.error.issues[0].message }
+  if (formData.get('adult_attested') !== 'on') {
+    return { error: 'Please confirm you’re 18 or older.' }
+  }
 
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>
   const needsTerms = !meta.terms_accepted_at || !meta.terms_version
@@ -66,7 +71,7 @@ export async function finishClientAccount(
     },
   })
   if (metaError) {
-    console.error('[onboarding/client/account] consent save failed', metaError)
+    console.error('[onboarding/client/account] consent save failed', { code: metaError.code })
     return { error: 'We couldn’t save your details. Please try again.' }
   }
 
@@ -75,7 +80,18 @@ export async function finishClientAccount(
 
   if (profile.role === 'contractor') {
     try {
-      await convertToClient(admin, user.id, { first_name: first.data, last_name: last.data, ...answers })
+      await convertToClient(admin, user.id, {
+        first_name: first.data,
+        last_name: last.data,
+        interests: answers.interests,
+        city: answers.city,
+        state: answers.state,
+        zip_code: answers.zip_code,
+        // Already validated by parseClientSignupCookie.
+        help_timeline: answers.help_timeline,
+        meeting_formats: answers.meeting_formats,
+        adult_attested_at: new Date().toISOString(),
+      })
     } catch (err) {
       console.error('[onboarding/client/account] convert failed', err)
       return { error: 'We couldn’t set up your account. Please try again.' }
@@ -86,12 +102,18 @@ export async function finishClientAccount(
       .update({ first_name: first.data, last_name: last.data })
       .eq('id', user.id)
     if (error) {
-      console.error('[onboarding/client/account] name update failed', error)
+      console.error('[onboarding/client/account] name update failed', { code: error.code })
       return { error: 'We couldn’t save your details. Please try again.' }
     }
+    // Validated + logged inside; never blocks the account.
+    await writeClientSignupAnswers(admin, user.id, {
+      help_timeline: answers.help_timeline,
+      meeting_formats: answers.meeting_formats,
+      adult_attested: true,
+    })
   }
 
   await setSignupPathIfUnset(admin, user.id, 'CLIENT')
   cookieStore.delete(CLIENT_SIGNUP_COOKIE)
-  redirect('/dashboard')
+  redirect(answers.interests.length ? CLIENT_MATCHES_PATH : '/dashboard')
 }
