@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import type { ActionResult } from '@/app/onboarding/organization/actions'
-import { QuestionFlow, type Screen } from '@/app/onboarding/organization/flow'
+import { QuestionFlow, type Screen } from '@/components/onboarding/question-flow'
 import { eventScreens, serviceScreens } from '@/app/onboarding/organization/listing-questions'
 import {
   localInputToIso,

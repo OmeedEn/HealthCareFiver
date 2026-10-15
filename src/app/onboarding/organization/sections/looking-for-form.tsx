@@ -12,7 +12,7 @@ import {
 import { RadioCards, TextField } from '../../professional/ui'
 import { saveLookingFor } from '../actions'
 import type { LookingForData } from '../shared'
-import { OptionChips, SectionActions } from './fields'
+import { OptionChips, SectionActions } from '@/components/onboarding/choices'
 
 const VALID_STATES = new Set(US_STATES.map((s) => s.value))
 

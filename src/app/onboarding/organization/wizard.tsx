@@ -40,11 +40,11 @@ import {
 import { DocSlot } from './doc-slot'
 import { localInputToIso } from './listing-draft'
 import { eventScreens, serviceScreens } from './listing-questions'
-import { QuestionFlow, type Screen as FlowScreen } from './flow'
+import { QuestionFlow, type Screen as FlowScreen } from '@/components/onboarding/question-flow'
 
 /** Screens are tagged with their step when the flow is assembled. */
 type Screen = Omit<FlowScreen, 'step'>
-import { IconChoices, IconMultiChoices } from './sections/fields'
+import { IconChoices, IconMultiChoices } from '@/components/onboarding/choices'
 import {
   BUSINESS_STRUCTURE_ICONS,
   ENGAGEMENT_ICONS,
@@ -55,7 +55,7 @@ import {
   PROFESSIONAL_TIER_ICONS,
   TIMELINE_ICONS,
   YES_NO_ICONS,
-} from './sections/choice-icons'
+} from '@/components/onboarding/choice-icons'
 import { EMPTY_EVENT } from './sections/event-form'
 import { EMPTY_LOOKING_FOR } from './sections/looking-for-form'
 import { EMPTY_SERVICE } from './sections/service-form'

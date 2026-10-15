@@ -2,7 +2,7 @@
 
 import { useId } from 'react'
 import { Check, type LucideIcon } from 'lucide-react'
-import { FieldError } from '../../professional/ui'
+import { FieldError } from '@/app/onboarding/professional/ui'
 import { FALLBACK_ICON, type ChoiceIcons } from './choice-icons'
 
 /** Multi-select chips with separate values and labels. */

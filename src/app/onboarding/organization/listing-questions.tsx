@@ -10,15 +10,15 @@ import {
 } from '@/lib/onboarding/organization'
 import { TextAreaField, TextField, Toggle } from '../professional/ui'
 import type { ActionResult } from './actions'
-import type { Screen } from './flow'
-import { IconChoices, IconMultiChoices } from './sections/fields'
+import type { Screen } from '@/components/onboarding/question-flow'
+import { IconChoices, IconMultiChoices } from '@/components/onboarding/choices'
 import {
   AUDIENCE_ICONS,
   EVENT_TYPE_ICONS,
   FORMAT_ICONS,
   REACH_VIA_ICONS,
   YES_NO_ICONS,
-} from './sections/choice-icons'
+} from '@/components/onboarding/choice-icons'
 import { checkFields, eventSchema, serviceSchema, type EventDraft, type ServiceDraft, type YesNo } from './shared'
 
 /**
