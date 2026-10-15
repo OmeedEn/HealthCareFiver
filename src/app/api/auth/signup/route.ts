@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
 import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
 import { TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
-import { ORG_SIGNUP_PATHS } from '@/lib/onboarding/signup-path'
+import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
+import { classificationRequestRow, unsureAnswersSchema } from '@/lib/onboarding/unsure'
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -141,9 +143,24 @@ const clientSchema = z.object({
   signup_path: z.literal('CLIENT').default('CLIENT'),
 })
 
+// "Not sure" (/signup/unsure). Not a real role: the account is created as a
+// client with signup_path 'UNSURE' (handle_new_user sets
+// classification_status 'pending'), and the step 2 answers are filed in
+// classification_requests for staff to place the account.
+const unsureSchema = z.object({
+  ...consent,
+  role: z.literal('unsure'),
+  email,
+  password,
+  first_name: firstName,
+  last_name: lastName,
+  phone,
+  answers: unsureAnswersSchema,
+})
+
 const schema = z.discriminatedUnion(
   'role',
-  [contractorSchema, facilitySchema, clientSchema],
+  [contractorSchema, facilitySchema, clientSchema, unsureSchema],
   { error: 'Choose an account type' }
 )
 
@@ -189,7 +206,9 @@ export async function POST(request: NextRequest) {
   const supabase = await createClient()
 
   let data: Record<string, unknown>
+  let signupPath: SignupPath
   if (body.role === 'contractor') {
+    signupPath = body.signup_path
     data = {
       role: 'contractor' as const,
       first_name: body.first_name,
@@ -202,6 +221,7 @@ export async function POST(request: NextRequest) {
         : {}),
     }
   } else if (body.role === 'facility') {
+    signupPath = body.signup_path
     data = {
       role: 'facility' as const,
       first_name: body.first_name,
@@ -212,7 +232,19 @@ export async function POST(request: NextRequest) {
       contact_title: body.title,
       phone: body.phone,
     }
+  } else if (body.role === 'unsure') {
+    signupPath = 'UNSURE'
+    data = {
+      role: 'client' as const,
+      first_name: body.first_name,
+      last_name: body.last_name,
+      phone: body.phone,
+      // handle_new_user copies these to client_profiles.
+      city: body.answers.city,
+      state: body.answers.state,
+    }
   } else {
+    signupPath = body.signup_path
     data = {
       role: 'client' as const,
       first_name: body.first_name,
@@ -226,7 +258,7 @@ export async function POST(request: NextRequest) {
 
   // handle_new_user stores this on profiles.signup_path (only when it
   // matches the role).
-  data.signup_path = body.signup_path
+  data.signup_path = signupPath
 
   // Consent record: server timestamp (never trust a client clock) plus the
   // exact terms version shown.
@@ -297,6 +329,30 @@ export async function POST(request: NextRequest) {
       { error: 'We couldn’t create your account. Please try again.' },
       { status: 500 }
     )
+  }
+
+  // Not sure: file the step 2 answers for the staff classification queue.
+  // An empty identities list is Supabase's obfuscated response for an email
+  // that already exists — there is no new account to attach answers to.
+  if (body.role === 'unsure' && result.user && result.user.identities?.length !== 0) {
+    try {
+      const admin = createAdminClient()
+      const { error: insertError } = await admin
+        .from('classification_requests')
+        .insert(classificationRequestRow(result.user.id, body.answers))
+      if (insertError) {
+        // code + message only: `details` can echo the row (the answers).
+        throw new Error(`${insertError.code}: ${insertError.message}`)
+      }
+    } catch (err) {
+      // The account exists either way (signup_path UNSURE, status pending),
+      // so the admin queue still lists the person — just without answers.
+      // Don't fail the signup over it.
+      console.error('[signup] classification_requests insert failed', {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : 'unknown error',
+      })
+    }
   }
 
   // No session means Supabase is waiting on email confirmation (or, with

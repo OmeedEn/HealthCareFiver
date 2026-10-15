@@ -42,6 +42,7 @@ import {
 } from '@/lib/demo/data'
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
+import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
@@ -164,6 +165,8 @@ export default async function DashboardPage() {
   // Client-specific data
   let clientInterests: string[] = []
   let clientLocation: string | null = null
+  // Not sure signups awaiting staff placement (or rejected): no messaging.
+  let clientClassification: 'pending' | 'rejected' | null = null
 
   // Facility-specific data
   let facilityKpis: FacilityKpis = {
@@ -355,6 +358,10 @@ export default async function DashboardPage() {
       profileData?.first_name ?? user.user_metadata?.first_name ?? 'there'
 
     if (role === 'client') {
+      if (profileData && isClassificationRestricted(profileData)) {
+        clientClassification =
+          profileData.classification_status === 'rejected' ? 'rejected' : 'pending'
+      }
       const { data: clientRow } = await supabase
         .from('client_profiles')
         .select('first_name, interests, city, state')
@@ -677,6 +684,7 @@ export default async function DashboardPage() {
           firstName={firstName}
           interests={clientInterests}
           location={clientLocation}
+          classification={clientClassification}
         />
       )}
     </div>
@@ -1846,23 +1854,79 @@ function FirstRunItem({
   )
 }
 
+function ClassificationBanner({
+  status,
+  firstName,
+}: {
+  status: 'pending' | 'rejected'
+  firstName: string
+}) {
+  if (status === 'rejected') {
+    return (
+      <div
+        role="status"
+        className="flex items-start gap-3 rounded-md border border-[#e4e5e7] bg-white p-4"
+      >
+        <AlertCircle className="mt-0.5 size-5 shrink-0 text-[#62646a]" />
+        <div className="text-sm text-[#404145]">
+          <p className="font-semibold">Our team reviewed your answers</p>
+          <p className="mt-1 text-[#62646a]">
+            You can keep using Sanus as a client to browse, save, and book.
+            Questions? Email{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-[#1dbf73] hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-3 rounded-md border border-[#bcebd5] bg-[#e8faf1] p-4"
+    >
+      <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#0f8f56]" />
+      <div className="text-sm text-[#0f4c3a]">
+        <p className="font-semibold">
+          Thanks, {firstName}. We&apos;re reviewing your answers and will place
+          you in the right category within 24-48 hours. We may ask for a few
+          more details.
+        </p>
+        <p className="mt-1">
+          Until then you can browse, save, and book as a client. Messaging
+          professionals unlocks once you&apos;re placed.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function ClientDashboard({
   firstName,
   interests,
   location,
+  classification,
 }: {
   firstName: string
   interests: string[]
   location: string | null
+  classification: 'pending' | 'rejected' | null
 }) {
   return (
     <div className="space-y-6">
+      {classification && (
+        <ClassificationBanner status={classification} firstName={firstName} />
+      )}
       <div>
         <h1 className="text-2xl font-bold text-[#404145]">
           Welcome, {firstName}!
         </h1>
         <p className="text-[#62646a]">
-          Find and connect with health professionals on Sanus.
+          {classification
+            ? 'Find health professionals on Sanus.'
+            : 'Find and connect with health professionals on Sanus.'}
         </p>
       </div>
 
@@ -1921,8 +1985,11 @@ function ClientDashboard({
             </CardHeader>
             <CardContent>
               <p className="text-sm text-[#62646a]">
-                No conversations yet. Reach out to a professional from their
-                profile to start one.
+                {classification === 'pending'
+                  ? 'Messaging professionals isn’t available while your account is under review.'
+                  : classification === 'rejected'
+                    ? 'Messaging professionals isn’t available on your account.'
+                    : 'No conversations yet. Reach out to a professional from their profile to start one.'}
               </p>
             </CardContent>
           </Card>
