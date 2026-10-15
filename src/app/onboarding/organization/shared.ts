@@ -8,8 +8,12 @@ import {
   ORG_SIZES,
   ORG_TYPE_KEYS,
   ORG_TYPE_OTHER_MAX,
+  orgTypeLabel,
+  orgTypesForPath,
   type OrgDocumentKind,
+  type OrgIntent,
 } from '@/lib/onboarding/organization'
+import { isOrgSignupPath, type OrgSignupPath } from '@/lib/onboarding/signup-path'
 
 /**
  * Cross-field checks run even when other fields fail, so people see every
@@ -17,6 +21,51 @@ import {
  * partially-invalid input, so they guard every field.
  */
 const ALWAYS = { when: () => true }
+
+/* ───────────── Signup door ───────────── */
+
+/**
+ * The door an org account came through (profiles.signup_path). Legacy
+ * accounts (null) and anything unexpected act like HIRING: both type lists
+ * in step 2 and the facility license question in step 3.
+ */
+export function orgDoorFor(signupPath: string | null | undefined): OrgSignupPath {
+  return isOrgSignupPath(signupPath) ? signupPath : 'HIRING'
+}
+
+/** Company orgs are asked about the lead person's credential instead of a facility license. */
+export function asksFacilityLicense(door: OrgSignupPath): boolean {
+  return door !== 'COMPANY'
+}
+
+/** Step 4 goals pre-checked when nothing is saved yet. */
+export const DEFAULT_INTENTS: Record<OrgSignupPath, OrgIntent[]> = {
+  PRACTICE: ['advertise_services'],
+  COMPANY: ['advertise_services', 'host_events'],
+  HIRING: ['find_professionals'],
+}
+
+export function isOrgTypeAllowed(door: OrgSignupPath, orgType: string): boolean {
+  return orgTypesForPath(door).some((t) => t.value === orgType)
+}
+
+export const ORG_TYPE_NOT_OFFERED = 'Choose one of the listed organization types'
+
+/**
+ * Step 2 select options for a door. A saved type that isn't offered for
+ * this door (e.g. legacy 'startup') stays visible so the field doesn't go
+ * blank, but saving asks them to pick one from the list.
+ */
+export function orgTypeOptionsFor(door: OrgSignupPath, current: string): { value: string; label: string }[] {
+  const options: { value: string; label: string }[] = orgTypesForPath(door).map((t) => ({
+    value: t.value,
+    label: t.label,
+  }))
+  if (current && !options.some((o) => o.value === current)) {
+    options.unshift({ value: current, label: `${orgTypeLabel(current) ?? current} (no longer offered)` })
+  }
+  return options
+}
 
 /* ───────────── Step 2: About your organization ───────────── */
 
@@ -81,59 +130,116 @@ export interface VerifyData {
   facility_license_agency: string
   facility_license_expires: string
   org_npi: string
+  /** Company door only: the lead person's credential, and LinkedIn. */
+  lead_has_credential: YesNo
+  lead_credential_type: string
+  lead_credential_number: string
+  lead_credential_state: string
+  lead_linkedin: string
   disclosures: Record<string, { answer: YesNo; details: string }>
   attest_authorized: boolean
   attest_checks: boolean
 }
 
 const yesNo = z.enum(['yes', 'no'], 'Answer yes or no')
+const yesNoOrBlank = z.enum(['', 'yes', 'no']).default('')
 
-export const verifySchema = z
-  .object({
-    legal_name: z.string().trim().max(200).default(''),
-    business_structure: z.enum(BUSINESS_STRUCTURE_KEYS, 'Choose a business structure'),
-    registration_state: z.string().trim().regex(/^[A-Z]{2}$/, 'Choose the state of registration'),
-    has_facility_license: yesNo,
-    facility_license_type: z.string().trim().max(200).default(''),
-    facility_license_number: z.string().trim().max(100).default(''),
-    facility_license_agency: z.string().trim().max(200).default(''),
-    facility_license_expires: z.string().trim().default(''),
-    org_npi: z
-      .string()
-      .trim()
-      .refine((v) => v === '' || /^\d{10}$/.test(v), 'An NPI is 10 digits')
-      .default(''),
-    disclosures: z.record(
-      z.string(),
-      z.object({ answer: yesNo, details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
-    ),
-    attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
-    attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
-  })
-  .superRefine((d, ctx) => {
-    if (d?.has_facility_license === 'yes') {
-      const req: [keyof typeof d, string][] = [
-        ['facility_license_type', 'License type is required'],
-        ['facility_license_number', 'License number is required'],
-        ['facility_license_agency', 'Issuing agency is required'],
-        ['facility_license_expires', 'Expiration date is required'],
-      ]
-      for (const [key, message] of req) {
-        if (!String(d[key] ?? '').trim()) ctx.addIssue({ code: 'custom', path: [key], message })
+/** Loose "looks like a URL" check; the scheme is optional (we add https://). */
+export const URL_LIKE = /^(https?:\/\/)?[^\s/.]+(\.[^\s/.]+)+(\/\S*)?$/i
+
+export function withScheme(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+/**
+ * Step 3. The door decides which license question applies: Practice and
+ * Hiring answer the facility license question; Company answers the lead
+ * person's credential question plus LinkedIn (required when the lead has no
+ * credential, optional otherwise). The server passes the door it read from
+ * the database.
+ */
+export function verifySchemaFor(door: OrgSignupPath) {
+  const facility = asksFacilityLicense(door)
+  return z
+    .object({
+      legal_name: z.string().trim().max(200).default(''),
+      business_structure: z.enum(BUSINESS_STRUCTURE_KEYS, 'Choose a business structure'),
+      registration_state: z.string().trim().regex(/^[A-Z]{2}$/, 'Choose the state of registration'),
+      has_facility_license: yesNoOrBlank,
+      facility_license_type: z.string().trim().max(200).default(''),
+      facility_license_number: z.string().trim().max(100).default(''),
+      facility_license_agency: z.string().trim().max(200).default(''),
+      facility_license_expires: z.string().trim().default(''),
+      org_npi: z
+        .string()
+        .trim()
+        .refine((v) => v === '' || /^\d{10}$/.test(v), 'An NPI is 10 digits')
+        .default(''),
+      lead_has_credential: yesNoOrBlank,
+      lead_credential_type: z.string().trim().max(200).default(''),
+      lead_credential_number: z.string().trim().max(100).default(''),
+      lead_credential_state: z.string().trim().default(''),
+      lead_linkedin: z.string().trim().max(300, 'Keep the link under 300 characters').default(''),
+      disclosures: z.record(
+        z.string(),
+        z.object({ answer: yesNo, details: z.string().trim().max(DISCLOSURE_DETAILS_MAX).default('') })
+      ),
+      attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
+      attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
+    })
+    .superRefine((d, ctx) => {
+      const require = (pairs: [string, string][]) => {
+        for (const [key, message] of pairs) {
+          if (!String((d as Record<string, unknown> | undefined)?.[key] ?? '').trim()) {
+            ctx.addIssue({ code: 'custom', path: [key], message })
+          }
+        }
       }
-      if (d.facility_license_expires && !/^\d{4}-\d{2}-\d{2}$/.test(d.facility_license_expires)) {
-        ctx.addIssue({ code: 'custom', path: ['facility_license_expires'], message: 'Enter a valid date' })
+      if (facility) {
+        if (d?.has_facility_license !== 'yes' && d?.has_facility_license !== 'no') {
+          ctx.addIssue({ code: 'custom', path: ['has_facility_license'], message: 'Answer yes or no' })
+        }
+        if (d?.has_facility_license === 'yes') {
+          require([
+            ['facility_license_type', 'License type is required'],
+            ['facility_license_number', 'License number is required'],
+            ['facility_license_agency', 'Issuing agency is required'],
+            ['facility_license_expires', 'Expiration date is required'],
+          ])
+          if (d.facility_license_expires && !/^\d{4}-\d{2}-\d{2}$/.test(d.facility_license_expires)) {
+            ctx.addIssue({ code: 'custom', path: ['facility_license_expires'], message: 'Enter a valid date' })
+          }
+        }
+      } else {
+        if (d?.lead_has_credential !== 'yes' && d?.lead_has_credential !== 'no') {
+          ctx.addIssue({ code: 'custom', path: ['lead_has_credential'], message: 'Answer yes or no' })
+        }
+        if (d?.lead_has_credential === 'yes') {
+          require([
+            ['lead_credential_type', 'License or certification type is required'],
+            ['lead_credential_number', 'License or certification number is required'],
+          ])
+          if (!/^[A-Z]{2}$/.test(d.lead_credential_state ?? '')) {
+            ctx.addIssue({ code: 'custom', path: ['lead_credential_state'], message: 'Choose a state' })
+          }
+        }
+        const linkedin = d?.lead_linkedin ?? ''
+        if (!linkedin && d?.lead_has_credential === 'no') {
+          ctx.addIssue({ code: 'custom', path: ['lead_linkedin'], message: 'Add the lead person’s LinkedIn' })
+        } else if (linkedin && !URL_LIKE.test(linkedin)) {
+          ctx.addIssue({ code: 'custom', path: ['lead_linkedin'], message: 'Enter a valid link, like linkedin.com/in/name' })
+        }
       }
-    }
-    for (const q of ORG_DISCLOSURES) {
-      const a = d?.disclosures?.[q.key]
-      if (!a) {
-        ctx.addIssue({ code: 'custom', path: ['disclosures', q.key], message: 'Answer yes or no' })
-      } else if (a.answer === 'yes' && !a.details) {
-        ctx.addIssue({ code: 'custom', path: ['disclosures', q.key], message: 'Please explain' })
+      for (const q of ORG_DISCLOSURES) {
+        const a = d?.disclosures?.[q.key]
+        if (!a) {
+          ctx.addIssue({ code: 'custom', path: ['disclosures', q.key], message: 'Answer yes or no' })
+        } else if (a.answer === 'yes' && !a.details) {
+          ctx.addIssue({ code: 'custom', path: ['disclosures', q.key], message: 'Please explain' })
+        }
       }
-    }
-  }, ALWAYS)
+    }, ALWAYS)
+}
 
 export interface OrgDoc {
   id: string

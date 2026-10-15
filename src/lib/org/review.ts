@@ -134,6 +134,12 @@ export interface OrgChecklistItem {
   links?: { label: string; href: string }[]
   /** Keep a dated screenshot/PDF of the lookup. */
   needsEvidence: boolean
+  /**
+   * Signup doors that ask for this. Company orgs aren't asked about a
+   * facility license (they give the lead person's credential instead).
+   * Omitted = every door.
+   */
+  doors?: 'company' | 'not_company'
 }
 
 export const CA_BIZFILE_URL = 'https://bizfileonline.sos.ca.gov/search/business'
@@ -162,6 +168,14 @@ export const ORG_CHECKLIST: OrgChecklistItem[] = [
     help: 'Use the state agency lookup (CDPH covers hospitals, clinics, and home health). Skip if they don’t hold one.',
     links: [{ label: 'CDPH facility lookup', href: CDPH_LOOKUP_URL }],
     needsEvidence: true,
+    doors: 'not_company',
+  },
+  {
+    key: 'lead_credential',
+    label: 'Lead person’s credential checks out, or their LinkedIn/CV does',
+    help: 'Company orgs: look up the license, bar admission, or certification with the issuing state or board. If they don’t hold one, check the LinkedIn they gave.',
+    needsEvidence: true,
+    doors: 'company',
   },
   {
     key: 'org_npi',
@@ -216,11 +230,23 @@ export const ORG_RED_FLAGS = [
   'Same phone or payment details across multiple orgs',
 ]
 
-export function checklistProgress(checklist: OrgChecklist | null | undefined): {
+/** Checklist items that apply to an org from this signup door (profiles.signup_path). */
+export function orgChecklistFor(signupPath: string | null | undefined): OrgChecklistItem[] {
+  const company = signupPath === 'COMPANY'
+  return ORG_CHECKLIST.filter(
+    (i) => !i.doors || (i.doors === 'company' ? company : !company)
+  )
+}
+
+export function checklistProgress(
+  checklist: OrgChecklist | null | undefined,
+  signupPath?: string | null
+): {
   done: number
   total: number
 } {
-  const total = ORG_CHECKLIST.length
-  const done = ORG_CHECKLIST.filter((i) => checklist?.[i.key]?.done).length
+  const items = orgChecklistFor(signupPath)
+  const total = items.length
+  const done = items.filter((i) => checklist?.[i.key]?.done).length
   return { done, total }
 }

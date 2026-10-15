@@ -9,7 +9,6 @@ import { formatUsPhoneInput } from '@/lib/phone'
 import {
   ORG_DESCRIPTION_MAX,
   ORG_SIZES,
-  ORG_TYPES,
   ORG_TYPE_OTHER_MAX,
 } from '@/lib/onboarding/organization'
 import {
@@ -20,19 +19,24 @@ import {
   TextField,
 } from '../professional/ui'
 import { saveAbout } from './actions'
-import type { AboutData } from './shared'
+import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
+import { orgTypeOptionsFor, type AboutData } from './shared'
 
 export function StepAbout({
+  door,
   value,
   onChange,
   onDone,
 }: {
+  door: OrgSignupPath
   value: AboutData
   onChange: (v: AboutData) => void
   onDone: () => void
 }) {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  // Fixed per account, so computing from the first-render value is fine.
+  const [orgTypeOptions] = useState(() => orgTypeOptionsFor(door, value.org_type))
   const set = <K extends keyof AboutData>(k: K, v: AboutData[K]) => onChange({ ...value, [k]: v })
 
   async function next() {
@@ -70,7 +74,7 @@ export function StepAbout({
         label="Organization type"
         value={value.org_type}
         onChange={(v) => set('org_type', v)}
-        options={ORG_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+        options={orgTypeOptions}
         error={errors.org_type}
         placeholder="Choose one…"
       />

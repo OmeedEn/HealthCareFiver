@@ -17,7 +17,12 @@ import {
   serviceSchema,
   staffingSchema,
   toCents,
-  verifySchema,
+  verifySchemaFor,
+  asksFacilityLicense,
+  isOrgTypeAllowed,
+  ORG_TYPE_NOT_OFFERED,
+  orgDoorFor,
+  withScheme,
   type OrgDoc,
 } from './shared'
 
@@ -32,12 +37,15 @@ async function authed() {
   } = await supabase.auth.getUser()
   if (!user) return { error: SESSION_EXPIRED } as const
   if ((await mfaGate(supabase)) !== 'ok') return { error: SESSION_EXPIRED } as const
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, signup_path').eq('id', user.id).single()
   if (profile?.role !== 'facility' && profile?.role !== 'staffing_agency') {
     return { error: 'Only organization accounts can do this.' } as const
   }
-  return { user, supabase } as const
+  return { user, supabase, door: orgDoorFor(profile.signup_path) } as const
 }
+
+/** Demo mode has no stored door; it behaves like Hiring (both type lists, facility license). */
+const DEMO_DOOR = 'HIRING' as const
 
 async function bumpStep(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -56,12 +64,21 @@ export async function saveAbout(input: unknown): Promise<ActionResult> {
   }
   const phone = normalizeUsPhone(parsed.data.phone)
   if (!phone) return { ok: false, error: 'Please fix the highlighted fields.', fields: { phone: `${PHONE_ERROR}.` } }
-  if (isDemoMode()) return { ok: true }
+  if (isDemoMode()) {
+    if (!isOrgTypeAllowed(DEMO_DOOR, parsed.data.org_type)) {
+      return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+    }
+    return { ok: true }
+  }
 
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
   const d = parsed.data
-  const website = /^https?:\/\//i.test(d.website) ? d.website : `https://${d.website}`
+  // The type list depends on the door; trust the stored door, not the client.
+  if (!isOrgTypeAllowed(a.door, d.org_type)) {
+    return { ok: false, error: 'Please fix the highlighted fields.', fields: { org_type: ORG_TYPE_NOT_OFFERED } }
+  }
+  const website = withScheme(d.website)
 
   const { error } = await a.supabase
     .from('facility_profiles')
@@ -129,18 +146,21 @@ export async function removeOrgDocument(id: string): Promise<ActionResult> {
   return { ok: true }
 }
 
-/** Step 3. */
+/** Step 3. Which license question applies depends on the door, read from the database. */
 export async function saveVerification(input: unknown): Promise<ActionResult> {
-  const parsed = verifySchema.safeParse(input)
+  const a = isDemoMode() ? null : await authed()
+  if (a && 'error' in a) return { ok: false, error: a.error as string }
+  const door = a ? a.door : DEMO_DOOR
+  const parsed = verifySchemaFor(door).safeParse(input)
   if (!parsed.success) {
     return { ok: false, error: 'Please fix the highlighted fields.', fields: fieldErrors(parsed.error) }
   }
-  if (isDemoMode()) return { ok: true }
+  if (!a) return { ok: true }
 
-  const a = await authed()
-  if ('error' in a) return { ok: false, error: a.error as string }
   const d = parsed.data
-  const hasLicense = d.has_facility_license === 'yes'
+  const facility = asksFacilityLicense(door)
+  const hasLicense = facility && d.has_facility_license === 'yes'
+  const leadHasCredential = !facility && d.lead_has_credential === 'yes'
 
   const { data: docs } = await a.supabase.from('org_documents').select('kind').eq('facility_id', a.user.id)
   const kinds = new Set((docs ?? []).map((x) => x.kind))
@@ -174,6 +194,11 @@ export async function saveVerification(input: unknown): Promise<ActionResult> {
       facility_license_number: hasLicense ? d.facility_license_number : null,
       facility_license_agency: hasLicense ? d.facility_license_agency : null,
       facility_license_expires: hasLicense ? d.facility_license_expires : null,
+      lead_has_credential: facility ? null : leadHasCredential,
+      lead_credential_type: leadHasCredential ? d.lead_credential_type : null,
+      lead_credential_number: leadHasCredential ? d.lead_credential_number : null,
+      lead_credential_state: leadHasCredential ? d.lead_credential_state : null,
+      lead_linkedin: !facility && d.lead_linkedin ? withScheme(d.lead_linkedin) : null,
       org_npi: d.org_npi || null,
       self_disclosures: disclosures,
       attested_authorized_at: now,

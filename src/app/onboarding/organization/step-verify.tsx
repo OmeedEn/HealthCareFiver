@@ -30,10 +30,19 @@ import {
   YES_NO_OPTIONS,
 } from '../professional/ui'
 import { recordOrgDocument, removeOrgDocument, saveVerification } from './actions'
-import { DOC_ALLOWED_TYPES, DOC_MAX_BYTES, type OrgDoc, type VerifyData, type YesNo } from './shared'
+import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
+import {
+  DOC_ALLOWED_TYPES,
+  DOC_MAX_BYTES,
+  asksFacilityLicense,
+  type OrgDoc,
+  type VerifyData,
+  type YesNo,
+} from './shared'
 
 export function StepVerify({
   userId,
+  door,
   value,
   onChange,
   docs,
@@ -42,6 +51,7 @@ export function StepVerify({
   onDone,
 }: {
   userId: string
+  door: OrgSignupPath
   value: VerifyData
   onChange: (v: VerifyData) => void
   docs: OrgDoc[]
@@ -58,7 +68,10 @@ export function StepVerify({
       [key]: { ...(value.disclosures[key] ?? { answer: '', details: '' }), ...patch },
     })
 
-  const hasLicense = value.has_facility_license === 'yes'
+  // Company orgs answer the lead person's credential question instead.
+  const facility = asksFacilityLicense(door)
+  const hasLicense = facility && value.has_facility_license === 'yes'
+  const leadHasCredential = value.lead_has_credential === 'yes'
 
   async function next() {
     setSaving(true)
@@ -108,15 +121,49 @@ export function StepVerify({
       </section>
 
       <section className="space-y-4">
-        <RadioCards
-          name="has_facility_license"
-          legend="Does your organization hold a facility or operating license?"
-          options={YES_NO_OPTIONS}
-          value={value.has_facility_license}
-          onChange={(v) => set('has_facility_license', v)}
-          error={errors.has_facility_license}
-          columns={2}
-        />
+        {facility ? (
+          <RadioCards
+            name="has_facility_license"
+            legend="Does your organization hold a facility or operating license?"
+            options={YES_NO_OPTIONS}
+            value={value.has_facility_license}
+            onChange={(v) => set('has_facility_license', v)}
+            error={errors.has_facility_license}
+            columns={2}
+          />
+        ) : (
+          <>
+            <RadioCards
+              name="lead_has_credential"
+              legend="Does the lead person at your company hold a professional license or certification?"
+              options={YES_NO_OPTIONS}
+              value={value.lead_has_credential}
+              onChange={(v) => set('lead_has_credential', v)}
+              error={errors.lead_has_credential}
+              columns={2}
+            />
+            {leadHasCredential && (
+              <div className="grid gap-3 rounded-lg border border-[#e4e5e7] bg-white p-4 sm:grid-cols-2">
+                <TextField id="lead_credential_type" label="License or certification type" value={value.lead_credential_type} onChange={(v) => set('lead_credential_type', v)} error={errors.lead_credential_type} placeholder="e.g. RN, bar admission, CPC" />
+                <TextField id="lead_credential_number" label="License or certification number" value={value.lead_credential_number} onChange={(v) => set('lead_credential_number', v)} error={errors.lead_credential_number} />
+                <SelectField id="lead_credential_state" label="State" value={value.lead_credential_state} onChange={(v) => set('lead_credential_state', v)} options={US_STATES} error={errors.lead_credential_state} />
+              </div>
+            )}
+            <TextField
+              id="lead_linkedin"
+              label="The lead person’s LinkedIn"
+              optional={value.lead_has_credential !== 'no'}
+              hint={value.lead_has_credential === 'no' ? 'We use it to verify who runs the company.' : undefined}
+              value={value.lead_linkedin}
+              onChange={(v) => set('lead_linkedin', v)}
+              error={errors.lead_linkedin}
+              placeholder="linkedin.com/in/name"
+              type="url"
+              inputMode="url"
+              autoComplete="url"
+            />
+          </>
+        )}
         {hasLicense && (
           <div className="grid gap-3 rounded-lg border border-[#e4e5e7] bg-white p-4 sm:grid-cols-2">
             <TextField id="facility_license_type" label="License type" value={value.facility_license_type} onChange={(v) => set('facility_license_type', v)} error={errors.facility_license_type} placeholder="e.g. Primary care clinic" />

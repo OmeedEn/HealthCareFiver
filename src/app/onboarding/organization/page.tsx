@@ -11,7 +11,7 @@ import {
   type OrgWizardStep,
 } from '@/lib/onboarding/organization'
 import { OrgOnboardingWizard } from './wizard'
-import type { AboutData, OrgDoc, VerifyData, YesNo } from './shared'
+import { DEFAULT_INTENTS, orgDoorFor, type AboutData, type OrgDoc, type VerifyData, type YesNo } from './shared'
 
 export const metadata: Metadata = { title: 'Set up your organization | Sanus' }
 
@@ -25,6 +25,8 @@ function emptyVerify(): VerifyData {
     legal_name: '', business_structure: '', registration_state: '', has_facility_license: '',
     facility_license_type: '', facility_license_number: '', facility_license_agency: '',
     facility_license_expires: '', org_npi: '',
+    lead_has_credential: '', lead_credential_type: '', lead_credential_number: '', lead_credential_state: '',
+    lead_linkedin: '',
     disclosures: Object.fromEntries(ORG_DISCLOSURES.map((q) => [q.key, { answer: '' as YesNo, details: '' }])),
     attest_authorized: false, attest_checks: false,
   }
@@ -41,11 +43,12 @@ export default async function OrganizationOnboardingPage() {
     return (
       <OrgOnboardingWizard
         userId="demo"
+        door="HIRING"
         initialStep={2}
         initialAbout={EMPTY_ABOUT}
         initialVerify={emptyVerify()}
         initialDocs={[]}
-        initialIntents={[]}
+        initialIntents={DEFAULT_INTENTS.HIRING}
       />
     )
   }
@@ -55,7 +58,7 @@ export default async function OrganizationOnboardingPage() {
   if (user.role !== 'facility' && user.role !== 'staffing_agency') redirect('/dashboard')
 
   const supabase = await createClient()
-  const [{ data: org }, { data: docs }, { data: auth }] = await Promise.all([
+  const [{ data: org }, { data: docs }, { data: auth }, { data: profile }] = await Promise.all([
     supabase.from('facility_profiles').select('*').eq('id', user.id).single(),
     supabase
       .from('org_documents')
@@ -63,7 +66,9 @@ export default async function OrganizationOnboardingPage() {
       .eq('facility_id', user.id)
       .order('uploaded_at'),
     supabase.auth.getUser(),
+    supabase.from('profiles').select('signup_path').eq('id', user.id).single(),
   ])
+  const door = orgDoorFor(profile?.signup_path)
   if (!org) redirect('/dashboard')
   if (org.onboarding_submitted_at) redirect('/dashboard')
 
@@ -99,6 +104,11 @@ export default async function OrganizationOnboardingPage() {
     facility_license_agency: org.facility_license_agency ?? '',
     facility_license_expires: org.facility_license_expires ?? '',
     org_npi: org.org_npi ?? '',
+    lead_has_credential: org.lead_has_credential == null ? '' : org.lead_has_credential ? 'yes' : 'no',
+    lead_credential_type: org.lead_credential_type ?? '',
+    lead_credential_number: org.lead_credential_number ?? '',
+    lead_credential_state: org.lead_credential_state ?? '',
+    lead_linkedin: org.lead_linkedin ?? '',
     disclosures: Object.fromEntries(
       ORG_DISCLOSURES.map((q) => {
         const s = saved[q.key]
@@ -110,14 +120,17 @@ export default async function OrganizationOnboardingPage() {
     attest_checks: !!org.authorized_checks_at,
   }
 
-  const intents = ((org.intents ?? []) as string[]).filter((i): i is OrgIntent =>
+  const savedIntents = ((org.intents ?? []) as string[]).filter((i): i is OrgIntent =>
     (ORG_INTENT_KEYS as readonly string[]).includes(i)
   )
+  // Pre-check the door's usual goals until they've saved their own.
+  const intents = savedIntents.length ? savedIntents : DEFAULT_INTENTS[door]
   const step = Math.min(Math.max(Number(org.onboarding_step ?? 2), 2), 5) as OrgWizardStep
 
   return (
     <OrgOnboardingWizard
       userId={user.id}
+      door={door}
       initialStep={step}
       initialAbout={about}
       initialVerify={verify}
