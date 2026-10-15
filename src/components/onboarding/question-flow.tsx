@@ -279,6 +279,23 @@ export function QuestionFlow({
           e.preventDefault()
           void next()
         }}
+        // Enter moves to the next screen (spec). On a focused tile or option
+        // button the browser would "click" it instead, toggling a multi-select
+        // answer — so continue. Single-select screens keep Enter as "pick",
+        // which auto-advances anyway.
+        onKeyDown={(e) => {
+          const t = e.target as HTMLElement
+          if (
+            e.key === 'Enter' &&
+            !screen.autoAdvance &&
+            t instanceof HTMLButtonElement &&
+            t.type === 'button' &&
+            bodyRef.current?.contains(t)
+          ) {
+            e.preventDefault()
+            void next()
+          }
+        }}
       >
         <h1
           className={`font-bold tracking-tight text-[#404145] ${
