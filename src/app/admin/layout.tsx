@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
+import { countPendingClassification } from '@/lib/admin/classification'
 
 const NAV = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/classification', label: 'Needs classification' },
   { href: '/admin/verification', label: 'Verification' },
   { href: '/admin/organizations', label: 'Organizations' },
   { href: '/admin/listings', label: 'Listings review' },
@@ -21,9 +23,11 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   let adminEmail = 'admin (demo)'
+  const badges: Record<string, number> = {}
   if (!isDemoMode()) {
-    const { admin } = await requireAdmin()
+    const { admin, db } = await requireAdmin()
     adminEmail = admin.email ?? admin.id
+    badges['/admin/classification'] = await countPendingClassification(db)
   }
 
   return (
@@ -38,9 +42,14 @@ export default async function AdminLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-[#62646a] hover:text-[#1dbf73]"
+                className="inline-flex items-center gap-1.5 text-[#62646a] hover:text-[#1dbf73]"
               >
                 {item.label}
+                {badges[item.href] ? (
+                  <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
+                    {badges[item.href]}
+                  </span>
+                ) : null}
               </Link>
             ))}
           </nav>
