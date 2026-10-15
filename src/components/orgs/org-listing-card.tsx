@@ -9,6 +9,7 @@ import {
   labelFor,
 } from '@/lib/onboarding/organization'
 import type { PublicOrgListing, PublicOrgListingWithOrg } from '@/lib/orgs/public'
+import { RequestBookingButton } from '@/components/bookings/request-booking-button'
 
 function formatWhen(iso: string): string {
   const d = new Date(iso)
@@ -106,8 +107,8 @@ export function OrgListingCard({
 }
 
 /**
- * Booking button. Bookings go through Sanus (request → accept → pay), which
- * ships in the next phase; until then signed-in visitors see it's coming.
+ * Booking button. Logged out: sign up first. Signed in: request it through
+ * Sanus (request → the organization accepts or quotes → pay).
  */
 export function OrgListingCta({ listing, signedIn }: { listing: PublicOrgListing; signedIn: boolean }) {
   const quote = listing.kind === 'service' && (listing.contactForPricing || listing.reachVia === 'inquiry')
@@ -122,12 +123,5 @@ export function OrgListingCta({ listing, signedIn }: { listing: PublicOrgListing
       </Link>
     )
   }
-  return (
-    <span
-      className="inline-flex h-10 w-full cursor-not-allowed items-center justify-center rounded-lg border border-dashed border-[#d5d6d9] text-sm font-semibold text-[#95979d]"
-      title="Booking through Sanus is coming soon"
-    >
-      {quote ? 'Quotes' : listing.kind === 'event' ? 'Registration' : 'Booking'} opens soon
-    </span>
-  )
+  return <RequestBookingButton listing={listing} />
 }

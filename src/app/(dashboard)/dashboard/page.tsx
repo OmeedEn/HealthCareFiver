@@ -1962,9 +1962,12 @@ function ClientDashboard({
             </CardHeader>
             <CardContent>
               <p className="text-sm text-[#62646a]">
-                You don&apos;t have any bookings yet. When you book a session
-                with a professional, it will show up here.
+                Services you request and events you register for show up in
+                My bookings.
               </p>
+              <Link href="/bookings" className="mt-3 inline-block text-sm font-semibold text-[#1dbf73] hover:underline">
+                Go to My bookings
+              </Link>
             </CardContent>
           </Card>
 
