@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -7,15 +8,18 @@ import { getSupabaseConfig } from '@/lib/supabase/config'
 import { TERMS_VERSION } from '@/lib/legal'
 import { computeGaps, hasGaps, namePrefill } from '@/lib/onboarding/account-gaps'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
+import { PRO_SIGNUP_COOKIE, parseProSignupCookie } from '@/lib/onboarding/professional-google'
+import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
 import { FinishAccountForm } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your account — Sanus' }
 
 /**
  * Landing page after "Continue with Google" (via /callback). OAuth signups
- * skip the step-1 form, so collect whatever is still missing — phone, Terms
- * consent, name — then hand off to the onboarding wizard. Users with nothing
- * missing pass straight through.
+ * skip the account screen, so collect whatever is still missing — Terms
+ * consent, name — then hand off to /onboarding/professional. Users with
+ * nothing missing pass straight through (their screens 1–3 answers from the
+ * Google cookie are saved on the way).
  */
 export default async function FinishAccountPage() {
   if (!getSupabaseConfig()) {
@@ -23,7 +27,7 @@ export default async function FinishAccountPage() {
     return (
       <Shell>
         <FinishAccountForm
-          gaps={{ name: true, phone: true, terms: true }}
+          gaps={{ name: true, terms: true }}
           prefill={{ firstName: '', lastName: '' }}
           termsVersion={TERMS_VERSION}
         />
@@ -38,7 +42,7 @@ export default async function FinishAccountPage() {
   if (!user) redirect('/login?redirectTo=/onboarding/account')
 
   const [{ data: profile }, { data: contractor }] = await Promise.all([
-    supabase.from('profiles').select('role, phone').eq('id', user.id).single(),
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
     supabase
       .from('contractor_profiles')
       .select('first_name, last_name')
@@ -50,10 +54,14 @@ export default async function FinishAccountPage() {
   // /signup/professional).
   if (profile?.role !== 'contractor') redirect('/dashboard')
 
-  const gaps = computeGaps(user, profile.phone, contractor)
+  const gaps = computeGaps(user, contractor)
   if (!hasGaps(gaps)) {
     // Nothing to collect, so finishAccount won't run: record the door here.
     await setSignupPathIfUnset(createAdminClient(), user.id, 'INDEPENDENT')
+    // The cookie expires on its own within the hour; applying is a no-op
+    // once the profile has a category.
+    const answers = parseProSignupCookie((await cookies()).get(PRO_SIGNUP_COOKIE)?.value)
+    if (answers) await applyProSignupAnswers(supabase, user.id, answers)
     redirect('/onboarding/professional')
   }
 

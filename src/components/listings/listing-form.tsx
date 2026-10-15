@@ -18,7 +18,6 @@ import { saveListing } from '@/app/(dashboard)/contractor/listings/actions'
 import {
   ENGAGEMENT_TYPES,
   EVENT_TYPES,
-  MEDICAL_PROCEDURES_LABEL,
   SERVICE_FORMATS,
   emptyListing,
   isoToLocalInput,
@@ -33,7 +32,17 @@ import {
   TextAreaField,
   TextField,
   Toggle,
+  FieldError,
 } from './form-fields'
+
+/**
+ * The hands-on question (Single-Question Onboarding spec: moved here from
+ * professional signup). Any yes makes malpractice coverage a "Needed after
+ * approval" item: saving starts it via startInsuranceGraceForListing.
+ */
+const HANDS_ON_QUESTION =
+  'Will this involve in-person or hands-on care, home visits, prescribing, injectables, or IVs?'
+type HandsOn = '' | 'yes' | 'no'
 
 const KINDS: { kind: OfferingKind; label: string; sub: string; icon: React.ElementType }[] = [
   { kind: 'service', label: 'Service', sub: 'Bookable sessions or visits', icon: Stethoscope },
@@ -46,8 +55,11 @@ export function ListingForm({
   initial,
   status,
   insured,
+  initialKind,
 }: {
   listingId: string | null
+  /** Preselects the kind for a new listing (dashboard first-run cards). */
+  initialKind?: OfferingKind
   /** starts_at may be ISO; converted to the local datetime-local value here. */
   initial: ListingDraft | null
   status?: ListingStatus
@@ -58,7 +70,13 @@ export function ListingForm({
   const [draft, setDraft] = useState<ListingDraft | null>(() =>
     initial
       ? { ...initial, starts_at: initial.starts_at ? isoToLocalInput(initial.starts_at) : '' }
-      : null
+      : initialKind
+        ? emptyListing(initialKind)
+        : null
+  )
+  // Existing listings already answered it; new ones must pick yes or no.
+  const [handsOn, setHandsOn] = useState<HandsOn>(() =>
+    initial ? (initial.involves_medical_procedures || needsMalpractice(initial) ? 'yes' : 'no') : ''
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [pending, startTransition] = useTransition()
@@ -75,6 +93,11 @@ export function ListingForm({
 
   function save(then: 'save' | 'review') {
     if (!draft) return
+    if (!handsOn) {
+      setErrors((e) => ({ ...e, hands_on: 'Choose yes or no' }))
+      toast.error('Please answer the hands-on care question.')
+      return
+    }
     const payload = {
       ...draft,
       starts_at:
@@ -165,6 +188,42 @@ export function ListingForm({
 
       <div className="rounded-xl border border-[#e4e5e7] bg-white p-5">
         <ListingFields draft={draft} errors={errors} onChange={update} />
+        <fieldset className="mt-5 space-y-2 border-t border-[#f1f1f2] pt-5">
+          <legend className="text-sm font-semibold text-[#404145]">{HANDS_ON_QUESTION}</legend>
+          <div className="grid grid-cols-2 gap-2">
+            {(['yes', 'no'] as const).map((v) => (
+              <label
+                key={v}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition ${
+                  handsOn === v
+                    ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
+                    : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="hands_on"
+                  value={v}
+                  checked={handsOn === v}
+                  onChange={() => {
+                    setHandsOn(v)
+                    // Yes is stored on the listing (involves_medical_procedures),
+                    // which makes it require malpractice coverage.
+                    update({ involves_medical_procedures: v === 'yes' })
+                    setErrors((e) => {
+                      const next = { ...e }
+                      delete next.hands_on
+                      return next
+                    })
+                  }}
+                  className="accent-[#1dbf73]"
+                />
+                {v === 'yes' ? 'Yes' : 'No'}
+              </label>
+            ))}
+          </div>
+          <FieldError msg={errors.hands_on} />
+        </fieldset>
       </div>
 
       {requiresMalpractice && (
@@ -236,14 +295,6 @@ function ListingFields({
 }) {
   const id = (f: string) => `listing-${f}`
   const err = (f: string) => errors[f]
-  const medical = (
-    <Toggle
-      id={id('medical')}
-      checked={item.involves_medical_procedures}
-      onChange={(v) => onChange({ involves_medical_procedures: v })}
-      label={MEDICAL_PROCEDURES_LABEL}
-    />
-  )
 
   if (item.kind === 'service') {
     return (
@@ -255,7 +306,6 @@ function ListingFields({
           <TextField id={id('price')} label="Price (USD)" value={item.price} onChange={(v) => onChange({ price: v })} error={err('price')} inputMode="decimal" placeholder="e.g., 120" />
           <TextField id={id('duration')} label="Duration (minutes)" value={item.duration_minutes} onChange={(v) => onChange({ duration_minutes: v.replace(/\D/g, '').slice(0, 4) })} error={err('duration_minutes')} inputMode="numeric" placeholder="e.g., 60" />
         </div>
-        {medical}
       </div>
     )
   }
@@ -278,7 +328,6 @@ function ListingFields({
         />
         <div className="flex flex-col gap-2">
           <Toggle id={id('custom_quote')} checked={item.custom_quote} onChange={(v) => onChange({ custom_quote: v })} label="I send custom quotes" />
-          {medical}
         </div>
       </div>
     )
@@ -315,7 +364,6 @@ function ListingFields({
         />
         <div className="flex flex-col gap-2">
           <Toggle id={id('is_free')} checked={item.is_free} onChange={(v) => onChange({ is_free: v })} label="Free" />
-          {medical}
         </div>
       </div>
     </div>

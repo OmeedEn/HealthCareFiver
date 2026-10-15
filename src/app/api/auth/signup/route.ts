@@ -9,6 +9,8 @@ import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
 import { classificationRequestRow, unsureAnswersSchema } from '@/lib/onboarding/unsure'
+import { proAnswersSchema } from '@/lib/onboarding/questions/professional'
+import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -87,7 +89,8 @@ const contractorSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
-  phone,
+  // Single-Question Onboarding: phone moved to the dashboard checklist.
+  phone: phone.optional(),
   // The granular license type is captured later in onboarding; 'other'
   // keeps the contractor_type enum happy at signup.
   contractor_type: z
@@ -99,6 +102,9 @@ const contractorSchema = z.object({
     .enum(PROFESSIONAL_CATEGORIES, 'Select a valid professional category')
     .optional(),
   signup_path: z.literal('INDEPENDENT').default('INDEPENDENT'),
+  // Screens 1–3 of /signup/professional (held in the browser until now).
+  // Written to contractor_profiles right after the account is created.
+  answers: proAnswersSchema.optional(),
 })
 
 // Organization signup is step 1 of the Organization Onboarding spec: just
@@ -214,9 +220,11 @@ export async function POST(request: NextRequest) {
       first_name: body.first_name,
       last_name: body.last_name,
       // handle_new_user copies this to profiles.phone.
-      phone: body.phone,
+      ...(body.phone ? { phone: body.phone } : {}),
       contractor_type: body.contractor_type,
-      ...(body.professional_category
+      // With answers, the category is written after signUp (with the rest
+      // of screens 1–3); handle_new_user only knows the four listed ones.
+      ...(body.professional_category && !body.answers
         ? { professional_category: body.professional_category }
         : {}),
     }
@@ -349,6 +357,26 @@ export async function POST(request: NextRequest) {
       // so the admin queue still lists the person — just without answers.
       // Don't fail the signup over it.
       console.error('[signup] classification_requests insert failed', {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : 'unknown error',
+      })
+    }
+  }
+
+  // Professional: save screens 1–3 to the new profile (service role; the
+  // person may not have a session yet while their email is unconfirmed).
+  // Same empty-identities rule as above. A failure doesn't fail the signup:
+  // /onboarding/professional asks the missing screens again.
+  if (
+    body.role === 'contractor' &&
+    body.answers &&
+    result.user &&
+    result.user.identities?.length !== 0
+  ) {
+    try {
+      await applyProSignupAnswers(createAdminClient(), result.user.id, body.answers)
+    } catch (err) {
+      console.error('[signup] professional answers not saved', {
         userId: result.user.id,
         error: err instanceof Error ? err.message : 'unknown error',
       })

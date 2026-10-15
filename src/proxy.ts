@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { mfaGate } from '@/lib/auth/mfa'
-import { missingPhoneOrTerms } from '@/lib/onboarding/account-gaps'
+import { missingTerms } from '@/lib/onboarding/account-gaps'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const PUBLIC_ROUTES = [
@@ -224,14 +224,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // The wizard needs a phone number and Terms consent first. Email signups
-  // provide both in step 1; Google signups provide them on
-  // /onboarding/account, so send anyone missing them there. (Not applied to
-  // /dashboard: existing professionals predate the phone requirement.)
+  // Professional onboarding needs Terms consent first. Email signups give it
+  // on the account screen; Google signups give it on /onboarding/account, so
+  // send anyone missing it there. (Phone is no longer asked at signup.)
   if (
     role === 'contractor' &&
     underPrefix(pathname, PRO_ONBOARDING_PATH) &&
-    missingPhoneOrTerms(user, profile?.phone)
+    missingTerms(user)
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/onboarding/account'

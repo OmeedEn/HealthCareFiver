@@ -57,6 +57,7 @@ import {
   type EvidenceItem,
 } from '../_lib/shared'
 import { ChecklistItem, saveChecklistEntry } from './checklist-item'
+import { professionalMissingForApproval } from '@/lib/onboarding/checklist-professional'
 
 type Action =
   | 'approve'
@@ -214,6 +215,16 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
       profile.carries_liability_insurance,
       malpracticeCreds.length,
     ]
+  )
+
+  // Needed for approval (Finish your profile): approve is refused while any are open.
+  const missingForApproval = professionalMissingForApproval(
+    branch,
+    credentials.map((c) => ({
+      credential_type: c.credential_type,
+      document_url: c.has_document ? 'stored' : null,
+      status: c.status,
+    }))
   )
 
   const evidenceByKey = useMemo(() => {
@@ -423,6 +434,11 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
                 {CATEGORY_LABEL[profile.professional_category ?? ''] ?? profile.contractor_type ?? '—'}
               </Badge>
             )}
+            {missingForApproval.map((m) => (
+              <Badge key={m} variant="destructive" title="Needed for approval">
+                Missing: {m}
+              </Badge>
+            ))}
             {profile.insured_verified_at && (
               <Badge className="bg-green-600">
                 <ShieldCheck data-icon="inline-start" /> Insured
