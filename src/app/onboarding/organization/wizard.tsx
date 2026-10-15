@@ -10,28 +10,22 @@ import {
   ATTEST_CHECKS_LABEL,
   BUSINESS_STRUCTURES,
   DISCLOSURE_DETAILS_MAX,
-  EVENT_AUDIENCES,
-  EVENT_FORMATS,
   HIRING_TIMELINES,
-  LISTING_FORMATS,
   LOOKING_FOR_ENGAGEMENTS,
   ORG_DESCRIPTION_MAX,
   ORG_DISCLOSURES,
   ORG_DOCUMENT_KINDS,
-  ORG_EVENT_TYPES,
   ORG_INTENTS,
   ORG_SIZES,
   ORG_TYPE_OTHER_MAX,
   PROFESSIONAL_TIERS,
-  REACH_VIA,
   REVIEW_NOTE,
-  SERVICE_AUDIENCES,
   STAFFING_POSTS_ENABLED,
   WORK_SETTINGS,
   type OrgIntent,
   type OrgWizardStep,
 } from '@/lib/onboarding/organization'
-import { CheckRow, SelectField, TextAreaField, TextField, Toggle } from '../professional/ui'
+import { CheckRow, SelectField, TextAreaField, TextField } from '../professional/ui'
 import {
   finishOnboarding,
   saveAbout,
@@ -44,22 +38,21 @@ import {
   type ActionResult,
 } from './actions'
 import { DocSlot } from './doc-slot'
+import { localInputToIso } from './listing-draft'
+import { eventScreens, serviceScreens } from './listing-questions'
 import { QuestionFlow, type Screen as FlowScreen } from './flow'
 
 /** Screens are tagged with their step when the flow is assembled. */
 type Screen = Omit<FlowScreen, 'step'>
 import { IconChoices, IconMultiChoices } from './sections/fields'
 import {
-  AUDIENCE_ICONS,
   BUSINESS_STRUCTURE_ICONS,
   ENGAGEMENT_ICONS,
-  EVENT_TYPE_ICONS,
   FORMAT_ICONS,
   ORG_INTENT_ICONS,
   ORG_SIZE_ICONS,
   ORG_TYPE_ICONS,
   PROFESSIONAL_TIER_ICONS,
-  REACH_VIA_ICONS,
   TIMELINE_ICONS,
   YES_NO_ICONS,
 } from './sections/choice-icons'
@@ -74,9 +67,7 @@ import {
   checkFields,
   orgTypeOptionsFor,
   URL_LIKE,
-  eventSchema,
   lookingForSchema,
-  serviceSchema,
   verifyFields,
   type AboutData,
   type EventDraft,
@@ -646,8 +637,6 @@ export function OrgOnboardingWizard({
       />
     ),
   })
-  const serviceCheck = (keys: (keyof ServiceDraft)[]) => checkFields(serviceSchema.shape, keys, { ...service })
-  const eventCheck = (keys: (keyof EventDraft)[]) => checkFields(eventSchema.shape, keys, { ...event })
   const lookingCheck = (keys: (keyof LookingForData)[]) => checkFields(lookingForSchema.shape, keys, { ...lookingFor })
   // Saves once; going back afterwards won't create a duplicate draft.
   const saveOnce = (intent: OrgIntent, run: () => Promise<ActionResult>, msg: string) => async () => {
@@ -660,223 +649,23 @@ export function OrgOnboardingWizard({
     return res
   }
 
-  const serviceScreens: Screen[] = [
-    {
-      id: 'svc_name',
-      section: SECTION[5],
-      title: 'What service do you offer?',
-      fields: ['title', 'description'],
-      validate: () => serviceCheck(['title', 'description']),
-      render: ({ errors }) => (
-        <>
-          <TextField id="svc-title" label="Service name" value={service.title} onChange={(x) => setS('title', x)} error={errors.title} placeholder="e.g. IV hydration therapy" />
-          <TextAreaField id="svc-desc" label="Description" value={service.description} onChange={(x) => setS('description', x)} error={errors.description} rows={4} />
-        </>
-      ),
-    },
-    {
-      id: 'svc_audience',
-      section: SECTION[5],
-      title: 'Who is it for?',
-      sub: 'Pick all that apply.',
-      fields: ['audiences'],
-      validate: () => serviceCheck(['audiences']),
-      render: ({ errors }) => (
-        <IconMultiChoices legend="Who it’s for" hideLegend options={SERVICE_AUDIENCES} icons={AUDIENCE_ICONS} value={service.audiences} onChange={(x) => setS('audiences', x)} error={errors.audiences} />
-      ),
-    },
-    {
-      id: 'svc_format',
-      section: SECTION[5],
-      title: 'How is it delivered?',
-      fields: ['format', 'locations'],
-      validate: () => ({
-        ...serviceCheck(['format']),
-        ...(service.format && service.format !== 'virtual'
-          ? need(!!service.locations.trim(), 'locations', 'Add where it’s offered')
-          : {}),
-      }),
-      render: ({ errors, advance }) => (
-        <>
-          <IconChoices
-            legend="Format"
-            hideLegend
-            options={LISTING_FORMATS}
-            icons={FORMAT_ICONS}
-            value={service.format}
-            onChange={(x) => {
-              setS('format', x)
-              if (x === 'virtual') advance()
-            }}
-            error={errors.format}
-          />
-          {service.format && service.format !== 'virtual' && (
-            <TextField id="svc-locations" label="Where is it offered?" value={service.locations} onChange={(x) => setS('locations', x)} error={errors.locations} placeholder="e.g. Irvine and Tustin offices" />
-          )}
-        </>
-      ),
-    },
-    {
-      id: 'svc_price',
-      section: SECTION[5],
-      title: 'What does it cost?',
-      fields: ['price'],
-      validate: () => ({
-        ...serviceCheck(['price']),
-        ...(!service.contact_for_pricing && !service.price
-          ? { price: 'Add a price, or choose “Contact us for pricing”' }
-          : {}),
-      }),
-      render: ({ errors }) => (
-        <>
-          {!service.contact_for_pricing && (
-            <div className="max-w-[220px]">
-              <TextField id="svc-price" label="Price ($)" value={service.price} onChange={(x) => setS('price', x)} error={errors.price} inputMode="decimal" />
-            </div>
-          )}
-          <Toggle id="svc-contact" checked={service.contact_for_pricing} onChange={(x) => setS('contact_for_pricing', x)} label="Contact us for pricing" />
-        </>
-      ),
-    },
-    {
-      id: 'svc_reach',
-      section: SECTION[5],
-      title: 'How should people reach you?',
-      fields: ['reach_via'],
-      validate: () => serviceCheck(['reach_via']),
-      save: saveOnce('advertise_services', () => saveListing('service', service), 'Service saved as a draft'),
-      continueLabel: 'Save service',
-      render: ({ errors }) => (
-        <IconChoices legend="How people reach you" hideLegend options={REACH_VIA} icons={REACH_VIA_ICONS} value={service.reach_via} onChange={(x) => setS('reach_via', x)} error={errors.reach_via} columns={2} />
-      ),
-    },
-  ]
-
-  const eventScreens: Screen[] = [
-    {
-      id: 'evt_type',
-      section: SECTION[5],
-      title: 'What kind of event is it?',
-      fields: ['event_type'],
-      validate: () => eventCheck(['event_type']),
-      render: ({ errors, advance }) => (
-        <IconChoices
-          legend="Event type"
-          hideLegend
-          options={ORG_EVENT_TYPES}
-          icons={EVENT_TYPE_ICONS}
-          value={event.event_type}
-          onChange={(x) => {
-            setE('event_type', x)
-            advance()
-          }}
-          error={errors.event_type}
-          columns={2}
-        />
-      ),
-    },
-    {
-      id: 'evt_name',
-      section: SECTION[5],
-      title: 'What’s it called?',
-      fields: ['title', 'description'],
-      validate: () => eventCheck(['title', 'description']),
-      render: ({ errors }) => (
-        <>
-          <TextField id="evt-title" label="Title" value={event.title} onChange={(x) => setE('title', x)} error={errors.title} />
-          <TextAreaField id="evt-desc" label="Description" value={event.description} onChange={(x) => setE('description', x)} error={errors.description} rows={4} />
-        </>
-      ),
-    },
-    {
-      id: 'evt_when',
-      section: SECTION[5],
-      title: 'When is it?',
-      fields: ['starts_at'],
-      validate: () => need(event.date_later || !!event.starts_at, 'starts_at', 'Pick a date and time, or “Set up the date later”'),
-      render: ({ errors }) => (
-        <>
-          {!event.date_later && (
-            <div className="max-w-[280px]">
-              <TextField id="evt-when" label="Date and time" type="datetime-local" value={event.starts_at} onChange={(x) => setE('starts_at', x)} error={errors.starts_at} />
-            </div>
-          )}
-          <Toggle id="evt-later" checked={event.date_later} onChange={(x) => setE('date_later', x)} label="Set up the date later" />
-        </>
-      ),
-    },
-    {
-      id: 'evt_format',
-      section: SECTION[5],
-      title: 'Where does it happen?',
-      fields: ['format', 'locations'],
-      validate: () => ({
-        ...eventCheck(['format']),
-        ...(event.format && event.format !== 'virtual'
-          ? need(!!event.locations.trim(), 'locations', 'Add the location')
-          : {}),
-      }),
-      render: ({ errors, advance }) => (
-        <>
-          <IconChoices
-            legend="Format"
-            hideLegend
-            options={EVENT_FORMATS}
-            icons={FORMAT_ICONS}
-            value={event.format}
-            onChange={(x) => {
-              setE('format', x)
-              if (x === 'virtual') advance()
-            }}
-            error={errors.format}
-          />
-          {event.format && event.format !== 'virtual' && (
-            <TextField id="evt-location" label="Location" value={event.locations} onChange={(x) => setE('locations', x)} error={errors.locations} />
-          )}
-        </>
-      ),
-    },
-    {
-      id: 'evt_price',
-      section: SECTION[5],
-      title: 'What does it cost, and how many can attend?',
-      fields: ['price', 'capacity'],
-      validate: () => ({
-        ...eventCheck(['price', 'capacity']),
-        ...(!event.is_free && !event.price ? { price: 'Add a price, or mark it free' } : {}),
-      }),
-      render: ({ errors }) => (
-        <>
-          <div className="space-y-2">
-            {!event.is_free && (
-              <div className="max-w-[220px]">
-                <TextField id="evt-price" label="Price ($)" value={event.price} onChange={(x) => setE('price', x)} error={errors.price} inputMode="decimal" />
-              </div>
-            )}
-            <Toggle id="evt-free" checked={event.is_free} onChange={(x) => setE('is_free', x)} label="It’s free" />
-          </div>
-          <div className="max-w-[220px]">
-            <TextField id="evt-capacity" label="Capacity" optional value={event.capacity} onChange={(x) => setE('capacity', x.replace(/\D/g, ''))} error={errors.capacity} inputMode="numeric" />
-          </div>
-        </>
-      ),
-    },
-    {
-      id: 'evt_audience',
-      section: SECTION[5],
-      title: 'Who is it for?',
-      fields: ['audiences', 'offers_ceu'],
-      validate: () => eventCheck(['audiences', 'offers_ceu']),
-      save: saveOnce('host_events', () => saveListing('event', event), 'Event saved as a draft'),
-      continueLabel: 'Save event',
-      render: ({ errors }) => (
-        <>
-          <IconMultiChoices legend="Audience" options={EVENT_AUDIENCES} icons={AUDIENCE_ICONS} value={event.audiences} onChange={(x) => setE('audiences', x)} error={errors.audiences} />
-          <IconChoices legend="Offers CEU/CME credit?" options={YES_NO} icons={YES_NO_ICONS} value={event.offers_ceu} onChange={(x) => setE('offers_ceu', x as YesNo)} error={errors.offers_ceu} columns={2} compact />
-        </>
-      ),
-    },
-  ]
+  const serviceQs = serviceScreens({
+    value: service,
+    set: setS,
+    section: SECTION[5],
+    finish: saveOnce('advertise_services', () => saveListing('service', service), 'Service saved as a draft'),
+  })
+  const eventQs = eventScreens({
+    value: event,
+    set: setE,
+    section: SECTION[5],
+    // Send the time as ISO: the server runs in UTC and would misread a local time.
+    finish: saveOnce(
+      'host_events',
+      () => saveListing('event', { ...event, starts_at: localInputToIso(event.starts_at) }),
+      'Event saved as a draft'
+    ),
+  })
 
   const lookingScreens: Screen[] = [
     {
@@ -938,9 +727,9 @@ export function OrgOnboardingWizard({
     const now = setup[o.key] === 'now'
     switch (o.key) {
       case 'advertise_services':
-        return [gate(o.key, 'Want to add your first service now?', serviceScreens.length), ...(now ? serviceScreens : [])]
+        return [gate(o.key, 'Want to add your first service now?', serviceQs.length), ...(now ? serviceQs : [])]
       case 'host_events':
-        return [gate(o.key, 'Want to add your first event now?', eventScreens.length), ...(now ? eventScreens : [])]
+        return [gate(o.key, 'Want to add your first event now?', eventQs.length), ...(now ? eventQs : [])]
       case 'find_professionals':
         return [gate(o.key, 'Want to tell us who you’re looking for?', lookingScreens.length), ...(now ? lookingScreens : [])]
       case 'post_needs':

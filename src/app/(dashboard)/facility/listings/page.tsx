@@ -11,29 +11,13 @@ import {
   SERVICE_AUDIENCES,
   labelFor,
 } from '@/lib/onboarding/organization'
-import { AddListing, DeleteListingButton, ListingStatusButton } from './listings-client'
+import { listingIsComplete, type ListingRow } from '@/app/onboarding/organization/listing-draft'
+import { AddListing, ContinueListingButton, DeleteListingButton, ListingStatusButton } from './listings-client'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
 
 export const dynamic = 'force-dynamic'
 
-interface Listing {
-  id: string
-  kind: 'service' | 'event'
-  status: string
-  title: string
-  description: string | null
-  audiences: string[]
-  format: string | null
-  locations: string | null
-  price_cents: number | null
-  contact_for_pricing: boolean
-  is_free: boolean
-  event_type: string | null
-  starts_at: string | null
-  capacity: number | null
-  offers_ceu: boolean | null
-  review_notes: string | null
-}
+type Listing = ListingRow
 
 const STATUS_LABEL: Record<string, string> = { draft: 'Draft', in_review: 'In review', published: 'Live' }
 
@@ -111,18 +95,25 @@ export default async function FacilityListingsPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={l.status === 'published' ? 'default' : l.status === 'draft' && l.review_notes ? 'destructive' : 'secondary'}>
-                      {l.status === 'draft' && l.review_notes ? 'Changes requested' : (STATUS_LABEL[l.status] ?? l.status)}
+                      {l.status === 'draft' && l.review_notes
+                        ? 'Changes requested'
+                        : l.status === 'draft' && !listingIsComplete(l)
+                          ? 'Unfinished'
+                          : (STATUS_LABEL[l.status] ?? l.status)}
                     </Badge>
+                    {l.status === 'draft' && <ContinueListingButton row={l} />}
                     {l.status === 'draft' && (
                       <ListingStatusButton
                         id={l.id}
                         action="submit"
                         disabledReason={
-                          !approved
-                            ? 'Available once your organization is approved'
-                            : !agreed
-                              ? 'Accept the Organization Agreement first'
-                              : null
+                          !listingIsComplete(l)
+                            ? 'Finish the listing first'
+                            : !approved
+                              ? 'Available once your organization is approved'
+                              : !agreed
+                                ? 'Accept the Organization Agreement first'
+                                : null
                         }
                       />
                     )}

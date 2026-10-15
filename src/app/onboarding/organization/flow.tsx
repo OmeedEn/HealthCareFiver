@@ -15,8 +15,8 @@ import type { ActionResult } from './actions'
  */
 export interface Screen {
   id: string
-  /** Wizard step (2–5) the screen belongs to; drives the progress bar. */
-  step: 2 | 3 | 4 | 5
+  /** Step the screen belongs to (a key of `stepWeights`); drives the progress bar. */
+  step: number
   section: string
   title: string
   sub?: string
@@ -34,18 +34,22 @@ export interface Screen {
   render: (ctx: { errors: Record<string, string>; advance: () => void }) => React.ReactNode
 }
 
-const STEP_ORDER = [2, 3, 4, 5] as const
-const STEP_WEIGHT = { 2: 0.3, 3: 0.4, 4: 0.1, 5: 0.2 } as const
+/** Organization onboarding: steps 2–5 and their share of the progress bar. */
+export const ORG_STEP_WEIGHTS: Record<number, number> = { 2: 0.3, 3: 0.4, 4: 0.1, 5: 0.2 }
 
 export function QuestionFlow({
   screens,
   initialIndex,
   onFinish,
+  stepWeights = ORG_STEP_WEIGHTS,
 }: {
   screens: Screen[]
   initialIndex: number
   onFinish: () => void
+  /** Each step's share of the bar (sums to 1). One step = a plain question count. */
+  stepWeights?: Record<number, number>
 }) {
+  const stepOrder = Object.keys(stepWeights).map(Number).sort((a, b) => a - b)
   const [index, setIndex] = useState(initialIndex)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
@@ -63,8 +67,8 @@ export function QuestionFlow({
   const w = (s: Screen) => s.weight ?? 1
   const stepTotal = inStep.reduce((n, s) => n + w(s), 0)
   const position = inStep.slice(0, inStep.indexOf(screen)).reduce((n, s) => n + w(s), 0) + 1
-  const before = STEP_ORDER.filter((s) => s < screen.step).reduce((n, s) => n + STEP_WEIGHT[s], 0)
-  const pct = Math.round((before + STEP_WEIGHT[screen.step] * (position / stepTotal)) * 100)
+  const before = stepOrder.filter((s) => s < screen.step).reduce((n, s) => n + stepWeights[s], 0)
+  const pct = Math.round((before + stepWeights[screen.step] * (position / stepTotal)) * 100)
   const [multiline, setMultiline] = useState(false)
 
   async function next() {
@@ -149,7 +153,8 @@ export function QuestionFlow({
           <div className="h-full rounded-full bg-[#1dbf73] transition-all duration-300" style={{ width: `${pct}%` }} />
         </div>
         <p className="mt-2 text-xs text-[#95979d]">
-          Step {STEP_ORDER.indexOf(screen.step) + 1} of {STEP_ORDER.length} · Question {position} of {stepTotal}
+          {stepOrder.length > 1 && `Step ${stepOrder.indexOf(screen.step) + 1} of ${stepOrder.length} · `}
+          Question {position} of {stepTotal}
         </p>
       </div>
 
