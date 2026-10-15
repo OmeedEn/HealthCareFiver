@@ -59,7 +59,10 @@ export default async function OrganizationOnboardingPage() {
 
   const supabase = await createClient()
   const [{ data: org }, { data: docs }, { data: auth }, { data: profile }] = await Promise.all([
-    supabase.from('facility_profiles').select('*').eq('id', user.id).single(),
+    // Own row via RPC: private columns aren't readable from the table directly.
+    // Untyped like the table read it replaces (no generated DB types yet).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabase.rpc('my_facility_profile').select('*').single<any>(),
     supabase
       .from('org_documents')
       .select('id, kind, filename, storage_path')

@@ -211,7 +211,7 @@ export async function saveVerifyDraft(
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
   if (parsed.disclosures) {
-    const { data: org } = await a.supabase.from('facility_profiles').select('self_disclosures').eq('id', a.user.id).single()
+    const { data: org } = await a.supabase.rpc('my_facility_profile').select('self_disclosures').single()
     const merged = { ...((org?.self_disclosures ?? {}) as Record<string, unknown>) }
     for (const q of ORG_DISCLOSURES) {
       const ans = parsed.disclosures[q.key]
@@ -345,11 +345,7 @@ export async function saveIntents(input: unknown): Promise<ActionResult> {
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
 
-  const { data: org } = await a.supabase
-    .from('facility_profiles')
-    .select('attested_authorized_at')
-    .eq('id', a.user.id)
-    .single()
+  const { data: org } = await a.supabase.rpc('my_facility_profile').select('attested_authorized_at').single()
   if (!org?.attested_authorized_at) return { ok: false, error: 'Finish verifying your organization first.' }
 
   const { error } = await a.supabase
@@ -507,9 +503,8 @@ export async function finishOnboarding(): Promise<ActionResult> {
   if ('error' in a) return { ok: false, error: a.error as string }
 
   const { data: org } = await a.supabase
-    .from('facility_profiles')
+    .rpc('my_facility_profile')
     .select('onboarding_submitted_at, attested_authorized_at, intents')
-    .eq('id', a.user.id)
     .single()
   if (!org?.attested_authorized_at || !(org.intents ?? []).length) {
     return { ok: false, error: 'Finish the earlier steps first.' }

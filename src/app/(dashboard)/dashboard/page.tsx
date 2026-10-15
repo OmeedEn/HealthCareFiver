@@ -563,10 +563,10 @@ export default async function DashboardPage() {
         { data: notifData },
         { count: listingCount },
       ] = await Promise.all([
+        // Own row via RPC: phone and review notes aren't readable directly.
         supabase
-          .from('facility_profiles')
+          .rpc('my_facility_profile')
           .select('description, phone, city, state, contact_name, verification_status, verification_notes, org_agreement_accepted_at')
-          .eq('id', user.id)
           .maybeSingle(),
         supabase
           .from('jobs')
