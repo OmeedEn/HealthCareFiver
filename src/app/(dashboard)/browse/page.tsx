@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { connection } from 'next/server'
 import { isDemoMode } from '@/lib/demo/data'
 import { getDemoProviders, getLiveProviders } from '@/lib/find-care/providers'
+import { getDemoOrgListings, getPublicOrgListings } from '@/lib/orgs/public'
 import { FindCareClient } from '@/app/find-care/find-care-client'
 
 export const metadata: Metadata = { title: 'Find professionals — Sanus' }
@@ -15,6 +16,7 @@ export default async function BrowsePage() {
   await connection()
   const isDemo = isDemoMode()
   let providers = isDemo ? getDemoProviders() : await getLiveProviders()
+  const orgListings = isDemo ? getDemoOrgListings() : await getPublicOrgListings()
 
   if (!isDemo) {
     const { createClient } = await import('@/lib/supabase/server')
@@ -25,5 +27,6 @@ export default async function BrowsePage() {
     if (user) providers = providers.filter((p) => p.id !== user.id)
   }
 
-  return <FindCareClient providers={providers} isDemo={isDemo} embedded />
+  // Inside the app the viewer is signed in (the proxy enforces MFA here).
+  return <FindCareClient providers={providers} orgListings={orgListings} signedIn isDemo={isDemo} embedded />
 }

@@ -1,6 +1,8 @@
 'use client'
 
 import { Suspense, useState, useMemo } from 'react'
+import type { PublicOrgListingWithOrg } from '@/lib/orgs/public'
+import { OrgListingsPanel } from './org-listings-panel'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -482,13 +484,27 @@ function FiltersPanel({
 
 type FindCareProps = {
   providers: PublicProvider[]
+  /** Organizations' live services and events ("Services & events" tab). */
+  orgListings?: PublicOrgListingWithOrg[]
+  /** Signed in (MFA done): decides the listing booking button. */
+  signedIn?: boolean
   isDemo: boolean
   /** Inside the signed-in app (browse mode): no public header/footer. */
   embedded?: boolean
 }
 
-function FindCarePageContent({ providers, isDemo, embedded = false }: FindCareProps) {
+function FindCarePageContent({ providers, orgListings = [], signedIn = false, isDemo, embedded = false }: FindCareProps) {
   const searchParams = useSearchParams()
+  const [tab, setTab] = useState<'pros' | 'listings'>(searchParams.get('tab') === 'listings' ? 'listings' : 'pros')
+  function chooseTab(next: 'pros' | 'listings') {
+    setTab(next)
+    // Keep the tab in the URL so it can be linked to and survives refresh.
+    const params = new URLSearchParams(window.location.search)
+    if (next === 'listings') params.set('tab', 'listings')
+    else params.delete('tab')
+    const qs = params.toString()
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`)
+  }
   const initialQuery = searchParams?.get('q') ?? ''
   // Search & filter state
   const [searchQuery, setSearchQuery] = useState(initialQuery)
@@ -639,7 +655,7 @@ function FindCarePageContent({ providers, isDemo, embedded = false }: FindCarePr
       <main className={embedded ? '' : 'mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10'}>
         {/* ── Page Heading ── */}
         <h1 className="font-heading text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl md:text-4xl">
-          Find Healthcare Professionals
+          {tab === 'listings' ? 'Find Services & Events' : 'Find Healthcare Professionals'}
         </h1>
         {isDemo ? (
           <p className="mt-2 inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
@@ -652,6 +668,36 @@ function FindCarePageContent({ providers, isDemo, embedded = false }: FindCarePr
           </p>
         )}
 
+        {/* ── Professionals | Services & events ── */}
+        <div className="mt-6">
+        <div role="tablist" aria-label="What to browse" className="inline-flex rounded-xl border border-[#e5e7eb] bg-white p-1">
+          {(
+            [
+              { id: 'pros', label: 'Professionals', count: providers.length },
+              { id: 'listings', label: 'Services & events', count: orgListings.length },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => chooseTab(t.id)}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73] ${
+                tab === t.id ? 'bg-[#0f4c3a] text-white' : 'text-[#374151] hover:text-[#1dbf73]'
+              }`}
+            >
+              {t.label}
+              <span className={`ml-1.5 text-xs ${tab === t.id ? 'text-white/80' : 'text-[#9ca3af]'}`}>{t.count}</span>
+            </button>
+          ))}
+        </div>
+        </div>
+
+        {tab === 'listings' ? (
+          <OrgListingsPanel listings={orgListings} signedIn={signedIn} initialQuery={initialQuery} />
+        ) : (
+        <>
         {/* ── Search Bar + Filters Button ── */}
         <div className="mt-6 flex gap-3">
           <div className="relative flex-1">
@@ -840,6 +886,8 @@ function FindCarePageContent({ providers, isDemo, embedded = false }: FindCarePr
             )}
           </div>
         </div>
+        </>
+        )}
       </main>
 
       {/* ── Footer ── */}
