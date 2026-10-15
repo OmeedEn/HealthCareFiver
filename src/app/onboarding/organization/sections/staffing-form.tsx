@@ -15,7 +15,8 @@ import {
 import { FieldError, RadioCards, SelectField, TextAreaField, TextField, Toggle } from '../../professional/ui'
 import { saveStaffingPost } from '../actions'
 import type { StaffingDraft } from '../shared'
-import { SectionActions } from './fields'
+import { IconChoices, SectionActions } from './fields'
+import { PAY_UNIT_ICONS, PROFESSIONAL_TIER_ICONS, STAFFING_POST_TYPE_ICONS } from './choice-icons'
 
 export function emptyStaffing(defaults: { city?: string; state?: string; zip_code?: string } = {}): StaffingDraft {
   return {
@@ -65,26 +66,28 @@ export function StaffingForm({
       </div>
 
       <TextField id="sp-title" label="Title" placeholder="e.g. Flu clinic surge: 6 RNs needed" value={v.title} onChange={(x) => set('title', x)} error={errors.title} />
-      <SelectField id="sp-type" label="Type" value={v.post_type} onChange={(x) => set('post_type', x)} options={STAFFING_POST_TYPES} error={errors.post_type} />
+      <IconChoices legend="Type" options={STAFFING_POST_TYPES} icons={STAFFING_POST_TYPE_ICONS} value={v.post_type} onChange={(x) => set('post_type', x)} error={errors.post_type} columns={4} />
 
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-[#404145]">Professionals needed</legend>
         {v.needs.map((n, i) => (
-          <div key={i} className="flex items-end gap-2">
-            <div className="flex-1">
-              <SelectField
-                id={`sp-need-${i}`}
-                label={i === 0 ? 'Type' : ' '}
+          <div key={i} className="flex items-start gap-3 rounded-xl border border-[#e4e5e7] bg-white p-3">
+            <div className="min-w-0 flex-1">
+              <IconChoices
+                legend={`Professional type ${i + 1}`}
+                hideLegend
+                compact
+                options={PROFESSIONAL_TIERS}
+                icons={PROFESSIONAL_TIER_ICONS}
                 value={n.type}
                 onChange={(x) => set('needs', v.needs.map((m, j) => (j === i ? { ...m, type: x } : m)))}
-                options={PROFESSIONAL_TIERS}
                 error={errors[`needs.${i}.type`]}
               />
             </div>
-            <div className="w-24">
+            <div className="w-24 shrink-0">
               <TextField
                 id={`sp-count-${i}`}
-                label={i === 0 ? 'How many' : ' '}
+                label="How many"
                 value={n.count}
                 onChange={(x) => set('needs', v.needs.map((m, j) => (j === i ? { ...m, count: x.replace(/\D/g, '') } : m)))}
                 error={errors[`needs.${i}.count`]}
@@ -92,7 +95,7 @@ export function StaffingForm({
               />
             </div>
             {v.needs.length > 1 && (
-              <button type="button" onClick={() => set('needs', v.needs.filter((_, j) => j !== i))} className="mb-3 text-[#95979d] hover:text-red-600" aria-label="Remove">
+              <button type="button" onClick={() => set('needs', v.needs.filter((_, j) => j !== i))} className="mt-1 text-[#95979d] hover:text-red-600" aria-label="Remove">
                 <X className="size-4" />
               </button>
             )}
@@ -127,10 +130,12 @@ export function StaffingForm({
       <div className="space-y-2">
         <Toggle id="sp-volunteer" checked={v.is_volunteer} onChange={(x) => set('is_volunteer', x)} label="This is a volunteer opportunity (unpaid)" />
         {!v.is_volunteer && (
-          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
-            <TextField id="sp-pay-min" label="Pay ($)" value={v.pay_min} onChange={(x) => set('pay_min', x)} error={errors.pay_min} inputMode="decimal" />
-            <TextField id="sp-pay-max" label="Up to ($)" optional value={v.pay_max} onChange={(x) => set('pay_max', x)} error={errors.pay_max} inputMode="decimal" />
-            <SelectField id="sp-pay-unit" label="Unit" value={v.pay_unit} onChange={(x) => set('pay_unit', x)} options={PAY_UNITS} error={errors.pay_unit} />
+          <div className="space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TextField id="sp-pay-min" label="Pay ($)" value={v.pay_min} onChange={(x) => set('pay_min', x)} error={errors.pay_min} inputMode="decimal" />
+              <TextField id="sp-pay-max" label="Up to ($)" optional value={v.pay_max} onChange={(x) => set('pay_max', x)} error={errors.pay_max} inputMode="decimal" />
+            </div>
+            <IconChoices legend="Paid" options={PAY_UNITS} icons={PAY_UNIT_ICONS} value={v.pay_unit} onChange={(x) => set('pay_unit', x)} error={errors.pay_unit} columns={4} compact />
           </div>
         )}
       </div>

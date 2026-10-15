@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { EVENT_AUDIENCES, EVENT_FORMATS, ORG_EVENT_TYPES } from '@/lib/onboarding/organization'
-import { RadioCards, SelectField, TextAreaField, TextField, Toggle, YES_NO_OPTIONS } from '../../professional/ui'
+import { RadioCards, TextAreaField, TextField, Toggle, YES_NO_OPTIONS } from '../../professional/ui'
 import { saveListing } from '../actions'
 import type { EventDraft } from '../shared'
-import { OptionChips, SectionActions } from './fields'
+import { IconChoices, OptionChips, SectionActions } from './fields'
+import { EVENT_TYPE_ICONS } from './choice-icons'
 
 export const EMPTY_EVENT: EventDraft = {
   event_type: '', title: '', description: '', date_later: false, starts_at: '', format: '',
@@ -37,7 +38,7 @@ export function EventForm({ onSaved, onSkip }: { onSaved: () => void; onSkip?: (
 
   return (
     <div className="space-y-4">
-      <SelectField id="evt-type" label="Type" value={v.event_type} onChange={(x) => set('event_type', x)} options={ORG_EVENT_TYPES} error={errors.event_type} />
+      <IconChoices legend="Type" options={ORG_EVENT_TYPES} icons={EVENT_TYPE_ICONS} value={v.event_type} onChange={(x) => set('event_type', x)} error={errors.event_type} columns={4} />
       <TextField id="evt-title" label="Title" value={v.title} onChange={(x) => set('title', x)} error={errors.title} />
       <TextAreaField id="evt-desc" label="Description" value={v.description} onChange={(x) => set('description', x)} error={errors.description} />
       <div className="space-y-2">

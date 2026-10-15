@@ -34,8 +34,8 @@ export interface AboutData {
   description: string
 }
 
-export const aboutSchema = z
-  .object({
+/** Per-field rules, so the wizard can check (and save) one question at a time. */
+export const aboutFields = {
     facility_name: z.string().trim().min(1, 'Organization name is required').max(200),
     org_type: z.enum(ORG_TYPE_KEYS, 'Choose your organization type'),
     org_type_other: z.string().trim().max(ORG_TYPE_OTHER_MAX).default(''),
@@ -60,7 +60,10 @@ export const aboutSchema = z
       .trim()
       .min(1, 'Add a short description')
       .max(ORG_DESCRIPTION_MAX, `Keep it to ${ORG_DESCRIPTION_MAX} characters`),
-  })
+}
+
+export const aboutSchema = z
+  .object(aboutFields)
   .refine((d) => d?.org_type !== 'other' || (d.org_type_other ?? '').trim().length > 0, {
     path: ['org_type_other'],
     message: 'Tell us what kind of organization you are',
@@ -88,8 +91,7 @@ export interface VerifyData {
 
 const yesNo = z.enum(['yes', 'no'], 'Answer yes or no')
 
-export const verifySchema = z
-  .object({
+export const verifyFields = {
     legal_name: z.string().trim().max(200).default(''),
     business_structure: z.enum(BUSINESS_STRUCTURE_KEYS, 'Choose a business structure'),
     registration_state: z.string().trim().regex(/^[A-Z]{2}$/, 'Choose the state of registration'),
@@ -109,7 +111,10 @@ export const verifySchema = z
     ),
     attest_authorized: z.literal(true, 'Please confirm you’re authorized and the information is accurate'),
     attest_checks: z.literal(true, 'Please authorize verification and exclusion screenings'),
-  })
+}
+
+export const verifySchema = z
+  .object(verifyFields)
   .superRefine((d, ctx) => {
     if (d?.has_facility_license === 'yes') {
       const req: [keyof typeof d, string][] = [
@@ -156,6 +161,20 @@ export const DOC_MAX_BYTES = 10 * 1024 * 1024
 export const intentsSchema = z
   .array(z.enum(ORG_INTENT_KEYS))
   .min(1, 'Pick at least one — you can change this anytime')
+
+/**
+ * Validate just `keys` of `data` against a field map (aboutFields /
+ * verifyFields) and return the first message per field. Empty = all good.
+ */
+export function checkFields<F extends z.ZodRawShape>(
+  fields: F,
+  keys: (keyof F & string)[],
+  data: Record<string, unknown>
+): Record<string, string> {
+  const shape = Object.fromEntries(keys.map((k) => [k, fields[k]])) as z.ZodRawShape
+  const res = z.object(shape).safeParse(data)
+  return res.success ? {} : fieldErrors(res.error)
+}
 
 /** First validation message per field, for inline errors. */
 export function fieldErrors(error: z.ZodError): Record<string, string> {
