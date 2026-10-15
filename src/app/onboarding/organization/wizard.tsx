@@ -6,6 +6,7 @@ import { StepAbout } from './step-about'
 import { StepVerify } from './step-verify'
 import { StepIntents } from './step-intents'
 import { StepQuickSetup } from './step-quick-setup'
+import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
 import type { AboutData, OrgDoc, VerifyData } from './shared'
 
 /**
@@ -16,6 +17,7 @@ import type { AboutData, OrgDoc, VerifyData } from './shared'
  */
 export function OrgOnboardingWizard({
   userId,
+  door,
   initialStep,
   initialAbout,
   initialVerify,
@@ -23,6 +25,8 @@ export function OrgOnboardingWizard({
   initialIntents,
 }: {
   userId: string
+  /** Signup door (profiles.signup_path); null legacy accounts arrive as HIRING. */
+  door: OrgSignupPath
   initialStep: OrgWizardStep
   initialAbout: AboutData
   initialVerify: VerifyData
@@ -43,10 +47,11 @@ export function OrgOnboardingWizard({
   return (
     <div className="space-y-8">
       <Progress step={step} />
-      {step === 2 && <StepAbout value={about} onChange={setAbout} onDone={() => go(3)} />}
+      {step === 2 && <StepAbout door={door} value={about} onChange={setAbout} onDone={() => go(3)} />}
       {step === 3 && (
         <StepVerify
           userId={userId}
+          door={door}
           value={verify}
           onChange={setVerify}
           docs={docs}
