@@ -41,6 +41,11 @@ import {
 } from '@/lib/demo/data'
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
+import { loadClientProfile } from '@/lib/onboarding/client-profile'
+import { buildClientChecklist, CLIENT_GROUP_LABELS } from '@/lib/onboarding/checklist-client'
+import type { ChecklistItem as FinishItem } from '@/lib/onboarding/checklist'
+import { FinishProfileCard } from '@/components/onboarding/finish-profile-card'
+import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
@@ -167,6 +172,8 @@ export default async function DashboardPage() {
   let clientLocation: string | null = null
   // Not sure signups awaiting staff placement (or rejected): no messaging.
   let clientClassification: 'pending' | 'rejected' | null = null
+  // Finish your profile items (null for Not sure accounts under review).
+  let clientChecklist: FinishItem[] | null = null
 
   // Facility-specific data
   let facilityKpis: FacilityKpis = {
@@ -367,21 +374,28 @@ export default async function DashboardPage() {
         clientClassification =
           profileData.classification_status === 'rejected' ? 'rejected' : 'pending'
       }
-      const { data: clientRow } = await supabase
-        .from('client_profiles')
-        .select('first_name, interests, city, state')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (typeof clientRow?.first_name === 'string' && clientRow.first_name) {
-        firstName = clientRow.first_name
-      }
-      clientInterests = Array.isArray(clientRow?.interests)
-        ? (clientRow.interests as string[])
-        : []
+      const clientRow = await loadClientProfile(supabase, user.id)
+      if (clientRow?.first_name) firstName = clientRow.first_name
+      clientInterests = clientRow?.interests ?? []
       clientLocation =
         [clientRow?.city, clientRow?.state]
           .filter((v): v is string => typeof v === 'string' && v.length > 0)
-          .join(', ') || null
+          .join(', ') ||
+        clientRow?.zip_code ||
+        null
+      // Not sure accounts keep the classification banner as their only
+      // nudge; the client checklist and matches are for placed clients.
+      if (clientRow && !clientClassification) {
+        clientChecklist = buildClientChecklist({
+          emailConfirmed: !!user.email_confirmed_at,
+          zip_code: clientRow.zip_code,
+          goals: clientRow.goals,
+          language: clientRow.language,
+          budget: clientRow.budget,
+          note: clientRow.note,
+          phone: (profileData?.phone as string | null | undefined) ?? null,
+        })
+      }
     }
 
     if (role === 'contractor') {
@@ -712,6 +726,7 @@ export default async function DashboardPage() {
           interests={clientInterests}
           location={clientLocation}
           classification={clientClassification}
+          checklist={clientChecklist}
         />
       )}
     </div>
@@ -1782,16 +1797,21 @@ function ClientDashboard({
   interests,
   location,
   classification,
+  checklist,
 }: {
   firstName: string
   interests: string[]
   location: string | null
   classification: 'pending' | 'rejected' | null
+  checklist: FinishItem[] | null
 }) {
   return (
     <div className="space-y-6">
       {classification && (
         <ClassificationBanner status={classification} firstName={firstName} />
+      )}
+      {checklist && (
+        <FinishProfileCard items={checklist} groupLabels={CLIENT_GROUP_LABELS} />
       )}
       <div>
         <h1 className="text-2xl font-bold text-[#404145]">
@@ -1815,10 +1835,22 @@ function ClientDashboard({
             {location ? ` near ${location}` : ''}.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-wrap gap-3">
+          {!classification && (
+            <Link
+              href={CLIENT_MATCHES_PATH}
+              className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+            >
+              See your matches &rarr;
+            </Link>
+          )}
           <Link
             href="/find-care"
-            className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+            className={
+              classification
+                ? 'inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]'
+                : 'inline-flex h-10 items-center rounded-md border border-[#1dbf73] bg-white px-4 text-sm font-semibold text-[#0f8f56] hover:bg-[#f4fdf8]'
+            }
           >
             Browse professionals &rarr;
           </Link>

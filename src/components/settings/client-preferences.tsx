@@ -3,7 +3,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
-import { CLIENT_INTERESTS } from '@/lib/onboarding/client-interests'
+import {
+  CLIENT_INTERESTS,
+  HELP_TIMELINES,
+  MEETING_FORMATS,
+  normalizeClientInterests,
+} from '@/lib/onboarding/client-interests'
+import { OptionChips } from '@/components/onboarding/choices'
 import { US_STATES } from '@/lib/utils/constants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,11 +26,10 @@ import { Check, Loader2 } from 'lucide-react'
 
 // Mirrors the client branch of /api/auth/signup and the client_profiles
 // CHECK constraints so a save never fails on the DB side.
-const MAX_INTERESTS = 10
+const MAX_INTERESTS = CLIENT_INTERESTS.length
 const MAX_CITY_LENGTH = 100
 const STATE_RE = /^[A-Z]{2}$/
 const ZIP_RE = /^\d{5}$/
-const VALID_KEYS = new Set<string>(CLIENT_INTERESTS.map((i) => i.key))
 
 /**
  * Lets a client edit the interests and location they picked at signup.
@@ -40,6 +45,10 @@ export function ClientPreferences() {
   const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [zip, setZip] = useState('')
+  const [timeline, setTimeline] = useState('')
+  const [formats, setFormats] = useState<string[]>([])
+  // False until migration 20261016000400 adds timeline/format columns.
+  const [hasAnswerColumns, setHasAnswerColumns] = useState(false)
   const [saving, setSaving] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -67,11 +76,21 @@ export function ClientPreferences() {
         if (!cancelled) setStatus('hidden')
         return
       }
-      const { data: row, error } = await supabase
+      const base = 'interests, city, state, zip_code'
+      let withAnswers = true
+      let { data: row, error } = await supabase
         .from('client_profiles')
-        .select('interests, city, state, zip_code')
+        .select(`${base}, help_timeline, meeting_formats`)
         .eq('id', user.id)
         .maybeSingle()
+      if (error) {
+        withAnswers = false
+        ;({ data: row, error } = await supabase
+          .from('client_profiles')
+          .select(base)
+          .eq('id', user.id)
+          .maybeSingle())
+      }
       if (cancelled) return
       if (error || !row) {
         // No row to update (RLS has no client-side INSERT), so don't offer
@@ -80,14 +99,16 @@ export function ClientPreferences() {
         return
       }
       setUserId(user.id)
+      const r = row as Record<string, unknown>
       setInterests(
-        Array.isArray(row.interests)
-          ? (row.interests as string[]).filter((k) => VALID_KEYS.has(k))
-          : []
+        Array.isArray(r.interests) ? normalizeClientInterests(r.interests as string[]) : []
       )
-      setCity((row.city as string | null) ?? '')
-      setState((row.state as string | null) ?? '')
-      setZip((row.zip_code as string | null) ?? '')
+      setHasAnswerColumns(withAnswers)
+      setTimeline(typeof r.help_timeline === 'string' ? r.help_timeline : '')
+      setFormats(Array.isArray(r.meeting_formats) ? (r.meeting_formats as string[]) : [])
+      setCity((r.city as string | null) ?? '')
+      setState((r.state as string | null) ?? '')
+      setZip((r.zip_code as string | null) ?? '')
       setStatus('ready')
     }
     load()
@@ -146,6 +167,9 @@ export function ClientPreferences() {
         city: trimmedCity || null,
         state: state || null,
         zip_code: trimmedZip || null,
+        ...(hasAnswerColumns
+          ? { help_timeline: timeline || null, meeting_formats: formats }
+          : {}),
       })
       .eq('id', userId)
     setSaving(false)
@@ -162,8 +186,7 @@ export function ClientPreferences() {
       <CardHeader>
         <CardTitle>What you&apos;re looking for</CardTitle>
         <CardDescription>
-          We use these to suggest professionals near you. Pick up to{' '}
-          {MAX_INTERESTS}.
+          We use these to suggest professionals near you.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -208,6 +231,32 @@ export function ClientPreferences() {
             })}
           </div>
         </fieldset>
+
+        {hasAnswerColumns && (
+          <div className="space-y-4">
+            <OptionChips
+              legend="How soon do you need help?"
+              options={HELP_TIMELINES}
+              value={timeline ? [timeline] : []}
+              onChange={(v) => setTimeline(v.find((x) => x !== timeline) ?? '')}
+            />
+            <OptionChips
+              legend="How would you like to meet?"
+              options={MEETING_FORMATS}
+              value={formats}
+              onChange={(v) => {
+                const added = v.find((x) => !formats.includes(x))
+                setFormats(
+                  added === 'no_preference'
+                    ? ['no_preference']
+                    : added
+                      ? v.filter((x) => x !== 'no_preference')
+                      : v
+                )
+              }}
+            />
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
