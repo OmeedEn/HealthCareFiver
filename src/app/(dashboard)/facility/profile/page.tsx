@@ -83,11 +83,11 @@ export default async function FacilityProfilePage() {
       redirect('/login')
     }
 
+    // Own row via RPC: private columns aren't readable from the table directly.
     const { data } = await supabase
-      .from('facility_profiles')
+      .rpc('my_facility_profile')
       // The table uses address_line_1/2; the UI type uses address_line1/2.
       .select('*, address_line1:address_line_1, address_line2:address_line_2')
-      .eq('id', user.id)
       .single()
 
     facility = (data as FacilityProfile | null) ?? null
