@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { TERMS_VERSION } from '@/lib/legal'
-import { canConvertToOrg } from '@/lib/onboarding/org-account'
+import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { OrgAccountForm } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your organization account — Sanus' }
@@ -31,7 +31,7 @@ export default async function OrgAccountPage() {
 
   if (role === 'contractor') {
     // An established professional account can't be turned into an org.
-    if (!(await canConvertToOrg(admin, user))) redirect('/dashboard')
+    if (!(await canConvertNewProfessional(admin, user))) redirect('/dashboard')
   } else if (role === 'facility' || role === 'staffing_agency') {
     const { data: org } = await admin
       .from('facility_profiles')

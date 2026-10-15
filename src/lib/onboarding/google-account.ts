@@ -5,7 +5,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 /**
  * "Continue with Google" creates every new account as a professional
  * (handle_new_user defaults the role). When someone started from
- * /signup/organization we turn that brand-new account into an organization.
+ * /signup/organization or /signup/client we turn that brand-new account into
+ * an organization or a client.
  *
  * Only safe for an account that is clearly untouched: created in the last
  * 24 hours, never started the professional wizard, and has no credentials,
@@ -13,7 +14,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  */
 const MAX_AGE_MS = 24 * 60 * 60 * 1000
 
-export async function canConvertToOrg(admin: SupabaseClient, user: User): Promise<boolean> {
+export async function canConvertNewProfessional(admin: SupabaseClient, user: User): Promise<boolean> {
   if (Date.now() - new Date(user.created_at).getTime() > MAX_AGE_MS) return false
 
   const [{ data: profile }, { data: contractor }, creds, offerings, apps] = await Promise.all([
@@ -60,4 +61,27 @@ export async function convertToOrg(
     contact_name: contactName,
   })
   if (insError) throw new Error(`Couldn't create organization profile: ${insError.message}`)
+}
+
+/** Swap the professional rows for client rows. Service-role client only. */
+export async function convertToClient(
+  admin: SupabaseClient,
+  userId: string,
+  client: {
+    first_name: string
+    last_name: string
+    interests: string[]
+    city: string | null
+    state: string | null
+    zip_code: string | null
+  }
+): Promise<void> {
+  const { error: delError } = await admin.from('contractor_profiles').delete().eq('id', userId)
+  if (delError) throw new Error(`Couldn't remove professional profile: ${delError.message}`)
+
+  const { error: roleError } = await admin.from('profiles').update({ role: 'client' }).eq('id', userId)
+  if (roleError) throw new Error(`Couldn't change account type: ${roleError.message}`)
+
+  const { error: insError } = await admin.from('client_profiles').insert({ id: userId, ...client })
+  if (insError) throw new Error(`Couldn't create client profile: ${insError.message}`)
 }

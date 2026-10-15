@@ -7,7 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { mfaGate } from '@/lib/auth/mfa'
 import { TERMS_VERSION } from '@/lib/legal'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
-import { canConvertToOrg, convertToOrg } from '@/lib/onboarding/org-account'
+import { canConvertNewProfessional, convertToOrg } from '@/lib/onboarding/google-account'
 
 export type OrgAccountState = { error?: string } | null
 
@@ -54,7 +54,7 @@ export async function finishOrgAccount(
   const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single()
 
   if (profile?.role === 'contractor') {
-    if (!(await canConvertToOrg(admin, user))) {
+    if (!(await canConvertNewProfessional(admin, user))) {
       return {
         error:
           'This Google account is already set up as a professional. Sign out and use a different account for your organization.',

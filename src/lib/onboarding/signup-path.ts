@@ -58,6 +58,22 @@ export function isPendingClassification(profile: {
   return profile.signup_path === 'UNSURE' && profile.classification_status === 'pending'
 }
 
+/**
+ * Not sure accounts that are awaiting placement or were rejected keep the
+ * under-review limits: browse, save, and book as a client, but no
+ * messaging professionals (and, as clients, no publishing, search listing,
+ * or applying).
+ */
+export function isClassificationRestricted(profile: {
+  signup_path?: string | null
+  classification_status?: string | null
+}): boolean {
+  return (
+    profile.signup_path === 'UNSURE' &&
+    (profile.classification_status === 'pending' || profile.classification_status === 'rejected')
+  )
+}
+
 /** Human labels, e.g. for the assignment email ("we've set you up as …") and admin views. */
 export const SIGNUP_PATH_LABELS: Record<SignupPath, string> = {
   INDEPENDENT: 'an independent professional',
