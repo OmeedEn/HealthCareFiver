@@ -16,6 +16,7 @@ import {
 import { listingIsComplete, listingNeedsPayouts, type ListingRow } from '@/app/onboarding/organization/listing-draft'
 import { AddListing, ContinueListingButton, DeleteListingButton, ListingStatusButton } from './listings-client'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
+import { isStripeConfigured } from '@/lib/stripe/connect'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,7 +48,7 @@ export default async function FacilityListingsPage() {
   const listings = (rows ?? []) as Listing[]
   const approved = org?.verification_status === 'approved'
   const agreed = !!org?.org_agreement_accepted_at
-  const payoutsReady = profile?.stripe_connect_onboarded === true
+  const payoutsReady = !isStripeConfigured() || profile?.stripe_connect_onboarded === true
   const needsPayoutsSetup = approved && !payoutsReady && listings.some((l) => l.status === 'draft' && listingNeedsPayouts(l))
 
   return (

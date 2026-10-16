@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { isDemoMode } from '@/lib/demo/data'
 import { ORG_AGREEMENT_VERSION } from '@/lib/legal'
 import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
+import { isStripeConfigured } from '@/lib/stripe/connect'
 import { checkFields, eventSchema, serviceSchema } from '@/app/onboarding/organization/shared'
 import {
   draftToColumns,
@@ -129,7 +130,8 @@ async function setListingStatus(id: string, status: 'draft' | 'in_review') {
       return { ok: false, error: 'Finish this listing first: open it with “Continue” and answer the remaining questions.' }
     }
     // Anything customers pay for needs payouts set up first (free events don't).
-    if (listingNeedsPayouts(row as ListingRow)) {
+    // Only enforced once Stripe is configured, so orgs aren't stuck before then.
+    if (isStripeConfigured() && listingNeedsPayouts(row as ListingRow)) {
       const { data: profile } = await supabase.from('profiles').select('stripe_connect_onboarded').eq('id', user.id).single()
       if (!profile?.stripe_connect_onboarded) {
         return { ok: false, error: 'Set up payouts before submitting paid services or events. Go to Payouts.' }
