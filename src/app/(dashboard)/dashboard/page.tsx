@@ -348,10 +348,10 @@ export default async function DashboardPage() {
     }
 
     const { data: profileData } = await supabase
-      .from('profiles')
+      // my_profile(): own row incl. private columns (email, phone).
+      .rpc('my_profile')
       .select('*')
-      .eq('id', user.id)
-      .single()
+      .maybeSingle<Record<string, string | boolean | null>>()
 
     accountCreatedAt =
       (profileData?.created_at as string | undefined) ?? user.created_at ?? null

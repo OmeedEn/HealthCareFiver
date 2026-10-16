@@ -30,10 +30,8 @@ export function useUser() {
           setUser(authUser)
 
           const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authUser.id)
-            .single()
+            .rpc('my_profile')
+            .maybeSingle()
 
           if (profileData) {
             setProfile(profileData as Profile)
@@ -55,10 +53,8 @@ export function useUser() {
         setUser(session.user)
 
         const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+          .rpc('my_profile')
+          .maybeSingle()
 
         if (profileData) {
           setProfile(profileData as Profile)

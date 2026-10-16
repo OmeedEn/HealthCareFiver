@@ -52,7 +52,7 @@ export default async function FinishProfessionalItemPage({
       )
       .eq('id', user.id)
       .single(),
-    supabase.from('profiles').select('phone').eq('id', user.id).single(),
+    supabase.rpc('my_profile').select('phone').maybeSingle(),
     supabase
       .from('credentials')
       .select('id, credential_type, name, document_filename, document_url, status')

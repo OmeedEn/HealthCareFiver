@@ -22,9 +22,8 @@ export default async function ClientFinishItemPage({ params }: { params: Promise
   if (!user) redirect(`/login?redirectTo=/dashboard/finish/client/${item}`)
 
   const { data: profileRow } = await supabase
-    .from('profiles')
+    .rpc('my_profile')
     .select('role, phone')
-    .eq('id', user.id)
     .maybeSingle()
   if (profileRow?.role !== 'client') redirect('/dashboard')
   if (item === 'verify_email' && user.email_confirmed_at) redirect('/dashboard')

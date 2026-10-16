@@ -56,10 +56,10 @@ export default async function DashboardLayout({
     }
 
     const { data: profile } = await supabase
-      .from('profiles')
+      // my_profile(): own row incl. private columns (email, phone).
+      .rpc('my_profile')
       .select('*')
-      .eq('id', user.id)
-      .single()
+      .maybeSingle<Record<string, string | boolean | null>>()
 
     role = (profile?.role ?? user.user_metadata?.role ?? 'contractor') as
       DashboardRole

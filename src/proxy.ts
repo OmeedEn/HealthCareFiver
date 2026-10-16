@@ -175,7 +175,7 @@ export async function proxy(request: NextRequest) {
   // Fetch user role from profiles table
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, phone')
+    .select('role')
     .eq('id', user.id)
     .single()
 
