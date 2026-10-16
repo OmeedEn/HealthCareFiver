@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { CalendarDays, ChevronRight, Megaphone, Users } from 'lucide-react'
-import { money, statusLabel, statusTone, when, type BookingRow, type BookingStatus } from '@/lib/bookings/types'
+import { money, statusLabel, statusTone, when, type BookingRow } from '@/lib/bookings/types'
 
 const TONES = {
   green: 'bg-[#e8faf1] text-[#0f8f56]',
@@ -9,10 +9,10 @@ const TONES = {
   gray: 'bg-[#f1f1f2] text-[#62646a]',
 } as const
 
-export function BookingStatusBadge({ status, side }: { status: BookingStatus; side: 'customer' | 'org' }) {
+export function BookingStatusBadge({ booking, side }: { booking: BookingRow; side: 'customer' | 'org' }) {
   return (
-    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${TONES[statusTone(status)]}`}>
-      {statusLabel(status, side)}
+    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${TONES[statusTone(booking)]}`}>
+      {statusLabel(booking, side)}
     </span>
   )
 }
@@ -53,7 +53,7 @@ export function BookingListItem({
             </span>
           )}
         </span>
-        <BookingStatusBadge status={b.status} side={side} />
+        <BookingStatusBadge booking={b} side={side} />
         <ChevronRight className="size-4 shrink-0 text-[#95979d]" aria-hidden="true" />
       </Link>
     </li>
