@@ -1,10 +1,12 @@
 import type { User } from '@supabase/supabase-js'
-import { normalizeUsPhone } from '@/lib/phone'
 
-/** What /onboarding/account still needs to collect for this user. */
+/**
+ * What /onboarding/account still needs to collect for this user. Phone is
+ * no longer asked at signup (Single-Question Onboarding): it's a "Make your
+ * profile stand out" item on the dashboard.
+ */
 export interface AccountGaps {
   name: boolean
-  phone: boolean
   terms: boolean
 }
 
@@ -21,34 +23,27 @@ function str(v: unknown): string {
 
 export function computeGaps(
   user: User,
-  profilePhone: string | null | undefined,
   contractor: { first_name: string | null; last_name: string | null } | null
 ): AccountGaps {
-  const meta = (user.user_metadata ?? {}) as Meta
   return {
     name: !str(contractor?.first_name) || !str(contractor?.last_name),
-    phone: normalizeUsPhone(profilePhone) === null,
-    // Accepting any version counts; the version is recorded so a future
-    // re-consent flow can compare against TERMS_VERSION (src/lib/legal.ts).
-    terms: !str(meta.terms_accepted_at) || !str(meta.terms_version),
+    terms: missingTerms(user),
   }
 }
 
 export function hasGaps(g: AccountGaps): boolean {
-  return g.name || g.phone || g.terms
+  return g.name || g.terms
 }
 
 /**
- * Cheap check the proxy can run with data it already has (session user +
- * profiles.phone): is terms consent or phone missing? Names need an extra
- * query, so /onboarding/account itself handles those.
+ * Cheap check the proxy can run with the session user alone: is Terms
+ * consent missing? Accepting any version counts; the version is recorded so
+ * a future re-consent flow can compare against TERMS_VERSION (src/lib/legal.ts).
+ * Names need an extra query, so /onboarding/account itself handles those.
  */
-export function missingPhoneOrTerms(
-  user: User,
-  profilePhone: string | null | undefined
-): boolean {
-  const g = computeGaps(user, profilePhone, { first_name: 'x', last_name: 'x' })
-  return g.phone || g.terms
+export function missingTerms(user: User): boolean {
+  const meta = (user.user_metadata ?? {}) as Meta
+  return !str(meta.terms_accepted_at) || !str(meta.terms_version)
 }
 
 /** Best-effort name prefill from what Google (or signup) put in metadata. */

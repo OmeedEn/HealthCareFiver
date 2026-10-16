@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import type { ActionResult } from '@/app/onboarding/organization/actions'
-import { QuestionFlow, type Screen } from '@/app/onboarding/organization/flow'
+import { QuestionFlow, type Screen } from '@/components/onboarding/question-flow'
 import { eventScreens, serviceScreens } from '@/app/onboarding/organization/listing-questions'
 import {
   localInputToIso,
@@ -20,9 +20,13 @@ import { EMPTY_SERVICE } from '@/app/onboarding/organization/sections/service-fo
 import type { EventDraft, ServiceDraft } from '@/app/onboarding/organization/shared'
 import { deleteOrgListing, saveListingDraft, submitOrgListing, withdrawOrgListing } from './actions'
 
-/** "Add a service" / "Add an event": big buttons that open the question flow. */
-export function AddListing() {
-  const [open, setOpen] = useState<'service' | 'event' | null>(null)
+/**
+ * "Add a service" / "Add an event": big buttons that open the question flow.
+ * `initial` opens one straight away (the dashboard's first-run cards link
+ * here with ?new=service or ?new=event).
+ */
+export function AddListing({ initial = null }: { initial?: 'service' | 'event' | null }) {
+  const [open, setOpen] = useState<'service' | 'event' | null>(initial)
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2">

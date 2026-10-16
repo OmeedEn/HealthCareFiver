@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TermsConsent } from '@/components/auth/signup-shared'
-import { formatUsPhoneInput, normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { finishAccount, type FinishAccountState } from './actions'
 import type { AccountGaps, AccountPrefill } from '@/lib/onboarding/account-gaps'
 
@@ -25,15 +24,11 @@ export function FinishAccountForm({
   )
   const [firstName, setFirstName] = useState(prefill.firstName)
   const [lastName, setLastName] = useState(prefill.lastName)
-  const [phone, setPhone] = useState('')
-  const [phoneTouched, setPhoneTouched] = useState(false)
   const [accepted, setAccepted] = useState(false)
 
-  const phoneOk = !gaps.phone || normalizeUsPhone(phone) !== null
   const nameOk = !gaps.name || (firstName.trim() !== '' && lastName.trim() !== '')
   const termsOk = !gaps.terms || accepted
-  const canSubmit = phoneOk && nameOk && termsOk
-  const phoneInvalid = gaps.phone && phoneTouched && phone.trim() !== '' && !phoneOk
+  const canSubmit = nameOk && termsOk
 
   return (
     <form action={formAction}>
@@ -41,7 +36,7 @@ export function FinishAccountForm({
         Finish creating your account
       </h1>
       <p className="mt-1.5 text-sm text-[#62646a]">
-        Just a couple of details before you set up your professional profile.
+        Free to join. Just one more step before you finish your application.
       </p>
 
       {gaps.name && (
@@ -54,26 +49,6 @@ export function FinishAccountForm({
             <Label htmlFor="last_name" className="text-sm font-semibold text-[#404145]">Last name</Label>
             <Input id="last_name" name="last_name" value={lastName} onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" className="h-11" />
           </div>
-        </div>
-      )}
-
-      {gaps.phone && (
-        <div className={`${gaps.name ? 'mt-3' : 'mt-6'} space-y-1.5`}>
-          <Label htmlFor="phone" className="text-sm font-semibold text-[#404145]">Phone number</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel-national"
-            placeholder="(555) 123-4567"
-            value={phone}
-            onChange={(e) => setPhone(formatUsPhoneInput(e.target.value))}
-            onBlur={() => setPhoneTouched(true)}
-            aria-invalid={phoneInvalid || undefined}
-            className="h-11"
-          />
-          {phoneInvalid && <p className="text-xs text-red-600">{PHONE_ERROR}.</p>}
         </div>
       )}
 

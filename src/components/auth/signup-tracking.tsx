@@ -18,7 +18,7 @@ export type SignupOption =
   | 'unsure'
   | 'client'
   | 'hiring'
-export type SignupFlow = 'professional' | 'organization' | 'client'
+export type SignupFlow = 'professional' | 'organization' | 'client' | 'unsure'
 
 /**
  * Child effects run before the root PostHogProvider's init effect, so make
@@ -44,6 +44,22 @@ export function trackSignupStepViewed(flow: SignupFlow, step: number | string) {
 
 export function trackSignupCompleted(signupPath: SignupPath) {
   capture(SIGNUP_EVENTS.completed, { signup_path: signupPath })
+}
+
+/* ───────── Per-question onboarding analytics (QuestionFlow `flowId`) ─────────
+ * Question ids and durations only — never the answer itself. Drop-off is a
+ * question that was viewed with no answered/skipped event after it. */
+
+export function trackQuestionViewed(flow: string, question: string) {
+  capture(SIGNUP_EVENTS.questionViewed, { flow, question })
+}
+
+export function trackQuestionAnswered(flow: string, question: string, ms: number) {
+  capture(SIGNUP_EVENTS.questionAnswered, { flow, question, ms })
+}
+
+export function trackQuestionSkipped(flow: string, question: string, ms: number, kind?: 'upload') {
+  capture(SIGNUP_EVENTS.questionSkipped, { flow, question, ms, ...(kind ? { kind } : {}) })
 }
 
 /** Fires signup_screen_viewed once on mount. Renders nothing. */

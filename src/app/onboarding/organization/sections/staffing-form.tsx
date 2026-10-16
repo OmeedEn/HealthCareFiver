@@ -15,8 +15,8 @@ import {
 import { FieldError, RadioCards, SelectField, TextAreaField, TextField, Toggle } from '../../professional/ui'
 import { saveStaffingPost } from '../actions'
 import type { StaffingDraft } from '../shared'
-import { IconChoices, SectionActions } from './fields'
-import { PAY_UNIT_ICONS, PROFESSIONAL_TIER_ICONS, STAFFING_POST_TYPE_ICONS } from './choice-icons'
+import { IconChoices, SectionActions } from '@/components/onboarding/choices'
+import { PAY_UNIT_ICONS, PROFESSIONAL_TIER_ICONS, STAFFING_POST_TYPE_ICONS } from '@/components/onboarding/choice-icons'
 
 export function emptyStaffing(defaults: { city?: string; state?: string; zip_code?: string } = {}): StaffingDraft {
   return {

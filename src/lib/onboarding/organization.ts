@@ -1,12 +1,9 @@
-// Organization onboarding options (Organization Onboarding spec). Shared by
-// /signup/organization (step 1), the /onboarding/organization wizard
-// (steps 2-4), the admin review page and the server actions, so stored keys
-// never drift from the UI. Stored in facility_profiles
-// (20261001000600_org_onboarding.sql).
-
-/** Steps shown in the wizard progress bar (step 1 is the signup page). */
-export const ORG_TOTAL_STEPS = 5
-export type OrgWizardStep = 2 | 3 | 4 | 5
+// Organization onboarding options (Organization Onboarding spec, revised for
+// the Single-Question Onboarding spec). Shared by /signup/organization,
+// /onboarding/organization, the dashboard's Finish your profile items, the
+// admin review page and the server actions, so stored keys never drift from
+// the UI. Stored in facility_profiles (20261001000600_org_onboarding.sql).
+// Question ids and copy live in ./questions/organization.ts.
 
 export const ORG_DESCRIPTION_MAX = 300
 export const ORG_TYPE_OTHER_MAX = 100
@@ -86,18 +83,30 @@ export const BUSINESS_STRUCTURE_KEYS = BUSINESS_STRUCTURES.map((b) => b.value) a
   ...BusinessStructure[],
 ]
 
-/** Step 3 self-disclosures. A "yes" needs an explanation. */
+/**
+ * Self-disclosures. Asked from the dashboard as one multi-select question
+ * ("Do any of these apply to your organization?"); `option` is the tile
+ * label there, `question` the full wording admins see. The license option
+ * is only offered to organizations that hold a facility license. Any pick
+ * asks for an explanation. Stored as self_disclosures[key] = { answer, details }.
+ */
 export const ORG_DISCLOSURES = [
   {
     key: 'license_action',
     question:
       "Has your organization's license ever been suspended, revoked, restricted, or investigated?",
+    option: 'Our license has been suspended, revoked, restricted, or investigated',
   },
-  { key: 'exclusion', question: 'Is your organization excluded from Medicare or Medicaid?' },
+  {
+    key: 'exclusion',
+    question: 'Is your organization excluded from Medicare or Medicaid?',
+    option: 'We’re excluded from Medicare or Medicaid',
+  },
   {
     key: 'workforce_action',
     question:
       'In the last 5 years, has your organization been the subject of a state or federal action over staffing or workforce practices?',
+    option: 'We’ve been the subject of a state or federal action over staffing or workforce practices in the last 5 years',
   },
 ] as const
 export type OrgDisclosureKey = (typeof ORG_DISCLOSURES)[number]['key']
@@ -111,7 +120,12 @@ export const ATTEST_CHECKS_LABEL =
   'I authorize Sanus to verify this information and run exclusion screenings.'
 export const REVIEW_NOTE = 'We review every application within 24-48 hours.'
 
-/** Step 3 uploads. */
+/**
+ * Uploads. The registration screen stores 'business_registration' (or
+ * 'facility_license' when that's what they chose to upload); 'other' is
+ * the dashboard's "Additional documents" item
+ * (20261016000300_organization_single_question.sql adds it).
+ */
 export const ORG_DOCUMENT_KINDS = [
   {
     kind: 'facility_license',
@@ -123,10 +137,15 @@ export const ORG_DOCUMENT_KINDS = [
     label: 'Business license or Secretary of State registration',
     help: 'A PDF or photo of your registration or business license.',
   },
+  {
+    kind: 'other',
+    label: 'Additional document',
+    help: 'Anything else that helps us verify your organization.',
+  },
 ] as const
 export type OrgDocumentKind = (typeof ORG_DOCUMENT_KINDS)[number]['kind']
 
-/** Step 4. They can change these any time from their profile. */
+/** The dashboard's "What do you want to do first?" cards. Changeable any time from their profile. */
 export const ORG_INTENTS = [
   {
     key: 'advertise_services',
@@ -135,7 +154,7 @@ export const ORG_INTENTS = [
   },
   {
     key: 'host_events',
-    label: 'Host events and trainings',
+    label: 'Host an event or training',
     sub: 'Webinars, workshops, CEU courses, health fairs, and more.',
   },
   {
@@ -152,7 +171,7 @@ export const ORG_INTENTS = [
 export type OrgIntent = (typeof ORG_INTENTS)[number]['key']
 export const ORG_INTENT_KEYS = ORG_INTENTS.map((i) => i.key) as [OrgIntent, ...OrgIntent[]]
 
-/** Free email providers — Step 1 nudges toward a work address. */
+/** Free email providers — the account screen nudges toward a work address. */
 export const FREE_EMAIL_DOMAINS = new Set([
   'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'hotmail.com', 'outlook.com',
   'live.com', 'msn.com', 'aol.com', 'icloud.com', 'me.com', 'mac.com', 'proton.me',
@@ -165,7 +184,7 @@ export function isFreeEmail(email: string): boolean {
   return FREE_EMAIL_DOMAINS.has(domain)
 }
 
-/* ───────────── Step 5: Quick setup ───────────── */
+/* ───────────── Setup from the first-run cards ───────────── */
 
 /**
  * Staffing posts (section D) stay off until the legal questions in the spec

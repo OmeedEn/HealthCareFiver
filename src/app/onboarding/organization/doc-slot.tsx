@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { FileText, Loader2, Trash2, Upload } from 'lucide-react'
+import { Camera, FileText, Loader2, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode } from '@/lib/demo/data'
@@ -11,7 +11,11 @@ import { FieldError } from '../professional/ui'
 import { recordOrgDocument, removeOrgDocument } from './actions'
 import { DOC_ALLOWED_TYPES, DOC_MAX_BYTES, type OrgDoc } from './shared'
 
-/** One upload slot (uploads go straight to storage and are recorded at once). */
+/**
+ * One upload slot (uploads go straight to storage and are recorded at once).
+ * Private: the credentials bucket is never public; staff open files through
+ * short-lived signed links. On phones a second button opens the camera.
+ */
 export function DocSlot({
   userId,
   kind,
@@ -30,10 +34,12 @@ export function DocSlot({
   error?: string
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
 
   async function handleFile(file: File | null) {
     if (inputRef.current) inputRef.current.value = ''
+    if (cameraRef.current) cameraRef.current.value = ''
     if (!file) return
     if (!DOC_ALLOWED_TYPES.includes(file.type)) {
       toast.error('File must be a PDF, JPG, PNG, GIF, or WebP')
@@ -97,6 +103,24 @@ export function DocSlot({
           <span className="mt-1 block text-sm text-[#62646a]">PDF, JPG, PNG, GIF or WebP, up to 10 MB</span>
         </span>
       </button>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => cameraRef.current?.click()}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#d5d6d9] bg-white text-sm font-semibold text-[#404145] transition hover:border-[#1dbf73] focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 focus-visible:outline-none disabled:opacity-70 sm:hidden"
+      >
+        <Camera className="size-4" aria-hidden />
+        Take a photo
+      </button>
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        aria-label={`Take a photo of ${label}`}
+        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+      />
       <input
         ref={inputRef}
         type="file"

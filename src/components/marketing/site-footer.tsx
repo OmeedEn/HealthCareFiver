@@ -1,3 +1,4 @@
+import { EmergencyNotice } from '@/components/emergency-notice'
 import Link from 'next/link'
 
 function FooterColumn({
@@ -87,8 +88,9 @@ export function SiteFooter() {
           />
         </div>
 
-        <div className="mt-12 border-t border-[#e5e7eb] pt-6 text-center text-sm text-[#6b7280]">
-          &copy; {new Date().getFullYear()} Sanus. All rights reserved.
+        <div className="mt-12 space-y-2 border-t border-[#e5e7eb] pt-6 text-center text-sm text-[#6b7280]">
+          <EmergencyNotice variant="inline" />
+          <p>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</p>
         </div>
       </div>
     </footer>

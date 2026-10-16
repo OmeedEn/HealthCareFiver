@@ -9,6 +9,12 @@ import {
   markInsuranceVerified,
 } from '@/lib/compliance/transitions'
 import { isUuid, requireAdminApi } from '@/app/api/admin/_lib/guard'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
+import {
+  professionalMissingForApproval,
+  type CredentialLike,
+} from '@/lib/onboarding/checklist-professional'
 
 type Action =
   | 'approve'
@@ -82,7 +88,7 @@ export async function POST(
   const { data: contractor, error: contractorError } = await adminSupabase
     .from('contractor_profiles')
     .select(
-      'id, first_name, last_name, verification_status, approved_at, offers_high_risk_services, insured_verified_at'
+      'id, first_name, last_name, verification_status, approved_at, offers_high_risk_services, insured_verified_at, professional_category, credential_basis'
     )
     .eq('id', contractorId)
     .single()
@@ -123,6 +129,8 @@ export async function POST(
           { status: 409 }
         )
       }
+      const blocked = await approvalBlocked(adminSupabase, contractor)
+      if (blocked) return blocked
       const { error } = await stampReview({ verification_notes: notes || null })
       if (error) return failed('Failed to record the review')
 
@@ -191,6 +199,8 @@ export async function POST(
       }
       if (!contractor.approved_at) {
         // Never approved before: this is effectively a first approval.
+        const blocked = await approvalBlocked(adminSupabase, contractor)
+        if (blocked) return blocked
         const { error } = await stampReview({ verification_notes: notes || null })
         if (error) return failed('Failed to record the review')
         try {
@@ -390,6 +400,34 @@ export async function POST(
   }
 
   return NextResponse.json({ success: true, status: newStatus, warnings, ...extra })
+}
+
+/**
+ * Needed-for-approval items (Single-Question Onboarding): the credential
+ * upload and government ID can be skipped at signup, but a provider can't be
+ * approved until they're in. Returns the 409 response, or null when clear.
+ */
+async function approvalBlocked(
+  adminSupabase: SupabaseClient,
+  contractor: { id: string; professional_category: string | null; credential_basis: string | null }
+): Promise<NextResponse | null> {
+  const { data, error } = await adminSupabase
+    .from('credentials')
+    .select('credential_type, document_url, status')
+    .eq('contractor_id', contractor.id)
+  if (error) return failed('Could not check the provider’s documents. Try again.')
+  const branch = isProfessionalCategory(contractor.professional_category)
+    ? effectiveBranch(contractor.professional_category, contractor.credential_basis)
+    : null
+  const missing = professionalMissingForApproval(branch, (data ?? []) as CredentialLike[])
+  if (!missing.length) return null
+  return NextResponse.json(
+    {
+      error: `Can’t approve yet. Missing: ${missing.join(', ')}. Use “Request info” to ask the provider for ${missing.length === 1 ? 'it' : 'them'}.`,
+      missing,
+    },
+    { status: 409 }
+  )
 }
 
 function failed(message: string) {

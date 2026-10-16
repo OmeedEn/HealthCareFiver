@@ -3,40 +3,24 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { currentUser } from '@/lib/auth/roles'
 import { isDemoMode } from '@/lib/demo/data'
-import { formatUsPhoneInput } from '@/lib/phone'
-import {
-  ORG_DISCLOSURES,
-  ORG_INTENT_KEYS,
-  type OrgIntent,
-  type OrgWizardStep,
-} from '@/lib/onboarding/organization'
+import { ORG_TYPE_KEYS, ORG_TYPE_OTHER_MAX, facilityTypeEnumFor, type OrgTypeKey } from '@/lib/onboarding/organization'
+import { getProgress } from '@/lib/onboarding/progress'
+import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
 import { OrgOnboardingWizard } from './wizard'
-import { DEFAULT_INTENTS, orgDoorFor, type AboutData, type OrgDoc, type VerifyData, type YesNo } from './shared'
+import { EMPTY_ORG_ANSWERS, type OrgAnswers } from './org-screens'
+import { isOrgTypeAllowed, orgDoorFor, type OrgDoc, type YesNo } from './shared'
 
 export const metadata: Metadata = { title: 'Set up your organization | Sanus' }
 
-const EMPTY_ABOUT: AboutData = {
-  facility_name: '', org_type: '', org_type_other: '', org_size: '', city: '', state: '',
-  zip_code: '', location_count: '1', website: '', phone: '', description: '',
-}
-
-function emptyVerify(): VerifyData {
-  return {
-    legal_name: '', business_structure: '', registration_state: '', has_facility_license: '',
-    facility_license_type: '', facility_license_number: '', facility_license_agency: '',
-    facility_license_expires: '', org_npi: '',
-    lead_has_credential: '', lead_credential_type: '', lead_credential_number: '', lead_credential_state: '',
-    lead_linkedin: '',
-    disclosures: Object.fromEntries(ORG_DISCLOSURES.map((q) => [q.key, { answer: '' as YesNo, details: '' }])),
-    attest_authorized: false, attest_checks: false,
-  }
-}
+const yesNo = (v: unknown): YesNo => (v === true ? 'yes' : v === false ? 'no' : '')
+const str = (v: unknown) => (typeof v === 'string' ? v : '')
 
 /**
- * Organization onboarding, steps 2–5 (step 1 is /signup/organization).
- * Progress lives in facility_profiles.onboarding_step (the NEXT step to
- * show). Once onboarding_submitted_at is set this redirects to /dashboard,
- * which shows the "under review" banner.
+ * Organization onboarding after the account exists (screens 4–8 of the
+ * Single-Question Onboarding spec, plus screens 1–2 for accounts that
+ * never saw them). Once onboarding_submitted_at is set this redirects to
+ * /dashboard, which shows the "under review" banner and the Finish your
+ * profile checklist.
  */
 export default async function OrganizationOnboardingPage() {
   if (isDemoMode()) {
@@ -44,11 +28,11 @@ export default async function OrganizationOnboardingPage() {
       <OrgOnboardingWizard
         userId="demo"
         door="HIRING"
-        initialStep={2}
-        initialAbout={EMPTY_ABOUT}
-        initialVerify={emptyVerify()}
+        initialAnswers={EMPTY_ORG_ANSWERS}
         initialDocs={[]}
-        initialIntents={DEFAULT_INTENTS.HIRING}
+        askType
+        askName
+        done={[]}
       />
     )
   }
@@ -58,11 +42,9 @@ export default async function OrganizationOnboardingPage() {
   if (user.role !== 'facility' && user.role !== 'staffing_agency') redirect('/dashboard')
 
   const supabase = await createClient()
-  const [{ data: org }, { data: docs }, { data: auth }, { data: profile }] = await Promise.all([
+  const [{ data: row }, { data: docs }, { data: auth }, { data: profile }, progress] = await Promise.all([
     // Own row via RPC: private columns aren't readable from the table directly.
-    // Untyped like the table read it replaces (no generated DB types yet).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    supabase.rpc('my_facility_profile').select('*').single<any>(),
+    supabase.rpc('my_facility_profile').select('*').single<Record<string, unknown>>(),
     supabase
       .from('org_documents')
       .select('id, kind, filename, storage_path')
@@ -70,75 +52,65 @@ export default async function OrganizationOnboardingPage() {
       .order('uploaded_at'),
     supabase.auth.getUser(),
     supabase.from('profiles').select('signup_path').eq('id', user.id).single(),
+    getProgress(supabase, user.id, 'organization'),
   ])
+  if (!row) redirect('/dashboard')
+  if (row.onboarding_submitted_at) redirect('/dashboard')
   const door = orgDoorFor(profile?.signup_path)
-  if (!org) redirect('/dashboard')
-  if (org.onboarding_submitted_at) redirect('/dashboard')
+  let org = row
 
-  // Email signups put the title in metadata (step 1); copy it over once.
-  const metaTitle = String(auth.user?.user_metadata?.contact_title ?? '').trim()
-  if (!org.contact_title && metaTitle) {
-    await supabase.from('facility_profiles').update({ contact_title: metaTitle.slice(0, 100) }).eq('id', user.id)
+  // Email signups send screens 1–2 in their metadata; the signup route
+  // copies them over, but fill any gap here (e.g. that write failed).
+  const meta = (auth.user?.user_metadata ?? {}) as Record<string, unknown>
+  const patch: Record<string, unknown> = {}
+  const metaType = str(meta.org_type)
+  if (!org.org_type && (ORG_TYPE_KEYS as readonly string[]).includes(metaType) && isOrgTypeAllowed(door, metaType)) {
+    patch.org_type = metaType
+    patch.facility_type = facilityTypeEnumFor(metaType as OrgTypeKey)
+    patch.org_type_other = metaType === 'other' ? str(meta.org_type_other).trim().slice(0, ORG_TYPE_OTHER_MAX) || null : null
+  }
+  const metaName = str(meta.facility_name).trim().slice(0, 200)
+  if (!str(org.facility_name).trim() && metaName) patch.facility_name = metaName
+  if (Object.keys(patch).length) {
+    const { error } = await supabase.from('facility_profiles').update(patch).eq('id', user.id)
+    if (error) console.error('[onboarding/organization] metadata copy failed', { code: error.code })
+    else org = { ...org, ...patch }
   }
 
-  const about: AboutData = {
-    facility_name: org.facility_name ?? '',
-    org_type: org.org_type ?? '',
-    org_type_other: org.org_type_other ?? '',
-    org_size: org.org_size ?? '',
-    city: org.city ?? '',
-    state: org.state ?? '',
-    zip_code: org.zip_code ?? '',
-    location_count: org.location_count ? String(org.location_count) : '1',
-    website: org.website ?? '',
-    phone: org.phone ? formatUsPhoneInput(String(org.phone).replace(/^\+1/, '')) : '',
-    description: org.description ?? '',
-  }
+  const docList = (docs ?? []) as OrgDoc[]
+  const flow = orgFlowDataFromRow(org, docList.map((d) => d.kind))
+  const onFile = ORG_FLOW_IDS.filter((id) => orgAnswerOnFile(id, flow, door))
+  const done = Array.from(new Set([...progress.answered, ...progress.skipped, ...onFile]))
 
-  const saved = (org.self_disclosures ?? {}) as Record<string, { answer?: boolean; details?: string | null }>
-  const verify: VerifyData = {
-    ...emptyVerify(),
-    legal_name: org.legal_name ?? '',
-    business_structure: org.business_structure ?? '',
-    registration_state: org.registration_state ?? '',
-    has_facility_license: org.has_facility_license == null ? '' : org.has_facility_license ? 'yes' : 'no',
-    facility_license_type: org.facility_license_type ?? '',
-    facility_license_number: org.facility_license_number ?? '',
-    facility_license_agency: org.facility_license_agency ?? '',
-    facility_license_expires: org.facility_license_expires ?? '',
-    org_npi: org.org_npi ?? '',
-    lead_has_credential: org.lead_has_credential == null ? '' : org.lead_has_credential ? 'yes' : 'no',
-    lead_credential_type: org.lead_credential_type ?? '',
-    lead_credential_number: org.lead_credential_number ?? '',
-    lead_credential_state: org.lead_credential_state ?? '',
-    lead_linkedin: org.lead_linkedin ?? '',
-    disclosures: Object.fromEntries(
-      ORG_DISCLOSURES.map((q) => {
-        const s = saved[q.key]
-        const answer: YesNo = s?.answer === true ? 'yes' : s?.answer === false ? 'no' : ''
-        return [q.key, { answer, details: s?.details ?? '' }]
-      })
-    ),
-    attest_authorized: !!org.attested_authorized_at,
-    attest_checks: !!org.authorized_checks_at,
+  const initialAnswers: OrgAnswers = {
+    ...EMPTY_ORG_ANSWERS,
+    org_type: str(org.org_type),
+    org_type_other: str(org.org_type_other),
+    facility_name: str(org.facility_name),
+    // Only show the URL we stored, without the scheme we added.
+    website: str(org.website).replace(/^https?:\/\//i, ''),
+    has_no_website: org.has_no_website === true,
+    city: str(org.city),
+    state: str(org.state),
+    has_facility_license: yesNo(org.has_facility_license),
+    facility_license_type: str(org.facility_license_type),
+    facility_license_number: str(org.facility_license_number),
+    facility_license_agency: str(org.facility_license_agency),
+    lead_has_credential: yesNo(org.lead_has_credential),
+    lead_credential_type: str(org.lead_credential_type),
+    lead_credential_number: str(org.lead_credential_number),
+    lead_credential_state: str(org.lead_credential_state),
   }
-
-  const savedIntents = ((org.intents ?? []) as string[]).filter((i): i is OrgIntent =>
-    (ORG_INTENT_KEYS as readonly string[]).includes(i)
-  )
-  // Pre-check the door's usual goals until they've saved their own.
-  const intents = savedIntents.length ? savedIntents : DEFAULT_INTENTS[door]
-  const step = Math.min(Math.max(Number(org.onboarding_step ?? 2), 2), 5) as OrgWizardStep
 
   return (
     <OrgOnboardingWizard
       userId={user.id}
       door={door}
-      initialStep={step}
-      initialAbout={about}
-      initialVerify={verify}
-      initialDocs={(docs ?? []) as OrgDoc[]}
-      initialIntents={intents}
+      initialAnswers={initialAnswers}
+      initialDocs={docList}
+      askType={!orgAnswerOnFile('org_type', flow, door)}
+      askName={!orgAnswerOnFile('org_name', flow, door)}
+      done={done}
     />
   )
 }

@@ -38,14 +38,17 @@ export interface QueueRow {
   rescreenDue: boolean
   lastExclusionCheckAt: string | null
   insuranceDueAt: string | null
+  /** Open Needed-for-approval items (e.g. "Government ID"); approval is refused while any remain. */
+  missing?: string[]
 }
 
 type StatusFilter = 'open' | 'all' | (typeof VERIFICATION_STATUSES)[number]
-type FlagFilter = 'other' | 'disclosure' | 'duplicate' | 'rescreen' | 'insurance'
+type FlagFilter = 'missing' | 'other' | 'disclosure' | 'duplicate' | 'rescreen' | 'insurance'
 
 const OPEN_STATUSES = ['pending_review', 'more_info_requested']
 
 const FLAG_LABEL: Record<FlagFilter, string> = {
+  missing: 'Missing for approval',
   other: 'Other profession',
   disclosure: 'Disclosed “yes”',
   duplicate: 'Duplicate phone/payout',
@@ -55,6 +58,8 @@ const FLAG_LABEL: Record<FlagFilter, string> = {
 
 function matchesFlag(row: QueueRow, flag: FlagFilter): boolean {
   switch (flag) {
+    case 'missing':
+      return (row.missing?.length ?? 0) > 0
     case 'other':
       return row.category === 'other'
     case 'disclosure':
@@ -254,6 +259,11 @@ export function QueueClient({
                       </TableCell>
                       <TableCell>
                         <div className="flex max-w-64 flex-wrap gap-1">
+                          {(r.missing ?? []).map((m) => (
+                            <Badge key={m} variant="destructive" title="Needed for approval">
+                              Missing: {m}
+                            </Badge>
+                          ))}
                           {r.disclosuresYes.length > 0 && (
                             <Badge variant="destructive">
                               Disclosed yes ({r.disclosuresYes.length})

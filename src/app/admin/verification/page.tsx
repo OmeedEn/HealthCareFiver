@@ -10,6 +10,11 @@ import {
 import { fetchDuplicateFlags, requireAdminPage } from './_lib/server'
 import { QueueClient, type QueueRow } from './queue-client'
 import { DEMO_QUEUE } from './_lib/demo'
+import { branchFor } from './_lib/shared'
+import {
+  professionalMissingForApproval,
+  type CredentialLike,
+} from '@/lib/onboarding/checklist-professional'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +55,22 @@ export default async function AdminVerificationQueuePage() {
   }
 
   const profiles = (data ?? []) as unknown as ProfileRow[]
-  const duplicates = await fetchDuplicateFlags(profiles.map((p) => p.id))
+  const ids = profiles.map((p) => p.id)
+  const [duplicates, { data: credRows, error: credError }] = await Promise.all([
+    fetchDuplicateFlags(ids),
+    // Uploads, for the Needed-for-approval "Missing" badges.
+    ids.length
+      ? adminSupabase
+          .from('credentials')
+          .select('contractor_id, credential_type, document_url, status')
+          .in('contractor_id', ids)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+  if (credError) console.error('[admin/verification] credentials load failed', credError.code)
+  const credsBy = new Map<string, CredentialLike[]>()
+  for (const c of (credRows ?? []) as (CredentialLike & { contractor_id: string })[]) {
+    credsBy.set(c.contractor_id, [...(credsBy.get(c.contractor_id) ?? []), c])
+  }
 
   const rows: QueueRow[] = profiles.map((p) => ({
     id: p.id,
@@ -70,6 +90,12 @@ export default async function AdminVerificationQueuePage() {
     ),
     lastExclusionCheckAt: p.last_exclusion_check_at,
     insuranceDueAt: p.insurance_due_at,
+    missing: credError
+      ? []
+      : professionalMissingForApproval(
+          branchFor(p.professional_category, p.credential_basis),
+          credsBy.get(p.id) ?? []
+        ),
   }))
 
   return (

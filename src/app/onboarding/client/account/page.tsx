@@ -11,8 +11,9 @@ export const metadata: Metadata = { title: 'Finish creating your account — San
 
 /**
  * Landing page after "Continue with Google" on /signup/client (via
- * /callback). Turns the brand-new account into a client with step 1's
- * answers and collects Terms consent, then on to the dashboard.
+ * /callback). Turns the brand-new account into a client with the signup
+ * answers and collects Terms consent and the 18+ attestation, then on to
+ * their matches.
  */
 export default async function ClientAccountPage() {
   if (!getSupabaseConfig()) {

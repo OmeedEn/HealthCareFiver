@@ -3,12 +3,33 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rate-limit'
-import { CLIENT_INTEREST_KEYS } from '@/lib/onboarding/client-interests'
-import { TERMS_VERSION } from '@/lib/legal'
+import {
+  CLIENT_INTEREST_KEYS,
+  HELP_TIMELINE_VALUES,
+  LEGACY_CLIENT_INTERESTS,
+  MEETING_FORMAT_VALUES,
+  normalizeClientInterests,
+} from '@/lib/onboarding/client-interests'
+import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
+import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
-import { classificationRequestRow, unsureAnswersSchema } from '@/lib/onboarding/unsure'
+import {
+  ORG_TYPE_KEYS,
+  ORG_TYPE_OTHER_MAX,
+  facilityTypeEnumFor,
+  orgTypesForPath,
+} from '@/lib/onboarding/organization'
+import {
+  UNSURE_REVIEW_CONSENT_ERROR,
+  classificationRequestRow,
+  unsureAnswersSchema,
+} from '@/lib/onboarding/unsure'
+import { proAnswersSchema } from '@/lib/onboarding/questions/professional'
+import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
+
+const LEGACY_INTEREST_KEYS = Object.keys(LEGACY_CLIENT_INTERESTS)
 
 // Must stay in sync with the `contractor_type` / `facility_type` Postgres
 // enums (supabase/migrations/20250523000001_create_enums.sql). The DB is the
@@ -87,7 +108,8 @@ const contractorSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
-  phone,
+  // Single-Question Onboarding: phone moved to the dashboard checklist.
+  phone: phone.optional(),
   // The granular license type is captured later in onboarding; 'other'
   // keeps the contractor_type enum happy at signup.
   contractor_type: z
@@ -99,28 +121,52 @@ const contractorSchema = z.object({
     .enum(PROFESSIONAL_CATEGORIES, 'Select a valid professional category')
     .optional(),
   signup_path: z.literal('INDEPENDENT').default('INDEPENDENT'),
+  // Screens 1–3 of /signup/professional (held in the browser until now).
+  // Written to contractor_profiles right after the account is created.
+  answers: proAnswersSchema.optional(),
 })
 
-// Organization signup is step 1 of the Organization Onboarding spec: just
-// the account. Steps 2-4 (organization details, verification, intents)
-// happen in /onboarding/organization after the email is confirmed.
-const facilitySchema = z.object({
-  ...consent,
-  role: z.literal('facility'),
-  email,
-  password,
-  first_name: firstName,
-  last_name: lastName,
-  title: z
-    .string({ error: 'Your role or title is required' })
-    .trim()
-    .min(1, 'Your role or title is required')
-    .max(100, 'Keep your title to 100 characters or fewer'),
-  phone,
-  // Which door they came through (/signup/organization?source=…). Drives
-  // the org type list, step 3 questions and pre-selected goals.
-  signup_path: z.enum(ORG_SIGNUP_PATHS, 'Choose how you work on the previous screen'),
-})
+// Organization signup (Single-Question Onboarding spec): screens 1–2
+// (organization type and name, held in the browser until now) plus the
+// account screen. No title or phone (dashboard items now). One checkbox
+// covers the Terms, Privacy Policy and Organization Terms (the Organization
+// Agreement), so its version is recorded too. Screens 4–8 happen in
+// /onboarding/organization.
+const facilitySchema = z
+  .object({
+    ...consent,
+    role: z.literal('facility'),
+    email,
+    password,
+    first_name: firstName,
+    last_name: lastName,
+    org_terms_version: z.literal(ORG_AGREEMENT_VERSION, {
+      error:
+        'Our Organization Terms were updated — please refresh the page and review them',
+    }),
+    // Which door they came through (/signup/organization?source=…). Drives
+    // the org type list, the license question and the first-run cards.
+    signup_path: z.enum(ORG_SIGNUP_PATHS, 'Choose how you work on the previous screen'),
+    org_type: z.enum(ORG_TYPE_KEYS, 'Choose your organization type'),
+    org_type_other: z
+      .string()
+      .trim()
+      .max(ORG_TYPE_OTHER_MAX, `Keep it to ${ORG_TYPE_OTHER_MAX} characters`)
+      .optional(),
+    facility_name: z
+      .string({ error: 'Organization name is required' })
+      .trim()
+      .min(1, 'Organization name is required')
+      .max(200, 'Keep the organization name to 200 characters or fewer'),
+  })
+  .superRefine((d, ctx) => {
+    if (!orgTypesForPath(d.signup_path).some((t) => t.value === d.org_type)) {
+      ctx.addIssue({ code: 'custom', path: ['org_type'], message: 'Choose one of the listed organization types' })
+    }
+    if (d.org_type === 'other' && !d.org_type_other) {
+      ctx.addIssue({ code: 'custom', path: ['org_type_other'], message: 'Tell us what kind of organization you are' })
+    }
+  })
 
 const clientSchema = z.object({
   ...consent,
@@ -129,10 +175,20 @@ const clientSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
+  // The 11 tiles; legacy keys from a stale tab map forward.
   interests: z
-    .array(z.enum(CLIENT_INTEREST_KEYS, 'Select a valid interest'))
+    .array(
+      z.enum([...CLIENT_INTEREST_KEYS, ...LEGACY_INTEREST_KEYS], 'Select a valid interest')
+    )
     .min(1, 'Pick at least one thing you are looking for')
-    .max(10, 'Pick up to 10 interests'),
+    .max(11, 'Pick up to 11 interests')
+    .transform((keys) => normalizeClientInterests(keys)),
+  help_timeline: z.enum(HELP_TIMELINE_VALUES, 'Choose how soon you need help'),
+  meeting_formats: z
+    .array(z.enum(MEETING_FORMAT_VALUES, 'Choose how you’d like to meet'))
+    .max(4)
+    .default([]),
+  adult_attested: z.literal(true, { error: 'Please confirm you’re 18 or older' }),
   city: z
     .string()
     .trim()
@@ -145,8 +201,9 @@ const clientSchema = z.object({
 
 // "Not sure" (/signup/unsure). Not a real role: the account is created as a
 // client with signup_path 'UNSURE' (handle_new_user sets
-// classification_status 'pending'), and the step 2 answers are filed in
-// classification_requests for staff to place the account.
+// classification_status 'pending'), and screens 1–4 are filed in
+// classification_requests for staff to place the account. No phone: it's
+// collected from the dashboard after staff assign a category.
 const unsureSchema = z.object({
   ...consent,
   role: z.literal('unsure'),
@@ -154,8 +211,9 @@ const unsureSchema = z.object({
   password,
   first_name: firstName,
   last_name: lastName,
-  phone,
   answers: unsureAnswersSchema,
+  // "I confirm this information is accurate and authorize Sanus to review it."
+  review_consent: z.literal(true, { error: UNSURE_REVIEW_CONSENT_ERROR }),
 })
 
 const schema = z.discriminatedUnion(
@@ -214,9 +272,11 @@ export async function POST(request: NextRequest) {
       first_name: body.first_name,
       last_name: body.last_name,
       // handle_new_user copies this to profiles.phone.
-      phone: body.phone,
+      ...(body.phone ? { phone: body.phone } : {}),
       contractor_type: body.contractor_type,
-      ...(body.professional_category
+      // With answers, the category is written after signUp (with the rest
+      // of screens 1–3); handle_new_user only knows the four listed ones.
+      ...(body.professional_category && !body.answers
         ? { professional_category: body.professional_category }
         : {}),
     }
@@ -226,11 +286,19 @@ export async function POST(request: NextRequest) {
       role: 'facility' as const,
       first_name: body.first_name,
       last_name: body.last_name,
-      // handle_new_user copies contact_name to facility_profiles and phone to
-      // profiles.phone; the wizard copies contact_title on its first load.
+      // handle_new_user copies contact_name, facility_name and facility_type
+      // to facility_profiles; org_type is written below (and again by
+      // /onboarding/organization from this metadata if that write fails).
       contact_name: `${body.first_name} ${body.last_name}`,
-      contact_title: body.title,
-      phone: body.phone,
+      facility_name: body.facility_name,
+      facility_type: facilityTypeEnumFor(body.org_type),
+      org_type: body.org_type,
+      ...(body.org_type === 'other' ? { org_type_other: body.org_type_other } : {}),
+      // Organization Terms (Organization Agreement) accepted on the account
+      // screen; the post-approval click-through still stamps
+      // facility_profiles.org_agreement_accepted_at.
+      org_terms_accepted_at: new Date().toISOString(),
+      org_terms_version: body.org_terms_version,
     }
   } else if (body.role === 'unsure') {
     signupPath = 'UNSURE'
@@ -238,10 +306,6 @@ export async function POST(request: NextRequest) {
       role: 'client' as const,
       first_name: body.first_name,
       last_name: body.last_name,
-      phone: body.phone,
-      // handle_new_user copies these to client_profiles.
-      city: body.answers.city,
-      state: body.answers.state,
     }
   } else {
     signupPath = body.signup_path
@@ -249,7 +313,7 @@ export async function POST(request: NextRequest) {
       role: 'client' as const,
       first_name: body.first_name,
       last_name: body.last_name,
-      interests: Array.from(new Set(body.interests)),
+      interests: body.interests,
       ...(body.city ? { city: body.city } : {}),
       ...(body.state ? { state: body.state } : {}),
       ...(body.zip_code ? { zip_code: body.zip_code } : {}),
@@ -331,7 +395,29 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Not sure: file the step 2 answers for the staff classification queue.
+  // Organization: store screen 1 (handle_new_user doesn't copy org_type).
+  // Best effort — /onboarding/organization fills it from metadata otherwise.
+  if (body.role === 'facility' && result.user && result.user.identities?.length !== 0) {
+    try {
+      const admin = createAdminClient()
+      const { error: orgError } = await admin
+        .from('facility_profiles')
+        .update({
+          org_type: body.org_type,
+          org_type_other: body.org_type === 'other' ? body.org_type_other : null,
+        })
+        .eq('id', result.user.id)
+      if (orgError) throw new Error(`${orgError.code}: ${orgError.message}`)
+    } catch (err) {
+      console.error('[signup] facility_profiles org_type write failed', {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : 'unknown error',
+      })
+    }
+  }
+
+  // Not sure: file the answers and the review consent for the staff
+  // classification queue.
   // An empty identities list is Supabase's obfuscated response for an email
   // that already exists — there is no new account to attach answers to.
   if (body.role === 'unsure' && result.user && result.user.identities?.length !== 0) {
@@ -339,7 +425,7 @@ export async function POST(request: NextRequest) {
       const admin = createAdminClient()
       const { error: insertError } = await admin
         .from('classification_requests')
-        .insert(classificationRequestRow(result.user.id, body.answers))
+        .insert(classificationRequestRow(result.user.id, body.answers, new Date().toISOString()))
       if (insertError) {
         // code + message only: `details` can echo the row (the answers).
         throw new Error(`${insertError.code}: ${insertError.message}`)
@@ -353,6 +439,37 @@ export async function POST(request: NextRequest) {
         error: err instanceof Error ? err.message : 'unknown error',
       })
     }
+  }
+
+  // Professional: save screens 1–3 to the new profile (service role; the
+  // person may not have a session yet while their email is unconfirmed).
+  // Same empty-identities rule as above. A failure doesn't fail the signup:
+  // /onboarding/professional asks the missing screens again.
+  if (
+    body.role === 'contractor' &&
+    body.answers &&
+    result.user &&
+    result.user.identities?.length !== 0
+  ) {
+    try {
+      await applyProSignupAnswers(createAdminClient(), result.user.id, body.answers)
+    } catch (err) {
+      console.error('[signup] professional answers not saved', {
+        userId: result.user.id,
+        error: err instanceof Error ? err.message : 'unknown error',
+      })
+    }
+  }
+
+  // Client: the answers handle_new_user doesn't copy (how soon, how to meet,
+  // the 18+ attestation). Same new-account check as above; a failure is
+  // logged and never fails the signup (they can be filled in later).
+  if (body.role === 'client' && result.user && result.user.identities?.length !== 0) {
+    await writeClientSignupAnswers(createAdminClient(), result.user.id, {
+      help_timeline: body.help_timeline,
+      meeting_formats: body.meeting_formats,
+      adult_attested: body.adult_attested,
+    })
   }
 
   // No session means Supabase is waiting on email confirmation (or, with

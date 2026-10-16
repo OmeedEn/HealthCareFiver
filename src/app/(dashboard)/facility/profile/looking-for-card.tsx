@@ -9,7 +9,7 @@ import type { LookingForData } from '@/app/onboarding/organization/shared'
 export function LookingForCard({ initial }: { initial: LookingForData }) {
   const router = useRouter()
   return (
-    <Card>
+    <Card id="looking-for" className="scroll-mt-20">
       <CardHeader>
         <CardTitle className="text-base">Professionals you&apos;re looking for</CardTitle>
         <CardDescription>We use this to suggest matching professionals.</CardDescription>

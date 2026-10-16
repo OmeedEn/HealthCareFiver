@@ -20,6 +20,7 @@ import {
   type OrgDecision,
   type OrgStatus,
 } from '@/lib/org/review'
+import { ORG_CHECKLIST_COLUMNS, orgMissingForApproval, type OrgChecklistRow } from '@/lib/onboarding/checklist-organization'
 
 type Db = Awaited<ReturnType<typeof requireAdmin>>['db']
 
@@ -105,9 +106,9 @@ export async function decideOrganization(orgId: string, decision: OrgDecision, f
 
   const { data: org, error: loadError } = await db
     .from('facility_profiles')
-    .select('id, facility_name, contact_name, verification_status, approved_at, approval_email_sent_at')
+    .select(`id, facility_name, contact_name, approved_at, approval_email_sent_at, ${ORG_CHECKLIST_COLUMNS}`)
     .eq('id', orgId)
-    .single()
+    .single<OrgChecklistRow & { id: string; facility_name: string; contact_name: string | null; approved_at: string | null; approval_email_sent_at: string | null }>()
   if (loadError || !org) throw new Error(`Organization not found: ${loadError?.message ?? orgId}`)
 
   const from = org.verification_status as OrgStatus
@@ -115,6 +116,16 @@ export async function decideOrganization(orgId: string, decision: OrgDecision, f
     throw new Error(`Can't ${decision} an organization that is ${from}.`)
   }
   const to = NEXT_STATUS[decision]
+
+  // Needed for approval items (registration upload, disclosure answers)
+  // block approval — never submission (Single-Question Onboarding spec).
+  if (to === 'approved') {
+    const { data: docs } = await db.from('org_documents').select('kind').eq('facility_id', orgId)
+    const missing = orgMissingForApproval({ org, docKinds: (docs ?? []).map((d) => d.kind as string) })
+    if (missing.length) {
+      throw new Error(`Can't approve yet. Missing: ${missing.map((m) => m.label.toLowerCase()).join('; ')}.`)
+    }
+  }
   const now = new Date().toISOString()
 
   const update: Record<string, unknown> = {

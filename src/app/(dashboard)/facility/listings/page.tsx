@@ -31,7 +31,13 @@ function price(l: Listing): string {
 }
 
 /** Organization services and events (spec step 5 A/B, and later from the dashboard). */
-export default async function FacilityListingsPage() {
+export default async function FacilityListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const requested = (await searchParams).new
+  const initial = requested === 'service' || requested === 'event' ? requested : null
   if (isDemoMode()) redirect('/dashboard')
   const { createClient } = await import('@/lib/supabase/server')
   const supabase = await createClient()
@@ -80,7 +86,7 @@ export default async function FacilityListingsPage() {
         </p>
       )}
 
-      <AddListing />
+      <AddListing initial={initial} />
 
       <Card>
         <CardHeader>

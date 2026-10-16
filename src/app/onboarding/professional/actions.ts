@@ -1,282 +1,223 @@
 'use server'
 
 import { z } from 'zod'
-import { blockedClaimsMessage, findBlockedClaims } from '@/lib/listings/claims'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { currentUser, requireRole, type SessionUser } from '@/lib/auth/roles'
 import { isDemoMode } from '@/lib/demo/data'
 import { CREDENTIALS_BUCKET } from '@/lib/credentials/document'
 import { submitContractorForReview } from '@/lib/verification/submit-for-review'
+import { markSubmitted, recordProgress } from '@/lib/onboarding/progress'
 import {
+  branchHasComplianceQuestions,
   effectiveBranch,
   isCredentialBasis,
   isProfessionalCategory,
+  type CredentialBasis,
+  type ProfessionalBranch,
+  type ProfessionalCategory,
 } from '@/lib/onboarding/professional-branch'
 import {
-  MALPRACTICE_SLOT,
-  categoryInputSchema,
-  credentialsSchemas,
-  docSlotsFor,
-  documentsInputSchema,
-  firstErrors,
+  DISCLOSURE_DETAILS_MAX,
+  DISCLOSURE_KEYS,
+  PRO_Q,
+  PRO_SKIPPABLE,
+  identityScreenFor,
   normalizeWebsiteUrl,
-  offeringSchema,
-  toSelfDisclosuresJson,
-  uploadableSlotsFor,
+  professionColumns,
+  proValid,
+  type ProSignupAnswers,
+} from '@/lib/onboarding/questions/professional'
+import { PROFESSION_MAX } from '@/lib/onboarding/professions'
+import {
+  SLOT_LABEL,
+  credentialTypeFor,
   type ActionResult,
-  type Branch,
-  type CredentialBasis,
   type DocSlotKey,
-  type ProCategory,
   type UploadedDoc,
-  EXPLORE_INTERESTS,
-  INTEREST_TILES,
-  type ExploreInterest,
-  type InterestTile,
 } from './shared'
 
 /*
- * Server actions for /onboarding/professional. Every action:
+ * Server actions for /onboarding/professional (screens 5–8, plus screens 1–3
+ * when they weren't answered before the account) and the dashboard's upload
+ * items. Every action:
  *   - authenticates with currentUser() (enforces MFA/AAL2 when enabled) and
  *     requireRole('contractor');
- *   - only ever reads/writes rows owned by that user (contractor_profiles.id,
- *     credentials.contractor_id and professional_offerings.contractor_id are
- *     all = auth.uid());
- *   - decides the step-3/step-4 branch from the STORED category and
- *     credential_basis via effectiveBranch(), never from client input;
+ *   - only reads/writes rows owned by that user;
+ *   - decides the branch from the STORED category and credential_basis via
+ *     effectiveBranch(), never from client input;
+ *   - records the screen in onboarding_progress so a refresh resumes on the
+ *     first unanswered screen;
  *   - is a no-op in demo mode (no Supabase configured).
  */
 
 type Supa = Awaited<ReturnType<typeof createClient>>
 
-// Credentials a contractor may withdraw during onboarding. Never verified ones.
+const SESSION_EXPIRED: ActionResult = {
+  ok: false,
+  error: 'Your session has expired. Please sign in again.',
+}
+const GENERIC_ERROR: ActionResult = {
+  ok: false,
+  error: 'Something went wrong saving your answer. Please try again.',
+}
+const ANSWER_EARLIER: ActionResult = {
+  ok: false,
+  error: 'Please answer the earlier questions first.',
+}
+
+// Credentials a contractor may withdraw themselves. Never verified ones.
 const REMOVABLE_CREDENTIAL_STATUSES = ['pending_upload', 'pending_review', 'rejected']
 
-const SESSION_EXPIRED = 'Your session has expired. Please sign in again.'
-
-async function authed(): Promise<
-  { user: SessionUser; supabase: Supa } | { error: ActionResult }
-> {
-  let user: SessionUser
+async function authed(): Promise<{ user: SessionUser; supabase: Supa } | null> {
   try {
-    user = requireRole(await currentUser(), 'contractor')
+    const user = requireRole(await currentUser(), 'contractor')
+    return { user, supabase: await createClient() }
   } catch {
-    return { error: { ok: false, error: SESSION_EXPIRED } }
+    return null
   }
-  return { user, supabase: await createClient() }
 }
 
-interface StoredProfile {
-  category: ProCategory | null
-  credentialBasis: CredentialBasis | null
-  /** null until a category (and, for 'other', a credential basis) is saved */
-  branch: Branch | null
-  step: number
+interface Stored {
+  category: ProfessionalCategory | null
+  basis: CredentialBasis | null
+  /** null until a category (and, for Other, a basis) is saved */
+  branch: ProfessionalBranch | null
   completed: boolean
-  specialties: string[]
+  disclosures: Record<string, unknown>
 }
 
-async function loadProfile(supabase: Supa, userId: string): Promise<StoredProfile | null> {
+async function loadStored(supabase: Supa, userId: string): Promise<Stored | null> {
   const { data, error } = await supabase
     .from('contractor_profiles')
-    .select(
-      'professional_category, credential_basis, onboarding_step, onboarding_completed_at, specialties'
-    )
+    .select('professional_category, credential_basis, onboarding_completed_at, self_disclosures')
     .eq('id', userId)
     .single()
   if (error || !data) return null
-  const category = isProfessionalCategory(data.professional_category)
-    ? data.professional_category
-    : null
-  const credentialBasis = isCredentialBasis(data.credential_basis) ? data.credential_basis : null
-  const branch =
-    category && (category !== 'other' || credentialBasis)
-      ? effectiveBranch(category, credentialBasis)
-      : null
+  const category = isProfessionalCategory(data.professional_category) ? data.professional_category : null
+  const basis = isCredentialBasis(data.credential_basis) ? data.credential_basis : null
   return {
     category,
-    credentialBasis,
-    branch,
-    step: Number(data.onboarding_step ?? 2),
+    basis,
+    branch: category && (category !== 'other' || basis) ? effectiveBranch(category, basis) : null,
     completed: !!data.onboarding_completed_at,
-    specialties: Array.isArray(data.specialties) ? data.specialties : [],
+    disclosures:
+      data.self_disclosures && typeof data.self_disclosures === 'object'
+        ? (data.self_disclosures as Record<string, unknown>)
+        : {},
   }
 }
 
-const GENERIC_ERROR: ActionResult = {
-  ok: false,
-  error: 'Something went wrong saving your progress. Please try again.',
+async function update(supabase: Supa, userId: string, columns: Record<string, unknown>): Promise<boolean> {
+  const { error } = await supabase.from('contractor_profiles').update(columns).eq('id', userId)
+  if (error) console.error('[onboarding/professional] update failed', error.code)
+  return !error
 }
 
-const CHOOSE_CATEGORY_FIRST: ActionResult = { ok: false, error: 'Choose a category first.' }
+/* ───────────── Screens 1–3 (post-account fallback) ───────────── */
 
-function invalid(issues: { path: PropertyKey[]; message: string }[]): ActionResult {
-  return {
-    ok: false,
-    error: 'Please fix the highlighted fields.',
-    fieldErrors: firstErrors(issues),
-  }
-}
-
-/* ───────────── Step 2 ───────────── */
-
-export async function saveCategory(input: {
-  category: string
-  other_profession?: string
-  credential_basis?: string
-}): Promise<ActionResult> {
-  const parsed = categoryInputSchema.safeParse({
-    category: input?.category,
-    other_profession: input?.other_profession ?? '',
-    credential_basis: input?.credential_basis ?? '',
-  })
-  if (!parsed.success) {
-    const fe = firstErrors(parsed.error.issues)
-    return {
-      ok: false,
-      error: fe.category ? 'Choose a category.' : 'Please fix the highlighted fields.',
-      fieldErrors: fe,
-    }
-  }
+/**
+ * Save one of screens 1–3 for a signed-in professional who didn't answer
+ * them before the account (Google without its cookie, a Not sure account
+ * staff placed as independent, or an older account).
+ */
+export async function saveIdentityAnswer(id: string, input: ProSignupAnswers): Promise<ActionResult> {
   if (isDemoMode()) return { ok: true }
-
   const a = await authed()
-  if ('error' in a) return a.error
-
-  const v = parsed.data
-  const isOther = v.category === 'other'
-  const { error } = await a.supabase
-    .from('contractor_profiles')
-    .update({
-      professional_category: v.category,
-      other_profession: isOther ? v.other_profession : null,
-      credential_basis: isOther ? v.credential_basis : null,
-      onboarding_step: 3,
-    })
-    .eq('id', a.user.id)
-  if (error) return GENERIC_ERROR
-  return { ok: true }
-}
-
-/* ───────────── Step 3 ───────────── */
-
-export async function saveCredentialDetails(
-  input: Record<string, unknown>
-): Promise<ActionResult> {
-  // In demo mode there's no stored category; validate against the one sent.
-  if (isDemoMode()) {
-    if (!isProfessionalCategory(input.category)) return CHOOSE_CATEGORY_FIRST
-    const branch = effectiveBranch(input.category, input.credential_basis as string | null)
-    const r = credentialsSchemas[branch].safeParse(input)
-    return r.success ? { ok: true } : invalid(r.error.issues)
-  }
-
-  const a = await authed()
-  if ('error' in a) return a.error
+  if (!a) return SESSION_EXPIRED
   const { user, supabase } = a
+  const stored = await loadStored(supabase, user.id)
+  if (!stored) return GENERIC_ERROR
 
-  // Branch on the STORED category/basis, never on what the client claims.
-  const profile = await loadProfile(supabase, user.id)
-  if (!profile) return GENERIC_ERROR
-  if (!profile.branch) return CHOOSE_CATEGORY_FIRST
-  const branch = profile.branch
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  let columns: Record<string, unknown>
 
-  const withSpecialty = (s: string) => [
-    s,
-    ...profile.specialties.filter((x) => x !== s),
-  ]
-
-  let update: Record<string, unknown>
-  if (branch === 'clinical') {
-    const r = credentialsSchemas.clinical.safeParse(input)
-    if (!r.success) return invalid(r.error.issues)
-    const v = r.data
-    const states = [...new Set(v.license_states)]
-    update = {
-      legal_name: v.legal_name,
-      other_names: v.other_names || null,
-      license_type: v.license_type,
-      specialties: withSpecialty(v.specialty),
-      state_license_number: v.state_license_number,
-      license_issue_date: v.license_issue_date,
-      license_expiration_date: v.license_expiration_date,
-      license_states: states,
-      license_state: states[0],
-      has_compact_license: v.has_compact_license === 'yes',
-      telehealth_states: [...new Set(v.telehealth_states)],
-      npi_number: v.npi_number || null,
-      years_of_experience: v.years_of_experience,
-      offers_high_risk_services: v.offers_high_risk_services === 'yes',
-      self_disclosures: toSelfDisclosuresJson(v.self_disclosures),
+  switch (id) {
+    case PRO_Q.category: {
+      if (!isProfessionalCategory(input?.category)) return { ok: false, error: 'Choose what kind of professional you are.' }
+      columns = { professional_category: input.category }
+      if (input.category !== 'other') Object.assign(columns, { other_profession: null, credential_basis: null })
+      break
     }
-  } else if (branch === 'allied') {
-    const r = credentialsSchemas.allied.safeParse(input)
-    if (!r.success) return invalid(r.error.issues)
-    const v = r.data
-    update = {
-      legal_name: v.legal_name,
-      certification_type: v.certification_type,
-      certifying_organization: v.certifying_organization,
-      specialties: withSpecialty(v.specialty),
-      years_of_experience: v.years_of_experience,
-      offers_high_risk_services: v.offers_high_risk_services === 'yes',
-      self_disclosures: toSelfDisclosuresJson(v.self_disclosures),
+    case PRO_Q.profession: {
+      if (!stored.category || stored.category === 'other') return ANSWER_EARLIER
+      const v = str(input?.profession)
+      if (!proValid.profession(v)) return { ok: false, error: 'Tell us your profession or specialty.' }
+      columns = professionColumns(stored.category, v)
+      break
     }
-  } else if (branch === 'consultant') {
-    const r = credentialsSchemas.consultant.safeParse(input)
-    if (!r.success) return invalid(r.error.issues)
-    const v = r.data
-    update = {
-      specialties: withSpecialty(v.specialty),
-      consulting_background: v.consulting_background,
-      client_types: [...new Set(v.client_types)],
-      years_of_experience: v.years_of_experience,
-      website_url: normalizeWebsiteUrl(v.website_url),
-      // Not asked on this branch; clear answers left over from a branch switch
-      // so approval doesn't apply the malpractice rule to them.
-      offers_high_risk_services: null,
-      self_disclosures: {},
+    case PRO_Q.otherProfession: {
+      if (stored.category !== 'other') return ANSWER_EARLIER
+      const v = str(input?.other_profession)
+      if (!v || v.length > PROFESSION_MAX) return { ok: false, error: 'Tell us your profession.' }
+      columns = { other_profession: v }
+      break
     }
-  } else {
-    const r = credentialsSchemas.educator.safeParse(input)
-    if (!r.success) return invalid(r.error.issues)
-    const v = r.data
-    update = {
-      primary_background: v.primary_background,
-      teaching_topics: v.teaching_topics,
-      client_types: [...new Set(v.client_types)],
-      ceu_accreditation: v.ceu_accreditation,
-      offers_high_risk_services: null,
-      self_disclosures: {},
+    case PRO_Q.credentialBasis: {
+      if (stored.category !== 'other') return ANSWER_EARLIER
+      if (!isCredentialBasis(input?.credential_basis)) return { ok: false, error: 'Choose an option.' }
+      columns = { credential_basis: input.credential_basis }
+      break
     }
+    case PRO_Q.license:
+    case PRO_Q.certifyingOrg:
+    case PRO_Q.website: {
+      if (!stored.branch) return ANSWER_EARLIER
+      if (identityScreenFor(stored.branch) !== id) return ANSWER_EARLIER
+      if (id === PRO_Q.license) {
+        const number = str(input?.license_number)
+        const state = str(input?.license_state)
+        if (!proValid.licenseNumber(number) || !proValid.state(state)) {
+          return { ok: false, error: 'Enter your license number and the state that issued it.' }
+        }
+        columns = { state_license_number: number, license_state: state, license_states: [state] }
+      } else if (id === PRO_Q.certifyingOrg) {
+        const org = str(input?.certifying_organization)
+        if (!proValid.certifyingOrg(org)) return { ok: false, error: 'Tell us which organization certified you.' }
+        columns = { certifying_organization: org }
+      } else if (input?.no_website === true) {
+        columns = { website_url: null }
+      } else {
+        const url = normalizeWebsiteUrl(str(input?.website_url))
+        if (!url) return { ok: false, error: 'Enter a link like linkedin.com/in/yourname, or choose “I don’t have one”.' }
+        columns = { website_url: url }
+      }
+      break
+    }
+    default:
+      return { ok: false, error: 'Unknown question.' }
   }
 
-  const { error } = await supabase
-    .from('contractor_profiles')
-    .update({ ...update, onboarding_step: Math.max(4, Math.min(profile.step, 6)) })
-    .eq('id', user.id)
-  if (error) return GENERIC_ERROR
-  return { ok: true }
+  if (!(await update(supabase, user.id, columns))) return GENERIC_ERROR
+  return recordProgress(supabase, user.id, 'professional', { answered: [id] })
 }
 
-/* ───────────── Step 4 ───────────── */
+/* ───────────── Screens 5–6: uploads ───────────── */
+
+/** Mark an upload screen answered (file in) or skipped ("Skip for now"). */
+export async function markScreen(id: string, kind: 'answered' | 'skipped'): Promise<ActionResult> {
+  if (isDemoMode()) return { ok: true }
+  if (id !== PRO_Q.credentialUpload && id !== PRO_Q.governmentId) return { ok: false, error: 'Unknown question.' }
+  if (kind === 'skipped' && !PRO_SKIPPABLE.has(id)) return { ok: false, error: 'This question can’t be skipped.' }
+  const a = await authed()
+  if (!a) return SESSION_EXPIRED
+  return recordProgress(a.supabase, a.user.id, 'professional', { [kind]: [id] })
+}
 
 const recordDocSchema = z.object({
-  slot: z.enum(['license', 'malpractice', 'resume', 'government_id']),
+  slot: z.enum(['credential', 'government_id']),
   path: z.string().min(3).max(500),
   filename: z.string().trim().min(1).max(255),
   replaceId: z.string().uuid().nullable(),
 })
 
-export type RecordDocumentResult =
-  | { ok: true; doc: UploadedDoc }
-  | { ok: false; error: string }
+export type RecordDocumentResult = { ok: true; doc: UploadedDoc } | { ok: false; error: string }
 
 /**
  * Record a document the browser already uploaded to the private credentials
- * bucket at `{user_id}/…`. Inserts a pending_review credentials row holding
- * the storage PATH; with replaceId, withdraws the previous upload afterwards.
+ * bucket at `{user_id}/…` (pending_review row holding the storage PATH).
+ * With replaceId, withdraws the previous upload afterwards. Also checks the
+ * matching screen off in onboarding_progress.
  */
 export async function recordDocument(input: {
   slot: DocSlotKey
@@ -286,88 +227,69 @@ export async function recordDocument(input: {
 }): Promise<RecordDocumentResult> {
   const parsed = recordDocSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: 'Invalid upload.' }
-  const { slot: slotKey, path, filename, replaceId } = parsed.data
+  const { slot, path, filename, replaceId } = parsed.data
 
   if (isDemoMode()) {
     return {
       ok: true,
       doc: {
-        id: `demo-${slotKey}-${Date.now()}`,
-        credential_type:
-          slotKey === 'malpractice' ? MALPRACTICE_SLOT.credentialType : slotKey,
+        id: `demo-${slot}-${Date.now()}`,
+        credential_type: slot === 'government_id' ? 'government_id' : 'license',
         name: filename,
         document_filename: filename,
         document_url: path,
         status: 'pending_review',
-        issuing_authority: null,
-        license_number: null,
-        coverage_amount: null,
-        expiration_date: null,
       },
     }
   }
 
   const a = await authed()
-  if ('error' in a) return { ok: false, error: SESSION_EXPIRED }
+  if (!a) return { ok: false, error: 'Your session has expired. Please sign in again.' }
   const { user, supabase } = a
 
   // The object must live in the caller's own folder (storage RLS enforces the
   // upload side; this stops a row pointing at someone else's file).
-  if (!path.startsWith(`${user.id}/`) || path.includes('..')) {
-    return { ok: false, error: 'Invalid upload.' }
-  }
+  if (!path.startsWith(`${user.id}/`) || path.includes('..')) return { ok: false, error: 'Invalid upload.' }
 
-  const profile = await loadProfile(supabase, user.id)
-  if (!profile?.branch) return { ok: false, error: 'Choose a category first.' }
-  const slot = uploadableSlotsFor(profile.branch).find((s) => s.key === slotKey)
-  if (!slot) return { ok: false, error: 'That document is not needed for your category.' }
+  const stored = await loadStored(supabase, user.id)
+  if (!stored?.branch) return { ok: false, error: 'Please answer the earlier questions first.' }
+  const credentialType = slot === 'government_id' ? 'government_id' : credentialTypeFor(stored.branch)
 
   const { data, error } = await supabase
     .from('credentials')
     .insert({
       contractor_id: user.id,
-      credential_type: slot.credentialType,
-      name: slot.key === 'malpractice' ? 'Professional liability insurance' : slot.label,
+      credential_type: credentialType,
+      name: SLOT_LABEL[credentialType],
       status: 'pending_review',
       document_url: path,
       document_filename: filename,
     })
-    .select(
-      'id, credential_type, name, document_filename, document_url, status, issuing_authority, license_number, coverage_amount, expiration_date'
-    )
+    .select('id, credential_type, name, document_filename, document_url, status')
     .single()
-
-  if (error || !data) {
-    return { ok: false, error: "We couldn't save that document. Please try again." }
-  }
+  if (error || !data) return { ok: false, error: 'We couldn’t save that document. Please try again.' }
 
   if (replaceId) await withdrawCredential(user.id, replaceId)
-
+  await recordProgress(supabase, user.id, 'professional', {
+    answered: [slot === 'government_id' ? PRO_Q.governmentId : PRO_Q.credentialUpload],
+  })
   return { ok: true, doc: data as UploadedDoc }
 }
 
 export async function removeDocument(credentialId: string): Promise<ActionResult> {
-  if (!z.string().min(1).max(100).safeParse(credentialId).success) {
-    return { ok: false, error: 'Invalid document.' }
-  }
   if (isDemoMode()) return { ok: true }
-
+  if (!z.string().uuid().safeParse(credentialId).success) return { ok: false, error: 'Invalid document.' }
   const a = await authed()
-  if ('error' in a) return a.error
-  if (!z.string().uuid().safeParse(credentialId).success) {
-    return { ok: false, error: 'Invalid document.' }
-  }
-
-  const removed = await withdrawCredential(a.user.id, credentialId)
-  return removed
+  if (!a) return SESSION_EXPIRED
+  return (await withdrawCredential(a.user.id, credentialId))
     ? { ok: true }
-    : { ok: false, error: "We couldn't remove that document. Please try again." }
+    : { ok: false, error: 'We couldn’t remove that document. Please try again.' }
 }
 
 /**
  * Delete one of the caller's own not-yet-verified credentials and its stored
  * object. There is no owner DELETE policy on `credentials` or on the storage
- * bucket, so this uses the service role — scoped by contractor_id = caller
+ * bucket, so this uses the service role, scoped by contractor_id = caller
  * and to the caller's own `{user_id}/` folder.
  */
 async function withdrawCredential(userId: string, credentialId: string): Promise<boolean> {
@@ -381,294 +303,105 @@ async function withdrawCredential(userId: string, credentialId: string): Promise
     .select('document_url')
     .maybeSingle()
   if (error || !data) return false
-
   const path = typeof data.document_url === 'string' ? data.document_url : null
   if (path && path.startsWith(`${userId}/`) && !/^https?:/i.test(path)) {
-    const { error: rmError } = await admin.storage
-      .from(CREDENTIALS_BUCKET)
-      .remove([path])
+    const { error: rmError } = await admin.storage.from(CREDENTIALS_BUCKET).remove([path])
     if (rmError) console.error('onboarding: failed to remove credential object', rmError.message)
   }
   return true
 }
 
-/**
- * Step 4 → 5. Requires every required document for the stored branch, the
- * liability-insurance answer (and, when "yes", the certificate + its details)
- * and both attestations; then submits the contractor for review
- * (not_submitted / more_info_requested → pending_review) — the same logic as
- * POST /api/contractor/verification/resubmit.
- *
- * "No" is always allowed, even when malpractice is required for the services
- * they selected: the 30-day grace period is applied at approval.
- */
-export async function submitDocuments(input: Record<string, unknown>): Promise<ActionResult> {
-  const parsed = documentsInputSchema.safeParse(input)
-  if (!parsed.success) {
-    const fe = firstErrors(parsed.error.issues)
-    const attest = fe.attest_accurate || fe.authorize_checks
-    return {
-      ok: false,
-      error:
-        attest && Object.keys(fe).every((k) => k === 'attest_accurate' || k === 'authorize_checks')
-          ? 'Please check both boxes to submit.'
-          : 'Please fix the highlighted fields.',
-      fieldErrors: fe,
-    }
-  }
-  const v = parsed.data
-  const insured = v.carries_liability_insurance === 'yes'
-  if (isDemoMode()) return { ok: true }
+/* ───────────── Screen 7: disclosures (licensed + allied) ───────────── */
 
+const disclosuresSchema = z.object({
+  picked: z.array(z.enum(DISCLOSURE_KEYS as [string, ...string[]])).max(4),
+  details: z.string().trim().max(DISCLOSURE_DETAILS_MAX),
+})
+
+/**
+ * "Do any of these apply to you?" → the existing self_disclosures shape
+ * ({key: {answer, details}}) so the admin flags keep working. One shared
+ * "Tell us a bit more" text goes on every picked item. No picks = "None of
+ * these apply".
+ */
+export async function saveDisclosures(input: { picked: string[]; details: string }): Promise<ActionResult> {
+  const parsed = disclosuresSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, error: 'Please check your answer and try again.' }
+  const { picked, details } = parsed.data
+  if (picked.length > 0 && !details) {
+    return { ok: false, error: 'Tell us a bit more.', fields: { details: 'Tell us a bit more' } }
+  }
+  if (isDemoMode()) return { ok: true }
   const a = await authed()
-  if ('error' in a) return a.error
+  if (!a) return SESSION_EXPIRED
+  const json = Object.fromEntries(
+    DISCLOSURE_KEYS.map((k) => {
+      const yes = picked.includes(k)
+      return [k, { answer: yes, details: yes ? details : null }]
+    })
+  )
+  if (!(await update(a.supabase, a.user.id, { self_disclosures: json }))) return GENERIC_ERROR
+  return recordProgress(a.supabase, a.user.id, 'professional', { answered: [PRO_Q.disclosures] })
+}
+
+/* ───────────── Screen 8: confirm and submit ───────────── */
+
+const submitSchema = z.object({
+  attest_accurate: z.literal(true),
+  authorize_checks: z.literal(true),
+})
+
+/**
+ * Attestations → submit for review (not_submitted / more_info_requested →
+ * pending_review) → onboarding complete, so the proxy lets them into
+ * /dashboard. Uploads are NOT required (beta: skipping never blocks
+ * submission; missing uploads block approval instead).
+ */
+export async function submitApplication(input: {
+  attest_accurate: boolean
+  authorize_checks: boolean
+}): Promise<ActionResult> {
+  if (!submitSchema.safeParse(input).success) {
+    return { ok: false, error: 'Please check both boxes to submit.' }
+  }
+  if (isDemoMode()) return { ok: true }
+  const a = await authed()
+  if (!a) return SESSION_EXPIRED
   const { user, supabase } = a
 
-  const profile = await loadProfile(supabase, user.id)
-  if (!profile) return GENERIC_ERROR
-  if (!profile.branch) return CHOOSE_CATEGORY_FIRST
-
-  const { data: creds, error } = await supabase
-    .from('credentials')
-    .select(
-      'id, credential_type, document_url, status, issuing_authority, license_number, coverage_amount, expiration_date, created_at'
-    )
-    .eq('contractor_id', user.id)
-    .order('created_at', { ascending: false })
-  if (error) return GENERIC_ERROR
-
-  const usable = (creds ?? []).filter((c) => c.document_url && c.status !== 'rejected')
-  const have = new Set(usable.map((c) => String(c.credential_type)))
-  const required = [...docSlotsFor(profile.branch), ...(insured ? [MALPRACTICE_SLOT] : [])]
-  const missing = required.filter((s) => s.required && !s.matches.some((t) => have.has(t)))
-  if (missing.length > 0) {
-    return {
-      ok: false,
-      error: `Please upload: ${missing.map((m) => m.label).join(', ')}.`,
-    }
-  }
-
-  if (insured) {
-    // Attach carrier / policy / coverage / expiry to the newest certificate.
-    // Owners may edit their own pending credentials; editing a verified one
-    // sends it back to pending_review (protect_credential_review_columns), so
-    // only write when something actually changed.
-    const cert = usable.find((c) => c.credential_type === 'malpractice_insurance')!
-    const meta = {
-      issuing_authority: v.carrier,
-      license_number: v.policy_number,
-      coverage_amount: v.coverage_amount,
-      expiration_date: v.expiration_date,
-    }
-    const changed = (Object.keys(meta) as (keyof typeof meta)[]).some(
-      (k) => (cert[k] ?? '') !== meta[k]
-    )
-    if (changed) {
-      const { error: certError } = await supabase
-        .from('credentials')
-        .update(meta)
-        .eq('id', cert.id)
-        .eq('contractor_id', user.id)
-      if (certError) return GENERIC_ERROR
-    }
+  const stored = await loadStored(supabase, user.id)
+  if (!stored) return GENERIC_ERROR
+  if (!stored.branch) return ANSWER_EARLIER
+  if (
+    branchHasComplianceQuestions(stored.branch) &&
+    !DISCLOSURE_KEYS.every((k) => {
+      const d = stored.disclosures[k]
+      return !!d && typeof d === 'object' && typeof (d as { answer?: unknown }).answer === 'boolean'
+    })
+  ) {
+    return { ok: false, error: 'Please answer “Do any of these apply to you?” first.' }
   }
 
   const now = new Date().toISOString()
-  const { error: profileError } = await supabase
-    .from('contractor_profiles')
-    .update({
-      carries_liability_insurance: insured,
-      attested_accurate_at: now,
-      authorized_checks_at: now,
-    })
-    .eq('id', user.id)
-  if (profileError) return GENERIC_ERROR
+  if (!(await update(supabase, user.id, { attested_accurate_at: now, authorized_checks_at: now }))) {
+    return GENERIC_ERROR
+  }
 
   const submitted = await submitContractorForReview(user.id)
   if (!submitted.ok) return GENERIC_ERROR
 
-  // Never move someone already on step 6 back to 5.
-  const { error: stepError } = await supabase
-    .from('contractor_profiles')
-    .update({ onboarding_step: 5 })
-    .eq('id', user.id)
-    .lt('onboarding_step', 5)
-  if (stepError) return GENERIC_ERROR
-  return { ok: true }
-}
+  const progress = await recordProgress(supabase, user.id, 'professional', { answered: [PRO_Q.submit] })
+  if (!progress.ok) return progress
+  const marked = await markSubmitted(supabase, user.id, 'professional')
+  if (!marked.ok) return marked
 
-/* ───────────── Step 5 ───────────── */
-
-export async function saveOfferings(input: unknown[]): Promise<ActionResult> {
-  const list = z.array(z.unknown()).min(1).max(30).safeParse(input)
-  if (!list.success) {
-    return { ok: false, error: 'Add at least one offering, or skip for now.' }
+  if (!stored.completed) {
+    const { error } = await supabase
+      .from('contractor_profiles')
+      .update({ onboarding_completed_at: now })
+      .eq('id', user.id)
+      .is('onboarding_completed_at', null)
+    if (error) return GENERIC_ERROR
   }
-
-  const rows: Record<string, unknown>[] = []
-  const fieldErrors: Record<string, string> = {}
-  list.data.forEach((raw, i) => {
-    const r = offeringSchema.safeParse(raw)
-    if (!r.success) {
-      for (const [k, msg] of Object.entries(firstErrors(r.error.issues))) {
-        fieldErrors[`${i}.${k}`] = msg
-      }
-      return
-    }
-    const v = r.data
-    const claims = findBlockedClaims(v.title, v.description)
-    if (claims.length) {
-      fieldErrors[`${i}.description`] = blockedClaimsMessage(claims)
-      return
-    }
-    if (v.kind === 'service') {
-      rows.push({
-        kind: 'service',
-        title: v.title,
-        description: v.description || null,
-        format: v.format,
-        duration_minutes: v.duration_minutes,
-        price_cents: v.price,
-        is_free: false,
-        involves_medical_procedures: v.involves_medical_procedures,
-      })
-    } else if (v.kind === 'consulting') {
-      rows.push({
-        kind: 'consulting',
-        title: v.title,
-        description: v.description || null,
-        engagement_type: v.engagement_type,
-        custom_quote: v.custom_quote,
-        price_cents: v.custom_quote ? null : Math.round(Number(v.price) * 100),
-        is_free: false,
-        involves_medical_procedures: false,
-      })
-    } else {
-      rows.push({
-        kind: 'event',
-        event_type: v.event_type,
-        title: v.title,
-        description: v.description || null,
-        starts_at: v.date_later ? null : new Date(v.starts_at).toISOString(),
-        capacity: v.capacity ? Number(v.capacity) : null,
-        is_free: v.is_free,
-        price_cents: v.is_free ? 0 : Math.round(Number(v.price) * 100),
-        involves_medical_procedures: v.involves_medical_procedures,
-      })
-    }
-  })
-
-  if (Object.keys(fieldErrors).length > 0) {
-    return { ok: false, error: 'Please fix the highlighted fields.', fieldErrors }
-  }
-  if (isDemoMode()) return { ok: true }
-
-  const a = await authed()
-  if ('error' in a) return a.error
-  const { user, supabase } = a
-
-  const gate = await requireStep5(supabase, user.id)
-  if (gate) return gate
-
-  // Onboarding owns only the contractor's DRAFT rows; replace them wholesale
-  // so re-submitting never duplicates. Non-draft offerings are never touched.
-  const { error: delError } = await supabase
-    .from('professional_offerings')
-    .delete()
-    .eq('contractor_id', user.id)
-    .eq('status', 'draft')
-  if (delError) return GENERIC_ERROR
-
-  const { error } = await supabase
-    .from('professional_offerings')
-    .insert(rows.map((r) => ({ ...r, contractor_id: user.id, status: 'draft' })))
-  if (error) return GENERIC_ERROR
-
-  return advanceToExplore(supabase, user.id)
-}
-
-export async function skipOfferings(): Promise<ActionResult> {
-  if (isDemoMode()) return { ok: true }
-  const a = await authed()
-  if ('error' in a) return a.error
-  const gate = await requireStep5(a.supabase, a.user.id)
-  if (gate) return gate
-  return advanceToExplore(a.supabase, a.user.id)
-}
-
-/** Step 5 → step 6 ("Want to explore Sanus too?"). */
-async function advanceToExplore(supabase: Supa, userId: string): Promise<ActionResult> {
-  const { error } = await supabase
-    .from('contractor_profiles')
-    .update({ onboarding_step: 6 })
-    .eq('id', userId)
-    .lt('onboarding_step', 6)
-  if (error) return GENERIC_ERROR
-  return { ok: true }
-}
-
-const exploreSchema = z.object({
-  interests: z.array(z.enum(EXPLORE_INTERESTS.map((i) => i.value) as [ExploreInterest, ...ExploreInterest[]])).max(5),
-  tiles: z.array(z.enum(INTEREST_TILES.map((t) => t.value) as [InterestTile, ...InterestTile[]])).max(9),
-  location: z.string().trim().max(100),
-  languages: z.array(z.string().trim().min(1).max(40)).max(20),
-})
-
-/** Step 6: save what they'd like to explore as a client, then finish. */
-export async function saveExplore(input: unknown): Promise<ActionResult> {
-  const parsed = exploreSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: 'Please check your choices and try again.' }
-  if (isDemoMode()) return { ok: true }
-  const a = await authed()
-  if ('error' in a) return a.error
-  const gate = await requireStep6(a.supabase, a.user.id)
-  if (gate) return gate
-  const d = parsed.data
-  const update: Record<string, unknown> = {
-    explore_interests: Array.from(new Set(d.interests)),
-    interest_tiles: Array.from(new Set(d.tiles)),
-    explore_location: d.location || null,
-  }
-  // Languages also appear on the provider profile; only overwrite when given.
-  if (d.languages.length) update.languages = Array.from(new Set(d.languages))
-  const { error } = await a.supabase.from('contractor_profiles').update(update).eq('id', a.user.id)
-  if (error) return GENERIC_ERROR
-  return completeOnboarding(a.supabase, a.user.id)
-}
-
-export async function skipExplore(): Promise<ActionResult> {
-  if (isDemoMode()) return { ok: true }
-  const a = await authed()
-  if ('error' in a) return a.error
-  const gate = await requireStep6(a.supabase, a.user.id)
-  if (gate) return gate
-  return completeOnboarding(a.supabase, a.user.id)
-}
-
-async function requireStep6(supabase: Supa, userId: string): Promise<ActionResult | null> {
-  const profile = await loadProfile(supabase, userId)
-  if (!profile) return GENERIC_ERROR
-  if (profile.step < 6) return { ok: false, error: 'Please finish the earlier steps first.' }
-  return null
-}
-
-/** Offerings/completion are only reachable after documents were submitted. */
-async function requireStep5(supabase: Supa, userId: string): Promise<ActionResult | null> {
-  const profile = await loadProfile(supabase, userId)
-  if (!profile) return GENERIC_ERROR
-  if (profile.step < 5) {
-    return { ok: false, error: 'Please finish uploading your documents first.' }
-  }
-  return null
-}
-
-/** Marks onboarding done; the client then goes straight to /dashboard. */
-async function completeOnboarding(supabase: Supa, userId: string): Promise<ActionResult> {
-  const { error } = await supabase
-    .from('contractor_profiles')
-    .update({ onboarding_completed_at: new Date().toISOString() })
-    .eq('id', userId)
-    .is('onboarding_completed_at', null)
-  if (error) return GENERIC_ERROR
   return { ok: true }
 }

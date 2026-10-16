@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   FileText,
   CreditCard,
-  PlusCircle,
   Users,
   ClipboardList,
   AlertCircle,
@@ -42,17 +41,20 @@ import {
 } from '@/lib/demo/data'
 import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
+import { loadClientProfile } from '@/lib/onboarding/client-profile'
+import { buildClientChecklist, CLIENT_GROUP_LABELS } from '@/lib/onboarding/checklist-client'
+import type { ChecklistItem as FinishItem } from '@/lib/onboarding/checklist'
+import { FinishProfileCard } from '@/components/onboarding/finish-profile-card'
+import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
+import { OrgFinishSection } from '@/components/org/org-finish-section'
 import { SUPPORT_EMAIL } from '@/lib/env'
-import {
-  buildContractorChecklist,
-  isNewAccount,
-  type ChecklistItem,
-  type ContractorChecklist,
-} from '@/lib/onboarding/contractor-checklist'
+import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
+import { buildProfessionalChecklist } from '@/lib/onboarding/checklist-professional'
+import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
 
 type DashboardJob = {
   id: string
@@ -156,7 +158,8 @@ export default async function DashboardPage() {
   let contractorType: string | null = null
   let verificationStatus: string | null = null
   let verificationNotes: string | null = null
-  let checklist: ContractorChecklist | null = null
+  let checklist: FinishItem[] | null = null
+  let hasListings = true
   let compliance: ComplianceState | null = null
   let previewHref: string | null = null
   let contractorStats: ContractorStats | null = null
@@ -167,6 +170,8 @@ export default async function DashboardPage() {
   let clientLocation: string | null = null
   // Not sure signups awaiting staff placement (or rejected): no messaging.
   let clientClassification: 'pending' | 'rejected' | null = null
+  // Finish your profile items (null for Not sure accounts under review).
+  let clientChecklist: FinishItem[] | null = null
 
   // Facility-specific data
   let facilityKpis: FacilityKpis = {
@@ -182,6 +187,7 @@ export default async function DashboardPage() {
   let orgStatus: string | null = null
   let orgNotes: string | null = null
   let orgNeedsAgreement = false
+  let orgUserId: string | null = null
 
   if (isDemoMode()) {
     // Read the demo role override cookie set by DemoRoleSwitcher.
@@ -279,16 +285,20 @@ export default async function DashboardPage() {
       firstName = DEMO_CONTRACTOR.first_name
       // Mocked setup state: everything done except payouts, so the demo
       // shows the checklist mid-way ("4 of 5").
-      checklist = buildContractorChecklist({
-        profile: { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'] },
-        avatarUrl: 'demo',
-        availabilitySlots: 3,
-        credentialCount: 5,
+      checklist = buildProfessionalChecklist({
+        branch: 'clinical',
         verificationStatus: 'approved',
-        stripeConnectId: DEMO_CONTRACTOR.stripe_connect_id,
-        stripeConnectOnboarded: DEMO_CONTRACTOR.stripe_connect_onboarded,
-        agreementAcceptedAt: '2026-01-01T00:00:00.000Z',
+        profile: { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'], contractor_agreement_accepted_at: '2026-01-01T00:00:00.000Z' },
+        phone: null,
+        avatarUrl: 'demo',
+        stripeConnectOnboarded: !!DEMO_CONTRACTOR.stripe_connect_onboarded,
+        credentials: [
+          { credential_type: 'license', document_url: 'demo', status: 'verified' },
+          { credential_type: 'government_id', document_url: 'demo', status: 'verified' },
+        ],
         listings: { total: 3, published: 1, inReview: 0 },
+        availabilitySlots: 3,
+        answered: [],
       })
       previewHref = `/pros/${DEMO_CONTRACTOR.id}`
     }
@@ -362,21 +372,28 @@ export default async function DashboardPage() {
         clientClassification =
           profileData.classification_status === 'rejected' ? 'rejected' : 'pending'
       }
-      const { data: clientRow } = await supabase
-        .from('client_profiles')
-        .select('first_name, interests, city, state')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (typeof clientRow?.first_name === 'string' && clientRow.first_name) {
-        firstName = clientRow.first_name
-      }
-      clientInterests = Array.isArray(clientRow?.interests)
-        ? (clientRow.interests as string[])
-        : []
+      const clientRow = await loadClientProfile(supabase, user.id)
+      if (clientRow?.first_name) firstName = clientRow.first_name
+      clientInterests = clientRow?.interests ?? []
       clientLocation =
         [clientRow?.city, clientRow?.state]
           .filter((v): v is string => typeof v === 'string' && v.length > 0)
-          .join(', ') || null
+          .join(', ') ||
+        clientRow?.zip_code ||
+        null
+      // Not sure accounts keep the classification banner as their only
+      // nudge; the client checklist and matches are for placed clients.
+      if (clientRow && !clientClassification) {
+        clientChecklist = buildClientChecklist({
+          emailConfirmed: !!user.email_confirmed_at,
+          zip_code: clientRow.zip_code,
+          goals: clientRow.goals,
+          language: clientRow.language,
+          budget: clientRow.budget,
+          note: clientRow.note,
+          phone: (profileData?.phone as string | null | undefined) ?? null,
+        })
+      }
     }
 
     if (role === 'contractor') {
@@ -390,7 +407,7 @@ export default async function DashboardPage() {
         supabase
           .from('contractor_profiles')
           .select(
-            'first_name, verification_status, verification_notes, professional_category, contractor_type, headline, bio, specialties, languages, hourly_rate_min, hourly_rate_max, city, state, state_license_number, license_state'
+            'first_name, verification_status, verification_notes, professional_category, credential_basis, contractor_type, headline, bio, specialties, languages, years_of_experience, npi_number, license_issue_date, license_expiration_date, other_names, telehealth_states, website_url, offers_high_risk_services, insured_verified_at, city, state, state_license_number, license_state'
           )
           .eq('id', user.id)
           .maybeSingle(),
@@ -474,31 +491,46 @@ export default async function DashboardPage() {
       }
       previewHref = `/pros/${user.id}`
 
-      checklist = buildContractorChecklist({
-        profile: contractorRow,
+      // Finish your profile (Single-Question Onboarding): uploads and
+      // which onboarding screens were answered.
+      const [{ data: credentialRows }, { data: progressRow }] = await Promise.all([
+        supabase
+          .from('credentials')
+          .select('credential_type, document_url, status')
+          .eq('contractor_id', user.id),
+        supabase
+          .from('onboarding_progress')
+          .select('answered')
+          .eq('user_id', user.id)
+          .eq('flow', 'professional')
+          .maybeSingle(),
+      ])
+      const category = contractorRow?.professional_category
+      hasListings = listingStatuses ? listingStatuses.length > 0 : true
+      checklist = buildProfessionalChecklist({
+        branch: isProfessionalCategory(category)
+          ? effectiveBranch(category, contractorRow?.credential_basis as string | null)
+          : null,
+        verificationStatus,
+        profile: {
+          ...(contractorRow ?? {}),
+          contractor_agreement_accepted_at: agreementError
+            ? null
+            : ((agreementRow?.contractor_agreement_accepted_at as string | null | undefined) ?? null),
+        },
+        phone: (profileData?.phone as string | null) ?? null,
         avatarUrl: (profileData?.avatar_url as string | null) ?? null,
-        availabilitySlots: availabilityError
-          ? undefined
-          : (availabilityCount ?? 0),
+        stripeConnectOnboarded: !!profileData?.stripe_connect_onboarded,
+        credentials: (credentialRows ?? []) as { credential_type: string; document_url: string | null; status: string }[],
         listings: listingStatuses
           ? {
               total: listingStatuses.length,
-              published: listingStatuses.filter((x) => x === 'published')
-                .length,
-              inReview: listingStatuses.filter((x) => x === 'pending_review')
-                .length,
+              published: listingStatuses.filter((x) => x === 'published').length,
+              inReview: listingStatuses.filter((x) => x === 'pending_review').length,
             }
           : undefined,
-        credentialCount: credentialCount ?? 0,
-        verificationStatus,
-        stripeConnectId: profileData?.stripe_connect_id ?? null,
-        stripeConnectOnboarded: profileData?.stripe_connect_onboarded ?? false,
-        agreementAcceptedAt: agreementError
-          ? null
-          : ((agreementRow?.contractor_agreement_accepted_at as
-              | string
-              | null
-              | undefined) ?? null),
+        availabilitySlots: availabilityError ? undefined : (availabilityCount ?? 0),
+        answered: Array.isArray(progressRow?.answered) ? (progressRow.answered as string[]) : [],
       })
 
       const { data: jobsData } = await supabase
@@ -555,6 +587,7 @@ export default async function DashboardPage() {
     }
 
     if (role === 'facility') {
+      orgUserId = user.id
       const [
         { data: facilityRow },
         { data: recentJobs },
@@ -625,7 +658,7 @@ export default async function DashboardPage() {
 
   const setupComplete =
     role === 'contractor'
-      ? (checklist?.allDone ?? true)
+      ? (checklist ?? []).every((i) => i.done)
       : role === 'facility' && facilitySetup
         ? facilitySetup.hasPostedJob &&
           facilitySetup.orgProfileMissing.length === 0
@@ -653,6 +686,7 @@ export default async function DashboardPage() {
       {role === 'contractor' && (
         <ContractorDashboard
           checklist={checklist}
+          hasListings={hasListings}
           stats={contractorStats}
           isDemo={isDemoMode()}
           jobs={jobs}
@@ -666,7 +700,12 @@ export default async function DashboardPage() {
         />
       )}
       {role === 'facility' && <OrgReviewBanner status={orgStatus} notes={orgNotes} />}
-      {role === 'facility' && orgNeedsAgreement && <OrgAgreementCard />}
+      {role === 'facility' && orgUserId && <OrgFinishSection userId={orgUserId} />}
+      {role === 'facility' && orgNeedsAgreement && (
+        <div id="org-agreement" className="scroll-mt-20">
+          <OrgAgreementCard />
+        </div>
+      )}
       {role === 'facility' && (
         <FacilityDashboard
           kpis={facilityKpis}
@@ -685,6 +724,7 @@ export default async function DashboardPage() {
           interests={clientInterests}
           location={clientLocation}
           classification={clientClassification}
+          checklist={clientChecklist}
         />
       )}
     </div>
@@ -897,6 +937,7 @@ function ComplianceBanner({
 
 function ContractorDashboard({
   checklist,
+  hasListings,
   stats,
   isDemo,
   jobs,
@@ -908,7 +949,9 @@ function ContractorDashboard({
   compliance,
   previewHref,
 }: {
-  checklist: ContractorChecklist | null
+  checklist: FinishItem[] | null
+  /** Has any listing yet; false shows the first-run cards. */
+  hasListings: boolean
   stats: ContractorStats | null
   isDemo: boolean
   jobs: DashboardJob[]
@@ -942,9 +985,8 @@ function ContractorDashboard({
         }
       />
       <ComplianceBanner status={verificationStatus} compliance={compliance} />
-      {checklist && !checklist.allDone && (
-        <SetupChecklistCard checklist={checklist} />
-      )}
+      {checklist && <FinishProfileCard items={checklist} />}
+      {!hasListings && <FirstRunOfferCards />}
       {previewHref && (
         <p className="text-sm text-[#62646a]">
           <Link
@@ -1174,103 +1216,41 @@ function ContractorDashboard({
   )
 }
 
-const CHECKLIST_STATE_STYLES: Record<
-  ChecklistItem['state'],
-  { label: string; className: string }
-> = {
-  done: { label: 'Done', className: 'bg-[#e8faf1] text-[#0f8f56]' },
-  todo: { label: 'To do', className: 'bg-[#f1f3f5] text-[#404145]' },
-  in_progress: { label: 'In progress', className: 'bg-[#fdf6e3] text-[#8a6508]' },
-  action_needed: {
-    label: 'Action needed',
-    className: 'bg-[#fdecea] text-[#c0392b]',
-  },
-  locked: { label: 'Locked', className: 'bg-[#f1f3f5] text-[#6b7280]' },
-}
+/** First-run cards (Single-Question Onboarding): what used to be the "What will you offer?" signup step. */
+const FIRST_RUN_OFFERS = [
+  { label: 'Add a service', sub: 'Bookable sessions or visits', href: '/contractor/listings/new?kind=service', icon: Briefcase },
+  { label: 'Add consulting', sub: 'Advisory work and projects', href: '/contractor/listings/new?kind=consulting', icon: TrendingUp },
+  { label: 'Add an event', sub: 'Workshops, classes, CEU courses', href: '/contractor/listings/new?kind=event', icon: CalendarDays },
+] as const
 
-function SetupChecklistCard({ checklist }: { checklist: ContractorChecklist }) {
-  const pct = Math.round((checklist.completed / checklist.total) * 100)
+function FirstRunOfferCards() {
   return (
-    <Card className="rounded-md">
-      <CardHeader>
-        <CardTitle className="text-[#404145]">Get set up</CardTitle>
-        <CardDescription>
-          {checklist.completed} of {checklist.total} done — finish these to go
-          live and start getting booked.
-        </CardDescription>
-        <CardAction>
-          <span className="text-sm font-semibold text-[#0f8f56]">
-            {checklist.completed}/{checklist.total}
-          </span>
-        </CardAction>
-        <div
-          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#f1f3f5]"
-          role="progressbar"
-          aria-label="Setup progress"
-          aria-valuemin={0}
-          aria-valuemax={checklist.total}
-          aria-valuenow={checklist.completed}
-        >
-          <div
-            className="h-full rounded-full bg-[#1dbf73]"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ol className="divide-y divide-[#f1f3f5]">
-          {checklist.items.map((item, i) => {
-            const style = CHECKLIST_STATE_STYLES[item.state]
-            const done = item.state === 'done'
-            return (
-              <li
-                key={item.key}
-                className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                {done ? (
-                  <CheckCircle2
-                    className="mt-0.5 size-5 shrink-0 text-[#1dbf73]"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span
-                    className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-[#c5c6c9] text-[11px] font-semibold text-[#62646a]"
-                    aria-hidden="true"
-                  >
-                    {i + 1}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p
-                      className={`text-sm font-medium ${
-                        done ? 'text-[#62646a] line-through' : 'text-[#404145]'
-                      }`}
-                    >
-                      {item.title}
-                    </p>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${style.className}`}
-                    >
-                      {style.label}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-sm text-[#62646a]">{item.detail}</p>
-                </div>
-                {item.href && item.cta && (
-                  <Link
-                    href={item.href}
-                    className="shrink-0 text-sm font-semibold text-[#1dbf73] hover:underline"
-                  >
-                    {item.cta} &rarr;
-                  </Link>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      </CardContent>
-    </Card>
+    <section aria-labelledby="first-run-offers" className="space-y-3">
+      <h2 id="first-run-offers" className="text-base font-semibold text-[#404145]">
+        What will you offer?
+      </h2>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {FIRST_RUN_OFFERS.map((o) => {
+          const Icon = o.icon
+          return (
+            <Link
+              key={o.label}
+              href={o.href}
+              className="flex items-start gap-3 rounded-xl border border-[#e4e5e7] bg-white p-4 transition hover:border-[#bcebd5] hover:bg-[#fafefb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+            >
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1] text-[#1dbf73]">
+                <Icon className="size-4" aria-hidden />
+              </span>
+              <span>
+                <span className="block text-sm font-semibold text-[#404145]">{o.label}</span>
+                <span className="block text-xs text-[#62646a]">{o.sub}</span>
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+      <p className="text-xs text-[#62646a]">Saved as drafts. Nothing publishes until you’re approved.</p>
+    </section>
   )
 }
 
@@ -1410,61 +1390,12 @@ function FacilityDashboard({
   })
   // Demo mode has no real setup state; fall back to "has jobs" there.
   const hasPostedJob = setup ? setup.hasPostedJob : jobs.length > 0
-  const orgProfileMissing = setup?.orgProfileMissing ?? []
-  const showFirstRun = !hasPostedJob || orgProfileMissing.length > 0
   // Hide the stat row for a brand-new facility rather than show zeros.
   const showRealStats =
     !isDemo && (hasPostedJob || kpis.activeContracts > 0)
 
   return (
     <div className="space-y-6">
-      {showFirstRun && (
-        <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
-              <PlusCircle className="h-5 w-5" />
-              Get started
-            </CardTitle>
-            <CardDescription className="font-semibold text-[#0f8f56]">
-              Two quick steps to start finding qualified healthcare
-              professionals.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3">
-              {STAFFING_POSTS_ENABLED ? (
-                <FirstRunItem
-                  done={hasPostedJob}
-                  title="Post your first job"
-                  detail="Describe the role, schedule, and pay."
-                  href="/facility/jobs/new"
-                  cta="Post a job"
-                />
-              ) : (
-                <FirstRunItem
-                  done={hasPostedJob}
-                  title="Add your services or events"
-                  detail="Save them as drafts — they go live after review."
-                  href="/facility/listings"
-                  cta="Add a listing"
-                />
-              )}
-              <FirstRunItem
-                done={orgProfileMissing.length === 0}
-                title="Complete your organization profile"
-                detail={
-                  orgProfileMissing.length > 0
-                    ? `Add your ${orgProfileMissing.join(', ')}.`
-                    : 'Professionals can see who they would work with.'
-                }
-                href="/facility/profile"
-                cta="Edit profile"
-              />
-            </ul>
-          </CardContent>
-        </Card>
-      )}
-
       {isDemo && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -1810,50 +1741,6 @@ function FacilityDashboard({
   )
 }
 
-function FirstRunItem({
-  done,
-  title,
-  detail,
-  href,
-  cta,
-}: {
-  done: boolean
-  title: string
-  detail: string
-  href: string
-  cta: string
-}) {
-  return (
-    <li className="flex items-start gap-3">
-      <CheckCircle2
-        className={`mt-0.5 size-5 shrink-0 ${
-          done ? 'text-[#1dbf73]' : 'text-[#c5c6c9]'
-        }`}
-        aria-hidden="true"
-      />
-      <div className="min-w-0 flex-1">
-        <p
-          className={`text-sm font-medium ${
-            done ? 'text-[#62646a] line-through' : 'text-[#404145]'
-          }`}
-        >
-          {title}
-          {done && <span className="sr-only"> (done)</span>}
-        </p>
-        {!done && <p className="text-sm text-[#62646a]">{detail}</p>}
-      </div>
-      {!done && (
-        <Link
-          href={href}
-          className="shrink-0 text-sm font-semibold text-[#1dbf73] hover:underline"
-        >
-          {cta} &rarr;
-        </Link>
-      )}
-    </li>
-  )
-}
-
 function ClassificationBanner({
   status,
   firstName,
@@ -1908,16 +1795,21 @@ function ClientDashboard({
   interests,
   location,
   classification,
+  checklist,
 }: {
   firstName: string
   interests: string[]
   location: string | null
   classification: 'pending' | 'rejected' | null
+  checklist: FinishItem[] | null
 }) {
   return (
     <div className="space-y-6">
       {classification && (
         <ClassificationBanner status={classification} firstName={firstName} />
+      )}
+      {checklist && (
+        <FinishProfileCard items={checklist} groupLabels={CLIENT_GROUP_LABELS} />
       )}
       <div>
         <h1 className="text-2xl font-bold text-[#404145]">
@@ -1941,10 +1833,22 @@ function ClientDashboard({
             {location ? ` near ${location}` : ''}.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-wrap gap-3">
+          {!classification && (
+            <Link
+              href={CLIENT_MATCHES_PATH}
+              className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+            >
+              See your matches &rarr;
+            </Link>
+          )}
           <Link
             href="/find-care"
-            className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+            className={
+              classification
+                ? 'inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]'
+                : 'inline-flex h-10 items-center rounded-md border border-[#1dbf73] bg-white px-4 text-sm font-semibold text-[#0f8f56] hover:bg-[#f4fdf8]'
+            }
           >
             Browse professionals &rarr;
           </Link>

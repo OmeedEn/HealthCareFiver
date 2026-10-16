@@ -1,14 +1,16 @@
 'use server'
 
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { mfaGate } from '@/lib/auth/mfa'
 import { TERMS_VERSION } from '@/lib/legal'
-import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { computeGaps } from '@/lib/onboarding/account-gaps'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
+import { PRO_SIGNUP_COOKIE, parseProSignupCookie } from '@/lib/onboarding/professional-google'
+import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
 
 export type FinishAccountState = { error?: string } | null
 
@@ -20,9 +22,10 @@ const name = (label: string) =>
     .max(100, `${label} must be 100 characters or fewer`)
 
 /**
- * Fill in what OAuth signups skip: phone, Terms/Privacy consent, and (if the
+ * Fill in what OAuth signups skip: Terms/Privacy consent and (if the
  * provider didn't give us one) a name. Only the gaps the server still sees
- * are written — a stale form can't overwrite existing values.
+ * are written — a stale form can't overwrite existing values. Then saves the
+ * screens 1–3 answers that rode along from /signup/professional.
  */
 export async function finishAccount(
   _prev: FinishAccountState,
@@ -39,7 +42,7 @@ export async function finishAccount(
   if (gate !== 'ok') redirect(gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify')
 
   const [{ data: profile }, { data: contractor }] = await Promise.all([
-    supabase.from('profiles').select('role, phone').eq('id', user.id).single(),
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
     supabase
       .from('contractor_profiles')
       .select('first_name, last_name')
@@ -48,7 +51,7 @@ export async function finishAccount(
   ])
   if (profile?.role !== 'contractor') redirect('/dashboard')
 
-  const gaps = computeGaps(user, profile.phone, contractor)
+  const gaps = computeGaps(user, contractor)
 
   if (gaps.terms && formData.get('accepted_terms') !== 'on') {
     return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' }
@@ -60,12 +63,6 @@ export async function finishAccount(
     }
   }
 
-  let phone: string | null = null
-  if (gaps.phone) {
-    phone = normalizeUsPhone(String(formData.get('phone') ?? ''))
-    if (!phone) return { error: `${PHONE_ERROR}.` }
-  }
-
   let names: { first_name: string; last_name: string } | null = null
   if (gaps.name) {
     const first = name('First name').safeParse(formData.get('first_name') ?? '')
@@ -73,17 +70,6 @@ export async function finishAccount(
     const last = name('Last name').safeParse(formData.get('last_name') ?? '')
     if (!last.success) return { error: last.error.issues[0].message }
     names = { first_name: first.data, last_name: last.data }
-  }
-
-  if (phone) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ phone })
-      .eq('id', user.id)
-    if (error) {
-      console.error('[onboarding/account] phone update failed', error.code)
-      return { error: 'We couldn’t save your phone number. Please try again.' }
-    }
   }
 
   if (names) {
@@ -120,6 +106,19 @@ export async function finishAccount(
   // Google accounts are created without a signup door; this is the
   // professional (INDEPENDENT) path.
   await setSignupPathIfUnset(createAdminClient(), user.id, 'INDEPENDENT')
+  await applyGoogleSignupAnswers(user.id)
 
   redirect('/onboarding/professional')
+}
+
+/**
+ * Screens 1–3 from the Google cookie → the profile (only while the profile
+ * has no category yet), then drop the cookie. Missing or invalid answers are
+ * fine: /onboarding/professional asks those screens again.
+ */
+async function applyGoogleSignupAnswers(userId: string) {
+  const jar = await cookies()
+  const answers = parseProSignupCookie(jar.get(PRO_SIGNUP_COOKIE)?.value)
+  if (answers) await applyProSignupAnswers(await createClient(), userId, answers)
+  jar.delete(PRO_SIGNUP_COOKIE)
 }

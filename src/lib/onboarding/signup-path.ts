@@ -142,4 +142,7 @@ export const SIGNUP_EVENTS = {
   optionSelected: 'signup_option_selected',
   stepViewed: 'signup_step_viewed',
   completed: 'signup_completed',
+  questionViewed: 'onboarding_question_viewed',
+  questionAnswered: 'onboarding_question_answered',
+  questionSkipped: 'onboarding_question_skipped',
 } as const
