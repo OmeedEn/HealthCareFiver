@@ -13,9 +13,10 @@ import {
   SERVICE_AUDIENCES,
   labelFor,
 } from '@/lib/onboarding/organization'
-import { listingIsComplete, type ListingRow } from '@/app/onboarding/organization/listing-draft'
+import { listingIsComplete, listingNeedsPayouts, type ListingRow } from '@/app/onboarding/organization/listing-draft'
 import { AddListing, ContinueListingButton, DeleteListingButton, ListingStatusButton } from './listings-client'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
+import { isStripeConfigured } from '@/lib/stripe/connect'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,13 +46,16 @@ export default async function FacilityListingsPage({
   } = await supabase.auth.getUser()
   if (!user) redirect('/login?redirectTo=/facility/listings')
 
-  const [{ data: rows }, { data: org }] = await Promise.all([
+  const [{ data: rows }, { data: org }, { data: profile }] = await Promise.all([
     supabase.from('org_listings').select('*').eq('facility_id', user.id).order('created_at', { ascending: false }),
     supabase.from('facility_profiles').select('verification_status, org_agreement_accepted_at').eq('id', user.id).maybeSingle(),
+    supabase.from('profiles').select('stripe_connect_onboarded').eq('id', user.id).single(),
   ])
   const listings = (rows ?? []) as Listing[]
   const approved = org?.verification_status === 'approved'
   const agreed = !!org?.org_agreement_accepted_at
+  const payoutsReady = !isStripeConfigured() || profile?.stripe_connect_onboarded === true
+  const needsPayoutsSetup = approved && !payoutsReady && listings.some((l) => l.status === 'draft' && listingNeedsPayouts(l))
 
   return (
     <div className="space-y-6">
@@ -74,6 +78,13 @@ export default async function FacilityListingsPage({
       </div>
 
       {approved && !agreed && <OrgAgreementCard />}
+
+      {needsPayoutsSetup && (
+        <p className="rounded-xl border border-[#f5deb3] bg-[#fdf6e3] p-4 text-sm text-[#6b5208]">
+          Set up payouts so customers can pay for your paid services and events.{' '}
+          <Link href="/facility/payouts" className="font-semibold underline">Set up payouts</Link>
+        </p>
+      )}
 
       <AddListing initial={initial} />
 
@@ -126,6 +137,8 @@ export default async function FacilityListingsPage({
                         disabledReason={
                           !listingIsComplete(l)
                             ? 'Finish the listing first'
+                            : approved && !payoutsReady && listingNeedsPayouts(l)
+                              ? 'Set up payouts first'
                             : !approved
                               ? 'Available once your organization is approved'
                               : !agreed
