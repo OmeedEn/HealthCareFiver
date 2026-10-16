@@ -6,7 +6,7 @@ import { CalendarCheck } from 'lucide-react'
 import { isDemoMode } from '@/lib/demo/data'
 import { currentUser } from '@/lib/auth/roles'
 import { listMyBookings, namesFor } from '@/lib/bookings/data'
-import type { BookingRow } from '@/lib/bookings/types'
+import { needsPayment, type BookingRow } from '@/lib/bookings/types'
 import { BookingGroup, BookingListItem } from '@/components/bookings/booking-list'
 
 export const metadata: Metadata = { title: 'My bookings — Sanus' }
@@ -23,10 +23,10 @@ export default async function MyBookingsPage() {
     names = await namesFor(bookings.map((b) => b.org_id))
   }
   const by = (statuses: string[]) => bookings.filter((b) => statuses.includes(b.status))
-  const action = by(['quoted'])
+  const action = bookings.filter((b) => b.status === 'quoted' || needsPayment(b))
   const waiting = by(['requested'])
-  const booked = by(['accepted'])
-  const closed = by(['declined', 'cancelled'])
+  const booked = bookings.filter((b) => (b.status === 'accepted' && !needsPayment(b)) || b.status === 'paid')
+  const closed = by(['completed', 'declined', 'cancelled'])
   const item = (b: BookingRow) => (
     <BookingListItem key={b.id} booking={b} side="customer" counterpart={names.get(b.org_id) ?? b.listing_snapshot.org_name ?? ''} />
   )
@@ -55,7 +55,7 @@ export default async function MyBookingsPage() {
           <BookingGroup title="Needs your answer" count={action.length}>{action.map(item)}</BookingGroup>
           <BookingGroup title="Waiting for the organization" count={waiting.length}>{waiting.map(item)}</BookingGroup>
           <BookingGroup title="Booked" count={booked.length}>{booked.map(item)}</BookingGroup>
-          <BookingGroup title="Closed" count={closed.length}>{closed.map(item)}</BookingGroup>
+          <BookingGroup title="Past and closed" count={closed.length}>{closed.map(item)}</BookingGroup>
         </div>
       )}
     </div>

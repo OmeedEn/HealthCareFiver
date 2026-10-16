@@ -24,7 +24,7 @@ const sections: LegalSection[] = [
         <p>
           The organization, not Sanus, provides the service or runs the event and is responsible for
           it. Sanus provides the marketplace, verifies organizations before they can list, and holds
-          payment until the booking takes place.
+          payment until after the booking takes place.
         </p>
       </>
     ),
@@ -45,16 +45,42 @@ const sections: LegalSection[] = [
   },
   {
     id: 'payment',
-    title: 'Payment, cancellations, and refunds',
+    title: 'Payment',
     body: (
       <>
         <p>
-          You pay through Sanus after your booking is accepted. Sanus holds the payment and releases it
-          to the organization after the booking takes place. [Service fee, cancellation windows, and
-          refund rules — pending.]
+          You pay through Sanus after the organization accepts your booking (or you accept their
+          quote). You pay the price shown; there&apos;s no extra charge to you. Sanus holds your
+          payment and releases it to the organization 48 hours after the booking takes place, minus
+          the Sanus service fee, which the organization pays.
         </p>
         <p>
-          You can cancel a request or an unpaid booking at any time from My bookings.
+          If an accepted booking isn&apos;t paid by its start time, it&apos;s cancelled and the spot is
+          released.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'cancellations',
+    title: 'Cancellations and refunds',
+    body: (
+      <>
+        <p>
+          <strong>You cancel 48 hours or more before the start:</strong> full refund.
+        </p>
+        <p>
+          <strong>You cancel less than 48 hours before the start:</strong> no refund. The organization
+          is still paid.
+        </p>
+        <p>
+          <strong>The organization cancels:</strong> full refund, at any time.
+        </p>
+        <p>
+          You can cancel a request, or a booking you haven&apos;t paid for, at any time from My
+          bookings at no cost. Refunds go back to the card you paid with and can take 5–10 business
+          days to appear. If something went wrong with a booking, contact Sanus support within 48
+          hours of it; disputed payments are held until they&apos;re resolved.
         </p>
       </>
     ),

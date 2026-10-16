@@ -1,11 +1,14 @@
 'use server'
 
 import { refresh } from 'next/cache'
+import { headers } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { BOOKING_TERMS_VERSION } from '@/lib/legal'
+import { isStripeConfigured } from '@/lib/stripe/connect'
+import { createBookingCheckout, tryBookingRefund } from './payments'
 
 export type BookingActionResult = { ok: true; id?: string } | { ok: false; error: string }
 
@@ -26,6 +29,8 @@ const HINT_MESSAGES: Record<string, string> = {
   wrong_status: 'This booking changed in the meantime. Refresh to see the latest.',
   quote_required: 'This one needs a price: send a quote instead.',
   price_required: 'Enter a price for the quote.',
+  time_required: 'Set the date and time: paid bookings need one so the customer can pay.',
+  time_past: 'Pick a date and time in the future.',
   bad_length: 'Write a message (up to 4,000 characters).',
   rate_limited: 'You’re sending messages quickly. Wait a moment and try again.',
 }
@@ -121,6 +126,7 @@ export async function respondToBooking(input: {
     p_note: d.note ?? null,
   })
   if (error) return fail(error)
+  if (d.action === 'cancel') await tryBookingRefund(d.bookingId)
   refresh()
   return { ok: true }
 }
@@ -134,6 +140,7 @@ export async function customerBookingAction(bookingId: string, action: 'accept_q
   if (!supabase) return SESSION_EXPIRED
   const { error } = await supabase.rpc('customer_org_booking_action', { p_booking_id: bookingId, p_action: action })
   if (error) return fail(error)
+  if (action === 'cancel') await tryBookingRefund(bookingId)
   refresh()
   return { ok: true }
 }
@@ -147,4 +154,26 @@ export async function sendBookingMessage(bookingId: string, body: string): Promi
   if (error) return fail(error)
   refresh()
   return { ok: true }
+}
+
+/** Customer: open Stripe Checkout to pay for an accepted booking. */
+export async function payForBooking(bookingId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  if (!uuid.safeParse(bookingId).success) return { ok: false, error: 'Invalid request.' }
+  if (!isStripeConfigured()) return { ok: false, error: 'Payments open soon. We’ll let you know when you can pay.' }
+  const supabase = await session()
+  if (!supabase) return SESSION_EXPIRED as { ok: false; error: string }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return SESSION_EXPIRED as { ok: false; error: string }
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${h.get('x-forwarded-proto') ?? 'https'}://${host}` : '')
+  if (!appUrl) return { ok: false, error: 'Couldn’t start checkout. Please try again.' }
+  try {
+    return await createBookingCheckout(bookingId, user.id, appUrl)
+  } catch (err) {
+    console.error('[bookings] checkout failed', err)
+    return { ok: false, error: 'Couldn’t start checkout. Please try again.' }
+  }
 }

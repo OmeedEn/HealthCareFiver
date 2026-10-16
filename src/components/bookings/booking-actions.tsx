@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, Send } from 'lucide-react'
+import { CreditCard, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { TextAreaField, TextField } from '@/app/onboarding/professional/ui'
 import { isoToLocalInput, localInputToIso } from '@/app/onboarding/organization/listing-draft'
-import { customerBookingAction, respondToBooking, sendBookingMessage, type BookingActionResult } from '@/lib/bookings/actions'
-import type { BookingRow } from '@/lib/bookings/types'
+import { customerBookingAction, payForBooking, respondToBooking, sendBookingMessage, type BookingActionResult } from '@/lib/bookings/actions'
+import { money, needsPayment, type BookingRow } from '@/lib/bookings/types'
 
 const GREEN = 'h-11 bg-[#1dbf73] px-5 text-sm font-semibold text-white hover:bg-[#19a463]'
 
@@ -33,7 +33,7 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
   const [note, setNote] = useState('')
   const needsQuote = b.price_cents == null
 
-  if (b.status === 'requested' || b.status === 'quoted' || b.status === 'accepted') {
+  if (b.status === 'requested' || b.status === 'quoted' || b.status === 'accepted' || b.status === 'paid') {
     const submit = (action: 'accept' | 'quote' | 'decline' | 'cancel', success: string) =>
       run(
         action,
@@ -63,7 +63,7 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
             {(b.status === 'requested' || b.status === 'quoted') && (
               <Button type="button" variant="outline" className="h-11" onClick={() => setMode('decline')}>Decline</Button>
             )}
-            {b.status === 'accepted' && (
+            {(b.status === 'accepted' || b.status === 'paid') && (
               <Button type="button" variant="outline" className="h-11" onClick={() => setMode('cancel')}>Cancel booking</Button>
             )}
             {b.status === 'quoted' && <p className="self-center text-sm text-[#62646a]">Waiting for the customer to accept your quote.</p>}
@@ -91,8 +91,24 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
             )}
             {(mode === 'accept' || mode === 'quote') && b.kind === 'service' && (
               <div className="max-w-[280px]">
-                <TextField id="booking-time" label="Confirmed date and time" type="datetime-local" value={time} onChange={setTime} hint="Leave blank to arrange in messages." />
+                <TextField
+                  id="booking-time"
+                  label="Confirmed date and time"
+                  type="datetime-local"
+                  value={time}
+                  onChange={setTime}
+                  hint={
+                    (mode === 'quote' ? Number(price) > 0 : (b.price_cents ?? 0) > 0)
+                      ? 'Required: the customer pays once it’s set.'
+                      : 'Leave blank to arrange in messages.'
+                  }
+                />
               </div>
+            )}
+            {mode === 'cancel' && b.payment_status === 'paid' && (
+              <p className="text-sm text-[#62646a]">
+                The customer paid {money(b.amount_paid_cents)}. Cancelling refunds them in full, and there’s no payout for this booking.
+              </p>
             )}
             <TextAreaField
               id="org-note"
@@ -118,41 +134,72 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
 }
 
 /** What the customer can do with a booking. */
-export function CustomerBookingActions({ booking: b }: { booking: BookingRow }) {
+export function CustomerBookingActions({
+  booking: b,
+  cancelNote,
+  paymentsOpen,
+}: {
+  booking: BookingRow
+  /** What cancelling means for their money, worked out on the server. */
+  cancelNote: string | null
+  paymentsOpen: boolean
+}) {
   const { busy, run } = useRun()
   const [confirmCancel, setConfirmCancel] = useState(false)
-  if (!['requested', 'quoted', 'accepted'].includes(b.status)) return null
+  const [paying, setPaying] = useState(false)
+  if (!['requested', 'quoted', 'accepted', 'paid'].includes(b.status)) return null
+
+  async function pay() {
+    setPaying(true)
+    const res = await payForBooking(b.id)
+    if (res.ok) {
+      window.location.assign(res.url)
+      return
+    }
+    setPaying(false)
+    toast.error(res.error)
+  }
+
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {b.status === 'quoted' && (
-        <Button
-          type="button"
-          className={GREEN}
-          disabled={!!busy}
-          onClick={() => run('accept', () => customerBookingAction(b.id, 'accept_quote'), 'Quote accepted.')}
-        >
-          {busy === 'accept' && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Accept quote
-        </Button>
-      )}
-      {confirmCancel ? (
-        <>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {b.status === 'quoted' && (
           <Button
             type="button"
-            className="h-11 bg-[#404145] px-5 text-white hover:bg-[#2b2c2f]"
+            className={GREEN}
             disabled={!!busy}
-            onClick={() => run('cancel', () => customerBookingAction(b.id, 'cancel'), 'Cancelled.')}
+            onClick={() => run('accept', () => customerBookingAction(b.id, 'accept_quote'), 'Quote accepted.')}
           >
-            {busy === 'cancel' && <Loader2 className="mr-2 size-4 animate-spin" />}
-            Yes, cancel
+            {busy === 'accept' && <Loader2 className="mr-2 size-4 animate-spin" />}
+            Accept quote
           </Button>
-          <Button type="button" variant="ghost" className="h-11" onClick={() => setConfirmCancel(false)}>Keep it</Button>
-        </>
-      ) : (
-        <Button type="button" variant="outline" className="h-11" onClick={() => setConfirmCancel(true)}>
-          {b.status === 'accepted' ? 'Cancel booking' : 'Cancel request'}
-        </Button>
-      )}
+        )}
+        {needsPayment(b) && paymentsOpen && (
+          <Button type="button" className={GREEN} disabled={paying || !!busy} onClick={pay}>
+            {paying ? <Loader2 className="mr-2 size-4 animate-spin" /> : <CreditCard className="mr-2 size-4" />}
+            Pay {money(b.price_cents)}
+          </Button>
+        )}
+        {confirmCancel ? (
+          <>
+            <Button
+              type="button"
+              className="h-11 bg-[#404145] px-5 text-white hover:bg-[#2b2c2f]"
+              disabled={!!busy}
+              onClick={() => run('cancel', () => customerBookingAction(b.id, 'cancel'), 'Cancelled.')}
+            >
+              {busy === 'cancel' && <Loader2 className="mr-2 size-4 animate-spin" />}
+              Yes, cancel
+            </Button>
+            <Button type="button" variant="ghost" className="h-11" onClick={() => setConfirmCancel(false)}>Keep it</Button>
+          </>
+        ) : (
+          <Button type="button" variant="outline" className="h-11" onClick={() => setConfirmCancel(true)}>
+            {b.status === 'accepted' || b.status === 'paid' ? 'Cancel booking' : 'Cancel request'}
+          </Button>
+        )}
+      </div>
+      {confirmCancel && cancelNote && <p className="text-sm font-medium text-[#404145]">{cancelNote}</p>}
     </div>
   )
 }

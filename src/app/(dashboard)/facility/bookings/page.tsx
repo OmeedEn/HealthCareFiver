@@ -24,8 +24,8 @@ export default async function OrgBookingsPage() {
   const by = (statuses: string[]) => bookings.filter((b) => statuses.includes(b.status))
   const needs = by(['requested'])
   const quoted = by(['quoted'])
-  const booked = by(['accepted'])
-  const closed = by(['declined', 'cancelled'])
+  const booked = by(['accepted', 'paid'])
+  const closed = by(['completed', 'declined', 'cancelled'])
   const item = (b: BookingRow) => (
     <BookingListItem key={b.id} booking={b} side="org" counterpart={names.get(b.customer_id) ?? 'Customer'} />
   )
@@ -53,7 +53,7 @@ export default async function OrgBookingsPage() {
           <BookingGroup title="Needs your response" count={needs.length}>{needs.map(item)}</BookingGroup>
           <BookingGroup title="Quote sent" count={quoted.length}>{quoted.map(item)}</BookingGroup>
           <BookingGroup title="Booked" count={booked.length}>{booked.map(item)}</BookingGroup>
-          <BookingGroup title="Closed" count={closed.length}>{closed.map(item)}</BookingGroup>
+          <BookingGroup title="Past and closed" count={closed.length}>{closed.map(item)}</BookingGroup>
         </div>
       )}
     </div>

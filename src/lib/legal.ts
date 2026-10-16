@@ -35,6 +35,6 @@ export const ORG_AGREEMENT_PATH = '/legal/organization-agreement'
  * (org_bookings.terms_version). Bump when /legal/booking-terms materially
  * changes.
  */
-export const BOOKING_TERMS_VERSION = '2026-10-15'
+export const BOOKING_TERMS_VERSION = '2026-10-15.2'
 
 export const BOOKING_TERMS_PATH = '/legal/booking-terms'

@@ -3,6 +3,7 @@ import type Stripe from 'stripe'
 import { constructWebhookEvent } from '@/lib/stripe/webhooks'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isConnectAccountReady } from '@/lib/stripe/connect'
+import { holdBookingPayoutForDispute, settleBookingCheckout } from '@/lib/bookings/payments'
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
@@ -89,6 +90,8 @@ export async function POST(request: NextRequest) {
         const dispute = event.data.object
         const paymentIntentId = dispute.payment_intent as string
         if (paymentIntentId) {
+          // Organization bookings: don't pay out while the charge is disputed.
+          await holdBookingPayoutForDispute(paymentIntentId)
           const { error } = await supabase
             .from('payments')
             .update({ status: 'disputed' })
@@ -124,6 +127,10 @@ export async function POST(request: NextRequest) {
       // ── Subscription lifecycle events ──────────────────────
       case 'checkout.session.completed': {
         const session = event.data.object
+        // Organization bookings (see src/lib/bookings/payments.ts).
+        if (session.mode === 'payment') {
+          await settleBookingCheckout(session)
+        }
         if (session.mode === 'subscription' && session.subscription) {
           const userId = session.metadata?.userId
           if (userId) {
