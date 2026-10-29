@@ -66,6 +66,14 @@ export interface OrgChecklistInput {
   skipped: string[]
   hasLogo: boolean
   payoutsOnboarded: boolean
+  /**
+   * Hiring org that hasn't submitted verification yet (verify later,
+   * src/lib/onboarding/org-verify-later.ts): one "Verify your organization"
+   * item replaces the approval items until they submit.
+   */
+  verifyLater?: boolean
+  /** Signed up through the Hiring door (profiles.signup_path = 'HIRING'): no seller items. */
+  buyer?: boolean
 }
 
 const filled = (v: unknown) => (typeof v === 'string' ? v.trim().length > 0 : v != null)
@@ -94,7 +102,16 @@ export function buildOrgChecklist(input: OrgChecklistInput): ChecklistItem[] {
   const items: ChecklistItem[] = []
 
   // Needed for approval
-  if (!regDoc || skipped.includes('registration_doc')) {
+  if (input.verifyLater) {
+    items.push({
+      id: 'verify',
+      group: 'needed_for_approval',
+      label: 'Verify your organization',
+      hint: 'Needed before you post a staffing need, book, or contact professionals.',
+      done: false,
+      href: '/onboarding/organization',
+    })
+  } else if (!regDoc || skipped.includes('registration_doc')) {
     items.push({
       id: 'registration_doc',
       group: 'needed_for_approval',
@@ -104,7 +121,7 @@ export function buildOrgChecklist(input: OrgChecklistInput): ChecklistItem[] {
       href: finishHref('registration_doc'),
     })
   }
-  items.push({
+  if (!input.verifyLater) items.push({
     id: 'disclosures',
     group: 'needed_for_approval',
     label: 'Answer the disclosure question',
@@ -124,7 +141,8 @@ export function buildOrgChecklist(input: OrgChecklistInput): ChecklistItem[] {
     href: '/go-live',
     locked: !approved,
   })
-  items.push({
+  // Buyers (Hiring door) don't get paid; payouts are for sellers.
+  if (!input.buyer) items.push({
     id: 'payouts',
     group: 'needed_after_approval',
     label: 'Set up payouts',

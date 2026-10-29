@@ -46,6 +46,7 @@ import type { ChecklistItem as FinishItem } from '@/lib/onboarding/checklist'
 import { FinishProfileCard } from '@/components/onboarding/finish-profile-card'
 import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
+import { ORG_LIGHT_COLUMNS, orgLightSetupDone, verifiesLater } from '@/lib/onboarding/org-verify-later'
 import { DemoRoleSwitcher } from '@/components/layout/demo-role-switcher'
 import { OrgReviewBanner } from '@/components/org/org-review-banner'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
@@ -127,25 +128,14 @@ type ContractorStats = {
   credentials: number
 }
 
-/** First-run setup state for a facility (both done → card hidden). */
+/** First-run setup state for a facility. */
 type FacilitySetup = {
   hasPostedJob: boolean
-  orgProfileMissing: string[]
-}
-
-const FACILITY_PROFILE_FIELDS: { key: string; label: string }[] = [
-  { key: 'description', label: 'description' },
-  { key: 'phone', label: 'phone' },
-  { key: 'city', label: 'city' },
-  { key: 'state', label: 'state' },
-  { key: 'contact_name', label: 'contact name' },
-]
-
-function missingFacilityFields(row: Record<string, unknown> | null): string[] {
-  return FACILITY_PROFILE_FIELDS.filter(({ key }) => {
-    const v = row?.[key]
-    return !(typeof v === 'string' && v.trim().length > 0)
-  }).map(({ label }) => label)
+  /**
+   * Finished the onboarding their door asks for: submitted for review, or
+   * (Hiring orgs, which verify later) type, name and city/state on file.
+   */
+  onboardingDone: boolean
 }
 
 export default async function DashboardPage() {
@@ -601,7 +591,7 @@ export default async function DashboardPage() {
         // Own row via RPC: phone and review notes aren't readable directly.
         supabase
           .rpc('my_facility_profile')
-          .select('description, phone, city, state, contact_name, verification_status, verification_notes, org_agreement_accepted_at')
+          .select(`verification_status, verification_notes, org_agreement_accepted_at, onboarding_submitted_at, ${ORG_LIGHT_COLUMNS}`)
           .maybeSingle(),
         supabase
           .from('jobs')
@@ -645,15 +635,20 @@ export default async function DashboardPage() {
         spendThisMonth: 0,
       }
       activity = (notifData ?? []) as DashboardNotification[]
-      orgStatus = (facilityRow?.verification_status as string | null) ?? null
+      const orgSubmitted = !!facilityRow?.onboarding_submitted_at
+      // Not submitted yet (a Hiring org verifying later): nothing is under
+      // review, so no review banner.
+      orgStatus = orgSubmitted ? ((facilityRow?.verification_status as string | null) ?? null) : null
       orgNotes = (facilityRow?.verification_notes as string | null) ?? null
       orgNeedsAgreement = orgStatus === 'approved' && !facilityRow?.org_agreement_accepted_at
       facilitySetup = {
         // While job posting is switched off, a first service or event counts.
         hasPostedJob: STAFFING_POSTS_ENABLED ? facilityJobs.length > 0 : (listingCount ?? 0) > 0,
-        orgProfileMissing: missingFacilityFields(
-          facilityRow as Record<string, unknown> | null,
-        ),
+        onboardingDone:
+          orgSubmitted ||
+          (verifiesLater(profileData?.signup_path as string | null | undefined) &&
+            !!facilityRow &&
+            orgLightSetupDone(facilityRow as Record<string, unknown>)),
       }
     }
   }
@@ -662,8 +657,7 @@ export default async function DashboardPage() {
     role === 'contractor'
       ? (checklist ?? []).every((i) => i.done)
       : role === 'facility' && facilitySetup
-        ? facilitySetup.hasPostedJob &&
-          facilitySetup.orgProfileMissing.length === 0
+        ? facilitySetup.onboardingDone
         : true
   const greeting = isNewAccount({ createdAt: accountCreatedAt, setupComplete })
     ? 'Welcome'

@@ -10,7 +10,7 @@ import { QuestionFlow, type Screen } from '@/components/onboarding/question-flow
 import { CheckRow, TextAreaField, TextField, Toggle } from '@/app/onboarding/professional/ui'
 import { localInputToIso } from '@/app/onboarding/organization/listing-draft'
 import { BOOKING_TERMS_PATH, BOOKING_TERMS_VERSION } from '@/lib/legal'
-import { requestBooking } from '@/lib/bookings/actions'
+import { bookingVerifyHref, requestBooking } from '@/lib/bookings/actions'
 import { money } from '@/lib/bookings/types'
 import type { PublicOrgListing } from '@/lib/orgs/public'
 
@@ -23,14 +23,28 @@ function needsQuote(l: PublicOrgListing) {
 
 /** "Request booking" / "Register" / "Request a quote" for a signed-in visitor. */
 export function RequestBookingButton({ listing }: { listing: PublicOrgListing }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
   const label = needsQuote(listing) ? 'Request a quote' : listing.kind === 'event' ? 'Register' : 'Request booking'
+
+  // Organizations that haven't verified yet (Hiring orgs verify later) go
+  // through verification first and come back here.
+  async function start() {
+    setChecking(true)
+    const href = await bookingVerifyHref(window.location.pathname + window.location.search).catch(() => null)
+    setChecking(false)
+    if (href) router.push(href)
+    else setOpen(true)
+  }
+
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-semibold text-white transition hover:bg-[#19a463]"
+        onClick={() => void start()}
+        disabled={checking}
+        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-semibold text-white transition hover:bg-[#19a463] disabled:opacity-70"
       >
         {label}
       </button>
@@ -146,7 +160,10 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
           note,
           termsVersion: BOOKING_TERMS_VERSION,
         })
-        if (!res.ok) return res
+        if (!res.ok) {
+          if (res.verifyHref) router.push(res.verifyHref)
+          return res
+        }
         toast.success('Request sent. We’ll let you know when they respond.')
         router.push(`/bookings/${res.id}`)
         return OK

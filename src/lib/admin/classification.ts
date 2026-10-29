@@ -16,7 +16,7 @@ import {
   type ClassifyDecision,
   type SignupPath,
 } from '@/lib/onboarding/signup-path'
-import { recordAssignmentPrefill } from '@/lib/onboarding/unsure-prefill'
+import { recordAssignmentPrefill, type StaffPicks } from '@/lib/onboarding/unsure-prefill'
 
 // Staff placement of signups (Signup Routing Update): the "Needs
 // classification" queue (/admin/classification) and the "Change category"
@@ -43,6 +43,11 @@ export interface AssignInput {
   note?: string | null
   /** Email the person (assignment / rejection). Failures are logged, never thrown. */
   notify: boolean
+  /**
+   * Optional details staff picked with the category (professional category,
+   * organization type). Pre-answers those screens; checked against the path.
+   */
+  picks?: StaffPicks
   appUrl: string
 }
 
@@ -126,7 +131,11 @@ async function loadSnapshot(db: AdminDb, userId: string) {
       .eq('id', userId)
       .maybeSingle(),
     db.from('facility_profiles').select('contact_name, city, state, zip_code, website').eq('id', userId).maybeSingle(),
-    db.from('classification_requests').select('city, state, website, decision').eq('user_id', userId).maybeSingle(),
+    db
+      .from('classification_requests')
+      .select('city, state, website, team_size, credential, decision')
+      .eq('user_id', userId)
+      .maybeSingle(),
   ])
   if (profile.error) throw new Error(`Failed to load account: ${profile.error.message}`)
   if (!profile.data) throw new Error('Account not found')
@@ -166,6 +175,8 @@ async function loadSnapshot(db: AdminDb, userId: string) {
   return {
     account,
     prefill,
+    /** Not sure screens 2–3, for the prefill that maps them (unsure-prefill.ts). */
+    answers: { teamSize: str(r?.team_size) || null, credential: str(r?.credential) || null },
     hasRequest: Boolean(r),
     requestDecided: Boolean(r?.decision),
   }
@@ -422,15 +433,24 @@ export async function assignSignupPath(db: AdminDb, input: AssignInput): Promise
     }
   }
 
-  // The deep link resumes the new flow at the first unanswered screen: mark
-  // what we already know (account, and the org website / city+state when
-  // prefilled) as answered. Best effort; logged on failure.
+  // The deep link resumes the new flow at the first unanswered screen: carry
+  // over the Not sure answers that map cleanly (and staff's picks) and mark
+  // those screens answered. Best effort; logged on failure.
   if (!rejected) {
-    await recordAssignmentPrefill(db, input.userId, input.path as AssignablePath, {
-      website: snap.prefill.website,
-      city: snap.prefill.city,
-      state: snap.prefill.state,
-    })
+    await recordAssignmentPrefill(
+      db,
+      input.userId,
+      input.path as AssignablePath,
+      {
+        website: snap.prefill.website,
+        linkedin: snap.prefill.linkedin,
+        city: snap.prefill.city,
+        state: snap.prefill.state,
+        teamSize: snap.answers.teamSize,
+        credential: snap.answers.credential,
+      },
+      input.picks
+    )
   }
 
   const action = input.decision

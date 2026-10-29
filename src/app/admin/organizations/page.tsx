@@ -25,6 +25,7 @@ import { FREE_EMAIL_DOMAINS, emailDomain } from '@/lib/org/red-flags'
 import { ORG_CHECKLIST_COLUMNS, orgMissingForApproval, type OrgChecklistRow } from '@/lib/onboarding/checklist-organization'
 import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
 import { orgDoorFor } from '@/app/onboarding/organization/shared'
+import { verifiesLater } from '@/lib/onboarding/org-verify-later'
 
 export const dynamic = 'force-dynamic'
 
@@ -175,7 +176,9 @@ export default async function AdminOrganizationsPage({
                         <Badge variant={ORG_STATUS_BADGE[s]}>{ORG_STATUS_LABEL[s]}</Badge>
                       </TableCell>
                       <TableCell className="text-sm">
-                        {r.onboarding_submitted_at ? `${done}/${total}` : `Signup: ${answered} of ${ORG_FLOW_IDS.length - 1} answered`}
+                        {r.onboarding_submitted_at
+                          ? `${done}/${total}`
+                          : `${verifiesLater(r.profiles?.signup_path) ? 'Buyer, verifying later' : 'Signup'}: ${answered} of ${ORG_FLOW_IDS.length - 1} answered`}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">

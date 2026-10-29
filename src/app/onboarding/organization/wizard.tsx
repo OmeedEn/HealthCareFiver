@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { toast } from 'sonner'
 import { ATTEST_AUTHORIZED_LABEL, ATTEST_CHECKS_LABEL } from '@/lib/onboarding/organization'
 import { ORG_QUESTIONS } from '@/lib/onboarding/questions/organization'
@@ -25,6 +26,11 @@ import type { OrgDoc, OrgFieldInput } from './shared'
  * Practice/Company) never saw screens 1–2, so those are asked here when the
  * answers aren't on file. Every screen saves as it's answered; a refresh
  * resumes on the first screen that's neither answered nor skipped.
+ *
+ * mode 'light' (Hiring organizations, verify later): only screens 1–2 if
+ * missing and city/state, then the dashboard. mode 'full' is the whole flow;
+ * for a Hiring organization it's the verification they're sent to from
+ * posting or booking, with `intro` saying why and a way back to `next`.
  */
 export function OrgOnboardingWizard({
   userId,
@@ -34,6 +40,9 @@ export function OrgOnboardingWizard({
   askType,
   askName,
   done,
+  mode = 'full',
+  intro = null,
+  next = null,
 }: {
   userId: string
   /** Signup door (profiles.signup_path); null legacy accounts arrive as HIRING. */
@@ -45,6 +54,12 @@ export function OrgOnboardingWizard({
   askName: boolean
   /** Question ids already answered or skipped (onboarding_progress plus answers on file). */
   done: string[]
+  /** 'light': Hiring orgs before the dashboard (type, name, city/state only). */
+  mode?: 'light' | 'full'
+  /** Why verification is being asked now (Hiring orgs sent here from posting or booking). */
+  intro?: string | null
+  /** Same-site path to return to when done (validated on the server). */
+  next?: string | null
 }) {
   const [v, setV] = useState(initialAnswers)
   const [docs, setDocs] = useState(initialDocs)
@@ -111,15 +126,18 @@ export function OrgOnboardingWizard({
     ),
   }
 
-  const screens: Screen[] = [
-    ...(askType ? [typeScreen(ctx)] : []),
-    ...(askName ? [nameScreen(ctx)] : []),
-    websiteScreen(ctx),
-    locationScreen(ctx),
-    ...licenseScreens(ctx),
-    registrationScreen,
-    submitScreen,
-  ]
+  const screens: Screen[] =
+    mode === 'light'
+      ? [...(askType ? [typeScreen(ctx)] : []), ...(askName ? [nameScreen(ctx)] : []), locationScreen(ctx)]
+      : [
+          ...(askType ? [typeScreen(ctx)] : []),
+          ...(askName ? [nameScreen(ctx)] : []),
+          websiteScreen(ctx),
+          locationScreen(ctx),
+          ...licenseScreens(ctx),
+          registrationScreen,
+          submitScreen,
+        ]
 
   // Resume once, from what the server loaded: the first screen that's
   // neither answered nor skipped.
@@ -129,15 +147,27 @@ export function OrgOnboardingWizard({
     return i === -1 ? screens.length - 1 : i
   })
 
-  return (
+  const flow = (
     <QuestionFlow
       screens={screens}
       initialIndex={initialIndex}
       stepWeights={SINGLE_STEP}
       chrome="minimal"
       flowId="organization"
-      // Full load so the dashboard (and proxy) see the submitted state.
-      onFinish={() => window.location.assign('/dashboard')}
+      // Full load so the dashboard (and proxy) see the new state.
+      onFinish={() => window.location.assign(next ?? '/dashboard')}
     />
+  )
+  if (!intro) return flow
+  return (
+    <>
+      <div className="mb-6 flex flex-col gap-2 rounded-xl border border-[#bcebd5] bg-[#e8faf1] px-4 py-3 text-sm text-[#0f8f56] sm:flex-row sm:items-center sm:justify-between">
+        <p>{intro}</p>
+        <Link href={next ?? '/dashboard'} className="shrink-0 font-semibold underline-offset-4 hover:underline">
+          Not now
+        </Link>
+      </div>
+      {flow}
+    </>
   )
 }
