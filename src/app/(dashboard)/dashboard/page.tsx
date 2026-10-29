@@ -22,7 +22,6 @@ import {
   DollarSign,
   MapPin,
   Star,
-  Building2,
   CheckCircle2,
   TrendingUp,
   Search,
@@ -355,7 +354,10 @@ export default async function DashboardPage() {
 
     accountCreatedAt =
       (profileData?.created_at as string | undefined) ?? user.created_at ?? null
-    role = (profileData?.role ?? user.user_metadata?.role ?? 'contractor') as
+    const rawRole = profileData?.role ?? user.user_metadata?.role ?? 'contractor'
+    // Staffing agencies are organizations too (facility_profiles row, same
+    // review, agreement, finish checklist and listings): same dashboard.
+    role = (rawRole === 'staffing_agency' ? 'facility' : rawRole) as
       | 'contractor'
       | 'facility'
       | 'admin'

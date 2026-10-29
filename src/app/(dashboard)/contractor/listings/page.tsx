@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Eye, Pencil, PlusCircle, Send } from 'lucide-react'
 import { listOwnListings } from '@/lib/listings/data'
 import { DEMO_LISTINGS } from '@/lib/listings/demo'
-import { KIND_LABELS, priceLine } from '@/lib/listings/offering'
+import { KIND_LABELS, listingIsComplete, priceLine } from '@/lib/listings/offering'
 import {
   ListingStatusBadge,
   NeedsMalpracticeTag,
@@ -92,6 +92,15 @@ export default async function ListingsPage() {
                     <Pencil className="size-3.5" />
                     Edit
                   </Link>
+                  {l.status === 'draft' && !listingIsComplete(l) ? (
+                  <Link
+                    href={`/contractor/listings/new?draft=${l.id}`}
+                    className="inline-flex items-center gap-1 font-semibold text-[#1dbf73] hover:underline"
+                  >
+                    <PlusCircle className="size-3.5" />
+                    Finish listing
+                  </Link>
+                  ) : (
                   <Link
                     href={`/contractor/listings/${l.id}/review`}
                     className="inline-flex items-center gap-1 font-semibold text-[#1dbf73] hover:underline"
@@ -110,6 +119,7 @@ export default async function ListingsPage() {
                       </>
                     )}
                   </Link>
+                  )}
                   <DeleteListingButton listingId={l.id} />
                 </div>
               </div>
