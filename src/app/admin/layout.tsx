@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
 import { countPendingClassification } from '@/lib/admin/classification'
+import { AdminSignOutButton } from './sign-out-button'
 
 const NAV = [
   { href: '/admin', label: 'Overview' },
@@ -59,6 +60,7 @@ export default async function AdminLayout({
             <Link href="/dashboard" className="hover:text-[#1dbf73]">
               Back to app
             </Link>
+            <AdminSignOutButton />
           </div>
         </div>
       </div>
