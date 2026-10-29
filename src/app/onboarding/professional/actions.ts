@@ -8,6 +8,7 @@ import { isDemoMode } from '@/lib/demo/data'
 import { CREDENTIALS_BUCKET } from '@/lib/credentials/document'
 import { submitContractorForReview } from '@/lib/verification/submit-for-review'
 import { markSubmitted, recordProgress } from '@/lib/onboarding/progress'
+import { missingTerms } from '@/lib/onboarding/account-gaps'
 import {
   branchHasComplianceQuestions,
   effectiveBranch,
@@ -78,6 +79,24 @@ async function authed(): Promise<{ user: SessionUser; supabase: Supa } | null> {
   }
 }
 
+const TERMS_FIRST: ActionResult = {
+  ok: false,
+  error: 'Please agree to the Terms of Service and Privacy Policy first.',
+}
+
+/**
+ * The onboarding screens come after the Terms consent. The proxy no longer
+ * bounces /onboarding/professional to a separate consent page (the consent
+ * is now that flow's first screen), so the onboarding-only actions check it
+ * themselves. Dashboard upload actions don't: older accounts keep working.
+ */
+async function consented(supabase: Supa): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return !!user && !missingTerms(user)
+}
+
 interface Stored {
   category: ProfessionalCategory | null
   basis: CredentialBasis | null
@@ -125,6 +144,7 @@ export async function saveIdentityAnswer(id: string, input: ProSignupAnswers): P
   if (isDemoMode()) return { ok: true }
   const a = await authed()
   if (!a) return SESSION_EXPIRED
+  if (!(await consented(a.supabase))) return TERMS_FIRST
   const { user, supabase } = a
   const stored = await loadStored(supabase, user.id)
   if (!stored) return GENERIC_ERROR
@@ -201,6 +221,7 @@ export async function markScreen(id: string, kind: 'answered' | 'skipped'): Prom
   if (kind === 'skipped' && !PRO_SKIPPABLE.has(id)) return { ok: false, error: 'This question can’t be skipped.' }
   const a = await authed()
   if (!a) return SESSION_EXPIRED
+  if (!(await consented(a.supabase))) return TERMS_FIRST
   return recordProgress(a.supabase, a.user.id, 'professional', { [kind]: [id] })
 }
 
@@ -334,6 +355,7 @@ export async function saveDisclosures(input: { picked: string[]; details: string
   if (isDemoMode()) return { ok: true }
   const a = await authed()
   if (!a) return SESSION_EXPIRED
+  if (!(await consented(a.supabase))) return TERMS_FIRST
   const json = Object.fromEntries(
     DISCLOSURE_KEYS.map((k) => {
       const yes = picked.includes(k)
@@ -367,6 +389,7 @@ export async function submitApplication(input: {
   if (isDemoMode()) return { ok: true }
   const a = await authed()
   if (!a) return SESSION_EXPIRED
+  if (!(await consented(a.supabase))) return TERMS_FIRST
   const { user, supabase } = a
 
   const stored = await loadStored(supabase, user.id)

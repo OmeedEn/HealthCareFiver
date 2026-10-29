@@ -27,7 +27,12 @@ export const metadata: Metadata = { title: 'Finish creating your account — San
  * nothing started) or a pending Not sure account without answers on file
  * may use this page; everyone else goes to the dashboard.
  */
-export default async function UnsureAccountPage() {
+export default async function UnsureAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const fromPicker = (await searchParams).from === 'pick'
   const answers = parseUnsureSignupCookie((await cookies()).get(UNSURE_SIGNUP_COOKIE)?.value)
 
   if (!getSupabaseConfig()) {
@@ -37,6 +42,7 @@ export default async function UnsureAccountPage() {
         prefill={{ firstName: '', lastName: '' }}
         needsTerms
         termsVersion={TERMS_VERSION}
+        fromPicker={fromPicker}
       />
     )
   }
@@ -80,6 +86,7 @@ export default async function UnsureAccountPage() {
       }}
       needsTerms={!meta.terms_accepted_at || !meta.terms_version}
       termsVersion={TERMS_VERSION}
+      fromPicker={fromPicker}
     />
   )
 }
