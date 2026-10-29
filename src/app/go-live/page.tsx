@@ -15,6 +15,7 @@ import {
 } from '@/app/onboarding/organization/listing-draft'
 import { getProgress } from '@/lib/onboarding/progress'
 import { isStripeConfigured } from '@/lib/stripe/connect'
+import { verifiesLater } from '@/lib/onboarding/org-verify-later'
 import { ProGoLiveFlow, type GoLiveStep, type ProGoLiveProps } from './pro-flow'
 import { OrgGoLiveFlow, type OrgGoLiveProps } from './org-flow'
 import { Shell } from './ui'
@@ -203,7 +204,7 @@ async function loadOrg(
   payoutsReturn: boolean,
   step: GoLiveStep | null
 ): Promise<OrgGoLiveProps | { notApproved: string | null }> {
-  const [{ data: org }, { data: rows }, progress] = await Promise.all([
+  const [{ data: org }, { data: rows }, progress, { data: profile }] = await Promise.all([
     // Own row via RPC (review fields aren't all readable directly).
     supabase
       .rpc('my_facility_profile')
@@ -211,8 +212,12 @@ async function loadOrg(
       .maybeSingle<{ facility_name: string | null; verification_status: string | null; org_agreement_accepted_at: string | null }>(),
     supabase.from('org_listings').select('*').eq('facility_id', userId).order('created_at', { ascending: false }),
     getProgress(supabase, userId, 'organization'),
+    supabase.from('profiles').select('signup_path').eq('id', userId).maybeSingle<{ signup_path: string | null }>(),
   ])
   if (org?.verification_status !== 'approved') return { notApproved: org?.verification_status ?? null }
+  // Buyers (Hiring door) don't sell: no payouts or first-listing screens
+  // unless they ask for one explicitly.
+  const buyer = verifiesLater(profile?.signup_path)
 
   let payoutsOnboarded = onboarded
   if (payoutsReturn && !payoutsOnboarded) payoutsOnboarded = await syncPayouts(userId, connectId)
@@ -226,11 +231,11 @@ async function loadOrg(
     showPayouts:
       !payoutsOnboarded &&
       isStripeConfigured() &&
-      (!skipped.includes('go_live_payouts') || step === 'payouts' || payoutsReturn),
+      (buyer ? step === 'payouts' || payoutsReturn : !skipped.includes('go_live_payouts') || step === 'payouts' || payoutsReturn),
     payoutsOnboarded,
     hasConnectAccount: connectId !== null,
     payoutsReturned: payoutsReturn && !payoutsOnboarded,
-    showListing: !hasListing && (!skipped.includes('go_live_listing') || step === 'listing'),
+    showListing: !hasListing && (buyer ? step === 'listing' : !skipped.includes('go_live_listing') || step === 'listing'),
     resumeListing: hasListing ? null : (listings.find((l) => l.status === 'draft') ?? null),
     hasListing,
     step,
