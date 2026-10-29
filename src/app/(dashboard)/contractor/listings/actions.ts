@@ -10,9 +10,16 @@ import { currentUser, requireRole, type SessionUser } from '@/lib/auth/roles'
 import { isDemoMode } from '@/lib/demo/data'
 import { getOwnListing, getProviderState } from '@/lib/listings/data'
 import {
+  LISTING_STEP_KEYS,
+  emptyListing,
   firstErrors,
   inputToColumns,
+  listingFieldErrors,
+  listingIsComplete,
   listingSchema,
+  stepColumns,
+  type ListingDraft,
+  type OfferingKind,
 } from '@/lib/listings/offering'
 
 /*
@@ -27,6 +34,10 @@ import {
 export type SaveListingResult =
   | { ok: true; id: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string> }
+
+export type SaveListingStepResult =
+  | { ok: true; id: string | null }
+  | { ok: false; error: string; fields?: Record<string, string> }
 
 export type SubmitListingResult =
   | { ok: true }
@@ -124,6 +135,89 @@ export async function saveListing(
   return { ok: true, id: data.id as string }
 }
 
+const KINDS: readonly OfferingKind[] = ['service', 'consulting', 'event']
+
+/** Untrusted client input → a ListingDraft (unknown or mistyped fields dropped). */
+function toDraft(input: unknown): ListingDraft | null {
+  if (!input || typeof input !== 'object') return null
+  const raw = input as Record<string, unknown>
+  const kind = KINDS.find((k) => k === raw.kind)
+  if (!kind) return null
+  const d = emptyListing(kind) as unknown as Record<string, unknown>
+  for (const [k, v] of Object.entries(d)) {
+    if (k in raw && typeof raw[k] === typeof v) d[k] = raw[k]
+  }
+  return d as unknown as ListingDraft
+}
+
+/**
+ * Save the answer to one question of the "new listing" flow
+ * (src/components/listings/listing-questions.tsx). Each answer is checked
+ * with the same listingSchema rules as the full form, field by field. The
+ * first save that includes a title creates the draft (the only required
+ * column); later saves update just the answered columns. Only drafts change
+ * here — the flow's last question calls saveListing with the whole listing.
+ */
+export async function saveListingStep(
+  id: string | null,
+  input: unknown,
+  keys: string[]
+): Promise<SaveListingStepResult> {
+  if (id !== null && !idSchema.safeParse(id).success) {
+    return { ok: false, error: 'Listing not found.' }
+  }
+  const draft = toDraft(input)
+  if (!draft || !Array.isArray(keys)) return { ok: false, error: 'Invalid listing.' }
+  const known = keys.filter((k) => (LISTING_STEP_KEYS as readonly string[]).includes(k))
+  const fields = listingFieldErrors(draft, known)
+  if (Object.keys(fields).length) {
+    return { ok: false, error: 'Please fix the highlighted fields.', fields }
+  }
+  const columns = stepColumns(draft, known)
+  if ('title' in columns || 'description' in columns) {
+    const claims = findBlockedClaims(draft.title, draft.description)
+    if (claims.length) {
+      const msg = blockedClaimsMessage(claims)
+      return { ok: false, error: msg, fields: { description: msg } }
+    }
+  }
+  // Nothing to create yet (e.g. an event's type is asked before its title).
+  if (!id && !columns.title) return { ok: true, id: null }
+  if (isDemoMode()) return { ok: true, id: id ?? '00000000-0000-4000-8000-000000000002' }
+
+  const user = await authed()
+  if (!user) return { ok: false, error: SESSION_EXPIRED }
+  const supabase = await createClient()
+
+  const cols = { ...columns, kind: draft.kind }
+  const withoutV3 = { ...cols } as Record<string, unknown>
+  delete withoutV3.involves_medical_procedures
+
+  const run = (c: Record<string, unknown>) =>
+    id
+      ? supabase
+          .from('professional_offerings')
+          .update(c)
+          .eq('id', id)
+          .eq('contractor_id', user.id)
+          .eq('status', 'draft')
+          .select('id')
+          .maybeSingle()
+      : supabase
+          .from('professional_offerings')
+          .insert({ ...c, contractor_id: user.id, status: 'draft' })
+          .select('id')
+          .maybeSingle()
+  let { data, error } = await run(cols)
+  if (isMissingV3Column(error)) ({ data, error } = await run(withoutV3))
+  if (error || !data) {
+    if (error) console.error('[listings] step save failed', error.message)
+    return { ok: false, error: "We couldn't save that. Please try again." }
+  }
+  await maybeStartInsuranceGrace(user.id, cols)
+  return { ok: true, id: data.id as string }
+}
+
 export async function submitListingForReview(
   id: string
 ): Promise<SubmitListingResult> {
@@ -144,6 +238,15 @@ export async function submitListingForReview(
   if (listing.status === 'pending_review') return { ok: true }
   if (listing.status === 'published') {
     return { ok: false, error: 'This listing is already published.' }
+  }
+  // Listings save question by question, so a draft can be unfinished.
+  if (!listingIsComplete(listing)) {
+    return {
+      ok: false,
+      error: 'Finish this listing first: a few questions are still unanswered.',
+      href: `/contractor/listings/new?draft=${id}`,
+      hrefLabel: 'Finish the listing',
+    }
   }
   if (!state.isApproved) {
     return { ok: false, error: 'You can publish once your application is approved' }

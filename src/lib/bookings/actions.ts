@@ -8,9 +8,13 @@ import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { BOOKING_TERMS_VERSION } from '@/lib/legal'
 import { isStripeConfigured } from '@/lib/stripe/connect'
+import { orgVerifyHref, safeNextPath } from '@/lib/onboarding/org-verify-later'
+import { orgMustVerify } from '@/lib/onboarding/org-verify-later-server'
 import { createBookingCheckout, tryBookingRefund } from './payments'
 
-export type BookingActionResult = { ok: true; id?: string } | { ok: false; error: string }
+export type BookingActionResult =
+  | { ok: true; id?: string }
+  | { ok: false; error: string; /** Hiring orgs that haven't verified: where to verify. */ verifyHref?: string }
 
 /** The database explains refusals with a HINT code; turn it into plain words. */
 const HINT_MESSAGES: Record<string, string> = {
@@ -33,6 +37,7 @@ const HINT_MESSAGES: Record<string, string> = {
   time_past: 'Pick a date and time in the future.',
   bad_length: 'Write a message (up to 4,000 characters).',
   rate_limited: 'You’re sending messages quickly. Wait a moment and try again.',
+  org_verification_required: 'Verify your organization before booking. It takes about two minutes.',
 }
 
 function fail(error: { hint?: string | null; message?: string } | null): BookingActionResult {
@@ -60,6 +65,21 @@ const SESSION_EXPIRED: BookingActionResult = {
 const uuid = z.string().uuid()
 const isoOrNull = z.string().datetime({ offset: true }).nullable()
 
+/**
+ * Before the request dialog opens: an organization that hasn't verified yet
+ * (Hiring orgs verify later) is sent to verification first, then back to
+ * `returnTo`. Null = go ahead.
+ */
+export async function bookingVerifyHref(returnTo: string): Promise<string | null> {
+  const supabase = await session()
+  if (!supabase) return null
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user || !(await orgMustVerify(supabase, user.id))) return null
+  return orgVerifyHref('book', safeNextPath(returnTo))
+}
+
 /** Customer: send a booking request (or registration) for a listing. */
 export async function requestBooking(input: {
   listingId: string
@@ -83,6 +103,16 @@ export async function requestBooking(input: {
   }
   const supabase = await session()
   if (!supabase) return SESSION_EXPIRED
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (user && (await orgMustVerify(supabase, user.id))) {
+    return {
+      ok: false,
+      error: 'Verify your organization before booking. It takes about two minutes.',
+      verifyHref: orgVerifyHref('book'),
+    }
+  }
   const { data, error } = await supabase.rpc('request_org_booking', {
     p_listing_id: parsed.data.listingId,
     p_quantity: parsed.data.quantity,

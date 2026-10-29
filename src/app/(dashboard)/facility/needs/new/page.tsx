@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { isDemoMode } from '@/lib/demo/data'
 import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { NewNeedForm } from './new-need-form'
+import { orgVerifyHref } from '@/lib/onboarding/org-verify-later'
+import { orgMustVerify } from '@/lib/onboarding/org-verify-later-server'
 
 /** Post an urgent need or staffing opportunity (spec step 5 D, after onboarding). */
 export default async function NewUrgentNeedPage() {
@@ -12,6 +14,8 @@ export default async function NewUrgentNeedPage() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect('/login?redirectTo=/facility/needs/new')
+  // Hiring orgs verify later: posting is the moment we ask.
+  if (await orgMustVerify(supabase, user.id)) redirect(orgVerifyHref('post', '/facility/needs/new'))
   const { data: org } = await supabase
     .from('facility_profiles')
     .select('city, state, zip_code')

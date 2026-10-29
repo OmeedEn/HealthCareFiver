@@ -18,8 +18,8 @@ import {
  * Starts (or resumes) Stripe Connect Express onboarding and returns a
  * Stripe-hosted Account Link URL. Optional JSON body `{ returnTo }` picks a
  * whitelisted return page: 'payments' (default) or 'go-live'. Approved
- * organizations can connect too (to be paid for bookings); they always
- * return to /facility/payouts.
+ * organizations can connect too (to be paid for bookings); they return to
+ * /facility/payouts, or to /go-live when they started in the go-live flow.
  */
 export async function POST(request: NextRequest) {
   // currentUser() enforces AAL2 (MFA) — API routes are outside the proxy,
@@ -50,9 +50,12 @@ export async function POST(request: NextRequest) {
     body && typeof body === 'object' && 'returnTo' in body
       ? (body as { returnTo: unknown }).returnTo
       : undefined
-  // Organizations always come back to their payouts page.
+  // Organizations come back to their payouts page, or to the go-live flow
+  // when they started there.
   const target: ConnectReturnTarget = isOrg
-    ? 'org-payouts'
+    ? requested === 'go-live'
+      ? 'go-live'
+      : 'org-payouts'
     : isConnectReturnTarget(requested) && requested !== 'org-payouts'
       ? requested
       : 'payments'

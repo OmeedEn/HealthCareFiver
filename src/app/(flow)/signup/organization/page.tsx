@@ -1,18 +1,15 @@
-import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
-import { OrganizationSignupFlow } from './signup-flow'
+import { parseSignupStart, signupStartUrl } from '@/lib/onboarding/signup-start'
 
-export const metadata: Metadata = { title: 'Create your organization account — Sanus' }
-
-// The organization flow is reached through a door: /signup/offer (PRACTICE,
-// COMPANY) or /signup/looking (HIRING). Without one, start at the router.
-export default async function OrganizationSignupPage({
+// Organization signup is the Practice / Company / Hiring path of the one
+// /signup flow. Without a valid door, start at the first screen.
+export default async function OrganizationSignupRedirect({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const source = parseOrgSignupSource((await searchParams).source)
-  if (!source) redirect('/signup')
-  return <OrganizationSignupFlow source={source} />
+  const params = await searchParams
+  const source = parseOrgSignupSource(params.source)
+  redirect(signupStartUrl(source ? parseSignupStart(source.toLowerCase()) : null, params, ['source']))
 }

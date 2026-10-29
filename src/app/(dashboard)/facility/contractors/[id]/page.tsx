@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
 import { formatCurrency, getInitials } from '@/lib/utils/format'
 import { isOrgStatus, orgBlockedReason } from '@/lib/org/review'
+import { orgVerifyHref } from '@/lib/onboarding/org-verify-later'
 import {
   ArrowLeft,
   Star,
@@ -64,6 +65,7 @@ export default async function ContractorDetailPage({
   let verifiedCredentials = 0
   // Messaging and invites unlock once the viewing org is approved.
   let contactBlockedReason: string | null = null
+  let contactVerifyHref: string | null = null
   let acceptsInquiries = true
   let latestInquiry: LatestInquiry | null = null
 
@@ -137,12 +139,17 @@ export default async function ContractorDetailPage({
 
     const { data: viewerOrg } = await supabase
       .from('facility_profiles')
-      .select('verification_status')
+      .select('verification_status, onboarding_submitted_at')
       .eq('id', user.id)
       .maybeSingle()
     contactBlockedReason = orgBlockedReason(
       isOrgStatus(viewerOrg?.verification_status) ? viewerOrg.verification_status : null
     )
+    // Hiring orgs verify later: contacting professionals is a moment we ask.
+    if (viewerOrg && !viewerOrg.onboarding_submitted_at) {
+      contactBlockedReason = 'Contacting professionals unlocks once your organization is verified and approved.'
+      contactVerifyHref = orgVerifyHref('contact', `/facility/contractors/${id}`)
+    }
 
     const { data: lastInq } = await supabase
       .from('org_inquiries')
@@ -316,6 +323,7 @@ export default async function ContractorDetailPage({
               contractorId={contractor.id}
               firstName={contractor.first_name}
               blockedReason={contactBlockedReason}
+              verifyHref={contactVerifyHref}
               acceptsInquiries={acceptsInquiries}
               latest={latestInquiry}
             />

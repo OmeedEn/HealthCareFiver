@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { mfaGate } from '@/lib/auth/mfa'
-import { missingTerms } from '@/lib/onboarding/account-gaps'
+import { ORG_LIGHT_COLUMNS, orgLightSetupDone, verifiesLater } from '@/lib/onboarding/org-verify-later'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const PUBLIC_ROUTES = [
@@ -52,18 +52,30 @@ const UNSURE_ACCOUNT_PATH = '/onboarding/unsure'
 
 const ORG_ROLES = ['facility', 'staffing_agency']
 
-/** Same idea as contractorNeedsOnboarding, for organizations. */
+/**
+ * Same idea as contractorNeedsOnboarding, for organizations.
+ * Verify later (src/lib/onboarding/org-verify-later.ts): a Hiring-door org
+ * only needs type, name and city/state before the dashboard opens; it
+ * verifies when it first posts, books or contacts a professional.
+ */
 async function orgNeedsOnboarding(
   supabase: SupabaseClient,
   userId: string
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('facility_profiles')
-    .select('onboarding_submitted_at')
+    .select(`onboarding_submitted_at, ${ORG_LIGHT_COLUMNS}`)
     .eq('id', userId)
     .maybeSingle()
   if (error || !data) return false
-  return data.onboarding_submitted_at === null
+  if (data.onboarding_submitted_at !== null) return false
+  if (!orgLightSetupDone(data)) return true
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('signup_path')
+    .eq('id', userId)
+    .maybeSingle()
+  return !verifiesLater(profile?.signup_path)
 }
 
 /**
@@ -226,18 +238,13 @@ export async function proxy(request: NextRequest) {
   }
 
   // Professional onboarding needs Terms consent first. Email signups give it
-  // on the account screen; Google signups give it on /onboarding/account, so
-  // send anyone missing it there. (Phone is no longer asked at signup.)
-  if (
-    role === 'contractor' &&
-    underPrefix(pathname, PRO_ONBOARDING_PATH) &&
-    missingTerms(user)
-  ) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/onboarding/account'
-    url.search = ''
-    return NextResponse.redirect(url)
-  }
+  // on the account screen; Google signups give it on the first screens of
+  // /onboarding/professional itself (which also asks a brand-new Google
+  // account that lost its signup path which path it meant, before treating
+  // it as a professional). No separate hop here: /dashboard → onboarding →
+  // consent page → onboarding used to bounce a new Google account around, and
+  // the consent page could only ever make it a professional. The onboarding
+  // actions check consent themselves.
 
   // Professionals who haven't finished the wizard land in it instead of the
   // dashboard. Only /dashboard is gated: /contractor/* pages (profile edit,

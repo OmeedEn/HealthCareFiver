@@ -30,11 +30,14 @@ export function UnsureFinishFlow({
   prefill,
   needsTerms,
   termsVersion,
+  fromPicker = false,
 }: {
   answers: UnsureAnswers | null
   prefill: { firstName: string; lastName: string }
   needsTerms: boolean
   termsVersion: string
+  /** Came from "What brings you to Sanus?" on /onboarding/professional: the back arrow returns there. */
+  fromPicker?: boolean
 }) {
   const router = useRouter()
   const [draft, setDraft, { hydrated, clear }] = usePreAccountAnswers(UNSURE_DRAFT_KEY, EMPTY_UNSURE_DRAFT)
@@ -97,6 +100,7 @@ export function UnsureFinishFlow({
       stepWeights={SINGLE_STEP}
       chrome="minimal"
       flowId="unsure"
+      onExit={fromPicker ? () => router.push('/onboarding/professional') : undefined}
       onFinish={() => {
         clear()
         router.push('/dashboard')

@@ -16,6 +16,7 @@ import {
 import { markSubmitted, recordProgress } from '@/lib/onboarding/progress'
 import { ORG_FLOW_IDS, orgAnswerOnFile, orgFlowDataFromRow } from '@/lib/onboarding/questions/organization'
 import { disclosureKeysFor } from '@/lib/onboarding/checklist-organization'
+import { orgMustVerify } from '@/lib/onboarding/org-verify-later-server'
 import {
   checkFields,
   eventSchema,
@@ -394,8 +395,12 @@ export async function saveStaffingPost(input: unknown): Promise<ActionResult> {
   if (isDemoMode()) return { ok: true }
   const a = await authed()
   if ('error' in a) return { ok: false, error: a.error as string }
+  // Hiring orgs verify later: posting needs a submitted organization.
+  if (await orgMustVerify(a.supabase, a.user.id)) {
+    return { ok: false, error: 'Verify your organization before posting. It takes about two minutes.' }
+  }
   const d = parsed.data
-  const needs = d.needs.map((n) => ({ type: n.type, count: Number(n.count) }))
+  const needs =d.needs.map((n) => ({ type: n.type, count: Number(n.count) }))
   const payMin = d.is_volunteer ? null : Number(d.pay_min)
   const payMax = d.is_volunteer || !d.pay_max ? null : Number(d.pay_max)
 

@@ -1,7 +1,15 @@
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { currentUser } from '@/lib/auth/roles'
+import { TERMS_VERSION } from '@/lib/legal'
+import { computeGaps, namePrefill } from '@/lib/onboarding/account-gaps'
+import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
+import { PRO_SIGNUP_COOKIE, parseProSignupCookie } from '@/lib/onboarding/professional-google'
+import { accountPathFor, hasFullName } from '@/lib/onboarding/account-paths'
+import { isSignupPath } from '@/lib/onboarding/signup-path'
 import { DEMO_CONTRACTOR, isDemoMode } from '@/lib/demo/data'
 import { getProgress, type OnboardingProgress } from '@/lib/onboarding/progress'
 import {
@@ -16,7 +24,7 @@ import {
   proValid,
   type ProSignupAnswers,
 } from '@/lib/onboarding/questions/professional'
-import { ProfessionalOnboardingFlow, type InitialDisclosures } from './flow'
+import { ProfessionalOnboardingFlow, type AccountStep, type InitialDisclosures } from './flow'
 import type { UploadedDoc } from './shared'
 
 export const metadata: Metadata = {
@@ -34,6 +42,13 @@ const ONBOARDING_CREDENTIAL_TYPES = ['license', 'certification', 'resume', 'gove
  * Every screen saves as it's answered (onboarding_progress), so a refresh
  * resumes on the first unanswered screen. Once submitted
  * (onboarding_completed_at), this route sends people to /dashboard.
+ *
+ * Google signups land here still owing the account screens Google skipped
+ * (Terms consent, and a name if Google didn't share one): those become the
+ * flow's first screens. A brand-new Google account that arrives without its
+ * signup path (no professional cookie, no signup_path, nothing answered) is
+ * first asked which path it meant, so an organization, client or Not sure
+ * signup that lost its `next`/cookie isn't onboarded as a professional.
  */
 export default async function ProfessionalOnboardingPage() {
   if (isDemoMode()) {
@@ -54,16 +69,22 @@ export default async function ProfessionalOnboardingPage() {
   if (user.role !== 'contractor') redirect('/dashboard')
 
   const supabase = await createClient()
-  const { data: profile, error } = await supabase
-    .from('contractor_profiles')
-    .select(
-      'professional_category, credential_basis, other_profession, license_type, certification_type, specialties, teaching_topics, state_license_number, license_state, certifying_organization, website_url, self_disclosures, onboarding_completed_at'
-    )
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile, error }, { data: auth }, { data: account }] = await Promise.all([
+    supabase
+      .from('contractor_profiles')
+      .select(
+        'first_name, last_name, professional_category, credential_basis, other_profession, license_type, certification_type, specialties, teaching_topics, state_license_number, license_state, certifying_organization, website_url, self_disclosures, onboarding_completed_at'
+      )
+      .eq('id', user.id)
+      .single(),
+    supabase.auth.getUser(),
+    supabase.from('profiles').select('signup_path').eq('id', user.id).single(),
+  ])
   if (error || !profile) {
     throw new Error(`Contractor ${user.id} has no readable contractor_profiles row.`)
   }
+  const authUser = auth.user
+  if (!authUser) redirect('/login?redirectTo=/onboarding/professional')
   const p = profile as Record<string, unknown>
   if (p.onboarding_completed_at) redirect('/dashboard')
 
@@ -77,10 +98,45 @@ export default async function ProfessionalOnboardingPage() {
       .order('created_at', { ascending: false }),
   ])
 
-  const answers = toAnswers(p, progress)
+  let answers = toAnswers(p, progress)
+
+  // Account screens Google skipped (see AccountStep).
+  const contractorName = profile as { first_name: string | null; last_name: string | null }
+  const gaps = computeGaps(authUser, contractorName)
+  let accountStep: AccountStep | null = null
+  if (gaps.name || gaps.terms) {
+    const prefill = namePrefill(authUser, contractorName)
+    // Screens 1–3 from /signup/professional's Google cookie: saved by the
+    // account screen (finishAccount); shown now so the flow skips them.
+    const cookieAnswers = parseProSignupCookie((await cookies()).get(PRO_SIGNUP_COOKIE)?.value)
+    if (cookieAnswers && !answers.category) answers = { ...answers, ...cookieAnswers }
+
+    const signupPath = (account as { signup_path?: string | null } | null)?.signup_path ?? null
+    const untouched =
+      gaps.terms &&
+      !cookieAnswers &&
+      progress.answered.length === 0 &&
+      progress.skipped.length === 0
+    const convertible = untouched && (await canConvertNewProfessional(createAdminClient(), authUser))
+    // A door was recorded but the conversion never happened: finish it there.
+    const pending = convertible && isSignupPath(signupPath) ? accountPathFor(signupPath, false) : null
+    if (pending) redirect(pending)
+
+    accountStep = {
+      needsName: gaps.name && (!hasFullName(prefill) || !gaps.terms),
+      needsTerms: gaps.terms,
+      prefill,
+      termsVersion: TERMS_VERSION,
+      pickPath: convertible && !signupPath,
+    }
+  }
+
   return (
     <ProfessionalOnboardingFlow
-      key={user.id}
+      // Remount once the account screens are done so the flow resumes from
+      // the freshly saved answers (router.refresh after finishAccount).
+      key={`${user.id}:${accountStep ? 'account' : 'application'}`}
+      account={accountStep}
       userId={user.id}
       includeIdentity={!identityComplete(answers)}
       initialAnswers={answers}

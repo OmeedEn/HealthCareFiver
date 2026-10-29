@@ -3,6 +3,7 @@ import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { getProgress } from '@/lib/onboarding/progress'
 import { ORG_CHECKLIST_COLUMNS, buildOrgChecklist, type OrgChecklistRow } from '@/lib/onboarding/checklist-organization'
 import { FinishProfileCard } from '@/components/onboarding/finish-profile-card'
+import { verifiesLater } from '@/lib/onboarding/org-verify-later'
 import { DEFAULT_INTENTS, orgDoorFor } from '@/app/onboarding/organization/shared'
 import { OrgFirstRunCards } from './org-first-run-cards'
 
@@ -17,8 +18,10 @@ export async function OrgFinishSection({ userId }: { userId: string }) {
     await Promise.all([
       supabase
         .rpc('my_facility_profile')
-        .select(`${ORG_CHECKLIST_COLUMNS}, looking_for`)
-        .maybeSingle<OrgChecklistRow & { looking_for: Record<string, unknown> | null }>(),
+        .select(`${ORG_CHECKLIST_COLUMNS}, looking_for, onboarding_submitted_at`)
+        .maybeSingle<
+          OrgChecklistRow & { looking_for: Record<string, unknown> | null; onboarding_submitted_at: string | null }
+        >(),
       supabase.from('org_documents').select('kind').eq('facility_id', userId),
       supabase.from('profiles').select('signup_path, avatar_url, stripe_connect_onboarded').eq('id', userId).single(),
       getProgress(supabase, userId, 'organization'),
@@ -36,6 +39,9 @@ export async function OrgFinishSection({ userId }: { userId: string }) {
     skipped: progress.skipped,
     hasLogo: !!profile?.avatar_url,
     payoutsOnboarded: profile?.stripe_connect_onboarded === true,
+    // Hiring orgs verify later and never get paid.
+    buyer: verifiesLater(profile?.signup_path),
+    verifyLater: verifiesLater(profile?.signup_path) && !org.onboarding_submitted_at,
   })
 
   // First-run cards until they've started something.

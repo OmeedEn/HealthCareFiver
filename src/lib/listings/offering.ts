@@ -378,3 +378,92 @@ export function normalizeListingRow(raw: Record<string, unknown>): ListingRow {
     review_notes: typeof raw.review_notes === 'string' ? raw.review_notes : null,
   }
 }
+
+/* ───────────── One question at a time (listing QuestionFlow) ───────────── */
+
+/**
+ * Form state → what the save actions expect: an event's datetime-local value
+ * becomes ISO in the browser's time zone (the server runs in UTC). Call on
+ * the client only. An unparseable date is passed through so validation
+ * reports it.
+ */
+export function draftToInput(d: ListingDraft): ListingDraft {
+  if (d.kind !== 'event' || d.date_later || !d.starts_at) return { ...d, starts_at: '' }
+  const t = Date.parse(d.starts_at)
+  return { ...d, starts_at: Number.isNaN(t) ? d.starts_at : new Date(t).toISOString() }
+}
+
+/**
+ * listingSchema's errors for just these fields. The whole listing is
+ * validated (same rules as the full form and saveListing) and only the named
+ * fields' errors are kept, so one screen can be checked before the questions
+ * after it are answered.
+ */
+export function listingFieldErrors(input: unknown, keys: readonly string[]): Record<string, string> {
+  const parsed = listingSchema.safeParse(input)
+  if (parsed.success) return {}
+  const all = firstErrors(parsed.error.issues)
+  return Object.fromEntries(Object.entries(all).filter(([k]) => keys.includes(k)))
+}
+
+/** Fields one listing question can save on its own (saveListingStep). */
+export const LISTING_STEP_KEYS = [
+  'title',
+  'description',
+  'format',
+  'duration_minutes',
+  'engagement_type',
+  'custom_quote',
+  'event_type',
+  'starts_at',
+  'date_later',
+  'capacity',
+  'price',
+  'is_free',
+  'involves_medical_procedures',
+] as const
+
+const toCents = (v: string): number | null =>
+  /^\d{1,6}(\.\d{1,2})?$/.test(v.trim()) ? Math.round(Number(v.trim()) * 100) : null
+
+/**
+ * professional_offerings columns for the answered fields only (same columns
+ * and conversions as inputToColumns). `d` must already pass
+ * listingFieldErrors for `keys`; starts_at is ISO (draftToInput).
+ */
+export function stepColumns(d: ListingDraft, keys: readonly string[]): Record<string, unknown> {
+  const has = (k: string) => keys.includes(k)
+  const c: Record<string, unknown> = {}
+  if (has('title')) c.title = d.title.trim()
+  if (has('description')) c.description = d.description.trim() || null
+  if (has('involves_medical_procedures')) c.involves_medical_procedures = !!d.involves_medical_procedures
+  if (d.kind === 'service') {
+    if (has('format')) c.format = d.format || null
+    if (has('duration_minutes')) c.duration_minutes = d.duration_minutes ? Number(d.duration_minutes) : null
+    if (has('price')) c.price_cents = toCents(d.price)
+  } else if (d.kind === 'consulting') {
+    if (has('engagement_type')) c.engagement_type = d.engagement_type || null
+    if (has('price') || has('custom_quote')) {
+      c.custom_quote = !!d.custom_quote
+      c.price_cents = d.custom_quote ? null : toCents(d.price)
+    }
+  } else {
+    if (has('event_type')) c.event_type = d.event_type || null
+    if (has('starts_at') || has('date_later')) c.starts_at = d.date_later || !d.starts_at ? null : d.starts_at
+    if (has('capacity')) c.capacity = d.capacity ? Number(d.capacity) : null
+    if (has('price') || has('is_free')) {
+      c.is_free = !!d.is_free
+      c.price_cents = d.is_free ? 0 : toCents(d.price)
+    }
+  }
+  return c
+}
+
+/**
+ * A saved listing has every answer listingSchema needs. Listings now save
+ * question by question, so a draft can be unfinished; only finished ones
+ * can be submitted for review.
+ */
+export function listingIsComplete(r: ListingRow): boolean {
+  return listingSchema.safeParse(rowToDraft(r)).success
+}

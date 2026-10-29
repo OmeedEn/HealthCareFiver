@@ -15,9 +15,10 @@ const CONNECT_RETURN_PATHS: Record<
     returnPath: '/contractor/payments?onboarded=true',
     refreshPath: '/contractor/payments?refresh=true',
   },
+  // The go-live flow (professionals and organizations): back to its payouts screen.
   'go-live': {
     returnPath: '/go-live?payouts=done',
-    refreshPath: '/go-live#payouts',
+    refreshPath: '/go-live?step=payouts',
   },
   // Organizations: paid for bookings of their services and events.
   'org-payouts': {
