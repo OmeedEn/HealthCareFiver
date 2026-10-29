@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Loader2, MessageSquare, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -32,10 +33,13 @@ export function InquiryPanel({
   blockedReason,
   acceptsInquiries,
   latest,
+  verifyHref = null,
 }: {
   contractorId: string
   firstName: string
   blockedReason: string | null
+  /** Hiring orgs that haven't verified yet: link to verification. */
+  verifyHref?: string | null
   acceptsInquiries: boolean
   latest: LatestInquiry | null
 }) {
@@ -83,7 +87,19 @@ export function InquiryPanel({
           Invite to join our team
         </Button>
       </div>
-      {reason && <p className="text-right text-xs text-[#62646a]">{reason}</p>}
+      {reason && (
+        <p className="text-right text-xs text-[#62646a]">
+          {reason}
+          {verifyHref && (
+            <>
+              {' '}
+              <Link href={verifyHref} className="font-semibold text-[#0f8f56] hover:underline">
+                Verify your organization
+              </Link>
+            </>
+          )}
+        </p>
+      )}
       {latest && (
         <p className="text-right text-xs text-[#62646a]">
           Your last {latest.kind === 'invite' ? 'invitation' : 'inquiry'}: <strong>{STATUS_COPY[latest.status]}</strong>

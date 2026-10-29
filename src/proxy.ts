@@ -3,6 +3,7 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { mfaGate } from '@/lib/auth/mfa'
 import { missingTerms } from '@/lib/onboarding/account-gaps'
+import { ORG_LIGHT_COLUMNS, orgLightSetupDone, verifiesLater } from '@/lib/onboarding/org-verify-later'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const PUBLIC_ROUTES = [
@@ -52,18 +53,30 @@ const UNSURE_ACCOUNT_PATH = '/onboarding/unsure'
 
 const ORG_ROLES = ['facility', 'staffing_agency']
 
-/** Same idea as contractorNeedsOnboarding, for organizations. */
+/**
+ * Same idea as contractorNeedsOnboarding, for organizations.
+ * Verify later (src/lib/onboarding/org-verify-later.ts): a Hiring-door org
+ * only needs type, name and city/state before the dashboard opens; it
+ * verifies when it first posts, books or contacts a professional.
+ */
 async function orgNeedsOnboarding(
   supabase: SupabaseClient,
   userId: string
 ): Promise<boolean> {
   const { data, error } = await supabase
     .from('facility_profiles')
-    .select('onboarding_submitted_at')
+    .select(`onboarding_submitted_at, ${ORG_LIGHT_COLUMNS}`)
     .eq('id', userId)
     .maybeSingle()
   if (error || !data) return false
-  return data.onboarding_submitted_at === null
+  if (data.onboarding_submitted_at !== null) return false
+  if (!orgLightSetupDone(data)) return true
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('signup_path')
+    .eq('id', userId)
+    .maybeSingle()
+  return !verifiesLater(profile?.signup_path)
 }
 
 /**
