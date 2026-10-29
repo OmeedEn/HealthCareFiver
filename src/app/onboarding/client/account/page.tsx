@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { TERMS_VERSION } from '@/lib/legal'
 import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
-import { ClientAccountForm } from './form'
+import { ClientAccountFlow } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your account — Sanus' }
 
@@ -13,11 +13,23 @@ export const metadata: Metadata = { title: 'Finish creating your account — San
  * Landing page after "Continue with Google" on /signup/client (via
  * /callback). Turns the brand-new account into a client with the signup
  * answers and collects Terms consent and the 18+ attestation, then on to
- * their matches.
+ * their matches. Asks only what's missing, one screen at a time.
  */
-export default async function ClientAccountPage() {
+export default async function ClientAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const fromPicker = (await searchParams).from === 'pick'
   if (!getSupabaseConfig()) {
-    return <ClientAccountForm prefill={{ firstName: '', lastName: '' }} needsTerms termsVersion={TERMS_VERSION} />
+    return (
+      <ClientAccountFlow
+        prefill={{ firstName: '', lastName: '' }}
+        needsTerms
+        termsVersion={TERMS_VERSION}
+        fromPicker={fromPicker}
+      />
+    )
   }
 
   const supabase = await createClient()
@@ -43,13 +55,14 @@ export default async function ClientAccountPage() {
   const fullName = (meta.full_name || meta.name || '').trim()
   const [firstFromFull, ...rest] = fullName.split(/\s+/)
   return (
-    <ClientAccountForm
+    <ClientAccountFlow
       prefill={{
-        firstName: meta.first_name || meta.given_name || firstFromFull || '',
-        lastName: meta.last_name || meta.family_name || rest.join(' ') || '',
+        firstName: (meta.first_name || meta.given_name || firstFromFull || '').trim(),
+        lastName: (meta.last_name || meta.family_name || rest.join(' ') || '').trim(),
       }}
       needsTerms={needsTerms}
       termsVersion={TERMS_VERSION}
+      fromPicker={fromPicker}
     />
   )
 }

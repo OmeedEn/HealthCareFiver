@@ -21,6 +21,13 @@ import {
 } from '@/lib/onboarding/questions/professional'
 import { branchHasComplianceQuestions } from '@/lib/onboarding/professional-branch'
 import type { OnboardingProgress } from '@/lib/onboarding/progress'
+import type { SignupPath } from '@/lib/onboarding/signup-path'
+import { isDemoMode } from '@/lib/demo/data'
+import { TermsConsent } from '@/components/auth/signup-shared'
+import { trackSignupCompleted } from '@/components/auth/signup-tracking'
+import { nameScreen, pathPickerScreen } from '@/components/onboarding/account-screens'
+import { accountPathFor, type NamePrefill } from '@/lib/onboarding/account-paths'
+import { finishAccount } from '../account/actions'
 import { CheckRow, TextAreaField } from './ui'
 import { markScreen, saveDisclosures, saveIdentityAnswer, submitApplication } from './actions'
 import { isUsableDoc, slotMatches, type DocSlotKey, type UploadedDoc } from './shared'
@@ -35,6 +42,32 @@ export interface InitialDisclosures {
 /** Screens 1–3 plus the account screen, for the share of the bar already behind them. */
 const PRE_ACCOUNT_SCREENS = 4
 
+/**
+ * When screens 1–3 are asked here, the account part (path, name, consent)
+ * owns this fixed slice of the bar, whether or not it still has screens, so
+ * the bar doesn't move backwards once those screens are done.
+ */
+const ACCOUNT_SHARE = 0.15
+
+/**
+ * What a Google signup still owes before the application: the account
+ * screens Google skipped. Rendered as this flow's first screens so the
+ * person goes straight from them into the application without a page break.
+ */
+export interface AccountStep {
+  /** Ask for a name (Google didn't share one). */
+  needsName: boolean
+  /** Terms of Service + Privacy Policy consent (always missing after Google). */
+  needsTerms: boolean
+  prefill: NamePrefill
+  termsVersion: string
+  /**
+   * Brand-new Google account that arrived without its signup path: ask
+   * which path they meant before treating them as a professional.
+   */
+  pickPath: boolean
+}
+
 export function ProfessionalOnboardingFlow({
   userId,
   includeIdentity,
@@ -42,6 +75,7 @@ export function ProfessionalOnboardingFlow({
   initialDocs,
   initialDisclosures,
   progress,
+  account = null,
 }: {
   userId: string
   /** Ask screens 1–3 here (they weren't answered before the account). */
@@ -50,6 +84,8 @@ export function ProfessionalOnboardingFlow({
   initialDocs: UploadedDoc[]
   initialDisclosures: InitialDisclosures
   progress: Pick<OnboardingProgress, 'answered' | 'skipped'>
+  /** Account screens still owed (Google signups); null once the account is done. */
+  account?: AccountStep | null
 }) {
   const router = useRouter()
   const [answers, setAnswers] = useState(initialAnswers)
@@ -59,6 +95,10 @@ export function ProfessionalOnboardingFlow({
   const [details, setDetails] = useState(initialDisclosures.details)
   const [attest, setAttest] = useState(false)
   const [authorize, setAuthorize] = useState(false)
+  const [firstName, setFirstName] = useState(account?.prefill.firstName ?? '')
+  const [lastName, setLastName] = useState(account?.prefill.lastName ?? '')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [path, setPath] = useState<SignupPath | ''>('')
 
   const branch = branchOf(answers)
   const docFor = (slot: DocSlotKey) => {
@@ -68,13 +108,74 @@ export function ProfessionalOnboardingFlow({
   const onUploaded = (doc: UploadedDoc, replacedId: string | null) =>
     setDocs((prev) => [doc, ...prev.filter((d) => d.id !== replacedId)])
 
+  // With screens 1–3 asked here, step 0 is the account and step 1 the rest.
+  const accountStep = includeIdentity ? 0 : 1
   const identity = includeIdentity
     ? identityScreens({
         answers,
         set: (patch) => setAnswers((a) => ({ ...a, ...patch })),
         persist: (id, a) => saveIdentityAnswer(id, a),
-      })
+      }).map((s) => ({ ...s, step: 1 }))
     : []
+
+  const accountScreens: Screen[] = []
+  if (account) {
+    // Saves the account (consent, name, signup path, the Google cookie's
+    // screens 1–3), then reloads the server data in place: the page drops
+    // these screens and remounts on the same next screen, so there's no
+    // visible page break.
+    const finish = async () => {
+      if (isDemoMode()) return { ok: true as const }
+      const res = await finishAccount({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        ...(account.needsTerms ? { accepted_terms: acceptedTerms, terms_version: account.termsVersion } : {}),
+      })
+      if (!res.ok) return res
+      // Google signups are the ones missing consent; older accounts that
+      // only lack a name aren't new signups.
+      if (account.needsTerms) trackSignupCompleted('INDEPENDENT')
+      router.refresh()
+      return { ok: true as const }
+    }
+    if (account.pickPath) {
+      accountScreens.push(
+        pathPickerScreen({
+          step: accountStep,
+          value: path,
+          onPick: (p) => {
+            setPath(p)
+            const to = accountPathFor(p)
+            if (to) router.push(to)
+          },
+        })
+      )
+    }
+    if (account.needsName) {
+      accountScreens.push({
+        ...nameScreen({
+          step: accountStep,
+          first: firstName,
+          last: lastName,
+          setFirst: setFirstName,
+          setLast: setLastName,
+        }),
+        ...(account.needsTerms ? {} : { save: finish }),
+      })
+    }
+    if (account.needsTerms) {
+      accountScreens.push({
+        id: PRO_Q.account,
+        step: accountStep,
+        title: 'Finish creating your account',
+        sub: 'Free to join. Agree to our terms and you’re in.',
+        continueLabel: 'Agree and continue',
+        canContinue: () => acceptedTerms,
+        save: finish,
+        render: () => <TermsConsent checked={acceptedTerms} onChange={setAcceptedTerms} id="pro-accept-terms" />,
+      })
+    }
+  }
 
   const credentialDoc = docFor('credential')
   const idDoc = docFor('government_id')
@@ -185,11 +286,13 @@ export function ProfessionalOnboardingFlow({
     ),
   })
 
-  const screens = [...identity, ...post]
+  const screens = [...accountScreens, ...identity, ...post]
 
-  // Resume: the first identity screen without a valid answer, else the first
-  // post-account screen neither answered nor skipped (submit if all are).
+  // Resume: the account screens if any are owed, else the first identity
+  // screen without a valid answer, else the first post-account screen
+  // neither answered nor skipped (submit if all are).
   const [initialIndex] = useState(() => {
+    if (accountScreens.length) return 0
     const open = firstOpenIdentityScreen(identity)
     if (open < identity.length) return open
     const done = new Set([...progress.answered, ...progress.skipped])
@@ -202,7 +305,7 @@ export function ProfessionalOnboardingFlow({
   // the bar so it doesn't restart at zero after the account screen.
   const postCount = postAccountScreenIds(branch).length
   const stepWeights: Record<number, number> = includeIdentity
-    ? { 1: 1 }
+    ? { 0: ACCOUNT_SHARE, 1: 1 - ACCOUNT_SHARE }
     : {
         1: PRE_ACCOUNT_SCREENS / (PRE_ACCOUNT_SCREENS + postCount),
         2: postCount / (PRE_ACCOUNT_SCREENS + postCount),

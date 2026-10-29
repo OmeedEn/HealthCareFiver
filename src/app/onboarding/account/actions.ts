@@ -12,7 +12,14 @@ import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 import { PRO_SIGNUP_COOKIE, parseProSignupCookie } from '@/lib/onboarding/professional-google'
 import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
 
-export type FinishAccountState = { error?: string } | null
+export type FinishAccountResult = { ok: true } | { ok: false; error: string }
+
+export interface FinishAccountInput {
+  first_name?: string
+  last_name?: string
+  accepted_terms?: boolean
+  terms_version?: string
+}
 
 const name = (label: string) =>
   z
@@ -26,16 +33,17 @@ const name = (label: string) =>
  * provider didn't give us one) a name. Only the gaps the server still sees
  * are written — a stale form can't overwrite existing values. Then saves the
  * screens 1–3 answers that rode along from /signup/professional.
+ *
+ * Called from the first screens of /onboarding/professional (the account
+ * screens of that flow). Returns a result instead of redirecting so the flow
+ * can carry on without a page break.
  */
-export async function finishAccount(
-  _prev: FinishAccountState,
-  formData: FormData
-): Promise<FinishAccountState> {
+export async function finishAccount(input: FinishAccountInput): Promise<FinishAccountResult> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) redirect('/login?redirectTo=/onboarding/account')
+  if (!user) redirect('/login?redirectTo=/onboarding/professional')
   // Server actions POST to this page's path, so the proxy has already run
   // the MFA gate — check again anyway; never write from an AAL1 session.
   const gate = await mfaGate(supabase)
@@ -53,11 +61,12 @@ export async function finishAccount(
 
   const gaps = computeGaps(user, contractor)
 
-  if (gaps.terms && formData.get('accepted_terms') !== 'on') {
-    return { error: 'Please agree to the Terms of Service and Privacy Policy to continue.' }
+  if (gaps.terms && input.accepted_terms !== true) {
+    return { ok: false, error: 'Please agree to the Terms of Service and Privacy Policy to continue.' }
   }
-  if (gaps.terms && formData.get('terms_version') !== TERMS_VERSION) {
+  if (gaps.terms && input.terms_version !== TERMS_VERSION) {
     return {
+      ok: false,
       error:
         'Our Terms of Service or Privacy Policy were updated — please refresh the page and review them.',
     }
@@ -65,10 +74,10 @@ export async function finishAccount(
 
   let names: { first_name: string; last_name: string } | null = null
   if (gaps.name) {
-    const first = name('First name').safeParse(formData.get('first_name') ?? '')
-    if (!first.success) return { error: first.error.issues[0].message }
-    const last = name('Last name').safeParse(formData.get('last_name') ?? '')
-    if (!last.success) return { error: last.error.issues[0].message }
+    const first = name('First name').safeParse(input.first_name ?? '')
+    if (!first.success) return { ok: false, error: first.error.issues[0].message }
+    const last = name('Last name').safeParse(input.last_name ?? '')
+    if (!last.success) return { ok: false, error: last.error.issues[0].message }
     names = { first_name: first.data, last_name: last.data }
   }
 
@@ -79,7 +88,7 @@ export async function finishAccount(
       .eq('id', user.id)
     if (error) {
       console.error('[onboarding/account] name update failed', error.code)
-      return { error: 'We couldn’t save your name. Please try again.' }
+      return { ok: false, error: 'We couldn’t save your name. Please try again.' }
     }
   }
 
@@ -99,7 +108,7 @@ export async function finishAccount(
     })
     if (error) {
       console.error('[onboarding/account] metadata update failed', error.code)
-      return { error: 'We couldn’t save your details. Please try again.' }
+      return { ok: false, error: 'We couldn’t save your details. Please try again.' }
     }
   }
 
@@ -107,8 +116,7 @@ export async function finishAccount(
   // professional (INDEPENDENT) path.
   await setSignupPathIfUnset(createAdminClient(), user.id, 'INDEPENDENT')
   await applyGoogleSignupAnswers(user.id)
-
-  redirect('/onboarding/professional')
+  return { ok: true }
 }
 
 /**

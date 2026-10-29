@@ -7,14 +7,15 @@ import { getSupabaseConfig } from '@/lib/supabase/config'
 import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
-import { OrgAccountForm } from './form'
+import { OrgAccountFlow } from './form'
 
 export const metadata: Metadata = { title: 'Finish creating your organization account — Sanus' }
 
 /**
  * Landing page after "Continue with Google" on /signup/organization (via
- * /callback): the account screen's name and consent checkbox, then on to
- * screens 4–8 at /onboarding/organization.
+ * /callback): the account screen Google skipped, one question at a time (a
+ * name only if Google didn't share one, then the consent checkbox), then on
+ * to screens 4–8 at /onboarding/organization.
  */
 export default async function OrgAccountPage({
   searchParams,
@@ -22,17 +23,21 @@ export default async function OrgAccountPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   // The signup door (PRACTICE / COMPANY / HIRING): from ?source= when it
-  // survived the trip, else the cookie /signup/organization set.
+  // survived the trip (or was picked on /onboarding/professional), else the
+  // cookie /signup/organization set.
+  const params = await searchParams
+  const fromPicker = params.from === 'pick'
   const source =
-    parseOrgSignupSource((await searchParams).source) ??
+    parseOrgSignupSource(params.source) ??
     parseOrgSignupSource((await cookies()).get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
 
   const form = (firstName: string, lastName: string) => (
-    <OrgAccountForm
-      prefill={{ firstName, lastName }}
+    <OrgAccountFlow
+      prefill={{ firstName: firstName.trim(), lastName: lastName.trim() }}
       termsVersion={TERMS_VERSION}
       orgTermsVersion={ORG_AGREEMENT_VERSION}
       source={source}
+      fromPicker={fromPicker}
     />
   )
   if (!getSupabaseConfig()) return form('', '')

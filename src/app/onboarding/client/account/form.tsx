@@ -1,92 +1,87 @@
 'use client'
 
-import { useActionState, useState } from 'react'
-import { Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { TermsConsent } from '@/components/auth/signup-shared'
+import { trackSignupCompleted } from '@/components/auth/signup-tracking'
 import { CheckRow } from '@/app/onboarding/professional/ui'
-import { finishClientAccount, type ClientAccountState } from './actions'
+import { QuestionFlow, SINGLE_STEP, type Screen } from '@/components/onboarding/question-flow'
+import { nameScreen } from '@/components/onboarding/account-screens'
+import { hasFullName, type NamePrefill } from '@/lib/onboarding/account-paths'
+import { isDemoMode } from '@/lib/demo/data'
+import { finishClientAccount } from './actions'
 
-export function ClientAccountForm({
+/**
+ * Client account step after "Continue with Google", one question per
+ * screen: a name only if Google didn't share one, then one consent screen
+ * (18+ and, when missing, Terms). Then straight on to their matches.
+ */
+export function ClientAccountFlow({
   prefill,
   needsTerms,
   termsVersion,
+  fromPicker,
 }: {
-  prefill: { firstName: string; lastName: string }
+  prefill: NamePrefill
   needsTerms: boolean
   termsVersion: string
+  /** Came from the "What brings you to Sanus?" screen: the back arrow returns there. */
+  fromPicker: boolean
 }) {
-  const [state, formAction, pending] = useActionState<ClientAccountState, FormData>(finishClientAccount, null)
+  const router = useRouter()
+  const [askName] = useState(() => !hasFullName(prefill))
   const [firstName, setFirstName] = useState(prefill.firstName)
   const [lastName, setLastName] = useState(prefill.lastName)
-  const [accepted, setAccepted] = useState(false)
   const [adult, setAdult] = useState(false)
+  const [accepted, setAccepted] = useState(false)
+  const next = useRef('/dashboard')
 
-  const canSubmit = firstName.trim() && lastName.trim() && adult && (!needsTerms || accepted)
-
-  return (
-    <div className="mx-auto max-w-md rounded-2xl border border-[#e4e5e7] bg-white p-6 sm:p-8">
-      <h1 className="text-2xl font-bold tracking-tight text-[#404145]">Finish creating your account</h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">Confirm your name and you&apos;re all set. Your answers stay private.</p>
-
-      <form action={formAction} className="mt-6 space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field id="first_name" label="First name" value={firstName} onChange={setFirstName} autoComplete="given-name" />
-          <Field id="last_name" label="Last name" value={lastName} onChange={setLastName} autoComplete="family-name" />
-        </div>
-
+  const consentScreen: Screen = {
+    id: 'account',
+    title: 'Finish creating your account',
+    sub: 'Your answers stay private.',
+    continueLabel: 'Agree and continue',
+    canContinue: () => adult && (!needsTerms || accepted),
+    save: async () => {
+      if (isDemoMode()) return { ok: true }
+      const res = await finishClientAccount({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        adult_attested: adult,
+        ...(needsTerms ? { accepted_terms: accepted, terms_version: termsVersion } : {}),
+      })
+      if (!res.ok) return res
+      next.current = res.next
+      if (needsTerms) trackSignupCompleted('CLIENT')
+      return { ok: true }
+    },
+    render: () => (
+      <div className="space-y-4">
         <CheckRow id="adult_attested" checked={adult} onChange={setAdult} label="I'm 18 or older." />
-        {adult && <input type="hidden" name="adult_attested" value="on" />}
+        {needsTerms && <TermsConsent checked={accepted} onChange={setAccepted} id="client-accept-terms" />}
+      </div>
+    ),
+  }
 
-        {needsTerms && (
-          <>
-            <TermsConsent checked={accepted} onChange={setAccepted} />
-            {accepted && <input type="hidden" name="accepted_terms" value="on" />}
-            <input type="hidden" name="terms_version" value={termsVersion} />
-          </>
-        )}
+  const screens: Screen[] = [
+    ...(askName
+      ? [nameScreen({ first: firstName, last: lastName, setFirst: setFirstName, setLast: setLastName })]
+      : []),
+    consentScreen,
+  ]
 
-        {state?.error && <p role="alert" className="text-sm text-red-600">{state.error}</p>}
-
-        <Button
-          type="submit"
-          disabled={!canSubmit || pending}
-          className="mt-3 h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]"
-        >
-          {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
-          Continue
-        </Button>
-      </form>
-    </div>
-  )
-}
-
-function Field({
-  id,
-  label,
-  value,
-  onChange,
-  autoComplete,
-}: {
-  id: string
-  label: string
-  value: string
-  onChange: (v: string) => void
-  autoComplete?: string
-}) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">{label}</Label>
-      <Input
-        id={id}
-        name={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={autoComplete}
-        className="h-11"
-      />
-    </div>
+    <QuestionFlow
+      screens={screens}
+      initialIndex={0}
+      stepWeights={SINGLE_STEP}
+      chrome="minimal"
+      flowId="client_account"
+      onExit={fromPicker ? () => router.push('/onboarding/professional') : undefined}
+      onFinish={() => {
+        router.replace(next.current)
+        router.refresh()
+      }}
+    />
   )
 }

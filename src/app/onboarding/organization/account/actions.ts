@@ -17,7 +17,16 @@ import {
 } from '@/lib/onboarding/org-signup-source'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 
-export type OrgAccountState = { error?: string } | null
+export type OrgAccountResult = { ok: true } | { ok: false; error: string }
+
+export interface OrgAccountInput {
+  first_name: string
+  last_name: string
+  accepted_terms: boolean
+  terms_version: string
+  org_terms_version: string
+  source?: string | null
+}
 
 const text = (label: string, max: number) =>
   z.string().trim().min(1, `${label} is required`).max(max, `${label} must be ${max} characters or fewer`)
@@ -27,9 +36,10 @@ const text = (label: string, max: number) =>
  * account into an organization (if it was created as a professional), save
  * screens 1–2 carried in the cookie, and record the one consent checkbox
  * (Terms of Service, Privacy Policy, Organization Terms). No title or
- * phone: those are dashboard items now. Then on to screens 4–8.
+ * phone: those are dashboard items now. Then on to screens 4–8 (the flow
+ * navigates there itself; this returns a result instead of redirecting).
  */
-export async function finishOrgAccount(_prev: OrgAccountState, formData: FormData): Promise<OrgAccountState> {
+export async function finishOrgAccount(input: OrgAccountInput): Promise<OrgAccountResult> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -38,16 +48,16 @@ export async function finishOrgAccount(_prev: OrgAccountState, formData: FormDat
   const gate = await mfaGate(supabase)
   if (gate !== 'ok') redirect(gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify')
 
-  const first = text('First name', 100).safeParse(formData.get('first_name') ?? '')
-  if (!first.success) return { error: first.error.issues[0].message }
-  const last = text('Last name', 100).safeParse(formData.get('last_name') ?? '')
-  if (!last.success) return { error: last.error.issues[0].message }
+  const first = text('First name', 100).safeParse(input.first_name ?? '')
+  if (!first.success) return { ok: false, error: first.error.issues[0].message }
+  const last = text('Last name', 100).safeParse(input.last_name ?? '')
+  if (!last.success) return { ok: false, error: last.error.issues[0].message }
 
-  if (formData.get('accepted_terms') !== 'on') {
-    return { error: 'Please agree to the Terms of Service, Privacy Policy, and Organization Terms to continue.' }
+  if (input.accepted_terms !== true) {
+    return { ok: false, error: 'Please agree to the Terms of Service, Privacy Policy, and Organization Terms to continue.' }
   }
-  if (formData.get('terms_version') !== TERMS_VERSION || formData.get('org_terms_version') !== ORG_AGREEMENT_VERSION) {
-    return { error: 'Our Terms were updated — please refresh the page and review them.' }
+  if (input.terms_version !== TERMS_VERSION || input.org_terms_version !== ORG_AGREEMENT_VERSION) {
+    return { ok: false, error: 'Our Terms were updated — please refresh the page and review them.' }
   }
 
   const admin = createAdminClient()
@@ -57,6 +67,7 @@ export async function finishOrgAccount(_prev: OrgAccountState, formData: FormDat
   if (profile?.role === 'contractor') {
     if (!(await canConvertNewProfessional(admin, user))) {
       return {
+        ok: false,
         error:
           'This Google account is already set up as a professional. Sign out and use a different account for your organization.',
       }
@@ -65,7 +76,7 @@ export async function finishOrgAccount(_prev: OrgAccountState, formData: FormDat
       await convertToOrg(admin, user.id, contactName)
     } catch (err) {
       console.error('[onboarding/organization/account] convert failed', err)
-      return { error: 'We couldn’t set up your organization account. Please try again.' }
+      return { ok: false, error: 'We couldn’t set up your organization account. Please try again.' }
     }
   } else if (profile?.role !== 'facility' && profile?.role !== 'staffing_agency') {
     redirect('/dashboard')
@@ -75,7 +86,7 @@ export async function finishOrgAccount(_prev: OrgAccountState, formData: FormDat
   // Validated against the org doors; if it was lost, leave it unset.
   const cookieStore = await cookies()
   const source =
-    parseOrgSignupSource(formData.get('source')) ??
+    parseOrgSignupSource(input.source) ??
     parseOrgSignupSource(cookieStore.get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
   if (source) await setSignupPathIfUnset(admin, user.id, source)
 
@@ -116,10 +127,10 @@ export async function finishOrgAccount(_prev: OrgAccountState, formData: FormDat
   ])
   if (orgError || metaError) {
     console.error('[onboarding/organization/account] save failed', orgError ?? metaError)
-    return { error: 'We couldn’t save your details. Please try again.' }
+    return { ok: false, error: 'We couldn’t save your details. Please try again.' }
   }
 
   cookieStore.delete(ORG_SIGNUP_SOURCE_COOKIE)
   cookieStore.delete(ORG_SIGNUP_ANSWERS_COOKIE)
-  redirect('/onboarding/organization')
+  return { ok: true }
 }
