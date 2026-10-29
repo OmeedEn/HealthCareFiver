@@ -120,7 +120,8 @@ export function buildOrgChecklist(input: OrgChecklistInput): ChecklistItem[] {
     label: 'Accept the organization agreement',
     hint: approved ? 'Before your first listing or post goes live.' : 'Unlocks once you’re approved.',
     done: !!org.org_agreement_accepted_at,
-    href: '/dashboard#org-agreement',
+    // The go-live flow (agreement → payouts → first listing).
+    href: '/go-live',
     locked: !approved,
   })
   items.push({
@@ -129,7 +130,7 @@ export function buildOrgChecklist(input: OrgChecklistInput): ChecklistItem[] {
     label: 'Set up payouts',
     hint: 'Needed before your first paid event or service.',
     done: input.payoutsOnboarded,
-    href: '/facility/payments',
+    href: '/facility/payouts',
     locked: !approved,
   })
 

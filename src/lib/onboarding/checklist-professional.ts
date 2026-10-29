@@ -140,6 +140,9 @@ export interface ProfessionalChecklistInput {
 const text = (v: unknown) => typeof v === 'string' && v.trim().length > 0
 const list = (v: unknown) => Array.isArray(v) && v.some(text)
 
+/** Everything after approval (agreement, payouts, first listing), one screen at a time. */
+const GO_LIVE = '/go-live'
+
 export function buildProfessionalChecklist(input: ProfessionalChecklistInput): ChecklistItem[] {
   const { branch, profile: p, credentials } = input
   const status = input.verificationStatus ?? 'not_submitted'
@@ -154,7 +157,7 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
     label: 'Accept the provider agreement',
     hint: approved ? 'Required before your first listing publishes.' : lockedHint,
     done: !!p.contractor_agreement_accepted_at,
-    href: '/go-live',
+    href: GO_LIVE,
     locked: !approved,
   })
   if (input.listings) {
@@ -168,7 +171,8 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
           ? 'You have a draft. Submit it for review once you’re approved.'
           : 'Save it as a draft anytime. It publishes once you’re approved.',
       done: published + inReview > 0,
-      href: total > 0 ? '/contractor/listings' : '/contractor/listings/new',
+      // Approved: the go-live flow's first-listing screens.
+      href: total > 0 ? '/contractor/listings' : approved ? `${GO_LIVE}?step=listing` : '/contractor/listings/new',
     })
   }
   if (p.offers_high_risk_services) {
@@ -187,7 +191,7 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
     label: 'Set up payouts',
     hint: approved ? 'Before your first paid booking.' : lockedHint,
     done: input.stripeConnectOnboarded,
-    href: '/contractor/payments',
+    href: `${GO_LIVE}?step=payouts`,
     locked: !approved,
   })
 

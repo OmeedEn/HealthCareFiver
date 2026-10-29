@@ -41,7 +41,7 @@ const NOTIFICATION: Record<
   approve: {
     type: 'verification_approved',
     title: 'Your organization is approved',
-    body: 'You can now message professionals and review applicants. Accept the Organization Agreement on your dashboard before your first listing or post goes live.',
+    body: 'You can now message professionals and review applicants. Finish going live: accept the Organization Agreement, set up payouts, and add your first listing.',
   },
   needs_info: {
     type: 'verification_more_info_requested',
@@ -149,7 +149,7 @@ export async function decideOrganization(orgId: string, decision: OrgDecision, f
   const n = NOTIFICATION[decision]
   if (n) {
     const { error: nErr } = await db.from('notifications').insert({
-      user_id: orgId, type: n.type, title: n.title, body: n.body, data: { href: '/dashboard' },
+      user_id: orgId, type: n.type, title: n.title, body: n.body, data: { href: decision === 'approve' ? '/go-live' : '/dashboard' },
     })
     if (nErr) console.error('[admin/organizations] notification failed', nErr)
   }

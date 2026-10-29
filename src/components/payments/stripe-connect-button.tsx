@@ -9,6 +9,28 @@ import { Loader2, CreditCard, CheckCircle } from 'lucide-react'
 
 import type { ConnectReturnTarget } from '@/lib/stripe/connect'
 
+/**
+ * Starts (or resumes) Stripe-hosted Connect onboarding and navigates there.
+ * Resolves only on failure (with the message); on success the browser is
+ * already leaving for Stripe, so callers can keep their spinner.
+ */
+export async function startStripeConnect(returnTo: ConnectReturnTarget): Promise<string> {
+  try {
+    const res = await fetch('/api/stripe/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ returnTo }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return data.error ?? 'Failed to create Stripe Connect account'
+    if (!data.url) return 'Failed to start Stripe onboarding'
+    window.location.href = data.url
+    return new Promise<string>(() => {})
+  } catch {
+    return 'Failed to set up payments'
+  }
+}
+
 interface StripeConnectButtonProps {
   isOnboarded: boolean
   /** Page Stripe-hosted onboarding returns to. Defaults to /contractor/payments. */
