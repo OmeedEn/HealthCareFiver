@@ -1,8 +1,11 @@
-import type { Metadata } from 'next'
-import { UnsureSignupFlow } from './flow'
+import { redirect } from 'next/navigation'
+import { signupStartUrl } from '@/lib/onboarding/signup-start'
 
-export const metadata: Metadata = { title: 'Tell us what you do — Sanus' }
-
-export default function UnsureSignupPage() {
-  return <UnsureSignupFlow />
+// Not sure signup is the "Not sure" path of the one /signup flow.
+export default async function UnsureSignupRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  redirect(signupStartUrl('unsure', await searchParams))
 }

@@ -13,6 +13,7 @@ import {
 import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
 import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
+import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
 import {
@@ -336,14 +337,17 @@ export async function POST(request: NextRequest) {
       data,
       // When email confirmations are on, the link must go through /callback
       // (PKCE code exchange) rather than the bare Site URL.
-      // Professionals land straight in the onboarding wizard.
+      // Professionals land straight in the onboarding wizard; clients on
+      // their matches (interests are required), like the in-session path.
       emailRedirectTo: authCallbackUrl(
         request,
         body.role === 'contractor'
           ? '/onboarding/professional'
           : body.role === 'facility'
             ? '/onboarding/organization'
-            : '/dashboard'
+            : body.role === 'client' && body.interests.length > 0
+              ? CLIENT_MATCHES_PATH
+              : '/dashboard'
       ),
     },
   })
