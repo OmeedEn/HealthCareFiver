@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
+import { signOutAndRedirect } from '@/lib/auth/sign-out'
 import { isDemoMode, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,7 +32,6 @@ import {
   Monitor,
   Lock,
 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 const ALLOWED_AVATAR_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
@@ -107,7 +107,6 @@ function initialsFromEmail(email: string): string {
 }
 
 export default function SettingsPage() {
-  const router = useRouter()
   const avatarInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -362,10 +361,8 @@ export default function SettingsPage() {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error || 'Failed to delete account')
       }
-      const supabase = createClient()
-      await supabase.auth.signOut()
       toast.success('Account deleted')
-      router.push('/')
+      await signOutAndRedirect('/')
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to delete account'
