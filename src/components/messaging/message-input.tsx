@@ -126,6 +126,13 @@ function VideoRecorderDialog({
           <video src={resultUrl} controls playsInline className="w-full rounded-lg bg-black" />
         ) : (
           <div className="relative">
+            {!rec.stream && (
+              <p className="absolute inset-0 z-10 flex items-center justify-center px-6 text-center text-sm text-white">
+                {rec.requesting
+                  ? 'Allow camera and microphone access in the prompt near your address bar.'
+                  : 'Starting camera…'}
+              </p>
+            )}
             <video
               ref={liveRef}
               autoPlay
@@ -281,7 +288,7 @@ export function MessageInput({
                   size="icon-sm"
                   aria-label={voice.recording ? 'Stop recording' : 'Record a voice message'}
                   title={voice.recording ? 'Stop recording' : 'Record a voice message'}
-                  disabled={sending}
+                  disabled={sending || voice.requesting}
                   onClick={toggleVoice}
                 >
                   {voice.recording ? <SquareIcon className="size-4" /> : <MicIcon className="size-4" />}
@@ -300,7 +307,12 @@ export function MessageInput({
             )}
           </div>
         )}
-        {voice.recording ? (
+        {voice.requesting ? (
+          <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#62646a]">
+            <Loader2Icon className="size-4 animate-spin" />
+            Allow microphone access in the prompt near your address bar.
+          </div>
+        ) : voice.recording ? (
           <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#404145]">
             <CircleIcon className="size-2.5 animate-pulse fill-red-500 text-red-500" />
             Recording {formatDuration(voice.seconds)}

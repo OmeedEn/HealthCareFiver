@@ -35,6 +35,8 @@ export function useMediaRecorder(kind: Kind) {
   const [recording, setRecording] = useState(false)
   const [seconds, setSeconds] = useState(0)
   const [error, setError] = useState<string | null>(null)
+  // True while the browser's permission prompt is open.
+  const [requesting, setRequesting] = useState(false)
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const resolveRef = useRef<((f: File | null) => void) | null>(null)
@@ -50,6 +52,7 @@ export function useMediaRecorder(kind: Kind) {
   const open = useCallback(async () => {
     setError(null)
     if (streamRef.current) return streamRef.current
+    setRequesting(true)
     try {
       const s = await navigator.mediaDevices.getUserMedia(
         kind === 'audio'
@@ -66,6 +69,8 @@ export function useMediaRecorder(kind: Kind) {
           : 'Camera access was blocked. Allow it in your browser settings.'
       )
       return null
+    } finally {
+      setRequesting(false)
     }
   }, [kind])
 
@@ -136,6 +141,7 @@ export function useMediaRecorder(kind: Kind) {
   return {
     stream,
     recording,
+    requesting,
     seconds,
     maxSeconds: MAX_SECONDS[kind],
     /** Callers should stop() when this turns true. */
