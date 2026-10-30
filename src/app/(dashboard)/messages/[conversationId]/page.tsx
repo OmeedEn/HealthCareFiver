@@ -15,6 +15,7 @@ import {
 } from '@/components/messaging/message-thread'
 import { attachmentColumns, uploadAttachment } from '@/lib/messaging/attachments'
 import { MessageInput } from '@/components/messaging/message-input'
+import { useLiveMessages } from '@/components/messaging/use-live-messages'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -173,45 +174,26 @@ export default function ConversationPage() {
     }
   }, [isDemo, fetchMessages])
 
-  // Subscribe to realtime messages
-  useEffect(() => {
-    if (!currentUserId || isDemo) return
+  const addMessage = useCallback(
+    (m: MessageItem) => {
+      setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]))
+      if (currentUserId && m.sender_id !== currentUserId && !m.read_at) {
+        createClient()
+          .from('messages')
+          .update({ is_read: true, read_at: new Date().toISOString() })
+          .eq('id', m.id)
+          .then()
+      }
+    },
+    [currentUserId]
+  )
 
-    const supabase = createClient()
-    const channel = supabase
-      .channel(`messages-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as MessageItem
-          setMessages((prev) => {
-            // Avoid duplicates
-            if (prev.some((m) => m.id === newMsg.id)) return prev
-            return [...prev, newMsg]
-          })
-
-          // Mark as read if it's not our own message
-          if (newMsg.sender_id !== currentUserId) {
-            supabase
-              .from('messages')
-              .update({ read_at: new Date().toISOString() })
-              .eq('id', newMsg.id)
-              .then()
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [conversationId, currentUserId, isDemo])
+  useLiveMessages(
+    conversationId,
+    messages.at(-1)?.created_at ?? null,
+    addMessage,
+    !isDemo && !!currentUserId
+  )
 
   const handleSend = async (content: string, file: File | null = null) => {
     if (!currentUserId) return
@@ -241,17 +223,23 @@ export default function ConversationPage() {
     }
 
     // conversations.last_message_* is kept current by a DB trigger.
-    const { error } = await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: currentUserId,
-      content,
-      ...attachmentColumns(attachment),
-    })
+    const { data: sent, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: currentUserId,
+        content,
+        ...attachmentColumns(attachment),
+      })
+      .select(MESSAGE_SELECT)
+      .single()
 
-    if (error) {
+    if (error || !sent) {
       toast.error('Failed to send message.')
-      throw error
+      throw error ?? new Error('Failed to send message.')
     }
+    // Show it right away instead of waiting for the live update.
+    addMessage(sent as unknown as MessageItem)
   }
 
   const otherName = otherUser

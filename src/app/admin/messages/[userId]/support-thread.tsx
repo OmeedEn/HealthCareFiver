@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useLiveMessages } from '@/components/messaging/use-live-messages'
 import { MessageThread } from '@/components/messaging/message-thread'
 import { MessageInput } from '@/components/messaging/message-input'
 import { uploadAttachment } from '@/lib/messaging/attachments'
@@ -37,30 +38,16 @@ export function AdminSupportThread({
   }, [conversationId, initialMessages, userId])
 
   // Live updates (user replies, other admins' messages).
-  useEffect(() => {
-    if (!conversationId) return
-    const supabase = createClient()
-    const channel = supabase
-      .channel(`admin-support-${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const m = payload.new as MessageItem
-          addMessage(m)
-          if (m.sender_id === userId) markSupportThreadRead(conversationId).catch(() => {})
-        }
-      )
-      .subscribe()
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [conversationId, userId, addMessage])
+  const onLive = useCallback(
+    (m: MessageItem) => {
+      addMessage(m)
+      if (conversationId && m.sender_id === userId && !m.read_at) {
+        markSupportThreadRead(conversationId).catch(() => {})
+      }
+    },
+    [addMessage, conversationId, userId]
+  )
+  useLiveMessages(conversationId, messages.at(-1)?.created_at ?? null, onLive)
 
   async function handleSend(content: string, file: File | null) {
     try {

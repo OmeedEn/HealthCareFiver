@@ -88,7 +88,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Verification', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Credentials', href: '/admin/credentials', icon: FileText },
-  { label: 'Messages', href: '/messages', icon: MessageSquare },
+  { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { label: 'Admin Console', href: '/admin', icon: LayoutDashboard },
   { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Events', href: '/events', icon: GraduationCap },
