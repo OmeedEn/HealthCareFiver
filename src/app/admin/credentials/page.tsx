@@ -17,12 +17,16 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { formatDate } from '@/lib/utils/format'
 import { toast } from 'sonner'
+import Link from 'next/link'
 import {
   CheckCircle,
   XCircle,
   ExternalLink,
   Loader2,
   ShieldCheck,
+  Mail,
+  Phone,
+  User,
 } from 'lucide-react'
 import {
   isDemoMode,
@@ -43,6 +47,8 @@ interface PendingCredential {
     first_name: string
     last_name: string
   } | null
+  email?: string | null
+  phone?: string | null
 }
 
 export default function AdminCredentialsPage() {
@@ -91,7 +97,23 @@ export default function AdminCredentialsPage() {
         .in('status', ['pending_review', 'pending_upload'])
         .order('created_at', { ascending: true })
 
-      setCredentials((data ?? []) as unknown as PendingCredential[])
+      const rows = (data ?? []) as unknown as PendingCredential[]
+
+      // Pull contact info so the admin can reach out about missing documents.
+      const ids = [...new Set(rows.map((r) => r.contractor_id))]
+      if (ids.length) {
+        const { data: contacts } = await supabase
+          .from('profiles')
+          .select('id, email, phone')
+          .in('id', ids)
+        const byId = new Map((contacts ?? []).map((p) => [p.id, p]))
+        for (const r of rows) {
+          r.email = byId.get(r.contractor_id)?.email ?? null
+          r.phone = byId.get(r.contractor_id)?.phone ?? null
+        }
+      }
+
+      setCredentials(rows)
       setLoading(false)
     }
 
@@ -231,10 +253,13 @@ export default function AdminCredentialsPage() {
                   <div className="flex flex-1 flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-[#404145]">
+                        <Link
+                          href={`/admin/users/${credential.contractor_id}`}
+                          className="text-sm font-semibold text-[#404145] hover:text-[#1dbf73] hover:underline"
+                        >
                           {credential.contractor_profiles?.first_name ?? ''}{' '}
                           {credential.contractor_profiles?.last_name ?? ''}
-                        </p>
+                        </Link>
                         <Badge
                           variant={
                             credential.status === 'pending_review'
@@ -257,6 +282,40 @@ export default function AdminCredentialsPage() {
                       <p className="text-xs text-[#6b7280]">
                         Submitted {formatDate(credential.created_at)}
                       </p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs">
+                        {credential.email && (
+                          <a
+                            href={`mailto:${credential.email}?subject=${encodeURIComponent(`Your ${credential.name} credential`)}`}
+                            className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline"
+                          >
+                            <Mail className="size-3" />
+                            {credential.email}
+                          </a>
+                        )}
+                        {credential.phone && (
+                          <a
+                            href={`tel:${credential.phone}`}
+                            className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline"
+                          >
+                            <Phone className="size-3" />
+                            {credential.phone}
+                          </a>
+                        )}
+                        <Link
+                          href={`/admin/users/${credential.contractor_id}`}
+                          className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                        >
+                          <User className="size-3" />
+                          Full profile
+                        </Link>
+                        <Link
+                          href={`/admin/verification/${credential.contractor_id}`}
+                          className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                        >
+                          <ShieldCheck className="size-3" />
+                          Verification review
+                        </Link>
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {credential.document_url ? (
