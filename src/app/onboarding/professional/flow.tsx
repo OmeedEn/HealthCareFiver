@@ -320,9 +320,12 @@ export function ProfessionalOnboardingFlow({
       flowId="professional"
       onFinish={() => {
         // Straight to the dashboard: it shows the under-review banner and
-        // the Finish your profile checklist.
+        // the Finish your profile checklist. No router.refresh() here: it
+        // re-requests this page, which now redirects to /dashboard because
+        // onboarding is complete, and that races the replace below and
+        // leaves the app stuck on this screen. /dashboard is dynamic, so the
+        // navigation already fetches it fresh.
         router.replace('/dashboard')
-        router.refresh()
       }}
     />
   )
