@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
 import { countPendingClassification } from '@/lib/admin/classification'
-import { countUnreadSupport } from '@/lib/admin/support'
+import { countNeedsReply } from '@/lib/admin/support'
 import { AdminSignOutButton } from './sign-out-button'
 import { AdminNav } from './admin-nav'
 
@@ -26,7 +26,7 @@ export default async function AdminLayout({
         .from('credentials')
         .select('id', { count: 'exact', head: true })
         .eq('status', 'pending_review'),
-      countUnreadSupport(db).catch(() => 0),
+      countNeedsReply(db).catch(() => 0),
     ])
     badges['/admin/classification'] = classification
     badges['/admin/verification'] = verification.count ?? 0

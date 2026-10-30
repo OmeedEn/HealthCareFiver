@@ -40,6 +40,10 @@ export interface SupportThreadRow {
   lastMessageAt: string | null
   lastMessagePreview: string | null
   unread: number
+  /** The user wrote last: the team owes them an answer. */
+  needsReply: boolean
+  /** The team wrote last: waiting on the user. */
+  awaitingUser: boolean
 }
 
 /**
@@ -74,17 +78,52 @@ export async function listSupportThreads(db: AdminDb): Promise<SupportThreadRow[
   const [{ data }, unread] = await Promise.all([
     db
       .from('conversations')
-      .select('id, participant_1, last_message_at, last_message_preview, created_at')
+      .select('id, participant_1, last_message_at, last_message_preview, last_message_sender_id, created_at')
       .eq('is_support', true)
       .order('last_message_at', { ascending: false, nullsFirst: false })
       .limit(500),
     unreadSupportCounts(db),
   ])
-  return (data ?? []).map((c) => ({
-    id: c.id as string,
-    userId: c.participant_1 as string,
-    lastMessageAt: (c.last_message_at as string | null) ?? null,
-    lastMessagePreview: (c.last_message_preview as string | null) ?? null,
-    unread: unread.get(c.id as string) ?? 0,
-  }))
+  const rows = (data ?? []).map((c) => {
+    const lastSender = (c.last_message_sender_id as string | null) ?? null
+    return {
+      id: c.id as string,
+      userId: c.participant_1 as string,
+      lastMessageAt: (c.last_message_at as string | null) ?? null,
+      lastMessagePreview: (c.last_message_preview as string | null) ?? null,
+      unread: unread.get(c.id as string) ?? 0,
+      needsReply: lastSender !== null && lastSender === c.participant_1,
+      awaitingUser: lastSender !== null && lastSender !== c.participant_1,
+    }
+  })
+  // Threads waiting on the team first, then newest.
+  return rows.sort((a, b) => Number(b.needsReply) - Number(a.needsReply))
+}
+
+/** Support threads where the user wrote last (nav badge). */
+export async function countNeedsReply(db: AdminDb): Promise<number> {
+  const { data } = await db
+    .from('conversations')
+    .select('participant_1, last_message_sender_id')
+    .eq('is_support', true)
+    .not('last_message_sender_id', 'is', null)
+    .limit(5000)
+  return (data ?? []).filter((c) => c.last_message_sender_id === c.participant_1).length
+}
+
+/** Seen within this window = online. Heartbeat runs every 60s. */
+export const ONLINE_WINDOW_MS = 150_000
+
+/** user id -> last_seen_at (ISO) for the given users. */
+export async function loadPresence(db: AdminDb, userIds: string[]): Promise<Record<string, string>> {
+  const ids = [...new Set(userIds)]
+  const out: Record<string, string> = {}
+  for (let i = 0; i < ids.length; i += 500) {
+    const { data } = await db
+      .from('user_presence')
+      .select('user_id, last_seen_at')
+      .in('user_id', ids.slice(i, i + 500))
+    for (const r of data ?? []) out[r.user_id as string] = r.last_seen_at as string
+  }
+  return out
 }

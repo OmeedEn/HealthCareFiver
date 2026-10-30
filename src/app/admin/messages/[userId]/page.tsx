@@ -3,7 +3,8 @@ import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
-import { findSupportThread } from '@/lib/admin/support'
+import { findSupportThread, loadPresence } from '@/lib/admin/support'
+import { LiveStatus } from './live-status'
 import { audit } from '@/lib/audit/log'
 import { AdminDemoNotice } from '@/components/admin/demo-notice'
 import { MESSAGE_SELECT, type MessageItem } from '@/lib/messaging/types'
@@ -24,12 +25,13 @@ export default async function AdminUserMessagesPage({
 
   const { admin, db } = await requireAdmin()
 
-  const [{ data: profile }, { data: c }, { data: cl }, { data: f }, conversationId] = await Promise.all([
+  const [{ data: profile }, { data: c }, { data: cl }, { data: f }, conversationId, presence] = await Promise.all([
     db.from('profiles').select('id, role, email, phone').eq('id', userId).maybeSingle(),
     db.from('contractor_profiles').select('first_name, last_name').eq('id', userId).maybeSingle(),
     db.from('client_profiles').select('first_name, last_name').eq('id', userId).maybeSingle(),
     db.from('facility_profiles').select('facility_name').eq('id', userId).maybeSingle(),
     findSupportThread(db, userId),
+    loadPresence(db, [userId]),
   ])
   if (!profile) notFound()
 
@@ -83,6 +85,7 @@ export default async function AdminUserMessagesPage({
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-semibold text-[#404145]">{name}</h1>
             {profile.role && <Badge variant="outline">{profile.role as string}</Badge>}
+            <LiveStatus userId={userId} initialLastSeen={presence[userId] ?? null} />
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             {profile.email && (

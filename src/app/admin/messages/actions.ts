@@ -1,7 +1,7 @@
 'use server'
 
 import { requireAdmin } from '@/lib/admin/guard'
-import { getOrCreateSupportThread } from '@/lib/admin/support'
+import { getOrCreateSupportThread, loadPresence } from '@/lib/admin/support'
 import { audit } from '@/lib/audit/log'
 import { resolveAppUrl } from '@/lib/compliance/notify'
 import { sendSupportMessageEmail } from '@/lib/email/resend'
@@ -147,4 +147,11 @@ export async function markSupportThreadRead(conversationId: string): Promise<voi
     .eq('conversation_id', thread.id)
     .eq('sender_id', thread.userId)
     .is('read_at', null)
+}
+
+/** Last time this user had the app open (ISO), for the live header status. */
+export async function getUserLastSeen(userId: string): Promise<string | null> {
+  const { db } = await requireAdmin()
+  if (!UUID.test(userId)) return null
+  return (await loadPresence(db, [userId]))[userId] ?? null
 }

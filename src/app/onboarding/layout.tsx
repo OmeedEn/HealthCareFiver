@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { PresenceHeartbeat } from '@/components/presence-heartbeat'
 
 // Minimal, generic shell for post-signup onboarding flows (/onboarding/*):
 // logo header + a centered column. Individual pages choose their own width.
@@ -9,6 +10,7 @@ export default function OnboardingLayout({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-[#fafafa]">
+      <PresenceHeartbeat />
       <header className="border-b border-[#e4e5e7] bg-white">
         <div className="mx-auto flex h-16 w-full max-w-3xl items-center px-6">
           <Link href="/" className="flex items-center gap-2">

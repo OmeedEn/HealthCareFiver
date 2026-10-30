@@ -11,15 +11,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { MessageSquarePlusIcon, SearchIcon } from 'lucide-react'
+import { PresenceDot, lastSeenLabel } from '@/components/admin/presence-dot'
 
 interface Recipient {
   id: string
   name: string
   email: string | null
   role: string | null
+  lastSeenAt: string | null
+  online: boolean
 }
 
-export function RecipientPicker({ recipients }: { recipients: Recipient[] }) {
+export function RecipientPicker({ recipients, now }: { recipients: Recipient[]; now: number }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const router = useRouter()
@@ -66,13 +69,21 @@ export function RecipientPicker({ recipients }: { recipients: Recipient[] }) {
                     onClick={() => router.push(`/admin/messages/${r.id}`)}
                     className="flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left hover:bg-[#f7f7f7]"
                   >
-                    <span className="min-w-0">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <PresenceDot lastSeenAt={r.lastSeenAt} now={now} />
+                      <span className="min-w-0">
                       <span className="block truncate text-sm font-medium text-[#404145]">
                         {r.name !== '—' ? r.name : r.email ?? r.id}
                       </span>
                       {r.email && <span className="block truncate text-xs text-[#62646a]">{r.email}</span>}
+                      </span>
                     </span>
-                    {r.role && <span className="shrink-0 text-xs text-[#9ca3af]">{r.role}</span>}
+                    <span className="flex shrink-0 flex-col items-end">
+                      {r.role && <span className="text-xs text-[#9ca3af]">{r.role}</span>}
+                      <span className={r.online ? 'text-[11px] font-medium text-[#0f8f56]' : 'text-[11px] text-[#9ca3af]'}>
+                        {lastSeenLabel(r.lastSeenAt, now)}
+                      </span>
+                    </span>
                   </button>
                 </li>
               ))

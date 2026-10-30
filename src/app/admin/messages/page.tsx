@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
 import { listAdminUsers } from '@/lib/admin/data'
-import { listSupportThreads } from '@/lib/admin/support'
+import { listSupportThreads, loadPresence } from '@/lib/admin/support'
+import { AutoRefresh } from '@/components/admin/auto-refresh'
+import { PresenceDot, ReplyStateBadge, isOnline, lastSeenLabel } from '@/components/admin/presence-dot'
 import { formatRelativeTime } from '@/lib/utils/format'
 import { AdminDemoNotice } from '@/components/admin/demo-notice'
 import { cn } from '@/lib/utils'
@@ -18,14 +20,28 @@ export default async function AdminMessagesPage() {
 
   const { db } = await requireAdmin()
   const [threads, users] = await Promise.all([listSupportThreads(db), listAdminUsers(db)])
+  const nonAdmins = users.filter((u) => u.role !== 'admin')
+  const presence = await loadPresence(db, nonAdmins.map((u) => u.id))
+  // eslint-disable-next-line react-hooks/purity -- server render; "now" for online status
+  const now = Date.now()
   const byId = new Map(users.map((u) => [u.id, u]))
-  const recipients = users
-    .filter((u) => u.role !== 'admin')
-    .map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role }))
+  const recipients = nonAdmins
+    .map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      lastSeenAt: presence[u.id] ?? null,
+      online: isOnline(presence[u.id], now),
+    }))
+    .sort((a, b) => Number(b.online) - Number(a.online))
   const unreadTotal = threads.reduce((n, t) => n + t.unread, 0)
+  const needsReplyTotal = threads.filter((t) => t.needsReply).length
+  const onlineTotal = recipients.filter((r) => r.online).length
 
   return (
     <div className="space-y-6 font-sans">
+      <AutoRefresh seconds={30} />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-[#404145]">Messages</h1>
@@ -33,13 +49,22 @@ export default async function AdminMessagesPage() {
             Message any user as the Sanus team. They can reply with text, photos, voice messages or video.
           </p>
         </div>
-        <RecipientPicker recipients={recipients} />
+        <RecipientPicker recipients={recipients} now={now} />
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base text-[#404145]">Conversations</CardTitle>
-          {unreadTotal > 0 && <Badge className="bg-[#1dbf73] text-white">{unreadTotal} unread</Badge>}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[#62646a]">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-block size-2.5 rounded-full bg-[#1dbf73]" />
+              {onlineTotal} online
+            </span>
+            {needsReplyTotal > 0 && (
+              <Badge className="bg-amber-100 text-amber-800">{needsReplyTotal} need a reply</Badge>
+            )}
+            {unreadTotal > 0 && <Badge className="bg-[#1dbf73] text-white">{unreadTotal} unread</Badge>}
+          </div>
         </CardHeader>
         <CardContent>
           {threads.length === 0 ? (
@@ -62,15 +87,18 @@ export default async function AdminMessagesPage() {
                       href={`/admin/messages/${t.userId}`}
                       className={cn(
                         'flex items-center gap-3 rounded-md px-2 py-3 hover:bg-[#f7f7f7]',
+                        t.needsReply && 'border-l-2 border-amber-400',
                         t.unread > 0 && 'bg-[#f3fcf7]'
                       )}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
+                          <PresenceDot lastSeenAt={presence[t.userId]} now={now} />
                           <span className={cn('truncate text-sm text-[#404145]', t.unread > 0 ? 'font-semibold' : 'font-medium')}>
                             {name}
                           </span>
                           {u?.role && <Badge variant="outline" className="text-[10px]">{u.role}</Badge>}
+                          <ReplyStateBadge needsReply={t.needsReply} awaitingUser={t.awaitingUser} />
                         </div>
                         <p className="truncate text-xs text-[#62646a]">
                           {t.lastMessagePreview ?? 'No messages yet'}
@@ -80,6 +108,7 @@ export default async function AdminMessagesPage() {
                         <span className="text-xs text-[#9ca3af]">
                           {t.lastMessageAt ? formatRelativeTime(t.lastMessageAt) : ''}
                         </span>
+                        <span className="text-[11px] text-[#9ca3af]">{lastSeenLabel(presence[t.userId], now)}</span>
                         {t.unread > 0 && (
                           <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
                             {t.unread}

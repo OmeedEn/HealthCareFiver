@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
+import { PresenceHeartbeat } from '@/components/presence-heartbeat'
 import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
 
 type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
@@ -91,6 +92,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
+      <PresenceHeartbeat />
       <a
         href="#dashboard-main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#0f4c3a] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
