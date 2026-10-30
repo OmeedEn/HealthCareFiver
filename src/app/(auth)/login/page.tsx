@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { Loader2, MailWarning } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { GoogleIcon } from '@/components/auth/signup-account'
 
 // Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
 function safeRedirect(target: string | null): string {
@@ -50,6 +51,27 @@ function LoginForm() {
   // Set to the email that tried to sign in before confirming it.
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
   const [resending, setResending] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const noGoogleAccount = searchParams.get('error') === 'no_google_account'
+
+  // Existing Google accounts only: /callback undoes any account this creates.
+  async function handleGoogle() {
+    if (googleLoading) return
+    setGoogleLoading(true)
+    if (isDemoMode()) {
+      router.push(redirectTo)
+      return
+    }
+    const origin = (process.env.NEXT_PUBLIC_APP_URL || window.location.origin).replace(/\/$/, '')
+    const { error } = await createClient().auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${origin}/callback?intent=login&next=${encodeURIComponent(redirectTo)}` },
+    })
+    if (error) {
+      toast.error('Could not start Google sign-in. Please try again.')
+      setGoogleLoading(false)
+    }
+  }
 
   async function handleResend() {
     if (!unconfirmedEmail || resending) return
@@ -150,7 +172,38 @@ function LoginForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      {noGoogleAccount && (
+        <div role="alert" className="mt-6 rounded-lg border border-[#f5d68a] bg-[#fffaeb] p-4 text-sm text-[#404145]">
+          <p className="font-semibold">No Sanus account uses that Google account</p>
+          <p className="mt-1 text-[#62646a]">
+            Sign in with your email and password, or{' '}
+            <Link href="/signup" className="font-semibold text-[#1dbf73] hover:underline">
+              create an account
+            </Link>{' '}
+            (you can use Google there).
+          </p>
+        </div>
+      )}
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleGoogle}
+        disabled={googleLoading}
+        className="mt-8 h-11 w-full text-sm font-semibold text-[#404145]"
+      >
+        {googleLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <GoogleIcon />}
+        Continue with Google
+      </Button>
+      <p className="mt-2 text-center text-xs text-[#95979d]">For accounts created with Google.</p>
+
+      <div className="mt-6 flex items-center gap-3 text-xs text-[#95979d]">
+        <span className="h-px flex-1 bg-[#e4e5e7]" />
+        or sign in with email
+        <span className="h-px flex-1 bg-[#e4e5e7]" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-sm font-semibold text-[#404145]">
             Email address
