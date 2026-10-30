@@ -19,6 +19,9 @@ import { US_STATES } from '@/lib/utils/constants'
 import { getInitials } from '@/lib/utils/format'
 import { normalizeLanguages } from '@/lib/profile/languages'
 import { HeadshotUpload } from '@/components/contractor/headshot-upload'
+import { effectiveBranch, isProfessionalCategory, type CredentialBasis } from '@/lib/onboarding/professional-branch'
+import { PROFESSIONS_BY_BRANCH, PROFESSION_PLACEHOLDER } from '@/lib/onboarding/professions'
+import { normalizeWebsiteUrl, professionColumns } from '@/lib/onboarding/questions/professional'
 import { LanguagesInput } from '@/components/contractor/languages-input'
 import { toast } from 'sonner'
 import {
@@ -30,22 +33,30 @@ import {
   CircleDollarSign,
   MapPin,
   Check,
+  Eye,
+  Lock,
+  FileText,
   type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 
-// Broad category picked at /signup/professional (contractor_profiles.professional_category).
+// Broad category picked in onboarding (contractor_profiles.professional_category).
 const PROFESSIONAL_CATEGORY_LABELS: Record<string, string> = {
   clinical: 'Licensed clinical professional',
   allied: 'Allied or certified health practitioner',
   consultant: 'Healthcare consultant or advisor',
   educator: 'Health educator or trainer',
+  other: 'Something else',
 }
 
-// Keys must match the `contractor_type` Postgres enum
-// (20250523000001_create_enums.sql). CONTRACTOR_TYPE_LABELS in
-// lib/utils/constants uses different keys (e.g. 'registered_nurse'), which
-// the DB rejects, so this page keeps its own enum-aligned list.
+const CREDENTIAL_BASIS_LABELS: Record<CredentialBasis, string> = {
+  license: 'A state license',
+  certification: 'A certification',
+  none: 'Neither',
+}
+
+// Legacy `contractor_type` enum labels, only used to prefill the profession
+// for profiles created before onboarding stored it as text (license_type).
 const LICENSE_TYPE_LABELS: Record<string, string> = {
   rn: 'Registered Nurse (RN)',
   lpn: 'Licensed Practical Nurse (LPN)',
@@ -71,7 +82,12 @@ interface FormData {
   first_name: string
   last_name: string
   professional_category: string
-  contractor_type: string
+  /** Onboarding screen 2 answer; stored per branch (see professionColumns). */
+  profession: string
+  other_profession: string
+  credential_basis: string
+  certifying_organization: string
+  website_url: string
   headline: string
   bio: string
   specialties: string
@@ -93,7 +109,11 @@ const initialFormData: FormData = {
   first_name: '',
   last_name: '',
   professional_category: '',
-  contractor_type: '',
+  profession: '',
+  other_profession: '',
+  credential_basis: '',
+  certifying_organization: '',
+  website_url: '',
   headline: '',
   bio: '',
   specialties: '',
@@ -111,11 +131,67 @@ const initialFormData: FormData = {
   is_available: true,
 }
 
+type ProfileRow = Record<string, unknown> & {
+  professional_category?: string | null
+  credential_basis?: string | null
+  contractor_type?: string | null
+  specialties?: string[] | null
+}
+
+const text = (v: unknown) => (typeof v === 'string' ? v : '')
+
+/** The profession answer, read from wherever onboarding stored it. */
+function professionFromRow(d: ProfileRow): string {
+  if (d.professional_category === 'other') return ''
+  switch (effectiveBranch(d.professional_category, d.credential_basis)) {
+    case 'clinical':
+      return text(d.license_type) || (d.contractor_type && d.contractor_type !== 'other' ? LICENSE_TYPE_LABELS[d.contractor_type] ?? '' : '')
+    case 'allied':
+      return text(d.certification_type)
+    case 'consultant':
+      return Array.isArray(d.specialties) ? (d.specialties[0] ?? '') : ''
+    case 'educator':
+      return text(d.teaching_topics)
+  }
+}
+
+function rowToForm(d: ProfileRow): FormData {
+  const category = text(d.professional_category)
+  const branch = effectiveBranch(category, d.credential_basis)
+  const specialties = Array.isArray(d.specialties) ? d.specialties : []
+  return {
+    first_name: text(d.first_name),
+    last_name: text(d.last_name),
+    professional_category: category,
+    profession: professionFromRow(d),
+    other_profession: text(d.other_profession),
+    credential_basis: text(d.credential_basis),
+    certifying_organization: text(d.certifying_organization),
+    website_url: text(d.website_url),
+    headline: text(d.headline),
+    bio: text(d.bio),
+    // Consultants' profession is the first specialty; don't show it twice.
+    specialties: (category !== 'other' && branch === 'consultant' ? specialties.slice(1) : specialties).join(', '),
+    years_of_experience: d.years_of_experience != null ? String(d.years_of_experience) : '',
+    hourly_rate_min: d.hourly_rate_min != null ? String(d.hourly_rate_min) : '',
+    hourly_rate_max: d.hourly_rate_max != null ? String(d.hourly_rate_max) : '',
+    npi_number: text(d.npi_number),
+    state_license_number: text(d.state_license_number),
+    license_state: text(d.license_state),
+    city: text(d.city),
+    state: text(d.state),
+    zip_code: text(d.zip_code),
+    willing_to_travel: d.willing_to_travel === true,
+    travel_radius_miles: d.travel_radius_miles != null ? String(d.travel_radius_miles) : '',
+    is_available: d.is_available !== false,
+  }
+}
+
 function calculateCompletion(data: FormData): number {
   const fields = [
     data.first_name,
     data.last_name,
-    data.contractor_type,
+    data.professional_category === 'other' ? data.other_profession : data.profession,
     data.headline,
     data.bio,
     data.specialties,
@@ -138,6 +214,8 @@ export default function ContractorProfileEditPage() {
   const [formData, setFormData] = useState<FormData>(initialFormData)
   // contractor_profiles.languages (TEXT[])
   const [languages, setLanguages] = useState<string[]>([])
+  // contractor_profiles.telehealth_states (TEXT[], state codes)
+  const [telehealthStates, setTelehealthStates] = useState<string[]>([])
   // profiles.avatar_url — written immediately by <HeadshotUpload>
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -146,30 +224,7 @@ export default function ContractorProfileEditPage() {
   useEffect(() => {
     async function loadProfile() {
       if (isDemoMode()) {
-        const data = DEMO_CONTRACTOR
-        setFormData({
-          first_name: data.first_name ?? '',
-          last_name: data.last_name ?? '',
-          contractor_type: data.contractor_type ?? '',
-          headline: data.headline ?? '',
-          bio: data.bio ?? '',
-          specialties: Array.isArray(data.specialties)
-            ? data.specialties.join(', ')
-            : '',
-          years_of_experience: data.years_of_experience?.toString() ?? '',
-          hourly_rate_min: data.hourly_rate_min?.toString() ?? '',
-          hourly_rate_max: data.hourly_rate_max?.toString() ?? '',
-          npi_number: data.npi_number ?? '',
-          state_license_number: data.state_license_number ?? '',
-          license_state: data.license_state ?? '',
-          city: data.city ?? '',
-          state: data.state ?? '',
-          zip_code: data.zip_code ?? '',
-          willing_to_travel: data.willing_to_travel ?? false,
-          travel_radius_miles: data.travel_radius_miles?.toString() ?? '',
-          is_available: data.is_available ?? true,
-          professional_category: '',
-        })
+        setFormData(rowToForm(DEMO_CONTRACTOR as unknown as ProfileRow))
         setLanguages(['English', 'Spanish'])
         setLoading(false)
         return
@@ -192,29 +247,8 @@ export default function ContractorProfileEditPage() {
         .single()
 
       if (data) {
-        setFormData({
-          first_name: data.first_name ?? '',
-          last_name: data.last_name ?? '',
-          contractor_type: data.contractor_type ?? '',
-          headline: data.headline ?? '',
-          bio: data.bio ?? '',
-          specialties: Array.isArray(data.specialties)
-            ? data.specialties.join(', ')
-            : '',
-          years_of_experience: data.years_of_experience?.toString() ?? '',
-          hourly_rate_min: data.hourly_rate_min?.toString() ?? '',
-          hourly_rate_max: data.hourly_rate_max?.toString() ?? '',
-          npi_number: data.npi_number ?? '',
-          state_license_number: data.state_license_number ?? '',
-          license_state: data.license_state ?? '',
-          city: data.city ?? '',
-          state: data.state ?? '',
-          zip_code: data.zip_code ?? '',
-          willing_to_travel: data.willing_to_travel ?? false,
-          travel_radius_miles: data.travel_radius_miles?.toString() ?? '',
-          is_available: data.is_available ?? true,
-          professional_category: data.professional_category ?? '',
-        })
+        setFormData(rowToForm(data as ProfileRow))
+        setTelehealthStates(Array.isArray(data.telehealth_states) ? data.telehealth_states : [])
         setLanguages(Array.isArray(data.languages) ? data.languages : [])
         const linked = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles
         setAvatarUrl(linked?.avatar_url ?? null)
@@ -249,8 +283,9 @@ export default function ContractorProfileEditPage() {
     setSaving(true)
 
     if (isDemoMode()) {
-      toast.success('Profile updated successfully! (demo mode)')
+      toast.success('Profile saved. (demo mode)')
       router.push('/contractor/profile')
+      setSaving(false)
       return
     }
 
@@ -265,18 +300,47 @@ export default function ContractorProfileEditPage() {
         return
       }
 
-      const specialtiesArray = formData.specialties
+      let specialtiesArray = formData.specialties
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
+
+      const website = formData.website_url.trim()
+      const websiteUrl = website ? normalizeWebsiteUrl(website) : null
+      if (website && !websiteUrl) {
+        toast.error('Check your website link, e.g. example.com')
+        return
+      }
+
+      // Profession, stored exactly the way onboarding stores it.
+      const category = formData.professional_category
+      const isOther = category === 'other'
+      const branch = effectiveBranch(category, formData.credential_basis)
+      const profession = formData.profession.trim()
+      const professionCols: Record<string, unknown> = {}
+      if (isProfessionalCategory(category) && !isOther && profession) {
+        if (branch === 'consultant') {
+          specialtiesArray = [profession, ...specialtiesArray.filter((s) => s !== profession)]
+        } else {
+          Object.assign(professionCols, professionColumns(branch, profession))
+        }
+      }
+      // The credential badge on the public profile comes from contractor_type;
+      // only licensed clinical professions have one.
+      if (isProfessionalCategory(category) && branch !== 'clinical') professionCols.contractor_type = 'other'
 
       const profileCompletion = calculateCompletion(formData)
 
       const updatePayload = {
         first_name: formData.first_name || null,
         last_name: formData.last_name || null,
-        professional_category: formData.professional_category || null,
-        contractor_type: formData.contractor_type || null,
+        professional_category: category || null,
+        other_profession: isOther ? formData.other_profession.trim() || null : null,
+        credential_basis: isOther ? formData.credential_basis || null : null,
+        ...professionCols,
+        certifying_organization: branch === 'allied' ? formData.certifying_organization.trim() || null : undefined,
+        website_url: websiteUrl,
+        telehealth_states: telehealthStates.length > 0 ? telehealthStates : null,
         headline: formData.headline || null,
         bio: formData.bio || null,
         specialties: specialtiesArray.length > 0 ? specialtiesArray : null,
@@ -312,8 +376,8 @@ export default function ContractorProfileEditPage() {
       if (error) {
         toast.error('Failed to update profile: ' + error.message)
       } else {
-        toast.success('Profile updated successfully!')
-        router.push('/contractor/profile')
+        toast.success('Profile saved.')
+        router.push(`/pros/${user.id}`)
       }
     } catch (err) {
       toast.error('An unexpected error occurred.')
@@ -332,6 +396,7 @@ export default function ContractorProfileEditPage() {
   }
 
   const completion = calculateCompletion(formData)
+  const branch = effectiveBranch(formData.professional_category, formData.credential_basis)
   const fullName = `${formData.first_name} ${formData.last_name}`.trim()
 
   return (
@@ -344,11 +409,20 @@ export default function ContractorProfileEditPage() {
         Back to profile
       </Link>
 
-      <div className="mt-4">
-        <h1 className="text-3xl font-bold tracking-tight text-[#404145]">Edit profile</h1>
-        <p className="mt-1.5 text-base text-[#62646a]">
-          Keep your profile current so facilities can match you with the right shifts.
-        </p>
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[#404145]">Edit profile</h1>
+          <p className="mt-1.5 text-base text-[#62646a]">
+            Sections marked “On your profile” are what clients see, in the same order.
+          </p>
+        </div>
+        <Link
+          href="/contractor/profile"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f8f56] hover:underline"
+        >
+          <Eye className="size-4" aria-hidden="true" />
+          Preview your profile
+        </Link>
       </div>
 
       <form onSubmit={handleSubmit} className="mt-8">
@@ -430,8 +504,9 @@ export default function ContractorProfileEditPage() {
             <Section
               id="basic"
               icon={UserRound}
-              title="Basic info"
-              description="How you appear to clients and facilities."
+              title="Photo, name & profession"
+              description="The top of your public profile."
+              visibility="public"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div className="md:col-span-2">
@@ -447,182 +522,230 @@ export default function ContractorProfileEditPage() {
 
                 <div>
                   <FieldLabel htmlFor="first_name" required>First name</FieldLabel>
-                  <Input
-                    id="first_name"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={handleChange}
-                    placeholder="First name"
-                    required
-                    className={INPUT}
-                  />
+                  <Input id="first_name" name="first_name" value={formData.first_name} onChange={handleChange} placeholder="First name" required className={INPUT} />
                 </div>
                 <div>
                   <FieldLabel htmlFor="last_name" required>Last name</FieldLabel>
-                  <Input
-                    id="last_name"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={handleChange}
-                    placeholder="Last name"
-                    required
-                    className={INPUT}
-                  />
+                  <Input id="last_name" name="last_name" value={formData.last_name} onChange={handleChange} placeholder="Last name" required className={INPUT} />
                 </div>
 
                 <div className="md:col-span-2">
                   <FieldLabel htmlFor="headline">Headline</FieldLabel>
-                  <Input
-                    id="headline"
-                    name="headline"
-                    value={formData.headline}
-                    onChange={handleChange}
-                    placeholder="e.g., Experienced ICU Nurse"
-                    className={INPUT}
-                  />
-                  <Hint>A short tagline that appears at the top of your profile.</Hint>
+                  <Input id="headline" name="headline" value={formData.headline} onChange={handleChange} placeholder="e.g., Pediatric physical therapist in Irvine" className={INPUT} />
+                  <Hint>One line under your name.</Hint>
                 </div>
 
                 <div className="md:col-span-2">
-                  <FieldLabel htmlFor="bio">Bio</FieldLabel>
-                  <Textarea
-                    id="bio"
-                    name="bio"
-                    value={formData.bio}
-                    onChange={handleChange}
-                    placeholder="Tell clients about your background, experience, and how you work..."
-                    rows={7}
-                    className="mt-2 min-h-40 px-3.5 py-3 text-base md:text-[15px]"
-                  />
-                </div>
-              </div>
-            </Section>
-
-            <Section
-              id="languages"
-              icon={Languages}
-              title="Languages"
-              description="Select every language you can work with clients in."
-            >
-              <LanguagesInput value={languages} onChange={setLanguages} />
-            </Section>
-
-            <Section
-              id="professional"
-              icon={BriefcaseMedical}
-              title="Professional details"
-              description="Your license and experience help facilities trust and find you."
-            >
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                <div className="md:col-span-2 xl:col-span-3">
-                  <FieldLabel htmlFor="professional_category">Professional category</FieldLabel>
+                  <FieldLabel htmlFor="professional_category">What kind of professional are you?</FieldLabel>
                   <Select
                     items={PROFESSIONAL_CATEGORY_LABELS}
                     value={formData.professional_category}
                     onValueChange={(val) => handleSelectChange('professional_category', val)}
                   >
                     <SelectTrigger id="professional_category" className={SELECT}>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Select one" />
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(PROFESSIONAL_CATEGORY_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="xl:col-span-2">
-                  <FieldLabel htmlFor="contractor_type">License / profession type</FieldLabel>
-                  <Select
-                    items={LICENSE_TYPE_LABELS}
-                    value={formData.contractor_type}
-                    onValueChange={(val) => handleSelectChange('contractor_type', val)}
-                  >
-                    <SelectTrigger id="contractor_type" className={SELECT}>
-                      <SelectValue placeholder="Select type" />
+                {formData.professional_category === 'other' ? (
+                  <>
+                    <div>
+                      <FieldLabel htmlFor="other_profession">Your profession</FieldLabel>
+                      <Input id="other_profession" name="other_profession" value={formData.other_profession} onChange={handleChange} maxLength={100} placeholder="e.g., Lactation consultant" className={INPUT} />
+                    </div>
+                    <div>
+                      <FieldLabel htmlFor="credential_basis">Do you hold a license or certification?</FieldLabel>
+                      <Select
+                        items={CREDENTIAL_BASIS_LABELS}
+                        value={formData.credential_basis}
+                        onValueChange={(val) => handleSelectChange('credential_basis', val)}
+                      >
+                        <SelectTrigger id="credential_basis" className={SELECT}>
+                          <SelectValue placeholder="Select one" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(CREDENTIAL_BASIS_LABELS).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                ) : formData.professional_category ? (
+                  <div className="md:col-span-2">
+                    <FieldLabel htmlFor="profession">Profession or specialty</FieldLabel>
+                    <Input
+                      id="profession"
+                      name="profession"
+                      list="profession-options"
+                      value={formData.profession}
+                      onChange={handleChange}
+                      maxLength={100}
+                      placeholder={PROFESSION_PLACEHOLDER[branch]}
+                      className={INPUT}
+                    />
+                    <datalist id="profession-options">
+                      {PROFESSIONS_BY_BRANCH[branch].map((p) => (
+                        <option key={p} value={p} />
+                      ))}
+                    </datalist>
+                    <Hint>Pick from the list or type your own. Shown under your name.</Hint>
+                  </div>
+                ) : null}
+
+                <div className="md:col-span-2">
+                  <FieldLabel htmlFor="website_url">Website or LinkedIn</FieldLabel>
+                  <Input id="website_url" name="website_url" value={formData.website_url} onChange={handleChange} inputMode="url" placeholder="example.com" className={INPUT} />
+                </div>
+              </div>
+            </Section>
+
+            <Section
+              id="location"
+              icon={MapPin}
+              title="Where you work"
+              description="Your city and the states you see clients in by video."
+              visibility="public"
+            >
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <div>
+                  <FieldLabel htmlFor="city">City</FieldLabel>
+                  <Input id="city" name="city" value={formData.city} onChange={handleChange} placeholder="City" className={INPUT} />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="state">State</FieldLabel>
+                  <Select items={STATE_LABELS} value={formData.state} onValueChange={(val) => handleSelectChange('state', val)}>
+                    <SelectTrigger id="state" className={SELECT}>
+                      <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(LICENSE_TYPE_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
+                      {US_STATES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <FieldLabel htmlFor="zip_code">ZIP code</FieldLabel>
+                  <Input id="zip_code" name="zip_code" value={formData.zip_code} onChange={handleChange} placeholder="12345" className={INPUT} />
+                </div>
+              </div>
+              <div className="mt-6">
+                <FieldLabel>Telehealth states</FieldLabel>
+                <Hint>Tap every state you can see clients in by video.</Hint>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {US_STATES.map((s) => {
+                    const on = telehealthStates.includes(s.value)
+                    return (
+                      <button
+                        key={s.value}
+                        type="button"
+                        aria-pressed={on}
+                        title={s.label}
+                        onClick={() =>
+                          setTelehealthStates((prev) =>
+                            on ? prev.filter((v) => v !== s.value) : [...prev, s.value].sort()
+                          )
+                        }
+                        className={`h-9 min-w-12 rounded-lg border px-2.5 text-sm font-semibold transition ${
+                          on
+                            ? 'border-[#1dbf73] bg-[#1dbf73] text-white'
+                            : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#1dbf73]'
+                        }`}
+                      >
+                        {s.value}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </Section>
 
+            <Section
+              id="experience"
+              icon={BriefcaseMedical}
+              title="Experience & languages"
+              description="Shown in the details on your profile."
+              visibility="public"
+            >
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
                 <div>
                   <FieldLabel htmlFor="years_of_experience">Years of experience</FieldLabel>
-                  <Input
-                    id="years_of_experience"
-                    name="years_of_experience"
-                    type="number"
-                    min="0"
-                    value={formData.years_of_experience}
-                    onChange={handleChange}
-                    placeholder="0"
-                    className={INPUT}
-                  />
+                  <Input id="years_of_experience" name="years_of_experience" type="number" min="0" value={formData.years_of_experience} onChange={handleChange} placeholder="0" className={INPUT} />
                 </div>
-
-                <div className="md:col-span-2 xl:col-span-3">
-                  <FieldLabel htmlFor="specialties">Specialties</FieldLabel>
-                  <Input
-                    id="specialties"
-                    name="specialties"
-                    value={formData.specialties}
-                    onChange={handleChange}
-                    placeholder="e.g., ICU, Emergency, Pediatrics"
-                    className={INPUT}
-                  />
-                  <Hint>Separate multiple specialties with commas.</Hint>
-                </div>
-
                 <div>
-                  <FieldLabel htmlFor="npi_number">NPI number</FieldLabel>
-                  <Input
-                    id="npi_number"
-                    name="npi_number"
-                    value={formData.npi_number}
-                    onChange={handleChange}
-                    placeholder="10-digit NPI number"
-                    className={INPUT}
-                  />
+                  <FieldLabel htmlFor="specialties">{branch === 'consultant' && formData.professional_category !== 'other' ? 'Other specialties' : 'Specialties'}</FieldLabel>
+                  <Input id="specialties" name="specialties" value={formData.specialties} onChange={handleChange} placeholder="e.g., Pediatrics, Sports injuries" className={INPUT} />
+                  <Hint>Separate with commas.</Hint>
                 </div>
+                <div className="md:col-span-2">
+                  <FieldLabel>Languages</FieldLabel>
+                  <div className="mt-2">
+                    <LanguagesInput value={languages} onChange={setLanguages} />
+                  </div>
+                </div>
+              </div>
+            </Section>
 
+            <Section
+              id="about"
+              icon={FileText}
+              title="About"
+              description="The About section of your profile."
+              visibility="public"
+            >
+              <Textarea
+                id="bio"
+                name="bio"
+                aria-label="About you"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Tell clients about your background, experience, and how you work..."
+                rows={7}
+                className="min-h-40 px-3.5 py-3 text-base md:text-[15px]"
+              />
+            </Section>
+
+            <Section
+              id="credentials"
+              icon={Lock}
+              title="License & credentials"
+              description="Used to verify you. Clients see a Verified badge, not these numbers."
+              visibility="private"
+            >
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {branch === 'allied' && (
+                  <div className="md:col-span-2 xl:col-span-3">
+                    <FieldLabel htmlFor="certifying_organization">Certifying organization</FieldLabel>
+                    <Input id="certifying_organization" name="certifying_organization" value={formData.certifying_organization} onChange={handleChange} placeholder="e.g., DONA International" className={INPUT} />
+                  </div>
+                )}
                 <div>
                   <FieldLabel htmlFor="state_license_number">State license number</FieldLabel>
-                  <Input
-                    id="state_license_number"
-                    name="state_license_number"
-                    value={formData.state_license_number}
-                    onChange={handleChange}
-                    placeholder="License number"
-                    className={INPUT}
-                  />
+                  <Input id="state_license_number" name="state_license_number" value={formData.state_license_number} onChange={handleChange} placeholder="License number" className={INPUT} />
                 </div>
-
                 <div>
                   <FieldLabel htmlFor="license_state">License state</FieldLabel>
-                  <Select
-                    items={STATE_LABELS}
-                    value={formData.license_state}
-                    onValueChange={(val) => handleSelectChange('license_state', val)}
-                  >
+                  <Select items={STATE_LABELS} value={formData.license_state} onValueChange={(val) => handleSelectChange('license_state', val)}>
                     <SelectTrigger id="license_state" className={SELECT}>
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
                       {US_STATES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div>
+                  <FieldLabel htmlFor="npi_number">NPI number</FieldLabel>
+                  <Input id="npi_number" name="npi_number" value={formData.npi_number} onChange={handleChange} placeholder="10-digit NPI number" className={INPUT} />
                 </div>
               </div>
             </Section>
@@ -630,108 +753,27 @@ export default function ContractorProfileEditPage() {
             <Section
               id="rate"
               icon={CircleDollarSign}
-              title="Rate & availability"
-              description="Set your hourly range and let facilities know when you can work."
+              title="Rates & availability"
+              description="Used for matching. Clients see prices on your listings."
+              visibility="private"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
                   <FieldLabel htmlFor="hourly_rate_min">Minimum hourly rate</FieldLabel>
-                  <MoneyInput
-                    id="hourly_rate_min"
-                    value={formData.hourly_rate_min}
-                    onChange={handleChange}
-                  />
+                  <MoneyInput id="hourly_rate_min" value={formData.hourly_rate_min} onChange={handleChange} />
                 </div>
                 <div>
                   <FieldLabel htmlFor="hourly_rate_max">Maximum hourly rate</FieldLabel>
-                  <MoneyInput
-                    id="hourly_rate_max"
-                    value={formData.hourly_rate_max}
-                    onChange={handleChange}
-                  />
+                  <MoneyInput id="hourly_rate_max" value={formData.hourly_rate_max} onChange={handleChange} />
                 </div>
-
-                <ToggleTile
-                  id="is_available"
-                  checked={formData.is_available}
-                  onChange={handleChange}
-                  title="Currently available for work"
-                  description="Show up in searches for open shifts."
-                />
-                <ToggleTile
-                  id="willing_to_travel"
-                  checked={formData.willing_to_travel}
-                  onChange={handleChange}
-                  title="Willing to travel"
-                  description="Get matched with shifts outside your city."
-                />
-
+                <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Currently available for work" description="Show up in searches." />
+                <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Get matched with work outside your city." />
                 {formData.willing_to_travel && (
                   <div className="md:col-span-2">
                     <FieldLabel htmlFor="travel_radius_miles">Travel radius (miles)</FieldLabel>
-                    <Input
-                      id="travel_radius_miles"
-                      name="travel_radius_miles"
-                      type="number"
-                      min="0"
-                      value={formData.travel_radius_miles}
-                      onChange={handleChange}
-                      placeholder="e.g., 50"
-                      className={`${INPUT} md:max-w-xs`}
-                    />
+                    <Input id="travel_radius_miles" name="travel_radius_miles" type="number" min="0" value={formData.travel_radius_miles} onChange={handleChange} placeholder="e.g., 50" className={`${INPUT} md:max-w-xs`} />
                   </div>
                 )}
-              </div>
-            </Section>
-
-            <Section
-              id="location"
-              icon={MapPin}
-              title="Location"
-              description="Where you're based. Used to match you with nearby work."
-            >
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-                <div>
-                  <FieldLabel htmlFor="city">City</FieldLabel>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="City"
-                    className={INPUT}
-                  />
-                </div>
-                <div>
-                  <FieldLabel htmlFor="state">State</FieldLabel>
-                  <Select
-                    items={STATE_LABELS}
-                    value={formData.state}
-                    onValueChange={(val) => handleSelectChange('state', val)}
-                  >
-                    <SelectTrigger id="state" className={SELECT}>
-                      <SelectValue placeholder="Select state" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {US_STATES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <FieldLabel htmlFor="zip_code">ZIP code</FieldLabel>
-                  <Input
-                    id="zip_code"
-                    name="zip_code"
-                    value={formData.zip_code}
-                    onChange={handleChange}
-                    placeholder="12345"
-                    className={INPUT}
-                  />
-                </div>
               </div>
             </Section>
           </div>
@@ -784,12 +826,14 @@ const STATE_LABELS: Record<string, string> = Object.fromEntries(
 const INPUT = 'mt-2 h-11 px-3.5 text-base md:text-[15px]'
 const SELECT = 'mt-2 w-full px-3.5 text-[15px] data-[size=default]:h-11'
 
+// Same order as the public profile (/pros/[id]), then the private sections.
 const SECTIONS: { id: string; title: string; icon: LucideIcon }[] = [
-  { id: 'basic', title: 'Basic info', icon: UserRound },
-  { id: 'languages', title: 'Languages', icon: Languages },
-  { id: 'professional', title: 'Professional details', icon: BriefcaseMedical },
-  { id: 'rate', title: 'Rate & availability', icon: CircleDollarSign },
-  { id: 'location', title: 'Location', icon: MapPin },
+  { id: 'basic', title: 'Photo, name & profession', icon: UserRound },
+  { id: 'location', title: 'Where you work', icon: MapPin },
+  { id: 'experience', title: 'Experience & languages', icon: Languages },
+  { id: 'about', title: 'About', icon: FileText },
+  { id: 'credentials', title: 'License & credentials', icon: Lock },
+  { id: 'rate', title: 'Rates & availability', icon: CircleDollarSign },
 ]
 
 function Section({
@@ -797,12 +841,14 @@ function Section({
   icon: Icon,
   title,
   description,
+  visibility,
   children,
 }: {
   id: string
   icon: LucideIcon
   title: string
   description: string
+  visibility: 'public' | 'private'
   children: React.ReactNode
 }) {
   return (
@@ -815,12 +861,20 @@ function Section({
         <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
           <Icon className="size-5" />
         </div>
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 id={`${id}-title`} className="text-lg font-bold text-[#404145]">
             {title}
           </h2>
           <p className="mt-0.5 text-sm text-[#62646a]">{description}</p>
         </div>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+            visibility === 'public' ? 'bg-[#e8faf1] text-[#0f8f56]' : 'bg-[#f1f1f2] text-[#62646a]'
+          }`}
+        >
+          {visibility === 'public' ? <Eye className="size-3.5" aria-hidden="true" /> : <Lock className="size-3.5" aria-hidden="true" />}
+          {visibility === 'public' ? 'On your profile' : 'Private'}
+        </span>
       </div>
       <div className="px-6 py-6 md:px-8 md:py-7">{children}</div>
     </section>
