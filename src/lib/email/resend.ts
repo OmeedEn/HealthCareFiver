@@ -539,3 +539,28 @@ export async function sendClassificationRejectedEmail(
     `),
   })
 }
+
+// ---------------------------------------------------------------------------
+// Support messages
+// ---------------------------------------------------------------------------
+
+/**
+ * "You have a new message from the Sanus team." Deliberately omits the
+ * message text: it may contain PHI, so it's only readable after sign-in.
+ */
+export async function sendSupportMessageEmail(
+  to: string,
+  firstName: string | null,
+  threadUrl: string
+): Promise<SendEmailResponse> {
+  const name = escapeHtml(firstName || 'there')
+  return sendEmail({
+    to,
+    subject: 'New message from the Sanus team',
+    html: layout(`
+      <p>Hi ${name},</p>
+      <p>You have a new message from the Sanus team. Sign in to read it and reply. You can send text, photos, voice messages or videos.</p>
+      ${ctaButton(threadUrl, 'View message')}
+    `),
+  })
+}

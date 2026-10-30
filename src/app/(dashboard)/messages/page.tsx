@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PROFILE_NAME_SELECT, profileName, type ProfileWithNames } from '@/lib/profile-name'
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -34,6 +35,8 @@ export default function MessagesPage() {
   // Not sure accounts awaiting placement (or rejected) can't message
   // professionals (also enforced by RLS).
   const [restricted, setRestricted] = useState(false)
+  const [openingSupport, setOpeningSupport] = useState(false)
+  const router = useRouter()
 
   const fetchConversations = useCallback(async () => {
     const supabase = createClient()
@@ -71,6 +74,26 @@ export default function MessagesPage() {
 
         const isP1 = row.participant_1 === user.id
         const other = isP1 ? p2 : p1
+
+        if (row.is_support) {
+          return {
+            id: row.id as string,
+            participant_1: row.participant_1 as string,
+            participant_2: row.participant_2 as string,
+            last_message_preview: row.last_message_preview as string | null,
+            last_message_at: row.last_message_at as string | null,
+            unread_count_1: 0,
+            unread_count_2: 0,
+            created_at: row.created_at as string,
+            other_user: {
+              id: 'support',
+              first_name: 'Sanus',
+              last_name: 'Team',
+              avatar_url: null,
+              role: 'admin',
+            },
+          }
+        }
 
         return {
           id: row.id as string,
@@ -140,6 +163,39 @@ export default function MessagesPage() {
     }
   }, [currentUserId, fetchConversations])
 
+  // Open (or create) this user's support thread with the Sanus team.
+  async function openSupportThread() {
+    if (!currentUserId || openingSupport) return
+    if (isDemo) {
+      toast.info('Messaging the team is disabled in demo mode.')
+      return
+    }
+    setOpeningSupport(true)
+    try {
+      const supabase = createClient()
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('is_support', true)
+        .eq('participant_1', currentUserId)
+        .maybeSingle()
+      let id = existing?.id as string | undefined
+      if (!id) {
+        const { data: created, error } = await supabase
+          .from('conversations')
+          .insert({ participant_1: currentUserId, participant_2: currentUserId, is_support: true })
+          .select('id')
+          .single()
+        if (error) throw error
+        id = created.id as string
+      }
+      router.push(`/messages/${id}`)
+    } catch {
+      toast.error("Couldn't open a conversation with the Sanus team.")
+      setOpeningSupport(false)
+    }
+  }
+
   const filteredConversations = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return conversations
@@ -162,10 +218,15 @@ export default function MessagesPage() {
         </div>
         <Button
           className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
-          disabled
+          disabled={!currentUserId || openingSupport}
+          onClick={openSupportThread}
         >
-          <MessageSquarePlusIcon className="size-4" data-icon="inline-start" />
-          New Conversation
+          {openingSupport ? (
+            <Loader2Icon className="size-4 animate-spin" data-icon="inline-start" />
+          ) : (
+            <MessageSquarePlusIcon className="size-4" data-icon="inline-start" />
+          )}
+          Contact Sanus team
         </Button>
       </div>
 

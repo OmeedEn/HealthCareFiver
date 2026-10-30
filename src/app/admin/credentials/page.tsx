@@ -27,6 +27,7 @@ import {
   Mail,
   Phone,
   User,
+  MessageSquare,
 } from 'lucide-react'
 import {
   isDemoMode,
@@ -34,6 +35,7 @@ import {
   DEMO_CONTRACTOR,
 } from '@/lib/demo/data'
 import { credentialDocumentHref } from '@/lib/credentials/document'
+import { getCredentialContacts } from './actions'
 
 interface PendingCredential {
   id: string
@@ -102,14 +104,10 @@ export default function AdminCredentialsPage() {
       // Pull contact info so the admin can reach out about missing documents.
       const ids = [...new Set(rows.map((r) => r.contractor_id))]
       if (ids.length) {
-        const { data: contacts } = await supabase
-          .from('profiles')
-          .select('id, email, phone')
-          .in('id', ids)
-        const byId = new Map((contacts ?? []).map((p) => [p.id, p]))
+        const contacts = await getCredentialContacts(ids).catch(() => ({}) as Awaited<ReturnType<typeof getCredentialContacts>>)
         for (const r of rows) {
-          r.email = byId.get(r.contractor_id)?.email ?? null
-          r.phone = byId.get(r.contractor_id)?.phone ?? null
+          r.email = contacts[r.contractor_id]?.email ?? null
+          r.phone = contacts[r.contractor_id]?.phone ?? null
         }
       }
 
@@ -301,6 +299,13 @@ export default function AdminCredentialsPage() {
                             {credential.phone}
                           </a>
                         )}
+                        <Link
+                          href={`/admin/messages/${credential.contractor_id}`}
+                          className="inline-flex items-center gap-1 font-medium text-[#0f8f56] hover:underline"
+                        >
+                          <MessageSquare className="size-3" />
+                          Message in app
+                        </Link>
                         <Link
                           href={`/admin/users/${credential.contractor_id}`}
                           className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline"

@@ -4,15 +4,11 @@ import { useEffect, useRef } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { formatDate, getInitials } from '@/lib/utils/format'
 import { cn } from '@/lib/utils'
+import { MESSAGE_SELECT, type MessageItem } from '@/lib/messaging/types'
+import { MessageAttachmentView } from './message-attachment'
 
-export interface MessageItem {
-  id: string
-  conversation_id: string
-  sender_id: string
-  content: string
-  created_at: string
-  read_at: string | null
-}
+export type { MessageItem }
+export { MESSAGE_SELECT }
 
 interface MessageThreadProps {
   messages: MessageItem[]
@@ -22,6 +18,11 @@ interface MessageThreadProps {
     last_name: string
     avatar_url: string | null
   }
+  /** Override which side a message sits on (support threads: any admin = own). */
+  isOwn?: (msg: MessageItem) => boolean
+  /** Small name shown above a message bubble, e.g. which admin sent it. */
+  senderLabel?: (msg: MessageItem) => string | null
+  emptyText?: string
 }
 
 function isSameDay(a: string, b: string): boolean {
@@ -38,6 +39,9 @@ export function MessageThread({
   messages,
   currentUserId,
   otherUser,
+  isOwn: isOwnFn,
+  senderLabel,
+  emptyText = 'No messages yet. Send the first message!',
 }: MessageThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +53,7 @@ export function MessageThread({
     return (
       <div className="flex flex-1 items-center justify-center py-12">
         <p className="text-muted-foreground">
-          No messages yet. Send the first message!
+          {emptyText}
         </p>
       </div>
     )
@@ -58,7 +62,9 @@ export function MessageThread({
   return (
     <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
       {messages.map((msg, idx) => {
-        const isOwn = msg.sender_id === currentUserId
+        const isOwn = isOwnFn ? isOwnFn(msg) : msg.sender_id === currentUserId
+        const label = senderLabel?.(msg)
+        const hasText = msg.content.trim() !== ''
         const showDateSeparator =
           idx === 0 || !isSameDay(messages[idx - 1].created_at, msg.created_at)
 
@@ -98,7 +104,30 @@ export function MessageThread({
                     : 'rounded-bl-md bg-muted text-foreground'
                 )}
               >
-                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                {label && (
+                  <p
+                    className={cn(
+                      'mb-0.5 text-[11px] font-medium',
+                      isOwn ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                    )}
+                  >
+                    {label}
+                  </p>
+                )}
+                {msg.attachment_path && msg.attachment_type && (
+                  <div className={cn(hasText && 'mb-1.5')}>
+                    <MessageAttachmentView
+                      path={msg.attachment_path}
+                      type={msg.attachment_type}
+                      name={msg.attachment_name ?? null}
+                      size={msg.attachment_size ?? null}
+                      own={isOwn}
+                    />
+                  </div>
+                )}
+                {hasText && (
+                  <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                )}
                 <p
                   className={cn(
                     'mt-1 text-[10px]',

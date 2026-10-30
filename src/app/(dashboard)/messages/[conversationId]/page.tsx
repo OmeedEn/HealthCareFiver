@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   MessageThread,
+  MESSAGE_SELECT,
   type MessageItem,
 } from '@/components/messaging/message-thread'
+import { attachmentColumns, uploadAttachment } from '@/lib/messaging/attachments'
 import { MessageInput } from '@/components/messaging/message-input'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
 import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
@@ -79,6 +81,9 @@ export default function ConversationPage() {
   // professionals; only staff threads stay open. Enforced by RLS too
   // (supabase/migrations/20261014000300_unsure_messaging_gate.sql).
   const [sendBlocked, setSendBlocked] = useState(false)
+  // Support thread with the Sanus team (admins). Shown as "Sanus Team" and
+  // allows photo / voice / video attachments.
+  const [isSupport, setIsSupport] = useState(false)
 
   const fetchMessages = useCallback(async () => {
     const supabase = createClient()
@@ -98,7 +103,17 @@ export default function ConversationPage() {
       .eq('id', conversationId)
       .single()
 
-    if (convo) {
+    if (convo?.is_support) {
+      setIsSupport(true)
+      setSendBlocked(false)
+      setOtherUser({ id: 'support', first_name: 'Sanus', last_name: 'Team', avatar_url: null })
+      await supabase
+        .from('messages')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', user.id)
+        .is('read_at', null)
+    } else if (convo) {
       const isP1 = convo.participant_1 === user.id
       const otherProfile = isP1
         ? (convo.participant_2_profile as ProfileWithNames | null)
@@ -134,7 +149,7 @@ export default function ConversationPage() {
     // Fetch messages
     const { data: msgs, error } = await supabase
       .from('messages')
-      .select('id, conversation_id, sender_id, content, created_at, read_at')
+      .select(MESSAGE_SELECT)
       .eq('conversation_id', conversationId)
       .order('created_at', { ascending: true })
 
@@ -198,7 +213,7 @@ export default function ConversationPage() {
     }
   }, [conversationId, currentUserId, isDemo])
 
-  const handleSend = async (content: string) => {
+  const handleSend = async (content: string, file: File | null = null) => {
     if (!currentUserId) return
 
     if (isDemoMode()) {
@@ -215,25 +230,28 @@ export default function ConversationPage() {
     }
 
     const supabase = createClient()
+    let attachment = null
+    if (file) {
+      try {
+        attachment = await uploadAttachment(supabase, conversationId, currentUserId, file)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to upload attachment.')
+        throw err
+      }
+    }
+
+    // conversations.last_message_* is kept current by a DB trigger.
     const { error } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       sender_id: currentUserId,
       content,
+      ...attachmentColumns(attachment),
     })
 
     if (error) {
       toast.error('Failed to send message.')
       throw error
     }
-
-    // Update conversation last message
-    await supabase
-      .from('conversations')
-      .update({
-        last_message_preview: content.slice(0, 100),
-        last_message_at: new Date().toISOString(),
-      })
-      .eq('id', conversationId)
   }
 
   const otherName = otherUser
@@ -277,6 +295,7 @@ export default function ConversationPage() {
           <MessageThread
             messages={messages}
             currentUserId={currentUserId}
+            emptyText={isSupport ? 'Send the Sanus team a message.' : undefined}
             otherUser={
               otherUser
                 ? {
@@ -296,7 +315,11 @@ export default function ConversationPage() {
               You can still browse, save, and book.
             </p>
           ) : (
-            <MessageInput onSend={handleSend} />
+            <MessageInput
+              onSend={handleSend}
+              allowAttachments={isSupport}
+              placeholder={isSupport ? 'Message the Sanus team...' : undefined}
+            />
           )}
         </>
       ) : null}

@@ -2,11 +2,13 @@ import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
 import { countPendingClassification } from '@/lib/admin/classification'
+import { countUnreadSupport } from '@/lib/admin/support'
 import { AdminSignOutButton } from './sign-out-button'
 
 const NAV = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/users', label: 'Users' },
+  { href: '/admin/messages', label: 'Messages' },
   { href: '/admin/classification', label: 'Needs classification' },
   { href: '/admin/care-requests', label: 'Care requests' },
   { href: '/admin/verification', label: 'Verification' },
@@ -29,7 +31,12 @@ export default async function AdminLayout({
   if (!isDemoMode()) {
     const { admin, db } = await requireAdmin()
     adminEmail = admin.email ?? admin.id
-    badges['/admin/classification'] = await countPendingClassification(db)
+    const [pending, unread] = await Promise.all([
+      countPendingClassification(db),
+      countUnreadSupport(db).catch(() => 0),
+    ])
+    badges['/admin/classification'] = pending
+    badges['/admin/messages'] = unread
   }
 
   return (
