@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { MessageUserButton } from '@/components/admin/message-user-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -459,6 +460,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
             </p>
           )}
         </div>
+        <MessageUserButton userId={profile.id} demo={demo} />
       </div>
 
       {demo && (

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useSyncExternalStore } from 'react'
 import { readModeCookie, writeModeCookie, type AppMode } from '@/lib/mode'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { signOutAndRedirect } from '@/lib/auth/sign-out'
 import { isDemoMode } from '@/lib/demo/data'
 import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { Button } from '@/components/ui/button'
@@ -85,10 +85,11 @@ const FACILITY_NAV: NavItem[] = [
 // items previously listed here had no backing routes — removed rather than left
 // as 404s. Add them back when the corresponding admin pages ship.
 const ADMIN_NAV: NavItem[] = [
-  { label: 'Admin Console', href: '/admin', icon: LayoutDashboard },
-  { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Verification', href: '/admin/verification', icon: ShieldCheck },
-  { label: 'Credentials', href: '/admin/credentials', icon: ShieldCheck },
+  { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Credentials', href: '/admin/credentials', icon: FileText },
+  { label: 'Messages', href: '/messages', icon: MessageSquare },
+  { label: 'Admin Console', href: '/admin', icon: LayoutDashboard },
   { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Events', href: '/events', icon: GraduationCap },
   { label: 'Settings', href: '/settings', icon: Settings },
@@ -224,10 +225,7 @@ export function Sidebar({ role, userName, userEmail, variant, open, onOpenChange
       router.push('/')
       return
     }
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    toast.success('Signed out')
-    router.push('/login')
+    await signOutAndRedirect('/login')
   }
 
   const initials = userName

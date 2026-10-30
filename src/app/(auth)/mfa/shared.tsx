@@ -1,7 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signOutAndRedirect } from '@/lib/auth/sign-out'
 import { Separator } from '@/components/ui/separator'
 
 // Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
@@ -13,13 +12,8 @@ export function safeRedirect(target: string | null): string {
 }
 
 export function MfaSignOut() {
-  const router = useRouter()
-
   async function handleSignOut() {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.replace('/login')
-    router.refresh()
+    await signOutAndRedirect('/login')
   }
 
   return (

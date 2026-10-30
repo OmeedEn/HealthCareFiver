@@ -15,6 +15,7 @@ import {
   VerificationBadge,
 } from '@/components/admin/status-badges'
 import { AccountActions } from './account-actions'
+import { MessageUserButton } from '@/components/admin/message-user-button'
 import { CategoryControl } from './category-control'
 import {
   SIGNUP_PATH_SHORT_LABELS,
@@ -150,6 +151,7 @@ export default async function AdminUserDetailPage({
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
+          {profile.data && <MessageUserButton userId={id} />}
           {profile.data && (
             <AccountActions
               userId={id}
