@@ -89,3 +89,22 @@ export async function convertToClient(
   const { error: insError } = await admin.from('client_profiles').insert({ id: userId, ...client })
   if (insError) throw new Error(`Couldn't create client profile: ${insError.message}`)
 }
+
+/**
+ * "Continue with Google" on /login is for people who already have an account.
+ * Supabase creates an account for any Google sign-in, so the callback uses
+ * this to spot one it just made: created moments ago, untouched (see
+ * canConvertNewProfessional) and never through a signup flow (no door, no
+ * Terms). Those are deleted and sent to sign up instead. Accounts made from
+ * the signup Google button carry a door or Terms, or are older, so they pass.
+ */
+const JUST_CREATED_MS = 2 * 60 * 1000
+
+export async function isUnclaimedLoginAccount(admin: SupabaseClient, user: User): Promise<boolean> {
+  if (Date.now() - new Date(user.created_at).getTime() > JUST_CREATED_MS) return false
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  if (typeof meta.terms_accepted_at === 'string' && meta.terms_accepted_at) return false
+  const { data: profile } = await admin.from('profiles').select('signup_path').eq('id', user.id).maybeSingle()
+  if (profile?.signup_path) return false
+  return canConvertNewProfessional(admin, user)
+}
