@@ -15,6 +15,7 @@ import {
   VerificationBadge,
 } from '@/components/admin/status-badges'
 import { AccountActions } from './account-actions'
+import { MessageUserButton } from '@/components/admin/message-user-button'
 import { CategoryControl } from './category-control'
 import {
   SIGNUP_PATH_SHORT_LABELS,
@@ -22,7 +23,7 @@ import {
   isSignupPath,
 } from '@/lib/onboarding/signup-path'
 import { addAdminNote } from './actions'
-import { ArrowLeft, ExternalLink, MessageSquare, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, ExternalLink, ShieldCheck } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -150,20 +151,13 @@ export default async function AdminUserDetailPage({
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
+          {profile.data && <MessageUserButton userId={id} />}
           {profile.data && (
             <AccountActions
               userId={id}
               isActive={Boolean(profile.data.is_active)}
               isVerified={Boolean(profile.data.is_verified)}
             />
-          )}
-          {profile.data && role !== 'admin' && (
-            <Link
-              href={`/admin/messages/${id}`}
-              className="inline-flex items-center gap-1.5 rounded-md bg-[#1dbf73] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#19a463]"
-            >
-              <MessageSquare className="size-4" /> Message
-            </Link>
           )}
           {c && (
             <Link

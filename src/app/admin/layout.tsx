@@ -4,22 +4,7 @@ import { requireAdmin } from '@/lib/admin/guard'
 import { countPendingClassification } from '@/lib/admin/classification'
 import { countUnreadSupport } from '@/lib/admin/support'
 import { AdminSignOutButton } from './sign-out-button'
-
-const NAV = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/users', label: 'Users' },
-  { href: '/admin/messages', label: 'Messages' },
-  { href: '/admin/classification', label: 'Needs classification' },
-  { href: '/admin/care-requests', label: 'Care requests' },
-  { href: '/admin/verification', label: 'Verification' },
-  { href: '/admin/organizations', label: 'Organizations' },
-  { href: '/admin/listings', label: 'Listings review' },
-  { href: '/admin/org-listings', label: 'Org listings' },
-  { href: '/admin/credentials', label: 'Credentials' },
-  { href: '/admin/activity', label: 'Activity' },
-  { href: '/admin/bugs', label: 'Bugs' },
-  { href: '/admin/disputes', label: 'Disputes' },
-]
+import { AdminNav } from './admin-nav'
 
 export default async function AdminLayout({
   children,
@@ -31,37 +16,32 @@ export default async function AdminLayout({
   if (!isDemoMode()) {
     const { admin, db } = await requireAdmin()
     adminEmail = admin.email ?? admin.id
-    const [pending, unread] = await Promise.all([
+    const [classification, verification, credentials, unreadMessages] = await Promise.all([
       countPendingClassification(db),
+      db
+        .from('contractor_profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('verification_status', 'pending_review'),
+      db
+        .from('credentials')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending_review'),
       countUnreadSupport(db).catch(() => 0),
     ])
-    badges['/admin/classification'] = pending
-    badges['/admin/messages'] = unread
+    badges['/admin/classification'] = classification
+    badges['/admin/verification'] = verification.count ?? 0
+    badges['/admin/credentials'] = credentials.count ?? 0
+    badges['/admin/messages'] = unreadMessages
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-2 md:px-6">
-          <Link href="/admin" className="text-lg font-semibold text-[#404145]">
+          <Link href="/admin/verification" className="text-lg font-semibold text-[#404145]">
             Sanus Admin
           </Link>
-          <nav className="flex flex-wrap items-center gap-4 text-sm">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="inline-flex items-center gap-1.5 text-[#62646a] hover:text-[#1dbf73]"
-              >
-                {item.label}
-                {badges[item.href] ? (
-                  <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
-                    {badges[item.href]}
-                  </span>
-                ) : null}
-              </Link>
-            ))}
-          </nav>
+          <AdminNav badges={badges} />
           <div className="ml-auto flex items-center gap-3 text-xs text-[#62646a]">
             <span>{adminEmail}</span>
             <Link href="/dashboard" className="hover:text-[#1dbf73]">
