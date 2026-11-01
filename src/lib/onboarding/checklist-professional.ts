@@ -129,8 +129,12 @@ export interface ProfessionalChecklistInput {
   avatarUrl: string | null
   stripeConnectOnboarded: boolean
   credentials: CredentialLike[]
-  /** professional_offerings by status; omit when unknown. */
-  listings?: { total: number; published: number; inReview: number }
+  /**
+   * professional_offerings by status; omit when unknown. awaitingInsurance =
+   * published listings that need malpractice while the pro isn't insured
+   * (SQL is_insured), so clients can't see them.
+   */
+  listings?: { total: number; published: number; inReview: number; awaitingInsurance?: number }
   /** Non-blocked contractor_availability rows; omit when unknown. */
   availabilitySlots?: number
   /** onboarding_progress for the professional flow. */
@@ -154,8 +158,8 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
   items.push({
     id: 'agreement',
     group: 'needed_after_approval',
-    label: 'Accept the provider agreement',
-    hint: approved ? 'Required before your first listing publishes.' : lockedHint,
+    label: 'Accept agreement to go live',
+    hint: approved ? 'Your profile and listings stay hidden until you accept.' : lockedHint,
     done: !!p.contractor_agreement_accepted_at,
     href: GO_LIVE,
     locked: !approved,
@@ -174,6 +178,31 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
       // Approved: the go-live flow's first-listing screens.
       href: total > 0 ? '/contractor/listings' : approved ? `${GO_LIVE}?step=listing` : '/contractor/listings/new',
     })
+    // Sanus publishes each listing (admin review); nothing for the pro to do.
+    if (inReview > 0) {
+      items.push({
+        id: 'listing_review',
+        group: 'needed_after_approval',
+        label: inReview === 1 ? 'Listing awaiting Sanus review' : `${inReview} listings awaiting Sanus review`,
+        hint: 'We review every listing before clients can see it. No action needed.',
+        done: false,
+        href: '/contractor/listings',
+      })
+    }
+    const hidden = input.listings.awaitingInsurance ?? 0
+    if (hidden > 0) {
+      items.push({
+        id: 'listing_insurance',
+        group: 'needed_after_approval',
+        label:
+          hidden === 1
+            ? 'Listing hidden until your malpractice insurance is verified'
+            : `${hidden} listings hidden until your malpractice insurance is verified`,
+        hint: 'Upload your current malpractice certificate here.',
+        done: false,
+        href: '/contractor/credentials/upload?type=malpractice_insurance',
+      })
+    }
   }
   if (p.offers_high_risk_services) {
     items.push({

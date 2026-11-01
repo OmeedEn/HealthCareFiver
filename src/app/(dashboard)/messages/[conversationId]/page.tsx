@@ -17,6 +17,7 @@ import { attachmentColumns, uploadAttachment } from '@/lib/messaging/attachments
 import { MessageInput } from '@/components/messaging/message-input'
 import { useLiveMessages } from '@/components/messaging/use-live-messages'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
+import { loadPartnerNames, withPartnerName } from '@/lib/messaging/partner-names'
 import { ArrowLeftIcon, Loader2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -129,22 +130,33 @@ export default function ConversationPage() {
         !!me && isClassificationRestricted(me) && otherProfile?.role !== 'admin'
       )
 
-      if (otherProfile) {
-        setOtherUser({
-          id: otherProfile.id ?? (isP1 ? convo.participant_2 : convo.participant_1),
-          ...profileName(otherProfile),
-          avatar_url: otherProfile.avatar_url ?? null,
-        })
-      }
+      const otherId = (isP1 ? convo.participant_2 : convo.participant_1) as string
+      const names = await loadPartnerNames(supabase)
+      setOtherUser({
+        id: otherProfile?.id ?? otherId,
+        ...withPartnerName(otherId, profileName(otherProfile), names),
+        avatar_url: otherProfile?.avatar_url ?? null,
+      })
 
       // Mark the other participant's messages as read (unread state lives on
-      // messages; conversations has no unread counters).
-      await supabase
-        .from('messages')
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', user.id)
-        .is('read_at', null)
+      // messages; conversations has no unread counters), and clear this
+      // thread's new-message notification so the next one can be sent.
+      const now = new Date().toISOString()
+      await Promise.all([
+        supabase
+          .from('messages')
+          .update({ is_read: true, read_at: now })
+          .eq('conversation_id', conversationId)
+          .neq('sender_id', user.id)
+          .is('read_at', null),
+        supabase
+          .from('notifications')
+          .update({ is_read: true, read_at: now })
+          .eq('user_id', user.id)
+          .eq('type', 'new_message')
+          .eq('is_read', false)
+          .contains('data', { conversation_id: conversationId }),
+      ])
     }
 
     // Fetch messages
@@ -178,10 +190,21 @@ export default function ConversationPage() {
     (m: MessageItem) => {
       setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]))
       if (currentUserId && m.sender_id !== currentUserId && !m.read_at) {
-        createClient()
+        const supabase = createClient()
+        const now = new Date().toISOString()
+        supabase
           .from('messages')
-          .update({ is_read: true, read_at: new Date().toISOString() })
+          .update({ is_read: true, read_at: now })
           .eq('id', m.id)
+          .then()
+        // Already reading it here — don't leave a bell notification behind.
+        supabase
+          .from('notifications')
+          .update({ is_read: true, read_at: now })
+          .eq('user_id', currentUserId)
+          .eq('type', 'new_message')
+          .eq('is_read', false)
+          .contains('data', { conversation_id: m.conversation_id })
           .then()
       }
     },

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatDateTime, formatRelativeTime } from '@/lib/utils/format'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
+import { isBanned } from '@/lib/admin/data'
 import { audit } from '@/lib/audit/log'
 import { credentialDocumentHref } from '@/lib/credentials/document'
 import { AdminDemoNotice } from '@/components/admin/demo-notice'
@@ -121,6 +122,8 @@ export default async function AdminUserDetailPage({
   const signupPath = (profile.data?.signup_path as string | null | undefined) ?? null
   const classificationStatus = (profile.data?.classification_status as string | null | undefined) ?? null
   const accountType = profile.data ? accountTypeFor(profile.data) : null
+  const suspended = Boolean(profile.data && !profile.data.is_active) || isBanned(authUser.banned_until)
+  const orgStatus = (facility.data?.verification_status as string | undefined) ?? null
 
   const adminEmails = new Map<string, string>()
   const adminIds = [...new Set((adminLog.data ?? []).map((r) => r.admin_id).filter(Boolean))]
@@ -146,25 +149,27 @@ export default async function AdminUserDetailPage({
             {classificationStatus && <Badge variant="outline">Classification: {classificationStatus.replace('_', ' ')}</Badge>}
             <EmailConfirmedBadge at={authUser.email_confirmed_at ?? null} />
             {c && <VerificationBadge status={c.verification_status as string} />}
-            {profile.data?.is_verified && <Badge className="bg-[#e8faf1] text-[#0f8f56]">Account verified</Badge>}
-            {profile.data && !profile.data.is_active && <Badge className="bg-red-100 text-red-700">Suspended</Badge>}
+            {orgStatus && <VerificationBadge status={orgStatus} />}
+            {suspended && <Badge className="bg-red-100 text-red-700">Account suspended</Badge>}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           {profile.data && <MessageUserButton userId={id} />}
-          {profile.data && (
-            <AccountActions
-              userId={id}
-              isActive={Boolean(profile.data.is_active)}
-              isVerified={Boolean(profile.data.is_verified)}
-            />
-          )}
+          {profile.data && <AccountActions userId={id} isActive={!suspended} />}
           {c && (
             <Link
               href={`/admin/verification/${id}`}
               className="inline-flex items-center gap-1.5 rounded-md bg-[#0f4c3a] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#0c3d2f]"
             >
-              <ShieldCheck className="size-4" /> Open provider verification review
+              <ShieldCheck className="size-4" /> Open professional review
+            </Link>
+          )}
+          {facility.data && (
+            <Link
+              href={`/admin/organizations/${id}`}
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#0f4c3a] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#0c3d2f]"
+            >
+              <ShieldCheck className="size-4" /> Open organization review
             </Link>
           )}
         </div>

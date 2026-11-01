@@ -23,7 +23,9 @@ const FILTERS: Record<string, { label: string; test: (u: AdminUserRow) => boolea
   needs_review: {
     label: 'Needs review',
     test: (u) =>
-      u.verificationStatus === 'pending_review' || u.verificationStatus === 'more_info_requested',
+      u.verificationStatus === 'pending_review' ||
+      u.verificationStatus === 'more_info_requested' ||
+      u.verificationStatus === 'needs_info',
   },
   never_signed_in: { label: 'Never signed in', test: (u) => !u.lastSignInAt },
   unconfirmed: { label: 'Email unconfirmed', test: (u) => !u.emailConfirmedAt },

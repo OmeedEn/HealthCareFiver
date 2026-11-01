@@ -35,7 +35,12 @@ import {
   DEMO_CONTRACTOR,
 } from '@/lib/demo/data'
 import { credentialDocumentHref } from '@/lib/credentials/document'
-import { getCredentialContacts } from './actions'
+import {
+  getCredentialContacts,
+  listOrgDocumentsForReview,
+  reviewCredential,
+  type OrgDocumentRow,
+} from './actions'
 
 interface PendingCredential {
   id: string
@@ -60,6 +65,7 @@ export default function AdminCredentialsPage() {
   const [rejectId, setRejectId] = useState<string | null>(null)
   const [rejectNotes, setRejectNotes] = useState('')
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
+  const [orgDocs, setOrgDocs] = useState<OrgDocumentRow[]>([])
   const demo = isDemoMode()
 
   useEffect(() => {
@@ -100,6 +106,9 @@ export default function AdminCredentialsPage() {
         .order('created_at', { ascending: true })
 
       const rows = (data ?? []) as unknown as PendingCredential[]
+      listOrgDocumentsForReview()
+        .then(setOrgDocs)
+        .catch(() => toast.error('Could not load organization documents'))
 
       // Pull contact info so the admin can reach out about missing documents.
       const ids = [...new Set(rows.map((r) => r.contractor_id))]
@@ -128,24 +137,14 @@ export default function AdminCredentialsPage() {
         return
       }
 
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      const { error } = await supabase
-        .from('credentials')
-        .update({
-          status: 'verified',
-          verified_at: new Date().toISOString(),
-          verified_by: user?.id ?? null,
-        })
-        .eq('id', credentialId)
-
-      if (error) throw error
-
+      const res = await reviewCredential(credentialId, 'approve')
+      if (res.error) {
+        toast.error(res.error)
+        return
+      }
       setCredentials((prev) => prev.filter((c) => c.id !== credentialId))
       toast.success('Credential approved')
+      if (res.warning) toast.warning(res.warning)
     } catch {
       toast.error('Failed to approve credential')
     } finally {
@@ -168,19 +167,14 @@ export default function AdminCredentialsPage() {
         return
       }
 
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('credentials')
-        .update({
-          status: 'rejected',
-          rejection_notes: rejectNotes.trim() || null,
-        })
-        .eq('id', rejectId)
-
-      if (error) throw error
-
+      const res = await reviewCredential(rejectId, 'reject', rejectNotes)
+      if (res.error) {
+        toast.error(res.error)
+        return
+      }
       setCredentials((prev) => prev.filter((c) => c.id !== rejectId))
       toast.success('Credential rejected')
+      if (res.warning) toast.warning(res.warning)
       setRejectDialogOpen(false)
       setRejectId(null)
       setRejectNotes('')
@@ -210,10 +204,11 @@ export default function AdminCredentialsPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-[#404145]">
-            Credential Review Queue
+            Documents
           </h1>
           <p className="text-sm text-[#62646a]">
-            Verify contractor licenses, certifications, and compliance documents.
+            Verify professional licenses, certifications, and compliance documents, and see
+            what organizations awaiting review have uploaded.
           </p>
         </div>
         <Badge variant="secondary">{credentials.length} pending</Badge>
@@ -221,7 +216,7 @@ export default function AdminCredentialsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-[#404145]">Pending Credentials</CardTitle>
+          <CardTitle className="text-[#404145]">Professional credentials</CardTitle>
         </CardHeader>
         <CardContent>
           {credentials.length === 0 ? (
@@ -386,6 +381,57 @@ export default function AdminCredentialsPage() {
         </CardContent>
       </Card>
 
+      {!demo && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#404145]">Organization documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {orgDocs.length === 0 ? (
+              <p className="text-sm text-[#6b7280]">
+                No uploads from organizations awaiting review.
+              </p>
+            ) : (
+              <ul className="divide-y divide-[#f1f3f5]">
+                {orgDocs.map((d) => (
+                  <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/organizations/${d.facilityId}`}
+                        className="font-semibold text-[#404145] hover:text-[#1dbf73] hover:underline"
+                      >
+                        {d.orgName}
+                      </Link>
+                      <p className="text-xs text-[#62646a]">
+                        {d.kind} · {d.filename} · uploaded {formatDate(d.uploadedAt)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {d.url && (
+                        <a
+                          href={d.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#1dbf73] hover:underline"
+                        >
+                          View <ExternalLink className="size-3" />
+                        </a>
+                      )}
+                      <Link
+                        href={`/admin/organizations/${d.facilityId}`}
+                        className="text-xs text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                      >
+                        Review organization
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="font-sans">
           <DialogHeader>
@@ -393,8 +439,8 @@ export default function AdminCredentialsPage() {
               Reject Credential
             </DialogTitle>
             <DialogDescription className="text-[#62646a]">
-              Provide a reason for rejecting this credential. The contractor
-              will be notified.
+              Provide a reason for rejecting this credential. The professional
+              gets an in-app notification with your note.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">

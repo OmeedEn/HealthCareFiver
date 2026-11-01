@@ -21,23 +21,28 @@ import {
 import { ListingCard } from '@/components/listings/listing-card'
 import { ListingStatusBadge } from '@/components/listings/listing-badges'
 import { NavAuth } from '@/components/marketing/nav-auth'
+import { MessageButton } from './message-button'
 
 type Props = { params: Promise<{ id: string }> }
 
-async function viewerId(): Promise<string | null> {
+const viewer = cache(async (): Promise<{ id: string; role: string } | null> => {
   try {
     const { currentUser } = await import('@/lib/auth/roles')
     // currentUser() returns null unless the session completed MFA (AAL2).
-    return (await currentUser())?.id ?? null
+    const u = await currentUser()
+    return u ? { id: u.id, role: u.role } : null
   } catch {
     return null
   }
-}
+})
+
+// Clients and organizations can start a conversation with a pro.
+const MESSAGING_ROLES = new Set(['client', 'facility', 'staffing_agency'])
 
 // Deduped between generateMetadata and the page within one request.
 const load = cache(async (id: string): Promise<PublicProfileResult | null> => {
   if (isDemoMode()) return getDemoPublicProfile(id)
-  return getPublicProfile(id, await viewerId())
+  return getPublicProfile(id, (await viewer())?.id ?? null)
 })
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -67,6 +72,17 @@ export default async function ProProfilePage({ params }: Props) {
     `${p.first_name[0] ?? ''}${p.last_name[0] ?? ''}`.toUpperCase() || '?'
   const location = [p.city, p.state].filter(Boolean).join(', ')
   const role = p.otherProfession ?? p.categoryLabel
+  const me = await viewer()
+  const messaging =
+    isOwner || !isPublic
+      ? null
+      : isDemoMode()
+        ? 'button'
+        : !me
+          ? 'login'
+          : MESSAGING_ROLES.has(me.role)
+            ? 'button'
+            : null
 
   return (
     <div className="min-h-screen bg-[#f9fafb] text-[#111827]">
@@ -206,6 +222,22 @@ export default async function ProProfilePage({ params }: Props) {
                   </div>
                 )}
               </dl>
+
+              {messaging === 'button' && (
+                <div className="mt-5">
+                  <MessageButton proId={p.id} firstName={p.first_name} />
+                </div>
+              )}
+              {messaging === 'login' && (
+                <div className="mt-5">
+                  <Link
+                    href={`/login?redirectTo=${encodeURIComponent(`/pros/${p.id}`)}`}
+                    className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-4 text-sm font-semibold text-white transition hover:bg-[#19a463]"
+                  >
+                    Sign in to message {p.first_name || 'this professional'}
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </section>

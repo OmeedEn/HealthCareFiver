@@ -81,7 +81,13 @@ export default async function ProfessionalOnboardingPage() {
     supabase.from('profiles').select('signup_path').eq('id', user.id).single(),
   ])
   if (error || !profile) {
-    throw new Error(`Contractor ${user.id} has no readable contractor_profiles row.`)
+    // No row (or unreadable): don't 500. The proxy never sends a contractor
+    // without a row back here, so /dashboard can't loop.
+    console.error('[onboarding/professional] no readable contractor_profiles row', {
+      userId: user.id,
+      code: error?.code ?? null,
+    })
+    redirect('/dashboard')
   }
   const authUser = auth.user
   if (!authUser) redirect('/login?redirectTo=/onboarding/professional')

@@ -91,7 +91,7 @@ export type ApprovalOptions = {
  *    Cleared when not pending.
  *  - compliance_hold_reason: an automated lapse hold is cleared if the lapse
  *    no longer applies; manual holds are left for clearComplianceHold.
- *  - "You're live on Sanus" email + in-app notification, only on the
+ *  - "You're approved on Sanus" email + in-app notification, only on the
  *    transition into a live status (a repeat approve doesn't re-send).
  *    Email failures are logged, never thrown.
  *
@@ -142,13 +142,13 @@ export async function applyApproval(
     await notify(admin, {
       userId: contractorId,
       type: 'verification_approved',
-      title: "You're live on Sanus.",
+      title: "You're approved — one step to go live",
       body: options.notes || APPROVE_NOTIFICATION_BODY,
       href: '/go-live',
     })
 
     const contacts = await loadProviderContacts(admin, [contractorId])
-    const sent = await sendSafely("You're live on Sanus", contacts.get(contractorId), (to) =>
+    const sent = await sendSafely("You're approved on Sanus", contacts.get(contractorId), (to) =>
       sendProviderApprovalEmail(to, appUrl, { insuranceDueAt })
     )
     if (sent) {

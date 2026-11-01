@@ -124,7 +124,7 @@ function layout(body: string): string {
     </div>`
 }
 
-export const APPROVAL_EMAIL_SUBJECT = "You're live on Sanus."
+export const APPROVAL_EMAIL_SUBJECT = "You're approved on Sanus"
 
 /** Listing types that need a reviewed malpractice certificate. */
 const HIGH_RISK_LISTINGS_PHRASE =
@@ -157,7 +157,7 @@ export interface ApprovalEmailOptions {
 }
 
 /**
- * "You're live on Sanus." — sent when an admin approves a provider's
+ * "You're approved on Sanus." — sent when an admin approves a provider's
  * verification review (via applyApproval in src/lib/compliance/transitions).
  * Links to /go-live, where they accept the contractor agreement and set up
  * payouts. When approved as Insurance pending, the email also gives the
@@ -185,7 +185,7 @@ export async function sendProviderApprovalEmail(
     to: provider.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re live on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re approved on Sanus.</h1>
       ${greeting(provider)}
       <p>Congratulations — our team has reviewed and approved your credentials. Welcome to Sanus.</p>
       <p>Two quick steps to finish going live:</p>
@@ -392,7 +392,7 @@ export interface OrgEmailContext {
 }
 
 /**
- * "You're live on Sanus." for organizations — sent when an admin approves an
+ * "You're approved on Sanus." for organizations — sent when an admin approves an
  * organization (src/app/admin/organizations/actions.ts).
  */
 export async function sendOrgApprovalEmail(
@@ -405,7 +405,7 @@ export async function sendOrgApprovalEmail(
     to: org.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re live on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re approved on Sanus.</h1>
       <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
       <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
       <p>You can now message professionals and review applicants. A few quick steps to finish going live: accept the Organization Agreement, set up payouts, and add your first service or event.</p>
