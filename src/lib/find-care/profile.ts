@@ -3,6 +3,7 @@ import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { DEMO_CONTRACTOR, DEMO_PROVIDERS } from '@/lib/demo/data'
 import { DEMO_LISTINGS } from '@/lib/listings/demo'
+import { getHiddenDemoIds } from '@/lib/demo/hide'
 import {
   LISTING_BASE_COLUMNS,
   LISTING_V3_COLUMNS,
@@ -130,6 +131,8 @@ export async function getPublicProfile(
 ): Promise<PublicProfileResult | null> {
   if (!UUID_RE.test(id)) return null
   try {
+    // HIDE_DEMO_DATA: seeded demo accounts 404.
+    if ((await getHiddenDemoIds()).has(id)) return null
     const supabase = await getReadClient()
 
     const [{ data: row, error }, { data: v3, error: v3Error }, { data: account }] =

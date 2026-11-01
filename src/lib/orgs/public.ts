@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { createClient } from '@/lib/supabase/server'
+import { getHiddenDemoIds } from '@/lib/demo/hide'
 import { DEMO_ORG_LISTINGS, DEMO_ORGS } from './demo'
 
 /**
@@ -122,6 +123,8 @@ export type PublicOrgPage = {
  */
 export async function getPublicOrgPage(id: string, viewerId: string | null): Promise<PublicOrgPage | null> {
   if (!UUID_RE.test(id)) return null
+  // HIDE_DEMO_DATA: seeded demo orgs 404.
+  if ((await getHiddenDemoIds()).has(id)) return null
   const supabase = await createClient()
   const [{ data: org }, { data: rows }] = await Promise.all([
     supabase.from('facility_profiles').select(`${ORG_COLUMNS}, verification_status`).eq('id', id).maybeSingle(),
@@ -153,7 +156,9 @@ export async function getPublicOrgListings(kind?: 'service' | 'event'): Promise<
     if (kind) q = q.eq('kind', kind)
     const { data, error } = await q
     if (error || !data) return []
+    const demoIds = await getHiddenDemoIds()
     return (data as Row[])
+      .filter((r) => !demoIds.has(String(r.facility_id)))
       .map((r) => {
         const fp = (Array.isArray(r.facility_profiles) ? r.facility_profiles[0] : r.facility_profiles) as Row
         return {

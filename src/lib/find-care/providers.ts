@@ -4,6 +4,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_PROVIDERS } from '@/lib/demo/data'
+import { getHiddenDemoIds } from '@/lib/demo/hide'
+import { hasCurrentMalpractice, type CredentialRow } from '@/lib/compliance/rules'
 import {
   CONTRACTOR_TYPE_BADGES,
   PROFESSIONAL_CATEGORY_LABELS,
@@ -19,9 +21,12 @@ export const LIVE_STATUSES = ['approved', 'insurance_pending'] as const
 type Compliance = { hold: boolean; insured: boolean }
 
 /**
- * compliance_hold_reason / insured_verified_at per contractor (v3 columns).
- * Only booleans leave this function. On error (columns not migrated yet)
- * everyone is treated as no hold / not insured.
+ * compliance_hold_reason + insured status per contractor (v3 columns).
+ * "Insured" is the SQL is_insured() rule: insured_verified_at set AND a
+ * current verified malpractice_insurance credential (service-role reads
+ * bypass RLS, so the rule is applied here). Only booleans leave this
+ * function. On error (columns not migrated yet) everyone is treated as no
+ * hold / not insured.
  */
 export async function getComplianceById(
   supabase: SupabaseClient,
@@ -29,15 +34,30 @@ export async function getComplianceById(
 ): Promise<Map<string, Compliance>> {
   const out = new Map<string, Compliance>()
   if (ids.length === 0) return out
-  const { data, error } = await supabase
-    .from('contractor_profiles')
-    .select('id, compliance_hold_reason, insured_verified_at')
-    .in('id', ids)
+  const [{ data, error }, { data: creds, error: credsError }] = await Promise.all([
+    supabase
+      .from('contractor_profiles')
+      .select('id, compliance_hold_reason, insured_verified_at')
+      .in('id', ids),
+    supabase
+      .from('credentials')
+      .select('id, contractor_id, credential_type, name, status, expiration_date')
+      .eq('credential_type', 'malpractice_insurance')
+      .in('contractor_id', ids),
+  ])
   if (error || !data) return out
+  if (credsError) console.error('[find-care] credentials query failed', { code: credsError.code })
+  const credsById = new Map<string, CredentialRow[]>()
+  for (const c of (creds ?? []) as CredentialRow[]) {
+    credsById.set(c.contractor_id, [...(credsById.get(c.contractor_id) ?? []), c])
+  }
+  const now = new Date()
   for (const r of data as Record<string, unknown>[]) {
-    out.set(r.id as string, {
+    const id = r.id as string
+    out.set(id, {
       hold: typeof r.compliance_hold_reason === 'string' && r.compliance_hold_reason.length > 0,
-      insured: r.insured_verified_at != null,
+      insured:
+        r.insured_verified_at != null && hasCurrentMalpractice(credsById.get(id) ?? [], now),
     })
   }
   return out
@@ -206,7 +226,12 @@ export async function getLiveProviders(): Promise<PublicProvider[]> {
       return []
     }
 
-    const contractorRows = rows as unknown as ContractorRow[]
+    // HIDE_DEMO_DATA: drop seeded demo accounts.
+    const demoIds = await getHiddenDemoIds()
+    const contractorRows = (rows as unknown as ContractorRow[]).filter(
+      (r) => !demoIds.has(r.id)
+    )
+    if (contractorRows.length === 0) return []
 
     // 2. Of those, only active contractor accounts (plus their avatars).
     const { data: activeProfiles, error: profilesError } = await supabase

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { getProgress } from '@/lib/onboarding/progress'
@@ -49,8 +50,34 @@ export async function OrgFinishSection({ userId }: { userId: string }) {
   const started =
     (listings ?? 0) > 0 || (jobs ?? 0) > 0 || (Array.isArray(lookingTypes) && lookingTypes.length > 0)
 
+  // Approved sellers only appear in Find care through listings.
+  const needsFirstListing =
+    org.verification_status === 'approved' && (listings ?? 0) === 0 && !verifiesLater(profile?.signup_path)
+
   return (
     <>
+      {needsFirstListing && (
+        <section
+          aria-labelledby="first-listing-title"
+          className="rounded-xl border-2 border-[#1dbf73] bg-[#f3fcf7] p-5 sm:p-6"
+        >
+          <h2 id="first-listing-title" className="text-base font-semibold text-[#404145]">
+            You&apos;re approved. Create your first listing.
+          </h2>
+          <p className="mt-1 text-sm text-[#62646a]">
+            Clients find organizations in Find care through listings. Until you add a service or event, your
+            organization won&apos;t show up there.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
+            <Link href="/facility/listings?new=service" className="text-[#1dbf73] hover:underline">
+              Add a service &rarr;
+            </Link>
+            <Link href="/facility/listings?new=event" className="text-[#1dbf73] hover:underline">
+              Add an event &rarr;
+            </Link>
+          </div>
+        </section>
+      )}
       <FinishProfileCard items={items} />
       {!started && (
         <OrgFirstRunCards
