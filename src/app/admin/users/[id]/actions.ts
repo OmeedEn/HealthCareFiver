@@ -35,41 +35,29 @@ async function logAdminAction(
   })
 }
 
-export async function setAccountActive(userId: string, active: boolean) {
+/**
+ * Suspend / reactivate an account. Suspending bans the auth user (blocks
+ * sign-in and token refresh) and sets profiles.is_active=false.
+ */
+export async function setAccountActive(userId: string, active: boolean): Promise<{ error?: string }> {
   const { admin, db } = await requireAdmin()
-  if (userId === admin.id && !active) throw new Error("You can't suspend your own account")
+  if (!/^[0-9a-f-]{36}$/i.test(userId)) return { error: 'Bad account id' }
+  if (userId === admin.id && !active) return { error: "You can't suspend your own account" }
+
+  const { error: banError } = await db.auth.admin.updateUserById(userId, {
+    ban_duration: active ? 'none' : '876000h',
+  })
+  if (banError) return { error: `Failed to ${active ? 'unblock' : 'block'} sign-in: ${banError.message}` }
 
   const { error } = await db.from('profiles').update({ is_active: active }).eq('id', userId)
-  if (error) throw new Error(`Failed to update account: ${error.message}`)
+  if (error) return { error: `Sign-in was ${active ? 'unblocked' : 'blocked'}, but updating the profile failed: ${error.message}` }
 
   await logAdminAction(
     db, admin.id, active ? 'account_activated' : 'account_suspended',
-    'profiles', userId, { is_active: !active }, { is_active: active }
+    'profiles', userId, { is_active: !active }, { is_active: active, banned: !active }
   )
   refresh()
-}
-
-/**
- * Manual verification flag for the account (profiles.is_verified) and, for
- * facilities, facility_profiles.is_verified. Provider license/background
- * review lives in /admin/verification/[id].
- */
-export async function setAccountVerified(userId: string, verified: boolean) {
-  const { admin, db } = await requireAdmin()
-
-  const { error } = await db.from('profiles').update({ is_verified: verified }).eq('id', userId)
-  if (error) throw new Error(`Failed to update verification: ${error.message}`)
-  // For organizations, verification is the review status (is_verified syncs from it).
-  await db
-    .from('facility_profiles')
-    .update({ verification_status: verified ? 'approved' : 'pending_review' })
-    .eq('id', userId)
-
-  await logAdminAction(
-    db, admin.id, verified ? 'account_verified' : 'account_unverified',
-    'profiles', userId, { is_verified: !verified }, { is_verified: verified }
-  )
-  refresh()
+  return {}
 }
 
 export async function addAdminNote(userId: string, formData: FormData) {

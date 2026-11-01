@@ -4,7 +4,10 @@ const VERIFICATION: Record<string, { label: string; className: string }> = {
   not_submitted: { label: 'Not submitted', className: 'bg-gray-100 text-gray-600' },
   pending_review: { label: 'Pending review', className: 'bg-amber-100 text-amber-800' },
   more_info_requested: { label: 'More info requested', className: 'bg-blue-100 text-blue-800' },
+  needs_info: { label: 'Needs info', className: 'bg-blue-100 text-blue-800' },
   approved: { label: 'Approved', className: 'bg-[#e8faf1] text-[#0f8f56]' },
+  insurance_pending: { label: 'Approved · insurance pending', className: 'bg-amber-50 text-amber-700' },
+  suspended: { label: 'Suspended', className: 'bg-red-100 text-red-700' },
   rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700' },
 }
 

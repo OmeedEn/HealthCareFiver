@@ -2,6 +2,7 @@
 
 import { refresh } from 'next/cache'
 import { headers } from 'next/headers'
+import { unstable_rethrow } from 'next/navigation'
 import { requireAdmin } from '@/lib/admin/guard'
 import { audit } from '@/lib/audit/log'
 import { resolveAppUrl } from '@/lib/compliance/notify'
@@ -97,7 +98,7 @@ async function appUrl(): Promise<string> {
 }
 
 /** Approve / needs info / suspend / reject / reopen an organization. */
-export async function decideOrganization(orgId: string, decision: OrgDecision, formData: FormData) {
+async function decide(orgId: string, decision: OrgDecision, formData: FormData) {
   const { admin, db } = await requireAdmin()
   const notes = String(formData.get('notes') ?? '').trim().slice(0, 4000)
   if (NOTES_REQUIRED.includes(decision) && !notes) {
@@ -176,7 +177,7 @@ export async function decideOrganization(orgId: string, decision: OrgDecision, f
 }
 
 /** Tick / untick one manual review checklist item, with an optional note. */
-export async function setChecklistItem(orgId: string, key: string, formData: FormData) {
+async function checklistItem(orgId: string, key: string, formData: FormData) {
   const { admin, db } = await requireAdmin()
   if (!ORG_CHECKLIST.some((i) => i.key === key)) throw new Error('Unknown checklist item')
 
@@ -201,7 +202,7 @@ export async function setChecklistItem(orgId: string, key: string, formData: For
 }
 
 /** Save a dated screenshot/PDF of a lookup (and/or a note) against a checklist item. */
-export async function addEvidence(orgId: string, key: string, formData: FormData) {
+async function evidence(orgId: string, key: string, formData: FormData) {
   const { admin, db } = await requireAdmin()
   if (!ORG_CHECKLIST.some((i) => i.key === key)) throw new Error('Unknown checklist item')
 
@@ -227,4 +228,29 @@ export async function addEvidence(orgId: string, key: string, formData: FormData
 
   await logAdminAction(db, admin.id, 'org_evidence_added', orgId, null, { key, storage_path: storagePath }, note)
   refresh()
+}
+
+export type OrgActionResult = { error?: string }
+
+// Return errors instead of throwing: production redacts thrown messages.
+async function asResult(fn: () => Promise<void>): Promise<OrgActionResult> {
+  try {
+    await fn()
+    return {}
+  } catch (err) {
+    unstable_rethrow(err)
+    return { error: err instanceof Error ? err.message : 'Something went wrong. Try again.' }
+  }
+}
+
+export async function decideOrganization(orgId: string, decision: OrgDecision, formData: FormData) {
+  return asResult(() => decide(orgId, decision, formData))
+}
+
+export async function setChecklistItem(orgId: string, key: string, formData: FormData) {
+  return asResult(() => checklistItem(orgId, key, formData))
+}
+
+export async function addEvidence(orgId: string, key: string, formData: FormData) {
+  return asResult(() => evidence(orgId, key, formData))
 }

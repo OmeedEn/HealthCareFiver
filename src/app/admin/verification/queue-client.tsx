@@ -151,7 +151,7 @@ export function QueueClient({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Provider applications</h1>
+          <h2 className="text-lg font-semibold">Professional applications</h2>
           <p className="text-sm text-muted-foreground">
             Review applicants, re-screen live providers every {rescreenDays} days, and track
             insurance deadlines.

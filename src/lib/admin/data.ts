@@ -19,6 +19,11 @@ export interface AdminUserRow {
   subscriptionStatus: string | null
 }
 
+/** True while an auth ban (admin suspension) is in effect. */
+export function isBanned(bannedUntil: string | null | undefined): boolean {
+  return !!bannedUntil && Date.parse(bannedUntil) > Date.now()
+}
+
 /** Every auth user. Fine at soft-launch scale; paginate in the UI past ~5k. */
 export async function listAuthUsers(db: AdminDb): Promise<User[]> {
   const users: User[] = []
@@ -46,7 +51,7 @@ export async function listAdminUsers(db: AdminDb): Promise<AdminUserRow[]> {
     db
       .from('contractor_profiles')
       .select('id, first_name, last_name, verification_status'),
-    db.from('facility_profiles').select('id, facility_name, contact_name'),
+    db.from('facility_profiles').select('id, facility_name, contact_name, verification_status, onboarding_submitted_at'),
     db.from('client_profiles').select('id, first_name, last_name'),
   ])
 
@@ -80,9 +85,14 @@ export async function listAdminUsers(db: AdminDb): Promise<AdminUserRow[]> {
         createdAt: u.created_at,
         emailConfirmedAt: u.email_confirmed_at ?? null,
         lastSignInAt: u.last_sign_in_at ?? null,
-        isActive: profile?.is_active ?? false,
+        // Suspended = profile deactivated or auth user banned.
+        isActive: (profile?.is_active ?? false) && !isBanned(u.banned_until),
         isVerified: profile?.is_verified ?? false,
-        verificationStatus: contractor?.verification_status ?? null,
+        verificationStatus:
+          contractor?.verification_status ??
+          // Orgs still mid-signup aren't in the review queue yet.
+          (facility?.onboarding_submitted_at ? facility.verification_status : null) ??
+          null,
         subscriptionStatus: profile?.subscription_status ?? null,
       }
     })

@@ -142,7 +142,7 @@ export async function applyApproval(
     await notify(admin, {
       userId: contractorId,
       type: 'verification_approved',
-      title: "You're live on Sanus.",
+      title: "You're approved — one step to go live",
       body: options.notes || APPROVE_NOTIFICATION_BODY,
       href: '/go-live',
     })

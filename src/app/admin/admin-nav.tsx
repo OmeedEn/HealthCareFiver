@@ -10,11 +10,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-// The day-to-day admin jobs: verify people, talk to them, check their documents.
+// The day-to-day admin jobs: verify people (pros + orgs), talk to them, check their documents.
 const PRIMARY = [
   { href: '/admin/verification', label: 'Verification' },
   { href: '/admin/users', label: 'Users' },
-  { href: '/admin/credentials', label: 'Credentials & documents' },
+  { href: '/admin/credentials', label: 'Documents' },
   { href: '/admin/messages', label: 'Messages' },
 ]
 
@@ -22,7 +22,6 @@ const PRIMARY = [
 const MORE = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/classification', label: 'Needs classification' },
-  { href: '/admin/organizations', label: 'Organizations' },
   { href: '/admin/care-requests', label: 'Care requests' },
   { href: '/admin/listings', label: 'Listings review' },
   { href: '/admin/org-listings', label: 'Org listings' },
@@ -33,6 +32,8 @@ const MORE = [
 
 function isActive(pathname: string, href: string) {
   if (href === '/admin') return pathname === '/admin'
+  // Org reviews live under Verification.
+  if (href === '/admin/verification' && pathname.startsWith('/admin/organizations')) return true
   return pathname === href || pathname.startsWith(href + '/')
 }
 
