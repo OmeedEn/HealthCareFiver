@@ -53,7 +53,8 @@ import { OrgAgreementCard } from '@/components/org/org-agreement-card'
 import { OrgFinishSection } from '@/components/org/org-finish-section'
 import { SUPPORT_EMAIL } from '@/lib/env'
 import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
-import { buildProfessionalChecklist } from '@/lib/onboarding/checklist-professional'
+import { buildProfessionalChecklist, type CredentialLike } from '@/lib/onboarding/checklist-professional'
+import { hasCurrentMalpractice, type CredentialRow } from '@/lib/compliance/rules'
 import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
 
 type DashboardJob = {
@@ -453,10 +454,16 @@ export default async function DashboardPage() {
           .select('id', { count: 'exact', head: true })
           .eq('contractor_id', user.id)
           .eq('is_blocked', false),
+        // requires_malpractice is v3; fall back to status only.
         supabase
           .from('professional_offerings')
-          .select('status')
-          .eq('contractor_id', user.id),
+          .select('status, requires_malpractice')
+          .eq('contractor_id', user.id)
+          .then(async (res) =>
+            res.error
+              ? await supabase.from('professional_offerings').select('status').eq('contractor_id', user.id)
+              : res
+          ),
         supabase
           .from('contractor_profiles')
           .select('insurance_due_at, compliance_hold_reason')
@@ -469,9 +476,10 @@ export default async function DashboardPage() {
           .eq('credential_type', 'malpractice_insurance')
           .eq('status', 'pending_review'),
       ])
-      const listingStatuses = listingsError
+      const listingList = listingsError
         ? null
-        : ((listingRows ?? []) as { status: string }[]).map((r) => r.status)
+        : ((listingRows ?? []) as { status: string; requires_malpractice?: boolean | null }[])
+      const listingStatuses = listingList ? listingList.map((r) => r.status) : null
       compliance = {
         insuranceDueAt: complianceError
           ? null
@@ -488,7 +496,7 @@ export default async function DashboardPage() {
       const [{ data: credentialRows }, { data: progressRow }] = await Promise.all([
         supabase
           .from('credentials')
-          .select('credential_type, document_url, status')
+          .select('credential_type, document_url, status, expiration_date')
           .eq('contractor_id', user.id),
         supabase
           .from('onboarding_progress')
@@ -498,6 +506,11 @@ export default async function DashboardPage() {
           .maybeSingle(),
       ])
       const category = contractorRow?.professional_category
+      const creds = (credentialRows ?? []) as (CredentialLike & { expiration_date: string | null })[]
+      // SQL is_insured(): badge set AND a current verified certificate.
+      const insured =
+        !!contractorRow?.insured_verified_at &&
+        hasCurrentMalpractice(creds as unknown as CredentialRow[], new Date())
       hasListings = listingStatuses ? listingStatuses.length > 0 : true
       checklist = buildProfessionalChecklist({
         branch: isProfessionalCategory(category)
@@ -513,12 +526,15 @@ export default async function DashboardPage() {
         phone: (profileData?.phone as string | null) ?? null,
         avatarUrl: (profileData?.avatar_url as string | null) ?? null,
         stripeConnectOnboarded: !!profileData?.stripe_connect_onboarded,
-        credentials: (credentialRows ?? []) as { credential_type: string; document_url: string | null; status: string }[],
-        listings: listingStatuses
+        credentials: creds,
+        listings: listingList && listingStatuses
           ? {
               total: listingStatuses.length,
               published: listingStatuses.filter((x) => x === 'published').length,
               inReview: listingStatuses.filter((x) => x === 'pending_review').length,
+              awaitingInsurance: insured
+                ? 0
+                : listingList.filter((l) => l.status === 'published' && l.requires_malpractice === true).length,
             }
           : undefined,
         availabilitySlots: availabilityError ? undefined : (availabilityCount ?? 0),

@@ -8,14 +8,18 @@ import type { SupabaseClient } from '@supabase/supabase-js'
  * /signup/organization or /signup/client we turn that brand-new account into
  * an organization or a client.
  *
- * Only safe for an account that is clearly untouched: created in the last
- * 24 hours, never started the professional wizard, and has no credentials,
- * listings or applications. Anything else stays a professional.
+ * Only safe for an account that is clearly untouched: never started the
+ * professional wizard, and has no credentials, listings or applications.
+ * Created in the last 24 hours, or older but never accepted Terms (a Google
+ * signup that stalled on its first screen; nothing can be submitted without
+ * Terms). Anything else stays a professional.
  */
 const MAX_AGE_MS = 24 * 60 * 60 * 1000
 
 export async function canConvertNewProfessional(admin: SupabaseClient, user: User): Promise<boolean> {
-  if (Date.now() - new Date(user.created_at).getTime() > MAX_AGE_MS) return false
+  const termsAt = (user.user_metadata as Record<string, unknown> | null)?.terms_accepted_at
+  const neverAcceptedTerms = !(typeof termsAt === 'string' && termsAt)
+  if (Date.now() - new Date(user.created_at).getTime() > MAX_AGE_MS && !neverAcceptedTerms) return false
 
   const [{ data: profile }, { data: contractor }, creds, offerings, apps] = await Promise.all([
     admin.from('profiles').select('role').eq('id', user.id).maybeSingle(),
