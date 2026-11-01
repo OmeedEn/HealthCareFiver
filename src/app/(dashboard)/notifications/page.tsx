@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_NOTIFICATIONS } from '@/lib/demo/data'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,10 +26,18 @@ interface Notification {
   body: string
   is_read: boolean
   created_at: string
+  data?: { href?: unknown } | null
+}
+
+// Internal paths only.
+function hrefOf(n: Notification): string | null {
+  const h = n.data?.href
+  return typeof h === 'string' && h.startsWith('/') && !h.startsWith('//') ? h : null
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
   message: <MessageSquare className="size-5 text-blue-500" />,
+  new_message: <MessageSquare className="size-5 text-[#1dbf73]" />,
   application: <Briefcase className="size-5 text-green-500" />,
   contract: <FileText className="size-5 text-purple-500" />,
   payment: <DollarSign className="size-5 text-emerald-500" />,
@@ -41,6 +50,7 @@ export default function NotificationsPage() {
     isDemo ? (DEMO_NOTIFICATIONS as unknown as Notification[]) : []
   )
   const [loading, setLoading] = useState(!isDemo)
+  const router = useRouter()
 
   useEffect(() => {
     if (isDemo) return
@@ -179,7 +189,11 @@ export default function NotificationsPage() {
               className={`cursor-pointer transition-colors hover:bg-muted/50 ${
                 !notification.is_read ? 'border-l-2 border-l-blue-500' : ''
               }`}
-              onClick={() => !notification.is_read && markAsRead(notification.id)}
+              onClick={() => {
+                if (!notification.is_read) markAsRead(notification.id)
+                const href = hrefOf(notification)
+                if (href) router.push(href)
+              }}
             >
               <CardContent className="flex items-start gap-3 py-3">
                 <span className="mt-0.5 shrink-0">

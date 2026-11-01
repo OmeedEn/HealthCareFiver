@@ -21,6 +21,32 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { isClassificationRestricted } from '@/lib/onboarding/signup-path'
+import { loadPartnerNames, withPartnerName } from '@/lib/messaging/partner-names'
+
+// Role-aware inbox copy.
+function inboxCopy(role: string | null) {
+  if (role === 'client') {
+    return {
+      subtitle: 'Your conversations with professionals and the Sanus team',
+      empty: 'Find a professional and send them a message. Replies will appear here.',
+      cta: { href: '/find-care', label: 'Find a professional' },
+    }
+  }
+  if (role === 'facility' || role === 'staffing_agency') {
+    return {
+      subtitle: 'Your conversations with professionals and the Sanus team',
+      empty: 'Browse professionals and message or invite them. New messages will appear here.',
+      cta: { href: '/facility/contractors', label: 'Browse professionals' },
+    }
+  }
+  return {
+    subtitle: role
+      ? 'Your conversations with clients, organizations and the Sanus team'
+      : 'Your conversations',
+    empty: 'Clients and organizations who message you will appear here. You can also apply to jobs.',
+    cta: { href: '/contractor/jobs', label: 'Browse jobs' },
+  }
+}
 
 export default function MessagesPage() {
   const isDemo = isDemoMode()
@@ -36,6 +62,7 @@ export default function MessagesPage() {
   // professionals (also enforced by RLS).
   const [restricted, setRestricted] = useState(false)
   const [openingSupport, setOpeningSupport] = useState(false)
+  const [role, setRole] = useState<string | null>(isDemo ? 'contractor' : null)
   const router = useRouter()
 
   const fetchConversations = useCallback(async () => {
@@ -49,10 +76,11 @@ export default function MessagesPage() {
 
     const { data: me } = await supabase
       .from('profiles')
-      .select('signup_path, classification_status')
+      .select('role, signup_path, classification_status')
       .eq('id', user.id)
       .maybeSingle()
     setRestricted(!!me && isClassificationRestricted(me))
+    setRole((me?.role as string | null) ?? null)
 
     const { data, error } = await supabase
       .from('conversations')
@@ -67,6 +95,26 @@ export default function MessagesPage() {
       return
     }
 
+    // Unread = messages from the other side not yet read (conversations has
+    // no unread counters).
+    const ids = (data ?? []).map((r: Record<string, unknown>) => r.id as string)
+    const unread = new Map<string, number>()
+    const [{ data: unreadRows }, names] = await Promise.all([
+      ids.length
+        ? supabase
+            .from('messages')
+            .select('conversation_id')
+            .in('conversation_id', ids)
+            .is('read_at', null)
+            .neq('sender_id', user.id)
+            .limit(1000)
+        : Promise.resolve({ data: [] as { conversation_id: string }[] }),
+      loadPartnerNames(supabase),
+    ])
+    for (const m of (unreadRows ?? []) as { conversation_id: string }[]) {
+      unread.set(m.conversation_id, (unread.get(m.conversation_id) ?? 0) + 1)
+    }
+
     const mapped: ConversationItem[] = (data ?? []).map(
       (row: Record<string, unknown>) => {
         const p1 = row.participant_1_profile as ProfileWithNames | null
@@ -74,6 +122,8 @@ export default function MessagesPage() {
 
         const isP1 = row.participant_1 === user.id
         const other = isP1 ? p2 : p1
+        const otherId = (isP1 ? row.participant_2 : row.participant_1) as string
+        const unreadCount = unread.get(row.id as string) ?? 0
 
         if (row.is_support) {
           return {
@@ -82,8 +132,8 @@ export default function MessagesPage() {
             participant_2: row.participant_2 as string,
             last_message_preview: row.last_message_preview as string | null,
             last_message_at: row.last_message_at as string | null,
-            unread_count_1: 0,
-            unread_count_2: 0,
+            unread_count_1: unreadCount,
+            unread_count_2: unreadCount,
             created_at: row.created_at as string,
             other_user: {
               id: 'support',
@@ -101,12 +151,12 @@ export default function MessagesPage() {
           participant_2: row.participant_2 as string,
           last_message_preview: row.last_message_preview as string | null,
           last_message_at: row.last_message_at as string | null,
-          unread_count_1: (row.unread_count_1 as number) ?? 0,
-          unread_count_2: (row.unread_count_2 as number) ?? 0,
+          unread_count_1: unreadCount,
+          unread_count_2: unreadCount,
           created_at: row.created_at as string,
           other_user: {
-            id: other?.id ?? '',
-            ...profileName(other),
+            id: other?.id ?? otherId,
+            ...withPartnerName(otherId, profileName(other), names),
             avatar_url: other?.avatar_url ?? null,
             role: other?.role ?? 'contractor',
           },
@@ -207,13 +257,15 @@ export default function MessagesPage() {
     })
   }, [conversations, search])
 
+  const copy = inboxCopy(role)
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[#404145]">Messages</h1>
           <p className="text-[#62646a]">
-            Your conversations with facilities and contractors
+            {copy.subtitle}
           </p>
         </div>
         <Button
@@ -273,12 +325,12 @@ export default function MessagesPage() {
                 <p className="mt-1 max-w-sm text-sm text-[#62646a]">
                   {search
                     ? 'Try a different name or keyword to find a conversation.'
-                    : 'Apply to jobs to start a conversation with facility contacts. New messages will appear here.'}
+                    : copy.empty}
                 </p>
                 {!search && (
-                  <Link href="/contractor/jobs" className="mt-6">
+                  <Link href={copy.cta.href} className="mt-6">
                     <Button className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
-                      Browse jobs
+                      {copy.cta.label}
                     </Button>
                   </Link>
                 )}
