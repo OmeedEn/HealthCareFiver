@@ -1,4 +1,8 @@
+import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
+import { cn } from '@/lib/utils'
+import { countPendingVerification } from '@/lib/admin/verification-counts'
+import { OrgQueue } from '../organizations/org-queue'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { EXCLUSION_RESCREEN_DAYS } from '@/lib/compliance/config'
 import {
@@ -33,13 +37,72 @@ interface ProfileRow {
   profiles: { email: string | null } | null
 }
 
-export default async function AdminVerificationQueuePage() {
+type Tab = 'professionals' | 'organizations'
+
+/** Professionals / Organizations toggle with pending counts. */
+function VerificationTabs({ tab, counts }: { tab: Tab; counts?: { pros: number; orgs: number } }) {
+  const tabs: { key: Tab; label: string; count?: number; href: string }[] = [
+    { key: 'professionals', label: 'Professionals', count: counts?.pros, href: '/admin/verification' },
+    { key: 'organizations', label: 'Organizations', count: counts?.orgs, href: '/admin/verification?tab=organizations' },
+  ]
+  return (
+    <div className="space-y-3">
+      <h1 className="text-2xl font-bold text-[#404145]">Verification</h1>
+      <div className="inline-flex rounded-lg border border-[#e4e5e7] bg-white p-1">
+        {tabs.map((t) => (
+          <Link
+            key={t.key}
+            href={t.href}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm',
+              tab === t.key ? 'bg-[#e8faf1] font-semibold text-[#0f8f56]' : 'text-[#62646a] hover:text-[#1dbf73]'
+            )}
+          >
+            {t.label}
+            {!!t.count && (
+              <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
+                {t.count}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default async function AdminVerificationQueuePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; status?: string }>
+}) {
+  const { tab: tabParam, status } = await searchParams
+  const tab: Tab = tabParam === 'organizations' ? 'organizations' : 'professionals'
+
   if (isDemoMode()) {
-    return <QueueClient rows={DEMO_QUEUE} rescreenDays={EXCLUSION_RESCREEN_DAYS} demo />
+    return (
+      <div className="space-y-6">
+        <VerificationTabs tab="professionals" />
+        <QueueClient rows={DEMO_QUEUE} rescreenDays={EXCLUSION_RESCREEN_DAYS} demo />
+      </div>
+    )
   }
 
   await requireAdminPage()
   const adminSupabase = createAdminClient()
+  const counts = await countPendingVerification(adminSupabase)
+
+  if (tab === 'organizations') {
+    return (
+      <div className="space-y-6">
+        <VerificationTabs tab={tab} counts={counts} />
+        <OrgQueue
+          status={status}
+          hrefFor={(f) => `/admin/verification?tab=organizations${f ? `&status=${f}` : ''}`}
+        />
+      </div>
+    )
+  }
 
   const { data, error } = await adminSupabase
     .from('contractor_profiles')
@@ -99,10 +162,13 @@ export default async function AdminVerificationQueuePage() {
   }))
 
   return (
-    <QueueClient
-      rows={rows}
-      rescreenDays={EXCLUSION_RESCREEN_DAYS}
-      loadError={error ? 'Could not load applicants. Check the server logs.' : null}
-    />
+    <div className="space-y-6">
+      <VerificationTabs tab={tab} counts={counts} />
+      <QueueClient
+        rows={rows}
+        rescreenDays={EXCLUSION_RESCREEN_DAYS}
+        loadError={error ? 'Could not load applicants. Check the server logs.' : null}
+      />
+    </div>
   )
 }

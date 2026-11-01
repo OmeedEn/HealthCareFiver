@@ -49,9 +49,6 @@ interface Notification {
   href: string | null
 }
 
-const APPROVE_NOTIFICATION_BODY =
-  'Accept the Independent Contractor and Platform Agreement and set up payouts to finish going live.'
-
 /**
  * Admin decisions on a provider application. Every action is admin-only
  * (MFA-gated via currentUser()) and audit-logged.
@@ -135,9 +132,12 @@ export async function POST(
       if (error) return failed('Failed to record the review')
 
       // applyApproval decides approved vs insurance_pending, sets approved_at
-      // / insurance_due_at, and sends the "You're live on Sanus" email.
+      // / insurance_due_at, and sends the approval email + notification.
       try {
-        const result = await applyApproval(adminSupabase, contractorId)
+        const result = await applyApproval(adminSupabase, contractorId, {
+          notes: notes || null,
+          appUrl: process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin,
+        })
         newStatus = result.status
         extra.insuranceDueAt = result.insuranceDueAt
       } catch (err) {
@@ -145,12 +145,22 @@ export async function POST(
         return failed('Approval failed — the provider was not approved. Try again.')
       }
 
-      notification = {
-        type: 'verification_approved',
-        title: "You're live on Sanus.",
-        body: notes || APPROVE_NOTIFICATION_BODY,
-        href: '/go-live',
+      // Approval covers the documents reviewed with it. Malpractice certs
+      // keep their own Verify insurance step (it drives insurance status).
+      const { data: verifiedCreds, error: credsError } = await adminSupabase
+        .from('credentials')
+        .update({ status: 'verified', verified_at: now, verified_by: admin.id })
+        .eq('contractor_id', contractorId)
+        .eq('status', 'pending_review')
+        .neq('credential_type', 'malpractice_insurance')
+        .select('id')
+      if (credsError) {
+        console.error('[verification] Failed to verify credentials on approval', credsError)
+        warnings.push('Approved, but their pending documents could not be marked verified. Review them under Documents.')
+      } else {
+        extra.credentialsVerified = verifiedCreds?.length ?? 0
       }
+      // The in-app notification is sent by applyApproval (only once).
       break
     }
 
@@ -187,7 +197,7 @@ export async function POST(
       notification = {
         type: 'verification_suspended',
         title: 'Your Sanus account is suspended',
-        body: 'Your profile and listings are hidden while we review your account. We will contact you by email.',
+        body: 'Your profile and listings are hidden while we review your account. Contact Sanus support if you have questions.',
         href: null,
       }
       break

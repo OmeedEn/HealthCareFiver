@@ -19,6 +19,7 @@ import {
   isOrgStatus,
   orgChecklistFor,
   type OrgChecklist,
+  type OrgDecision,
   type OrgStatus,
 } from '@/lib/org/review'
 import { detectOrgRedFlags } from '@/lib/org/red-flags'
@@ -40,9 +41,19 @@ import {
   orgTypeLabel,
 } from '@/lib/onboarding/organization'
 import { SIGNUP_PATH_SHORT_LABELS, isSignupPath } from '@/lib/onboarding/signup-path'
+import { MessageUserButton } from '@/components/admin/message-user-button'
 import { addEvidence, decideOrganization, setChecklistItem } from '../actions'
+import { ActionForm } from './action-form'
 
 export const dynamic = 'force-dynamic'
+
+const DECISION_DONE: Record<OrgDecision, string> = {
+  approve: 'Organization approved',
+  needs_info: 'More info requested',
+  suspend: 'Organization suspended',
+  reject: 'Organization rejected',
+  reopen: 'Review reopened',
+}
 
 interface EvidenceRow {
   id: string
@@ -200,7 +211,7 @@ export default async function AdminOrganizationPage({
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
+      <Link href="/admin/verification?tab=organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
         &larr; All organizations
       </Link>
 
@@ -217,9 +228,20 @@ export default async function AdminOrganizationPage({
             </span>
           </p>
         </div>
-        <Badge variant={ORG_STATUS_BADGE[status]} className="text-sm">
-          {ORG_STATUS_LABEL[status]}
-        </Badge>
+        <div className="flex flex-col items-end gap-2">
+          <Badge variant={ORG_STATUS_BADGE[status]} className="text-sm">
+            {ORG_STATUS_LABEL[status]}
+          </Badge>
+          <div className="flex gap-2">
+            <MessageUserButton userId={id} />
+            <Link
+              href={`/admin/users/${id}`}
+              className="inline-flex h-7 items-center rounded-md border border-[#e4e5e7] px-2.5 text-sm text-[#404145] hover:border-[#1dbf73]"
+            >
+              Account
+            </Link>
+          </div>
+        </div>
       </div>
 
       {!org.onboarding_submitted_at && (
@@ -436,13 +458,16 @@ export default async function AdminOrganizationPage({
                           </div>
                         )}
                       </div>
-                      <form action={setChecklistItem.bind(null, id, item.key)}>
+                      <ActionForm
+                        action={setChecklistItem.bind(null, id, item.key)}
+                        success={entry?.done ? 'Unchecked' : 'Marked done'}
+                      >
                         <input type="hidden" name="done" value={entry?.done ? 'false' : 'true'} />
                         <input type="hidden" name="note" value={entry?.note ?? ''} />
                         <Button type="submit" size="sm" variant={entry?.done ? 'default' : 'outline'} className={entry?.done ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]' : ''}>
                           {entry?.done ? '✓ Done' : 'Mark done'}
                         </Button>
-                      </form>
+                      </ActionForm>
                     </div>
                     {entry?.at && (
                       <p className="mt-1 text-xs text-[#62646a]">
@@ -467,11 +492,16 @@ export default async function AdminOrganizationPage({
                     )}
 
                     {item.needsEvidence && (
-                      <form action={addEvidence.bind(null, id, item.key)} className="mt-3 flex flex-wrap items-center gap-2">
+                      <ActionForm
+                        action={addEvidence.bind(null, id, item.key)}
+                        success="Evidence saved"
+                        resetOnSuccess
+                        className="mt-3 flex flex-wrap items-center gap-2"
+                      >
                         <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" className="max-w-[220px] text-xs" />
                         <input type="text" name="note" placeholder="Note (optional)" className="h-8 min-w-0 flex-1 rounded-md border border-[#e4e5e7] px-2 text-sm" />
                         <Button type="submit" size="sm" variant="outline">Save evidence</Button>
-                      </form>
+                      </ActionForm>
                     )}
                   </div>
                 )
@@ -491,7 +521,12 @@ export default async function AdminOrganizationPage({
             </CardHeader>
             <CardContent className="space-y-3">
               {ORG_ALLOWED_DECISIONS[status].map((decision) => (
-                <form key={decision} action={decideOrganization.bind(null, id, decision)} className="space-y-2">
+                <ActionForm
+                  key={decision}
+                  action={decideOrganization.bind(null, id, decision)}
+                  success={DECISION_DONE[decision]}
+                  className="space-y-2"
+                >
                   {ORG_DECISION_NEEDS_NOTE.includes(decision) && (
                     <Textarea name="notes" required rows={3} placeholder={`Note to the organization (${ORG_DECISION_LABEL[decision].toLowerCase()})`} />
                   )}
@@ -502,7 +537,7 @@ export default async function AdminOrganizationPage({
                   >
                     {ORG_DECISION_LABEL[decision]}
                   </Button>
-                </form>
+                </ActionForm>
               ))}
               {status !== 'approved' && progress.done < progress.total && (
                 <p className="text-xs text-[#b8860b]">

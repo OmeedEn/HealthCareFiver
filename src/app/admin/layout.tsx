@@ -3,6 +3,7 @@ import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
 import { countPendingClassification } from '@/lib/admin/classification'
 import { countNeedsReply } from '@/lib/admin/support'
+import { countPendingVerification } from '@/lib/admin/verification-counts'
 import { AdminSignOutButton } from './sign-out-button'
 import { AdminNav } from './admin-nav'
 
@@ -18,10 +19,7 @@ export default async function AdminLayout({
     adminEmail = admin.email ?? admin.id
     const [classification, verification, credentials, unreadMessages] = await Promise.all([
       countPendingClassification(db),
-      db
-        .from('contractor_profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('verification_status', 'pending_review'),
+      countPendingVerification(db),
       db
         .from('credentials')
         .select('id', { count: 'exact', head: true })
@@ -29,7 +27,7 @@ export default async function AdminLayout({
       countNeedsReply(db).catch(() => 0),
     ])
     badges['/admin/classification'] = classification
-    badges['/admin/verification'] = verification.count ?? 0
+    badges['/admin/verification'] = verification.pros + verification.orgs
     badges['/admin/credentials'] = credentials.count ?? 0
     badges['/admin/messages'] = unreadMessages
   }

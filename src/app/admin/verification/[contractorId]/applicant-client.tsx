@@ -79,7 +79,7 @@ const DIALOG_COPY: Record<
   approve: {
     title: 'Approve provider',
     description:
-      'Approval sets them live (or Insurance pending if their services need malpractice coverage they haven’t had reviewed) and sends the “You’re live on Sanus” email.',
+      'Approval marks their pending documents verified (malpractice keeps its own step), sets them Approved (or Insurance pending if their services need coverage) and sends the approval email. They still accept the agreement on Go live before they’re live.',
     placeholder: 'Optional note for the provider’s notification',
     confirm: 'Approve',
     notesRequired: false,
