@@ -211,7 +211,7 @@ export default async function AdminOrganizationPage({
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/verification?tab=organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
+      <Link href="/admin/review/organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
         &larr; All organizations
       </Link>
 

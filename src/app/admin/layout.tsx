@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
-import { countPendingClassification } from '@/lib/admin/classification'
-import { countNeedsReply } from '@/lib/admin/support'
-import { countPendingVerification } from '@/lib/admin/verification-counts'
+import { getQueueCounts, inboxTotal, reviewTotal } from '@/lib/admin/queue-counts'
 import { AdminSignOutButton } from './sign-out-button'
 import { AdminNav } from './admin-nav'
 
@@ -15,21 +13,11 @@ export default async function AdminLayout({
   let adminEmail = 'admin (demo)'
   const badges: Record<string, number> = {}
   if (!isDemoMode()) {
-    const { admin, db } = await requireAdmin()
+    const { admin } = await requireAdmin()
     adminEmail = admin.email ?? admin.id
-    const [classification, verification, credentials, unreadMessages] = await Promise.all([
-      countPendingClassification(db),
-      countPendingVerification(db),
-      db
-        .from('credentials')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending_review'),
-      countNeedsReply(db).catch(() => 0),
-    ])
-    badges['/admin/classification'] = classification
-    badges['/admin/verification'] = verification.pros + verification.orgs
-    badges['/admin/credentials'] = credentials.count ?? 0
-    badges['/admin/messages'] = unreadMessages
+    const counts = await getQueueCounts()
+    badges['/admin/review'] = reviewTotal(counts)
+    badges['/admin/inbox'] = inboxTotal(counts)
   }
 
   return (

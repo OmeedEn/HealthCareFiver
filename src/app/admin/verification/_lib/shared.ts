@@ -3,6 +3,12 @@
  * console (queue + applicant detail). No server-only imports.
  */
 
+import {
+  effectiveBranch,
+  isCredentialBasis,
+  isProfessionalCategory,
+} from '@/lib/onboarding/professional-branch'
+
 export const VERIFICATION_STATUSES = [
   'pending_review',
   'more_info_requested',
@@ -45,29 +51,22 @@ export const LIVE_STATUSES = ['approved', 'insurance_pending']
 export type Branch = 'clinical' | 'allied' | 'consultant' | 'educator'
 
 /**
- * Which step-3 question set applies. Mirrors effectiveBranch() in
- * src/lib/onboarding/professional-branch.ts (Wizard agent) — kept local so
- * the admin console has no build-time dependency on the wizard.
+ * Which step-3 question set / document list applies. Delegates to the
+ * onboarding wizard's effectiveBranch() so admin and onboarding never drift
+ * (e.g. allied + credential_basis 'none' = "no certifications" → consultant,
+ * resume instead of certification). Returns null when the category (or an
+ * 'other' professional's credential basis) is missing, so callers can show
+ * "Category unknown" instead of guessing.
  */
 export function branchFor(
   category: string | null,
   credentialBasis: string | null
 ): Branch | null {
-  if (category === 'other') {
-    if (credentialBasis === 'license') return 'clinical'
-    if (credentialBasis === 'certification') return 'allied'
-    if (credentialBasis === 'none') return 'consultant'
-    return null
-  }
-  if (
-    category === 'clinical' ||
-    category === 'allied' ||
-    category === 'consultant' ||
-    category === 'educator'
-  ) {
-    return category
-  }
-  return null
+  if (!isProfessionalCategory(category)) return null
+  if (category === 'other' && !isCredentialBasis(credentialBasis)) return null
+  // Explicit so this holds even before effectiveBranch() learns the rule.
+  if (category === 'allied' && credentialBasis === 'none') return 'consultant'
+  return effectiveBranch(category, credentialBasis)
 }
 
 export const CATEGORY_LABEL: Record<string, string> = {

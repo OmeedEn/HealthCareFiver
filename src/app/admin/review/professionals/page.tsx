@@ -1,0 +1,109 @@
+import { isDemoMode } from '@/lib/demo/data'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { EXCLUSION_RESCREEN_DAYS } from '@/lib/compliance/config'
+import {
+  VERIFICATION_STATUSES,
+  disclosureYesKeys,
+  isRescreenDue,
+  type SelfDisclosures,
+} from '@/app/admin/verification/_lib/shared'
+import { fetchDuplicateFlags, requireAdminPage } from '@/app/admin/verification/_lib/server'
+import { QueueClient, type QueueRow } from './queue-client'
+import { DEMO_QUEUE } from '@/app/admin/verification/_lib/demo'
+import { branchFor } from '@/app/admin/verification/_lib/shared'
+import {
+  professionalMissingForApproval,
+  type CredentialLike,
+} from '@/lib/onboarding/checklist-professional'
+
+export const dynamic = 'force-dynamic'
+
+interface ProfileRow {
+  id: string
+  first_name: string
+  last_name: string
+  professional_category: string | null
+  other_profession: string | null
+  credential_basis: string | null
+  verification_status: string
+  updated_at: string
+  self_disclosures: SelfDisclosures | null
+  last_exclusion_check_at: string | null
+  insurance_due_at: string | null
+  profiles: { email: string | null } | null
+}
+
+export default async function AdminProfessionalsQueuePage() {
+  if (isDemoMode()) {
+    return (
+      <QueueClient rows={DEMO_QUEUE} rescreenDays={EXCLUSION_RESCREEN_DAYS} demo />
+    )
+  }
+
+  await requireAdminPage()
+  const adminSupabase = createAdminClient()
+  const { data, error } = await adminSupabase
+    .from('contractor_profiles')
+    .select(
+      'id, first_name, last_name, professional_category, other_profession, credential_basis, verification_status, updated_at, self_disclosures, last_exclusion_check_at, insurance_due_at, profiles!contractor_profiles_id_fkey(email)'
+    )
+    .in('verification_status', [...VERIFICATION_STATUSES])
+    .order('updated_at', { ascending: true })
+    .limit(500)
+
+  if (error) {
+    console.error('[admin/verification] queue load failed', error)
+  }
+
+  const profiles = (data ?? []) as unknown as ProfileRow[]
+  const ids = profiles.map((p) => p.id)
+  const [duplicates, { data: credRows, error: credError }] = await Promise.all([
+    fetchDuplicateFlags(ids),
+    // Uploads, for the Needed-for-approval "Missing" badges.
+    ids.length
+      ? adminSupabase
+          .from('credentials')
+          .select('contractor_id, credential_type, document_url, status')
+          .in('contractor_id', ids)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+  if (credError) console.error('[admin/verification] credentials load failed', credError.code)
+  const credsBy = new Map<string, CredentialLike[]>()
+  for (const c of (credRows ?? []) as (CredentialLike & { contractor_id: string })[]) {
+    credsBy.set(c.contractor_id, [...(credsBy.get(c.contractor_id) ?? []), c])
+  }
+
+  const rows: QueueRow[] = profiles.map((p) => ({
+    id: p.id,
+    name: `${p.first_name} ${p.last_name}`.trim(),
+    email: p.profiles?.email ?? null,
+    category: p.professional_category,
+    otherProfession: p.other_profession,
+    credentialBasis: p.credential_basis,
+    status: p.verification_status,
+    updatedAt: p.updated_at,
+    disclosuresYes: disclosureYesKeys(p.self_disclosures),
+    duplicateCount: duplicates.has(p.id) ? duplicates.get(p.id)!.length : null,
+    rescreenDue: isRescreenDue(
+      p.verification_status,
+      p.last_exclusion_check_at,
+      EXCLUSION_RESCREEN_DAYS
+    ),
+    lastExclusionCheckAt: p.last_exclusion_check_at,
+    insuranceDueAt: p.insurance_due_at,
+    missing: credError
+      ? []
+      : professionalMissingForApproval(
+          branchFor(p.professional_category, p.credential_basis),
+          credsBy.get(p.id) ?? []
+        ),
+  }))
+
+  return (
+    <QueueClient
+      rows={rows}
+      rescreenDays={EXCLUSION_RESCREEN_DAYS}
+      loadError={error ? 'Could not load applicants. Check the server logs.' : null}
+    />
+  )
+}

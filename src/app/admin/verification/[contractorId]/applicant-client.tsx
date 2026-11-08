@@ -417,7 +417,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-start gap-3">
-        <Button variant="ghost" size="icon" render={<Link href="/admin/verification" />}>
+        <Button variant="ghost" size="icon" render={<Link href="/admin/review/professionals" />}>
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1">
@@ -973,7 +973,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
                 </li>
               ))}
             </ul>
-            <Link href="/admin/listings" className="mt-2 inline-block text-xs text-[#1dbf73] hover:underline">
+            <Link href="/admin/review/listings" className="mt-2 inline-block text-xs text-[#1dbf73] hover:underline">
               Open listings review →
             </Link>
           </CardContent>

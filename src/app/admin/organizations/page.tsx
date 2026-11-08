@@ -1,15 +1,12 @@
-import { redirect } from 'next/navigation'
+import { legacyRedirect } from '@/lib/admin/legacy-redirect'
 
 export const dynamic = 'force-dynamic'
 
-// The org queue lives under Verification; keep old links working.
-export default async function AdminOrganizationsPage({
+/** Moved to /admin/review/organizations; keeps old links and bookmarks working. */
+export default async function LegacyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const { status } = await searchParams
-  const params = new URLSearchParams({ tab: 'organizations' })
-  if (status) params.set('status', status)
-  redirect(`/admin/verification?${params}`)
+  return legacyRedirect('/admin/review/organizations', searchParams)
 }
