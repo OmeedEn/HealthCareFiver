@@ -336,7 +336,10 @@ export default function ContractorProfileEditPage() {
         last_name: formData.last_name || null,
         professional_category: category || null,
         other_profession: isOther ? formData.other_profession.trim() || null : null,
-        credential_basis: isOther ? formData.credential_basis || null : null,
+        // Kept for 'other' and 'allied' (allied pros can answer "no
+        // certification" = 'none'); wiping it would re-require a cert.
+        credential_basis:
+          isOther || category === 'allied' ? formData.credential_basis || null : null,
         ...professionCols,
         certifying_organization: branch === 'allied' ? formData.certifying_organization.trim() || null : undefined,
         website_url: websiteUrl,
