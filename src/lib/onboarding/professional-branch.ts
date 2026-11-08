@@ -9,6 +9,11 @@
  *   certification → allied     (allied / certified questions)
  *   none          → consultant (consultant questions)
  *
+ * "Allied or certified" asks "Do you have any certifications?" (same
+ * column; certifications are optional): certification (or no answer, as on
+ * accounts from before the question) → allied; none → consultant, i.e. a
+ * website / LinkedIn link and a resume or CV instead of a certification.
+ *
  * Pure and dependency-free so it can be shared by server actions, client
  * components, admin and dashboard code.
  */
@@ -47,8 +52,8 @@ export function isCredentialBasis(v: unknown): v is CredentialBasis {
 }
 
 /**
- * Resolve the branch for a category (+ credential basis, only meaningful for
- * 'other'). An 'other' professional without a valid basis — which the wizard
+ * Resolve the branch for a category (+ credential basis, meaningful for
+ * 'other' and 'allied'). An 'other' professional without a valid basis — which the wizard
  * never allows to be saved — falls back to 'consultant', the branch that asks
  * for no license/certification data.
  */
@@ -57,8 +62,9 @@ export function effectiveBranch(
   credentialBasis: CredentialBasis | string | null | undefined
 ): ProfessionalBranch {
   switch (category) {
-    case 'clinical':
     case 'allied':
+      return credentialBasis === 'none' ? 'consultant' : 'allied'
+    case 'clinical':
     case 'consultant':
     case 'educator':
       return category

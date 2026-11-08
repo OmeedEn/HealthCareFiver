@@ -10,7 +10,6 @@ import { submitContractorForReview } from '@/lib/verification/submit-for-review'
 import { markSubmitted, recordProgress } from '@/lib/onboarding/progress'
 import { missingTerms } from '@/lib/onboarding/account-gaps'
 import {
-  branchHasComplianceQuestions,
   effectiveBranch,
   isCredentialBasis,
   isProfessionalCategory,
@@ -23,6 +22,9 @@ import {
   DISCLOSURE_KEYS,
   PRO_Q,
   PRO_SKIPPABLE,
+  asksDisclosures,
+  certificationsOf,
+  formatCertifications,
   identityScreenFor,
   normalizeWebsiteUrl,
   professionColumns,
@@ -156,7 +158,12 @@ export async function saveIdentityAnswer(id: string, input: ProSignupAnswers): P
     case PRO_Q.category: {
       if (!isProfessionalCategory(input?.category)) return { ok: false, error: 'Choose what kind of professional you are.' }
       columns = { professional_category: input.category }
-      if (input.category !== 'other') Object.assign(columns, { other_profession: null, credential_basis: null })
+      if (input.category !== 'other') columns.other_profession = null
+      // The credential question differs by category (Other: license /
+      // certification / neither; Allied: any certifications?): ask again.
+      if (input.category !== stored.category || (input.category !== 'other' && input.category !== 'allied')) {
+        columns.credential_basis = null
+      }
       break
     }
     case PRO_Q.profession: {
@@ -174,9 +181,13 @@ export async function saveIdentityAnswer(id: string, input: ProSignupAnswers): P
       break
     }
     case PRO_Q.credentialBasis: {
-      if (stored.category !== 'other') return ANSWER_EARLIER
+      if (stored.category !== 'other' && stored.category !== 'allied') return ANSWER_EARLIER
       if (!isCredentialBasis(input?.credential_basis)) return { ok: false, error: 'Choose an option.' }
+      // Allied: "Do you have any certifications?" is yes / no only.
+      if (stored.category === 'allied' && input.credential_basis === 'license') return { ok: false, error: 'Choose an option.' }
       columns = { credential_basis: input.credential_basis }
+      // No certifications: drop any entered on an earlier pass.
+      if (stored.category === 'allied' && input.credential_basis === 'none') columns.certifying_organization = null
       break
     }
     case PRO_Q.license:
@@ -192,9 +203,14 @@ export async function saveIdentityAnswer(id: string, input: ProSignupAnswers): P
         }
         columns = { state_license_number: number, license_state: state, license_states: [state] }
       } else if (id === PRO_Q.certifyingOrg) {
-        const org = str(input?.certifying_organization)
-        if (!proValid.certifyingOrg(org)) return { ok: false, error: 'Tell us which organization certified you.' }
-        columns = { certifying_organization: org }
+        const certs = certificationsOf({
+          certifications: Array.isArray(input?.certifications) ? input.certifications : [],
+          certifying_organization: str(input?.certifying_organization),
+        })
+        if (!proValid.certifications(certs)) {
+          return { ok: false, error: 'Add the name of each certification and the organization that issued it.' }
+        }
+        columns = { certifying_organization: formatCertifications(certs) }
       } else if (input?.no_website === true) {
         columns = { website_url: null }
       } else {
@@ -396,7 +412,7 @@ export async function submitApplication(input: {
   if (!stored) return GENERIC_ERROR
   if (!stored.branch) return ANSWER_EARLIER
   if (
-    branchHasComplianceQuestions(stored.branch) &&
+    asksDisclosures(stored.category, stored.branch) &&
     !DISCLOSURE_KEYS.every((k) => {
       const d = stored.disclosures[k]
       return !!d && typeof d === 'object' && typeof (d as { answer?: unknown }).answer === 'boolean'

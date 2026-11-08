@@ -15,11 +15,11 @@ import {
   PRO_COPY,
   PRO_Q,
   PRO_SKIPPABLE,
+  asksDisclosures,
   branchOf,
   postAccountScreenIds,
   type ProSignupAnswers,
 } from '@/lib/onboarding/questions/professional'
-import { branchHasComplianceQuestions } from '@/lib/onboarding/professional-branch'
 import type { OnboardingProgress } from '@/lib/onboarding/progress'
 import type { SignupPath } from '@/lib/onboarding/signup-path'
 import { isDemoMode } from '@/lib/demo/data'
@@ -179,7 +179,7 @@ export function ProfessionalOnboardingFlow({
 
   const credentialDoc = docFor('credential')
   const idDoc = docFor('government_id')
-  const showDisclosures = !branch || branchHasComplianceQuestions(branch)
+  const showDisclosures = asksDisclosures(answers.category, branch)
   const step = includeIdentity ? 1 : 2
 
   const post: Screen[] = [
@@ -303,7 +303,7 @@ export function ProfessionalOnboardingFlow({
 
   // Screens 1–3 and the account are behind them: give them their share of
   // the bar so it doesn't restart at zero after the account screen.
-  const postCount = postAccountScreenIds(branch).length
+  const postCount = postAccountScreenIds(branch, answers.category).length
   const stepWeights: Record<number, number> = includeIdentity
     ? { 0: ACCOUNT_SHARE, 1: 1 - ACCOUNT_SHARE }
     : {
