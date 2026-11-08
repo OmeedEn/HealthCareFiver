@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Archivo, Public_Sans } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import "./globals.css";
 
-const inter = Inter({
+// Display: Archivo, a grotesk with a variable width axis — condensed for
+// loud credential-style moments, expanded for headlines.
+const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  axes: ["wdth"],
+  variable: "--font-archivo",
 });
 
-const playfair = Playfair_Display({
+// Body: Public Sans — neutral, highly legible, built for public services.
+const publicSans = Public_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-playfair",
+  variable: "--font-public-sans",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`h-full antialiased ${inter.variable} ${playfair.variable}`}>
+    <html lang="en" className={`h-full antialiased ${archivo.variable} ${publicSans.variable}`}>
       <body className="min-h-full flex flex-col font-sans">
         <PostHogProvider>
           {children}
