@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { isDemoMode, DEMO_AVAILABILITY } from '@/lib/demo/data'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { Plus, Trash2, Calendar, Loader2, CalendarOff } from 'lucide-react'
+import { Plus, Trash2, Calendar, Loader2, CalendarOff, ArrowRight } from 'lucide-react'
 
 const DAYS_OF_WEEK = [
   'Sunday',
@@ -258,6 +259,12 @@ export default function AvailabilityPage() {
           <p className="text-[#62646a]">
             Set your weekly availability and block out time off
           </p>
+          <Link
+            href="/contractor/rates"
+            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#1dbf73] hover:text-[#19a463]"
+          >
+            Set your rates <ArrowRight className="size-3.5" aria-hidden="true" />
+          </Link>
         </div>
         <Button
           onClick={addSlot}

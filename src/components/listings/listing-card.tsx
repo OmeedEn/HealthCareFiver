@@ -58,12 +58,25 @@ function formatWhen(iso: string): string {
   })
 }
 
+/** Non-numeric price hint for browse cards. */
+function browsePriceHint(l: PublicListing): string {
+  if (l.kind === 'event' && l.is_free) return 'Free'
+  if (l.kind === 'consulting' && l.custom_quote) return 'Custom quote'
+  return 'See pricing'
+}
+
 export function ListingCard({
   listing,
   footer,
+  hidePrice = false,
 }: {
   listing: PublicListing
   footer?: React.ReactNode
+  /**
+   * Browse contexts (search results, carousels) pass true: dollar figures
+   * are only shown once a client opens the profile or listing.
+   */
+  hidePrice?: boolean
 }) {
   const l = listing
   const kindLine =
@@ -88,7 +101,9 @@ export function ListingCard({
         </p>
       )}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#6b7280]">
-        <span className="font-semibold text-[#1dbf73]">{priceLine(l)}</span>
+        <span className="font-semibold text-[#1dbf73]">
+          {hidePrice ? browsePriceHint(l) : priceLine(l)}
+        </span>
         {l.kind === 'service' && l.duration_minutes && (
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" aria-hidden="true" />

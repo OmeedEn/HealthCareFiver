@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
-import { formatCurrency, getInitials } from '@/lib/utils/format'
-import { MapPin, Star, Clock } from 'lucide-react'
+import { getInitials } from '@/lib/utils/format'
+import { MapPin, Star, Tag } from 'lucide-react'
 
 export interface ContractorProfileData {
   id: string
@@ -17,8 +17,10 @@ export interface ContractorProfileData {
   headline: string | null
   bio: string | null
   years_of_experience: number | null
-  hourly_rate_min: number | null
-  hourly_rate_max: number | null
+  // Kept for callers' convenience; never rendered — prices show on the
+  // full profile only, not on browse cards.
+  hourly_rate_min?: number | null
+  hourly_rate_max?: number | null
   city: string | null
   state: string | null
   is_available: boolean
@@ -80,10 +82,10 @@ export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
               {[contractor.city, contractor.state].filter(Boolean).join(', ')}
             </span>
           )}
-          {contractor.hourly_rate_min != null && contractor.hourly_rate_max != null && (
-            <span className="flex items-center gap-1">
-              <Clock className="size-3.5" />
-              {formatCurrency(contractor.hourly_rate_min)} - {formatCurrency(contractor.hourly_rate_max)}/hr
+          {href && (
+            <span className="flex items-center gap-1 text-[#0f8f56]">
+              <Tag className="size-3.5" aria-hidden="true" />
+              Rates on profile
             </span>
           )}
         </div>

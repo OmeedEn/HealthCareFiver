@@ -102,7 +102,7 @@ export function OrgListingsPanel({
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((l) => (
-            <OrgListingCard key={l.id} listing={l} showOrg footer={<OrgListingCta listing={l} signedIn={signedIn} />} />
+            <OrgListingCard key={l.id} listing={l} showOrg hidePrice footer={<OrgListingCta listing={l} signedIn={signedIn} />} />
           ))}
         </div>
       )}
