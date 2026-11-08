@@ -32,15 +32,28 @@ export function orgListingPrice(l: PublicOrgListing): string {
   return `$${(l.priceCents / 100).toFixed(2).replace(/\.00$/, '')}`
 }
 
+/** Non-numeric price hint for browse cards ("Free", "Request a quote", "See pricing"). */
+export function orgListingBrowseHint(l: PublicOrgListing): string {
+  if (l.kind === 'service' && l.contactForPricing) return 'Request a quote'
+  if (l.kind === 'event' && l.isFree) return 'Free'
+  return 'See pricing'
+}
+
 /** A published organization service or event, as the public sees it. */
 export function OrgListingCard({
   listing,
   showOrg = false,
+  hidePrice = false,
   footer,
 }: {
   listing: PublicOrgListing | PublicOrgListingWithOrg
   /** Show which organization offers it (Find care, Events). */
   showOrg?: boolean
+  /**
+   * Browse contexts (Find care) pass true: no dollar figure on the card —
+   * the price shows on the organization page and in the booking dialog.
+   */
+  hidePrice?: boolean
   footer?: React.ReactNode
 }) {
   const l = listing
@@ -76,7 +89,20 @@ export function OrgListingCard({
         <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-sm text-[#374151]">{l.description}</p>
       )}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#6b7280]">
-        <span className="font-semibold text-[#1dbf73]">{orgListingPrice(l)}</span>
+        {hidePrice ? (
+          org ? (
+            <Link
+              href={`/orgs/${org.id}#listing-${l.id}`}
+              className="font-semibold text-[#1dbf73] hover:underline"
+            >
+              {orgListingBrowseHint(l)}
+            </Link>
+          ) : (
+            <span className="font-semibold text-[#1dbf73]">{orgListingBrowseHint(l)}</span>
+          )
+        ) : (
+          <span className="font-semibold text-[#1dbf73]">{orgListingPrice(l)}</span>
+        )}
         {l.kind === 'event' && (
           <span className="inline-flex items-center gap-1">
             <CalendarDays className="size-3.5" aria-hidden="true" />

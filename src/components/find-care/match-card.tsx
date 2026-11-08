@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { MapPin, ShieldCheck, Star } from 'lucide-react'
+import { MapPin, ShieldCheck, Star, Tag } from 'lucide-react'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { FORMAT_LABELS, type MatchedProvider } from '@/lib/find-care/match-shared'
 
@@ -18,14 +18,6 @@ function avatarColor(id: string): string {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]
 }
 
-function formatRate(p: MatchedProvider): string | null {
-  const { hourly_rate_min: min, hourly_rate_max: max } = p
-  if (min != null && max != null && max !== min) return `$${min}–$${max}/hr`
-  if (min != null) return `From $${min}/hr`
-  if (max != null) return `Up to $${max}/hr`
-  return null
-}
-
 /**
  * A professional on the client results screen. Same look as the /find-care
  * cards (that component isn't exported), plus why they matched: the tiles
@@ -33,7 +25,6 @@ function formatRate(p: MatchedProvider): string | null {
  */
 export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
   const initials = `${p.first_name[0] ?? ''}${p.last_name[0] ?? ''}`.toUpperCase() || '?'
-  const rate = formatRate(p)
   const location = [p.city, p.state].filter(Boolean).join(', ')
 
   return (
@@ -95,7 +86,11 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        <span className="font-semibold text-[#1dbf73]">{rate ?? 'Rate on request'}</span>
+        {/* Prices live on the full profile only, never on browse cards. */}
+        <span className="flex items-center gap-1 font-medium text-[#0f8f56]">
+          <Tag className="size-3.5" aria-hidden />
+          Rates on profile
+        </span>
         {location && (
           <span className="flex items-center gap-1 text-[#6b7280]">
             <MapPin className="size-3.5" aria-hidden />

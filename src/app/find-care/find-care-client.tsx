@@ -13,10 +13,10 @@ import {
   ChevronDown,
   UserPlus,
   ShieldCheck,
+  Tag,
 } from 'lucide-react'
 import type { PublicProvider } from '@/lib/find-care/types'
 import { SiteHeader } from '@/components/marketing/site-header'
-import { Input } from '@/components/ui/input'
 import {
   Sheet,
   SheetTrigger,
@@ -81,8 +81,6 @@ const CATEGORY_FILTERS: { label: string; match: (p: PublicProvider) => boolean }
 
 const SORT_OPTIONS = [
   { value: 'highest_rated', label: 'Highest Rated' },
-  { value: 'price_low', label: 'Price: Low to High' },
-  { value: 'price_high', label: 'Price: High to Low' },
   { value: 'most_reviewed', label: 'Most Reviewed' },
 ] as const
 
@@ -103,24 +101,7 @@ function avatarColor(id: string): string {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length]
 }
 
-function formatRate(p: PublicProvider): string | null {
-  const { hourly_rate_min: min, hourly_rate_max: max } = p
-  if (min != null && max != null && max !== min) return `$${min} – $${max}/hr`
-  if (min != null) return `From $${min}/hr`
-  if (max != null) return `Up to $${max}/hr`
-  return null
-}
-
-function compareNullsLast(
-  a: number | null,
-  b: number | null,
-  dir: 'asc' | 'desc'
-): number {
-  if (a == null && b == null) return 0
-  if (a == null) return 1
-  if (b == null) return -1
-  return dir === 'asc' ? a - b : b - a
-}
+// Prices are never shown on browse cards — only on the full profile page.
 
 /* ────────────────────── Helper Components ────────────────────── */
 
@@ -146,7 +127,6 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
     `${provider.first_name[0] ?? ''}${provider.last_name[0] ?? ''}`.toUpperCase() ||
     '?'
   const colorClass = avatarColor(provider.id)
-  const rate = formatRate(provider)
   const location = [provider.city, provider.state].filter(Boolean).join(', ')
 
   return (
@@ -216,8 +196,9 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
 
       {/* Details row */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <span className="font-semibold text-[#1dbf73]">
-          {rate ?? 'Rate on request'}
+        <span className="flex items-center gap-1 font-medium text-[#0f8f56]">
+          <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+          Rates on profile
         </span>
         {location && (
           <span className="flex items-center gap-1 text-[#6b7280]">
@@ -268,10 +249,6 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
 function FiltersPanel({
   sessionType,
   setSessionType,
-  rateMin,
-  setRateMin,
-  rateMax,
-  setRateMax,
   minRating,
   setMinRating,
   specialty,
@@ -285,10 +262,6 @@ function FiltersPanel({
 }: {
   sessionType: string
   setSessionType: (v: string) => void
-  rateMin: string
-  setRateMin: (v: string) => void
-  rateMax: string
-  setRateMax: (v: string) => void
   minRating: string
   setMinRating: (v: string) => void
   specialty: string
@@ -302,8 +275,6 @@ function FiltersPanel({
 }) {
   const activeCount = [
     sessionType !== 'all',
-    rateMin !== '',
-    rateMax !== '',
     minRating !== 'any',
     specialty !== 'All Specialties',
     stateFilter !== 'All States',
@@ -355,40 +326,6 @@ function FiltersPanel({
         </div>
       </div>
       )}
-
-      {/* Hourly Rate */}
-      <div>
-        <h4 className="mb-3 text-sm font-semibold text-[#111827]">
-          Hourly Rate
-        </h4>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
-              $
-            </span>
-            <Input
-              type="number"
-              placeholder="0"
-              value={rateMin}
-              onChange={(e) => setRateMin(e.target.value)}
-              className="h-9 pl-6 text-sm"
-            />
-          </div>
-          <span className="text-sm text-[#6b7280]">&ndash;</span>
-          <div className="relative flex-1">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
-              $
-            </span>
-            <Input
-              type="number"
-              placeholder="500+"
-              value={rateMax}
-              onChange={(e) => setRateMax(e.target.value)}
-              className="h-9 pl-6 text-sm"
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Minimum Rating */}
       <div>
@@ -510,8 +447,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
   const [searchQuery, setSearchQuery] = useState(initialQuery)
   const [activeCategory, setActiveCategory] = useState('All')
   const [sessionType, setSessionType] = useState('all')
-  const [rateMin, setRateMin] = useState('')
-  const [rateMax, setRateMax] = useState('')
   const [minRating, setMinRating] = useState('any')
   const [specialty, setSpecialty] = useState('All Specialties')
   const [stateFilter, setStateFilter] = useState('All States')
@@ -520,8 +455,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
 
   const clearAll = () => {
     setSessionType('all')
-    setRateMin('')
-    setRateMax('')
     setMinRating('any')
     setSpecialty('All Specialties')
     setStateFilter('All States')
@@ -531,8 +464,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
 
   const activeFilterCount = [
     sessionType !== 'all',
-    rateMin !== '',
-    rateMax !== '',
     minRating !== 'any',
     specialty !== 'All Specialties',
     stateFilter !== 'All States',
@@ -584,20 +515,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
       results = results.filter((p) => p.session_types.includes(sessionType))
     }
 
-    // Rate range
-    if (rateMin) {
-      const min = Number(rateMin)
-      results = results.filter(
-        (p) => (p.hourly_rate_max ?? p.hourly_rate_min ?? -Infinity) >= min
-      )
-    }
-    if (rateMax) {
-      const max = Number(rateMax)
-      results = results.filter(
-        (p) => (p.hourly_rate_min ?? p.hourly_rate_max ?? Infinity) <= max
-      )
-    }
-
     // Rating
     if (minRating !== 'any') {
       const min = Number(minRating)
@@ -619,16 +536,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
       case 'highest_rated':
         results.sort((a, b) => b.average_rating - a.average_rating)
         break
-      case 'price_low':
-        results.sort((a, b) =>
-          compareNullsLast(a.hourly_rate_min, b.hourly_rate_min, 'asc')
-        )
-        break
-      case 'price_high':
-        results.sort((a, b) =>
-          compareNullsLast(a.hourly_rate_max, b.hourly_rate_max, 'desc')
-        )
-        break
       case 'most_reviewed':
         results.sort((a, b) => b.total_reviews - a.total_reviews)
         break
@@ -639,8 +546,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
     searchQuery,
     activeCategory,
     sessionType,
-    rateMin,
-    rateMax,
     minRating,
     specialty,
     stateFilter,
@@ -735,10 +640,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
                 <FiltersPanel
                   sessionType={sessionType}
                   setSessionType={setSessionType}
-                  rateMin={rateMin}
-                  setRateMin={setRateMin}
-                  rateMax={rateMax}
-                  setRateMax={setRateMax}
                   minRating={minRating}
                   setMinRating={setMinRating}
                   specialty={specialty}
@@ -782,10 +683,6 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
               <FiltersPanel
                 sessionType={sessionType}
                 setSessionType={setSessionType}
-                rateMin={rateMin}
-                setRateMin={setRateMin}
-                rateMax={rateMax}
-                setRateMax={setRateMax}
                 minRating={minRating}
                 setMinRating={setMinRating}
                 specialty={specialty}
