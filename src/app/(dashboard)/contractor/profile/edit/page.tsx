@@ -23,6 +23,7 @@ import { effectiveBranch, isProfessionalCategory, type CredentialBasis } from '@
 import { PROFESSIONS_BY_BRANCH, PROFESSION_PLACEHOLDER } from '@/lib/onboarding/professions'
 import { normalizeWebsiteUrl, professionColumns } from '@/lib/onboarding/questions/professional'
 import { LanguagesInput } from '@/components/contractor/languages-input'
+import { PhotoManager } from './photo-manager'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -31,6 +32,9 @@ import {
   Languages,
   BriefcaseMedical,
   CircleDollarSign,
+  CalendarRange,
+  ChevronRight,
+  Images,
   MapPin,
   Check,
   Eye,
@@ -92,8 +96,6 @@ interface FormData {
   bio: string
   specialties: string
   years_of_experience: string
-  hourly_rate_min: string
-  hourly_rate_max: string
   npi_number: string
   state_license_number: string
   license_state: string
@@ -118,8 +120,6 @@ const initialFormData: FormData = {
   bio: '',
   specialties: '',
   years_of_experience: '',
-  hourly_rate_min: '',
-  hourly_rate_max: '',
   npi_number: '',
   state_license_number: '',
   license_state: '',
@@ -173,8 +173,6 @@ function rowToForm(d: ProfileRow): FormData {
     // Consultants' profession is the first specialty; don't show it twice.
     specialties: (category !== 'other' && branch === 'consultant' ? specialties.slice(1) : specialties).join(', '),
     years_of_experience: d.years_of_experience != null ? String(d.years_of_experience) : '',
-    hourly_rate_min: d.hourly_rate_min != null ? String(d.hourly_rate_min) : '',
-    hourly_rate_max: d.hourly_rate_max != null ? String(d.hourly_rate_max) : '',
     npi_number: text(d.npi_number),
     state_license_number: text(d.state_license_number),
     license_state: text(d.license_state),
@@ -196,8 +194,6 @@ function calculateCompletion(data: FormData): number {
     data.bio,
     data.specialties,
     data.years_of_experience,
-    data.hourly_rate_min,
-    data.hourly_rate_max,
     data.npi_number,
     data.state_license_number,
     data.license_state,
@@ -218,6 +214,8 @@ export default function ContractorProfileEditPage() {
   const [telehealthStates, setTelehealthStates] = useState<string[]>([])
   // profiles.avatar_url — written immediately by <HeadshotUpload>
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  // For the "Preview public profile" link (/pros/[id]).
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -226,6 +224,7 @@ export default function ContractorProfileEditPage() {
       if (isDemoMode()) {
         setFormData(rowToForm(DEMO_CONTRACTOR as unknown as ProfileRow))
         setLanguages(['English', 'Spanish'])
+        setUserId(DEMO_CONTRACTOR.id)
         setLoading(false)
         return
       }
@@ -239,6 +238,7 @@ export default function ContractorProfileEditPage() {
         router.push('/login')
         return
       }
+      setUserId(user.id)
 
       const { data } = await supabase
         .from('contractor_profiles')
@@ -336,7 +336,10 @@ export default function ContractorProfileEditPage() {
         last_name: formData.last_name || null,
         professional_category: category || null,
         other_profession: isOther ? formData.other_profession.trim() || null : null,
-        credential_basis: isOther ? formData.credential_basis || null : null,
+        // Kept for 'other' and 'allied' (allied pros can answer "no
+        // certification" = 'none'); wiping it would re-require a cert.
+        credential_basis:
+          isOther || category === 'allied' ? formData.credential_basis || null : null,
         ...professionCols,
         certifying_organization: branch === 'allied' ? formData.certifying_organization.trim() || null : undefined,
         website_url: websiteUrl,
@@ -346,12 +349,6 @@ export default function ContractorProfileEditPage() {
         specialties: specialtiesArray.length > 0 ? specialtiesArray : null,
         years_of_experience: formData.years_of_experience
           ? parseInt(formData.years_of_experience, 10)
-          : null,
-        hourly_rate_min: formData.hourly_rate_min
-          ? parseFloat(formData.hourly_rate_min)
-          : null,
-        hourly_rate_max: formData.hourly_rate_max
-          ? parseFloat(formData.hourly_rate_max)
           : null,
         npi_number: formData.npi_number || null,
         state_license_number: formData.state_license_number || null,
@@ -398,15 +395,16 @@ export default function ContractorProfileEditPage() {
   const completion = calculateCompletion(formData)
   const branch = effectiveBranch(formData.professional_category, formData.credential_basis)
   const fullName = `${formData.first_name} ${formData.last_name}`.trim()
+  const publicHref = userId ? `/pros/${userId}` : '/contractor/profile'
 
   return (
     <div className="mx-auto w-full max-w-7xl">
       <Link
-        href="/contractor/profile"
+        href="/dashboard"
         className="inline-flex items-center gap-1.5 text-sm font-medium text-[#62646a] hover:text-[#404145]"
       >
         <ArrowLeft className="size-4" />
-        Back to profile
+        Back to dashboard
       </Link>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
@@ -417,11 +415,11 @@ export default function ContractorProfileEditPage() {
           </p>
         </div>
         <Link
-          href="/contractor/profile"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f8f56] hover:underline"
+          href={publicHref}
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#1dbf73] bg-white px-4 text-sm font-semibold text-[#0f8f56] transition hover:bg-[#f0faf5]"
         >
           <Eye className="size-4" aria-hidden="true" />
-          Preview your profile
+          Preview public profile
         </Link>
       </div>
 
@@ -713,6 +711,39 @@ export default function ContractorProfileEditPage() {
             </Section>
 
             <Section
+              id="photos"
+              icon={Images}
+              title="Photos"
+              description="A gallery on your profile. Saved as soon as you upload."
+              visibility="public"
+            >
+              <PhotoManager />
+            </Section>
+
+            <Section
+              id="rates"
+              icon={CircleDollarSign}
+              title="Rates & availability"
+              description="Edited on their own pages. Your rates are the only prices clients see."
+              visibility="public"
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <LinkCard
+                  href="/contractor/rates"
+                  icon={CircleDollarSign}
+                  title="Rates"
+                  description="Per session, hour, day, package, or contact for pricing."
+                />
+                <LinkCard
+                  href="/contractor/availability"
+                  icon={CalendarRange}
+                  title="Availability"
+                  description="Your weekly hours and days off."
+                />
+              </div>
+            </Section>
+
+            <Section
               id="credentials"
               icon={Lock}
               title="License & credentials"
@@ -751,22 +782,14 @@ export default function ContractorProfileEditPage() {
             </Section>
 
             <Section
-              id="rate"
-              icon={CircleDollarSign}
-              title="Rates & availability"
-              description="Used for matching. Clients see prices on your listings."
-              visibility="private"
+              id="preferences"
+              icon={MapPin}
+              title="Search & travel"
+              description="Used for matching and shown on your profile."
+              visibility="public"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                  <FieldLabel htmlFor="hourly_rate_min">Minimum hourly rate</FieldLabel>
-                  <MoneyInput id="hourly_rate_min" value={formData.hourly_rate_min} onChange={handleChange} />
-                </div>
-                <div>
-                  <FieldLabel htmlFor="hourly_rate_max">Maximum hourly rate</FieldLabel>
-                  <MoneyInput id="hourly_rate_max" value={formData.hourly_rate_max} onChange={handleChange} />
-                </div>
-                <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Currently available for work" description="Show up in searches." />
+                <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Accepting new clients" description="Show up in searches." />
                 <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Get matched with work outside your city." />
                 {formData.willing_to_travel && (
                   <div className="md:col-span-2">
@@ -832,8 +855,10 @@ const SECTIONS: { id: string; title: string; icon: LucideIcon }[] = [
   { id: 'location', title: 'Where you work', icon: MapPin },
   { id: 'experience', title: 'Experience & languages', icon: Languages },
   { id: 'about', title: 'About', icon: FileText },
+  { id: 'photos', title: 'Photos', icon: Images },
+  { id: 'rates', title: 'Rates & availability', icon: CircleDollarSign },
   { id: 'credentials', title: 'License & credentials', icon: Lock },
-  { id: 'rate', title: 'Rates & availability', icon: CircleDollarSign },
+  { id: 'preferences', title: 'Search & travel', icon: MapPin },
 ]
 
 function Section({
@@ -902,35 +927,31 @@ function Hint({ children }: { children: React.ReactNode }) {
   return <p className="mt-1.5 text-xs text-[#62646a]">{children}</p>
 }
 
-function MoneyInput({
-  id,
-  value,
-  onChange,
+function LinkCard({
+  href,
+  icon: Icon,
+  title,
+  description,
 }: {
-  id: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  href: string
+  icon: LucideIcon
+  title: string
+  description: string
 }) {
   return (
-    <div className="relative mt-2">
-      <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-[15px] text-[#62646a]">
-        $
+    <Link
+      href={href}
+      className="group flex items-center gap-4 rounded-xl border border-[#e4e5e7] bg-white p-4 transition hover:border-[#1dbf73] hover:bg-[#f0faf5]"
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+        <Icon className="size-5" />
       </span>
-      <Input
-        id={id}
-        name={id}
-        type="number"
-        min="0"
-        step="0.01"
-        value={value}
-        onChange={onChange}
-        placeholder="0.00"
-        className="h-11 pr-12 pl-8 text-base md:text-[15px]"
-      />
-      <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-sm text-[#95979d]">
-        /hr
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-[#404145]">Edit {title.toLowerCase()}</span>
+        <span className="mt-0.5 block text-xs text-[#62646a]">{description}</span>
       </span>
-    </div>
+      <ChevronRight className="size-5 shrink-0 text-[#95979d] transition group-hover:translate-x-0.5 group-hover:text-[#1dbf73]" />
+    </Link>
   )
 }
 

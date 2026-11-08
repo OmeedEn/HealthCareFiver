@@ -56,6 +56,7 @@ import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
 import { buildProfessionalChecklist, type CredentialLike } from '@/lib/onboarding/checklist-professional'
 import { hasCurrentMalpractice, type CredentialRow } from '@/lib/compliance/rules'
 import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
+import { ProfileCard, profileChecks, type ProfileCardData } from './profile-card'
 
 type DashboardJob = {
   id: string
@@ -154,6 +155,7 @@ export default async function DashboardPage() {
   let previewHref: string | null = null
   let contractorStats: ContractorStats | null = null
   let accountCreatedAt: string | null = null
+  let profileCard: ProfileCardData | null = null
 
   // Client-specific data
   let clientInterests: string[] = []
@@ -291,6 +293,18 @@ export default async function DashboardPage() {
         answered: [],
       })
       previewHref = `/pros/${DEMO_CONTRACTOR.id}`
+      profileCard = {
+        firstName: DEMO_CONTRACTOR.first_name,
+        lastName: DEMO_CONTRACTOR.last_name,
+        avatarUrl: DEMO_CONTRACTOR.avatar_url,
+        headline: DEMO_CONTRACTOR.headline,
+        verified: true,
+        publicHref: previewHref,
+        checks: profileChecks(
+          { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'] },
+          DEMO_CONTRACTOR.avatar_url
+        ),
+      }
     }
 
     // Contractor-only demo data — only compute if we're in contractor view.
@@ -400,7 +414,7 @@ export default async function DashboardPage() {
         supabase
           .from('contractor_profiles')
           .select(
-            'first_name, verification_status, verification_notes, professional_category, credential_basis, contractor_type, headline, bio, specialties, languages, years_of_experience, npi_number, license_issue_date, license_expiration_date, other_names, telehealth_states, website_url, offers_high_risk_services, insured_verified_at, city, state, state_license_number, license_state'
+            'first_name, last_name, verification_status, verification_notes, professional_category, credential_basis, contractor_type, headline, bio, specialties, languages, years_of_experience, npi_number, license_issue_date, license_expiration_date, other_names, telehealth_states, website_url, offers_high_risk_services, insured_verified_at, city, state, state_license_number, license_state'
           )
           .eq('id', user.id)
           .maybeSingle(),
@@ -490,6 +504,19 @@ export default async function DashboardPage() {
         certificateInReview: (malpracticeInReview ?? 0) > 0,
       }
       previewHref = `/pros/${user.id}`
+      {
+        const avatarUrl = (profileData?.avatar_url as string | null) ?? null
+        const row = contractorRow as Record<string, unknown> | null
+        profileCard = {
+          firstName: (row?.first_name as string | null) ?? (firstName === 'there' ? '' : firstName),
+          lastName: (row?.last_name as string | null) ?? '',
+          avatarUrl,
+          headline: (row?.headline as string | null) ?? null,
+          verified: verificationStatus === 'approved' || verificationStatus === 'insurance_pending',
+          publicHref: previewHref,
+          checks: profileChecks(row, avatarUrl),
+        }
+      }
 
       // Finish your profile (Single-Question Onboarding): uploads and
       // which onboarding screens were answered.
@@ -708,7 +735,7 @@ export default async function DashboardPage() {
           verificationStatus={verificationStatus}
           verificationNotes={verificationNotes}
           compliance={compliance}
-          previewHref={previewHref}
+          profileCard={profileCard}
         />
       )}
       {role === 'facility' && <OrgReviewBanner status={orgStatus} notes={orgNotes} />}
@@ -959,7 +986,7 @@ function ContractorDashboard({
   verificationStatus,
   verificationNotes,
   compliance,
-  previewHref,
+  profileCard,
 }: {
   checklist: FinishItem[] | null
   /** Has any listing yet; false shows the first-run cards. */
@@ -973,7 +1000,7 @@ function ContractorDashboard({
   verificationStatus: string | null
   verificationNotes: string | null
   compliance: ComplianceState | null
-  previewHref: string | null
+  profileCard: ProfileCardData | null
 }) {
   const contractorTypeLabel = contractorType
     ? CONTRACTOR_TYPE_LABELS[contractorType] ?? contractorType.toUpperCase()
@@ -988,6 +1015,7 @@ function ContractorDashboard({
 
   return (
     <div className="space-y-6">
+      {profileCard && <ProfileCard data={profileCard} />}
       <VerificationBanner
         status={verificationStatus}
         notes={
@@ -999,17 +1027,6 @@ function ContractorDashboard({
       <ComplianceBanner status={verificationStatus} compliance={compliance} />
       {checklist && <FinishProfileCard items={checklist} />}
       {!hasListings && <FirstRunOfferCards />}
-      {previewHref && (
-        <p className="text-sm text-[#62646a]">
-          <Link
-            href={previewHref}
-            className="font-semibold text-[#1dbf73] hover:underline"
-          >
-            Preview my profile &rarr;
-          </Link>{' '}
-          See your profile the way clients will.
-        </p>
-      )}
 
       {isDemo && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
