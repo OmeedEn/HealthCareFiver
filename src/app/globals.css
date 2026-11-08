@@ -4,12 +4,62 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Sanus design system — "minimal yet loud".
+ *
+ * Calm, monochrome paper-and-ink base with one confident accent
+ * (Sanus ultramarine) spent sparingly. Raw tokens live on :root as
+ * --sanus-*; Tailwind utilities are exposed via @theme below:
+ *
+ *   bg-paper  bg-paper-sunken  bg-surface
+ *   text-ink  text-ink-soft  text-ink-muted  text-ink-faint
+ *   border-line  border-line-strong
+ *   bg-brand  hover:bg-brand-hover  text-brand-ink  bg-brand-tint
+ *   border-brand-line  text-brand-on-ink
+ *   success / warning / danger (+ -tint)
+ *   font-display (Archivo, variable width)  font-sans (Public Sans)
+ *
+ * Contrast (WCAG): white on brand 6.8:1, brand on paper 6.2:1,
+ * ink-muted on paper 6.0:1, ink-faint on paper 4.7:1, brand-on-ink on
+ * ink 9.5:1. Never put ink text on the brand colour (2.6:1).
+ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-public-sans), "Public Sans", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-system-mono);
-  --font-heading: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-heading: var(--font-archivo), "Archivo", system-ui, sans-serif;
+  --font-display: var(--font-archivo), "Archivo", system-ui, sans-serif;
+
+  /* Sanus palette */
+  --color-paper: var(--sanus-paper);
+  --color-paper-sunken: var(--sanus-paper-sunken);
+  --color-surface: var(--sanus-surface);
+  --color-ink: var(--sanus-ink);
+  --color-ink-soft: var(--sanus-ink-soft);
+  --color-ink-muted: var(--sanus-ink-muted);
+  --color-ink-faint: var(--sanus-ink-faint);
+  --color-line: var(--sanus-line);
+  --color-line-strong: var(--sanus-line-strong);
+  --color-brand: var(--sanus-accent);
+  --color-brand-hover: var(--sanus-accent-hover);
+  --color-brand-ink: var(--sanus-accent-ink);
+  --color-brand-tint: var(--sanus-accent-tint);
+  --color-brand-line: var(--sanus-accent-line);
+  --color-brand-on-ink: var(--sanus-accent-on-ink);
+  --color-success: var(--sanus-success);
+  --color-success-tint: var(--sanus-success-tint);
+  --color-warning: var(--sanus-warning);
+  --color-warning-tint: var(--sanus-warning-tint);
+  --color-danger: var(--sanus-danger);
+  --color-danger-tint: var(--sanus-danger-tint);
+
+  --shadow-lift: var(--sanus-shadow-lift);
+  --shadow-float: var(--sanus-shadow-float);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,94 +89,201 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 3);
+  --radius-4xl: calc(var(--radius) * 4);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.69 0.18 155);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.97 0.01 155);
-  --secondary-foreground: oklch(0.28 0.02 150);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.48 0 0);
-  --accent: oklch(0.95 0.05 155);
-  --accent-foreground: oklch(0.35 0.09 155);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.69 0.18 155);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.375rem;
-  --font-system-sans: "Inter", system-ui, -apple-system, sans-serif;
+  /* Raw Sanus tokens */
+  --sanus-paper: #f6f4ef;
+  --sanus-paper-sunken: #eeebe4;
+  --sanus-surface: #ffffff;
+  --sanus-ink: #1a1a17;
+  --sanus-ink-soft: #3a3934;
+  --sanus-ink-muted: #5f5d57;
+  --sanus-ink-faint: #706d65;
+  --sanus-line: #e3dfd6;
+  --sanus-line-strong: #cbc6ba;
+  --sanus-accent: #2f3cf5;
+  --sanus-accent-hover: #2330c8;
+  --sanus-accent-ink: #2330c8;
+  --sanus-accent-tint: #eceefe;
+  --sanus-accent-line: #c9cdfb;
+  --sanus-accent-on-ink: #b4bbff;
+  --sanus-success: #1f7a4d;
+  --sanus-success-tint: #e5f2ea;
+  --sanus-warning: #8a5a00;
+  --sanus-warning-tint: #fbf0dc;
+  --sanus-danger: #b42318;
+  --sanus-danger-tint: #fdecea;
+  --sanus-shadow-lift: 0 1px 0 rgb(26 26 23 / 0.04), 0 8px 24px -12px rgb(26 26 23 / 0.18);
+  --sanus-shadow-float: 0 2px 0 rgb(26 26 23 / 0.04), 0 24px 48px -20px rgb(26 26 23 / 0.28);
+
+  /* shadcn semantic tokens, mapped onto the Sanus palette */
+  --background: var(--sanus-paper);
+  --foreground: var(--sanus-ink);
+  --card: var(--sanus-surface);
+  --card-foreground: var(--sanus-ink);
+  --popover: var(--sanus-surface);
+  --popover-foreground: var(--sanus-ink);
+  --primary: var(--sanus-accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--sanus-paper-sunken);
+  --secondary-foreground: var(--sanus-ink);
+  --muted: var(--sanus-paper-sunken);
+  --muted-foreground: var(--sanus-ink-muted);
+  --accent: var(--sanus-accent-tint);
+  --accent-foreground: var(--sanus-accent-ink);
+  --destructive: var(--sanus-danger);
+  --border: var(--sanus-line);
+  --input: var(--sanus-line-strong);
+  --ring: var(--sanus-accent);
+  --chart-1: var(--sanus-accent);
+  --chart-2: var(--sanus-ink);
+  --chart-3: #8a8fe8;
+  --chart-4: var(--sanus-line-strong);
+  --chart-5: var(--sanus-success);
+  --radius: 0.5rem;
   --font-system-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.69 0.18 155);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.95 0.05 155);
-  --sidebar-accent-foreground: oklch(0.35 0.09 155);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--sanus-paper);
+  --sidebar-foreground: var(--sanus-ink);
+  --sidebar-primary: var(--sanus-accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--sanus-paper-sunken);
+  --sidebar-accent-foreground: var(--sanus-ink);
+  --sidebar-border: var(--sanus-line);
+  --sidebar-ring: var(--sanus-accent);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sanus-paper: #141412;
+  --sanus-paper-sunken: #1d1d1a;
+  --sanus-surface: #1f1f1c;
+  --sanus-ink: #f3f1ea;
+  --sanus-ink-soft: #d9d6cd;
+  --sanus-ink-muted: #aaa69c;
+  --sanus-ink-faint: #8f8b81;
+  --sanus-line: #33322d;
+  --sanus-line-strong: #4a4943;
+  --sanus-accent: #6f78ff;
+  --sanus-accent-hover: #8a91ff;
+  --sanus-accent-ink: #b4bbff;
+  --sanus-accent-tint: #23264a;
+  --sanus-accent-line: #3b4190;
+  --sanus-accent-on-ink: #b4bbff;
+  --primary-foreground: #0f1030;
+  --sidebar-primary-foreground: #0f1030;
+  --border: var(--sanus-line);
+  --input: rgb(255 255 255 / 0.15);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--sanus-accent);
+    color: #ffffff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--sanus-accent);
+    outline-offset: 2px;
+  }
+}
+
+/* ───────────── Display type ───────────── */
+
+/* Condensed, heavy display — credential-label energy. */
+@utility type-condensed {
+  font-family: var(--font-display);
+  font-stretch: 68%;
+  font-variation-settings: "wdth" 68;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 0.86;
+}
+
+/* Wide, tight headline. */
+@utility type-expanded {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-variation-settings: "wdth" 112;
+  letter-spacing: -0.035em;
+}
+
+/* ───────────── Motion ───────────── */
+
+@keyframes sanus-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes sanus-rise {
+  from { opacity: 0; transform: translate3d(0, 0.35em, 0); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes sanus-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.sanus-marquee-track {
+  animation: sanus-marquee 48s linear infinite;
+}
+.sanus-marquee:hover .sanus-marquee-track,
+.sanus-marquee:focus-within .sanus-marquee-track {
+  animation-play-state: paused;
+}
+
+.sanus-rise {
+  animation: sanus-rise 0.7s var(--ease-out-expo) both;
+}
+
+[data-reveal] {
+  transition:
+    opacity 0.8s var(--ease-out-expo),
+    transform 0.8s var(--ease-out-expo);
+}
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translate3d(0, 1.5rem, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sanus-marquee-track,
+  .sanus-rise {
+    animation: none;
+  }
+  .sanus-marquee-track {
+    width: auto;
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+  .sanus-marquee [data-dup] {
+    display: none;
+  }
+  [data-reveal] {
+    transition: none;
+  }
+  [data-reveal="hidden"] {
+    opacity: 1;
+    transform: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
 }
