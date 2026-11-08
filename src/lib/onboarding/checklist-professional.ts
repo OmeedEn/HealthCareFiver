@@ -55,6 +55,10 @@ const UPLOAD_LABEL: Record<ProfessionalBranch, string> = {
  * government ID. In the beta these never block submitting — they block
  * approval (the admin approve route refuses while any are open) and show in
  * the admin queue as "Missing".
+ *
+ * `branch` is effectiveBranch(): an allied professional who answered "No"
+ * to "Do you have any certifications?" is on the consultant branch, so they
+ * are asked for a resume or CV, never a certification.
  */
 export function professionalApprovalItems(
   branch: ProfessionalBranch | null,

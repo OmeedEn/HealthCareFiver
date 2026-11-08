@@ -20,7 +20,10 @@ import {
   DISCLOSURE_KEYS,
   EMPTY_PRO_ANSWERS,
   PRO_Q,
+  basisOf,
   branchOf,
+  certificationsOf,
+  parseCertifications,
   proValid,
   type ProSignupAnswers,
 } from '@/lib/onboarding/questions/professional'
@@ -172,18 +175,23 @@ function toAnswers(p: Record<string, unknown>, progress: OnboardingProgress): Pr
             ? str(p.teaching_topics)
             : ''
   const website = str(p.website_url)
-  return {
+  const certifyingOrganization = str(p.certifying_organization)
+  const answers: ProSignupAnswers = {
     category,
     profession,
     other_profession: str(p.other_profession),
     credential_basis: isCredentialBasis(p.credential_basis) ? p.credential_basis : '',
     license_number: str(p.state_license_number),
     license_state: str(p.license_state),
-    certifying_organization: str(p.certifying_organization),
+    certifications: parseCertifications(certifyingOrganization),
+    certifying_organization: certifyingOrganization,
     website_url: website,
     // Answered the link screen with no link = "I don't have one".
     no_website: !website && progress.answered.includes(PRO_Q.website),
   }
+  // Allied accounts from before "Do you have any certifications?" have no
+  // basis: a certifying organization on file means yes.
+  return { ...answers, credential_basis: basisOf(answers) }
 }
 
 /** True when screens 1–3 have everything we need. */
@@ -194,7 +202,11 @@ function identityComplete(a: ProSignupAnswers): boolean {
     return false
   }
   if (branch === 'clinical') return proValid.licenseNumber(a.license_number) && proValid.state(a.license_state)
-  if (branch === 'allied') return proValid.certifyingOrg(a.certifying_organization)
+  // An older answer may name only the organization: enough here.
+  if (branch === 'allied') {
+    const certs = certificationsOf(a)
+    return certs.length > 0 && certs.every((c) => proValid.certifyingOrg(c.organization))
+  }
   return a.no_website || !!a.website_url
 }
 

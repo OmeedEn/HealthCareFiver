@@ -134,7 +134,7 @@ export function useProfessionalSignup(): SignupPathFlow {
     create: createAccount,
     // Stands in for screens 5–8 too, so the bar shows how far along they
     // really are rather than "done" at the account.
-    extraWeight: postAccountScreenIds(branch).length,
+    extraWeight: postAccountScreenIds(branch, answers.category).length,
   })
 
   return {

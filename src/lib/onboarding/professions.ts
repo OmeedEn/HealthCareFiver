@@ -114,6 +114,15 @@ export const PROFESSIONS_BY_BRANCH: Record<ProfessionalBranch, readonly string[]
   educator: EDUCATOR,
 }
 
+/** The always-visible last choice on screen 2: reveals a "What's your specialty?" text box. */
+export const PROFESSION_OTHER_LABEL = 'Other / not listed'
+
+/** True when `value` is one of the list's own entries (case-insensitive). */
+export function isListedProfession(list: readonly string[], value: string): boolean {
+  const v = value.trim().toLowerCase()
+  return !!v && list.some((o) => o.toLowerCase() === v)
+}
+
 /** Placeholder for the search box, by branch. */
 export const PROFESSION_PLACEHOLDER: Record<ProfessionalBranch, string> = {
   clinical: 'Search license types, like RN or LCSW',
