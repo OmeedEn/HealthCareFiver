@@ -13,15 +13,13 @@ export type StartConversationState = { error?: string }
 const CAN_MESSAGE = new Set(['client', 'facility', 'staffing_agency'])
 const ORG_ROLES = new Set(['facility', 'staffing_agency'])
 
+type Opened = { conversationId: string; userId: string } | { error: string }
+
 /**
- * Open (or reuse) a direct conversation with a live professional, then go to
- * it. Runs with the caller's own session so RLS gates still apply.
+ * Open (or reuse) a direct conversation with a live professional. Runs with
+ * the caller's own session so RLS gates still apply.
  */
-export async function startConversation(
-  proId: string,
-  _prev: StartConversationState,
-  _form: FormData
-): Promise<StartConversationState> {
+async function openConversation(proId: string): Promise<Opened> {
   if (!z.string().uuid().safeParse(proId).success) {
     return { error: 'This professional could not be found.' }
   }
@@ -36,7 +34,7 @@ export async function startConversation(
   }
 
   // Same visibility rule as the profile page (live professionals only).
-  const pro = await getPublicProfile(proId, null)
+  const pro = await getPublicProfile(proId, null, { details: false })
   if (!pro?.isPublic) return { error: 'This professional is not available to message.' }
 
   const supabase = await createClient()
@@ -98,6 +96,82 @@ export async function startConversation(
   if (!conversationId) {
     return { error: "We couldn't open a conversation. Please try again." }
   }
+  return { conversationId, userId: user.id }
+}
 
-  redirect(`/messages/${conversationId}`)
+/** "Message" on a profile: open (or reuse) the conversation and go to it. */
+export async function startConversation(
+  proId: string,
+  _prev: StartConversationState,
+  _form: FormData
+): Promise<StartConversationState> {
+  const opened = await openConversation(proId)
+  if ('error' in opened) return { error: opened.error }
+  redirect(`/messages/${opened.conversationId}`)
+}
+
+const bookingSchema = z.object({
+  service: z.string().trim().max(200),
+  format: z.enum(['', 'virtual', 'in_person', 'home_visit']),
+  when: z.string().trim().max(200),
+  note: z.string().trim().max(2000),
+})
+
+const FORMAT_LABEL: Record<string, string> = {
+  virtual: 'Video visit',
+  in_person: 'In person',
+  home_visit: 'At my home',
+}
+
+const field = (form: FormData, key: string) => {
+  const v = form.get(key)
+  return typeof v === 'string' ? v : ''
+}
+
+/**
+ * "Request booking" (clients): sends a structured booking request as a
+ * message in the conversation with the professional, then goes to it. The
+ * professional confirms the time there.
+ */
+export async function requestProBooking(
+  proId: string,
+  _prev: StartConversationState,
+  form: FormData
+): Promise<StartConversationState> {
+  const parsed = bookingSchema.safeParse({
+    service: field(form, 'service'),
+    format: field(form, 'format'),
+    when: field(form, 'when'),
+    note: field(form, 'note'),
+  })
+  if (!parsed.success) return { error: 'Please check your answers and try again.' }
+  const d = parsed.data
+  if (!d.service && !d.note) {
+    return { error: 'Tell them what you need: pick a service or add a note.' }
+  }
+
+  const opened = await openConversation(proId)
+  if ('error' in opened) return { error: opened.error }
+
+  const content = [
+    'Booking request',
+    d.service && `Service: ${d.service}`,
+    d.format && `Format: ${FORMAT_LABEL[d.format]}`,
+    d.when && `Preferred time: ${d.when}`,
+    d.note && `\n${d.note}`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const supabase = await createClient()
+  const { error } = await supabase.from('messages').insert({
+    conversation_id: opened.conversationId,
+    sender_id: opened.userId,
+    content,
+  })
+  if (error) {
+    console.error('[pros] booking request message failed', error.code)
+    return { error: "We couldn't send your request. Please try again." }
+  }
+  redirect(`/messages/${opened.conversationId}`)
 }
