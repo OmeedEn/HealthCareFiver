@@ -97,6 +97,47 @@ async function contractorNeedsOnboarding(
   return data.onboarding_completed_at === null
 }
 
+// Where the login page sends people after signing in (src/app/(auth)/login).
+const LOGIN_CONTINUE_PATH = '/login/continue'
+
+/**
+ * Where a signed-in user lands after logging in: the homepage, unless they
+ * still owe MFA, haven't finished onboarding, or are an admin. /dashboard is
+ * reached from the avatar menu → Account.
+ */
+async function landingUrl(
+  request: NextRequest,
+  supabase: SupabaseClient | null,
+  userId: string
+): Promise<URL> {
+  const url = request.nextUrl.clone()
+  url.search = ''
+  url.pathname = '/'
+  if (!supabase) return url
+
+  const gate = await mfaGate(supabase)
+  if (gate !== 'ok') {
+    url.pathname = gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify'
+    url.searchParams.set('redirectTo', LOGIN_CONTINUE_PATH)
+    return url
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single()
+  const role = profile?.role ?? ''
+  if (role === 'contractor' && (await contractorNeedsOnboarding(supabase, userId))) {
+    url.pathname = PRO_ONBOARDING_PATH
+  } else if (ORG_ROLES.includes(role) && (await orgNeedsOnboarding(supabase, userId))) {
+    url.pathname = ORG_ONBOARDING_PATH
+  } else if (role === 'admin') {
+    url.pathname = '/admin'
+  }
+  return url
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublic = isPublicRoute(pathname)
@@ -111,33 +152,19 @@ export async function proxy(request: NextRequest) {
 
   // Allow public routes without auth
   if (isPublic) {
-    // If user is authenticated and visits /login or /signup, redirect to
-    // /dashboard — or straight to the wizard for a professional who hasn't
-    // finished onboarding (saves a hop through the /dashboard gate below).
-    // Either target is protected, so the MFA gate still applies.
-    if (user && (pathname === '/login' || pathname.startsWith('/signup'))) {
+    // Signed-in visitors of /login or /signup, and the post-login hop
+    // /login/continue, go to their landing page: the homepage — or straight
+    // to the wizard for an account that hasn't finished onboarding, /admin
+    // for admins. The homepage is public, so the MFA gate is applied here
+    // first (the wizards and /admin are protected and gated anyway).
+    const isContinue = pathname === LOGIN_CONTINUE_PATH
+    if (user && (pathname === '/login' || pathname.startsWith('/signup') || isContinue)) {
+      return NextResponse.redirect(await landingUrl(request, supabase, user.id))
+    }
+    if (isContinue) {
       const url = request.nextUrl.clone()
-      url.pathname = '/dashboard'
-      if (supabase) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-        if (
-          profile?.role === 'contractor' &&
-          (await contractorNeedsOnboarding(supabase, user.id))
-        ) {
-          url.pathname = PRO_ONBOARDING_PATH
-          url.search = ''
-        } else if (
-          ORG_ROLES.includes(profile?.role ?? '') &&
-          (await orgNeedsOnboarding(supabase, user.id))
-        ) {
-          url.pathname = ORG_ONBOARDING_PATH
-          url.search = ''
-        }
-      }
+      url.pathname = '/login'
+      url.search = ''
       return NextResponse.redirect(url)
     }
     return supabaseResponse
