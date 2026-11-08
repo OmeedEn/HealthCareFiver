@@ -100,8 +100,8 @@ export default async function ContractorContractsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">My Contracts</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">My Contracts</h1>
+        <p className="text-[#5f5d57]">
           View and manage your contracts with facilities
         </p>
       </div>
@@ -153,16 +153,16 @@ function StatCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[#62646a]">
+        <CardTitle className="text-sm font-medium text-[#5f5d57]">
           {title}
         </CardTitle>
-        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
-          <Icon className="size-4 text-[#1dbf73]" />
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2f3cf5]/10 to-[#2f3cf5]/20">
+          <Icon className="size-4 text-[#2f3cf5]" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#404145]">{value}</div>
-        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
+        <div className="text-2xl font-bold text-[#1a1a17]">{value}</div>
+        <p className="mt-1 text-xs text-[#5f5d57]">{description}</p>
       </CardContent>
     </Card>
   )
@@ -197,22 +197,22 @@ function ContractRowCard({ contract }: { contract: ContractRow }) {
   return (
     <Link
       href={`/contractor/contracts/${contract.id}`}
-      className="block rounded-xl transition-colors hover:bg-[#f9fafb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73]"
+      className="block rounded-xl transition-colors hover:bg-[#f6f4ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f3cf5]"
     >
       <Card size="sm">
         <CardContent className="space-y-2">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h3 className="truncate font-semibold text-[#404145]">
+              <h3 className="truncate font-semibold text-[#1a1a17]">
                 {facilityName}
               </h3>
-              <p className="mt-0.5 truncate text-sm text-[#62646a]">
+              <p className="mt-0.5 truncate text-sm text-[#5f5d57]">
                 {contract.title}
               </p>
             </div>
             <ContractStatusBadge status={status} label={statusLabel} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#62646a]">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-[#5f5d57]">
             {contract.start_date && (
               <span>
                 {formatDate(contract.start_date)}
@@ -223,7 +223,7 @@ function ContractRowCard({ contract }: { contract: ContractRow }) {
             )}
             {contract.rate_amount != null && (
               <>
-                <span aria-hidden="true" className="text-[#6b7280]">
+                <span aria-hidden="true" className="text-[#5f5d57]">
                   ·
                 </span>
                 <span>
@@ -232,7 +232,7 @@ function ContractRowCard({ contract }: { contract: ContractRow }) {
                 </span>
               </>
             )}
-            <span aria-hidden="true" className="text-[#6b7280]">
+            <span aria-hidden="true" className="text-[#5f5d57]">
               ·
             </span>
             <span>Created {formatDate(contract.created_at)}</span>
@@ -252,7 +252,7 @@ function ContractStatusBadge({
 }) {
   if (status === 'active') {
     return (
-      <Badge className="bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]">
+      <Badge className="bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]">
         {label}
       </Badge>
     )
@@ -293,17 +293,17 @@ function EmptyState({ kind }: { kind: 'active' | 'completed' | 'all' }) {
   return (
     <Card>
       <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73]">
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe] text-[#2f3cf5]">
           <FileTextIcon className="size-6" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-base font-semibold text-[#404145]">
+          <h3 className="text-base font-semibold text-[#1a1a17]">
             {copy.title}
           </h3>
-          <p className="text-sm text-[#62646a]">{copy.body}</p>
+          <p className="text-sm text-[#5f5d57]">{copy.body}</p>
         </div>
         <Button
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
           render={<Link href="/contractor/jobs" />}
         >
           <SearchIcon className="size-4" />

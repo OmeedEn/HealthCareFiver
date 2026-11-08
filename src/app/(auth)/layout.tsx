@@ -15,14 +15,14 @@ export default function AuthLayout({
   return (
     <div className="flex min-h-screen">
       {/* Left panel — branding (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] flex-col justify-between bg-[#0f4c3a] p-10 text-white">
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] flex-col justify-between bg-[#1a1a17] p-10 text-white">
         <div>
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#1dbf73] text-lg font-black text-white shadow-lg shadow-[#1dbf73]/30">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#2f3cf5] text-lg font-black text-white shadow-lg shadow-[#2f3cf5]/30">
               S
             </div>
             <span className="text-2xl font-black tracking-tight">
-              Sanus<span className="text-[#8ee7bf]">.</span>
+              Sanus<span className="text-[#b4bbff]">.</span>
             </span>
           </Link>
 
@@ -32,7 +32,7 @@ export default function AuthLayout({
               <br />
               meets opportunity.
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-[#b8e6d0]">
+            <p className="mt-4 text-base leading-relaxed text-[#c9cdfb]">
               The marketplace for the entire health expertise economy.
               Clinical care, consulting, coaching, legal, and education — all
               in one place.
@@ -66,11 +66,11 @@ export default function AuthLayout({
         <div className="mt-12 rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10">
-              <HeartHandshake className="h-5 w-5 text-[#8ee7bf]" />
+              <HeartHandshake className="h-5 w-5 text-[#b4bbff]" />
             </div>
             <div>
               <p className="text-sm font-bold">Built for trust from day one</p>
-              <p className="mt-1 text-sm leading-relaxed text-[#b8e6d0]">
+              <p className="mt-1 text-sm leading-relaxed text-[#c9cdfb]">
                 Health information is handled with HIPAA safeguards, and you
                 stay in control of who you work with and what you share.
               </p>
@@ -82,13 +82,13 @@ export default function AuthLayout({
       {/* Right panel — form */}
       <div className="flex flex-1 flex-col">
         {/* Mobile header */}
-        <div className="flex items-center justify-between border-b border-[#e4e5e7] px-6 py-4 lg:hidden">
+        <div className="flex items-center justify-between border-b border-[#e3dfd6] px-6 py-4 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#1dbf73] text-base font-black text-white">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#2f3cf5] text-base font-black text-white">
               S
             </div>
-            <span className="text-xl font-black tracking-tight text-[#404145]">
-              Sanus<span className="text-[#1dbf73]">.</span>
+            <span className="text-xl font-black tracking-tight text-[#1a1a17]">
+              Sanus<span className="text-[#2f3cf5]">.</span>
             </span>
           </Link>
         </div>
@@ -99,13 +99,13 @@ export default function AuthLayout({
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col items-center justify-center gap-1.5 border-t border-[#e4e5e7] px-6 py-4 text-center text-xs text-[#95979d] sm:flex-row sm:gap-4">
+        <div className="flex flex-col items-center justify-center gap-1.5 border-t border-[#e3dfd6] px-6 py-4 text-center text-xs text-[#706d65] sm:flex-row sm:gap-4">
           <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
           <span className="flex gap-4">
-            <Link href="/terms" className="transition hover:text-[#404145]">
+            <Link href="/terms" className="transition hover:text-[#1a1a17]">
               Terms of Service
             </Link>
-            <Link href="/privacy" className="transition hover:text-[#404145]">
+            <Link href="/privacy" className="transition hover:text-[#1a1a17]">
               Privacy Policy
             </Link>
           </span>
@@ -127,11 +127,11 @@ function Feature({
   return (
     <div className="flex items-start gap-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
-        <Icon className="h-5 w-5 text-[#8ee7bf]" />
+        <Icon className="h-5 w-5 text-[#b4bbff]" />
       </div>
       <div>
         <p className="text-sm font-bold">{title}</p>
-        <p className="mt-0.5 text-sm leading-relaxed text-[#b8e6d0]">
+        <p className="mt-0.5 text-sm leading-relaxed text-[#c9cdfb]">
           {description}
         </p>
       </div>

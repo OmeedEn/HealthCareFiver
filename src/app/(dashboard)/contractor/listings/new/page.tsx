@@ -33,13 +33,13 @@ export default async function NewListingPage({
     <div className="mx-auto max-w-2xl space-y-8 py-2 sm:py-6">
       <Link
         href="/contractor/listings"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to listings
       </Link>
       <NewListingFlow key={row?.id ?? 'new'} row={row} initialKind={initialKind} insured={ctx.state.isInsured} />
-      <p className="text-center text-xs text-[#95979d]">
+      <p className="text-center text-xs text-[#706d65]">
         Your answers save as a draft as you go. Nothing goes live until you submit it and we review it.
       </p>
     </div>

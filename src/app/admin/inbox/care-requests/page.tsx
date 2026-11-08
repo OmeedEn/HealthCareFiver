@@ -25,8 +25,8 @@ const STATUS_LABEL = { open: 'Open', contacted: 'Contacted', closed: 'Closed' } 
 function Field({ name, children }: { name: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">{name}</dt>
-      <dd className="break-words text-sm text-[#404145]">{children}</dd>
+      <dt className="text-xs uppercase tracking-wide text-[#706d65]">{name}</dt>
+      <dd className="break-words text-sm text-[#1a1a17]">{children}</dd>
     </div>
   )
 }
@@ -36,7 +36,7 @@ function RequestCard({ r }: { r: CareRequestItem }) {
     <Card>
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
         <div>
-          <CardTitle className="flex items-center gap-2 text-base text-[#404145]">
+          <CardTitle className="flex items-center gap-2 text-base text-[#1a1a17]">
             {r.name}
             <Badge variant="outline">{STATUS_LABEL[r.status]}</Badge>
           </CardTitle>
@@ -45,7 +45,7 @@ function RequestCard({ r }: { r: CareRequestItem }) {
             {r.handledAt ? ` · updated ${formatDateTime(r.handledAt)}` : ''}
           </CardDescription>
         </div>
-        <Link href={`/admin/users/${r.userId}`} className="text-sm text-[#62646a] hover:text-[#1dbf73]">
+        <Link href={`/admin/users/${r.userId}`} className="text-sm text-[#5f5d57] hover:text-[#2f3cf5]">
           Full account →
         </Link>
       </CardHeader>
@@ -63,8 +63,8 @@ function RequestCard({ r }: { r: CareRequestItem }) {
           </Field>
           {r.note && (
             <div className="min-w-0 sm:col-span-2 lg:col-span-3">
-              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Note</dt>
-              <dd className="whitespace-pre-wrap break-words text-sm text-[#404145]">{r.note}</dd>
+              <dt className="text-xs uppercase tracking-wide text-[#706d65]">Note</dt>
+              <dd className="whitespace-pre-wrap break-words text-sm text-[#1a1a17]">{r.note}</dd>
             </div>
           )}
         </dl>
@@ -93,20 +93,20 @@ export default async function CareRequestsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-[#404145]">Care requests</h2>
-        <p className="mt-1 text-sm text-[#62646a]">
+        <h2 className="text-lg font-semibold text-[#1a1a17]">Care requests</h2>
+        <p className="mt-1 text-sm text-[#5f5d57]">
           Clients whose results showed fewer than 3 matching professionals and asked for help finding
           someone. Reach out by email, then mark the request contacted, and closed once it&apos;s resolved.
         </p>
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-[#404145]">
+        <h2 className="text-lg font-semibold text-[#1a1a17]">
           Waiting <Badge variant="outline" className="ml-1 align-middle">{active.length}</Badge>
         </h2>
         {active.length === 0 ? (
           <Card>
-            <CardContent className="py-6 text-sm text-[#6b7280]">No open requests.</CardContent>
+            <CardContent className="py-6 text-sm text-[#5f5d57]">No open requests.</CardContent>
           </Card>
         ) : (
           active.map((r) => <RequestCard key={r.id} r={r} />)
@@ -115,7 +115,7 @@ export default async function CareRequestsPage() {
 
       {closed.length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-[#404145]">Recently closed</h2>
+          <h2 className="text-lg font-semibold text-[#1a1a17]">Recently closed</h2>
           {closed.map((r) => (
             <RequestCard key={r.id} r={r} />
           ))}

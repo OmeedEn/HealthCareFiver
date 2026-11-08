@@ -33,19 +33,19 @@ interface Notification {
 // Map every notification_type enum from the schema to an icon. Defaults to
 // Bell if a new type ships before this map is updated.
 const typeIcon: Record<string, React.ReactNode> = {
-  new_message: <MessageSquare className="size-4 text-[#1dbf73]" />,
-  application_received: <Briefcase className="size-4 text-[#1dbf73]" />,
-  application_status_change: <Briefcase className="size-4 text-[#1dbf73]" />,
-  job_match: <Briefcase className="size-4 text-[#1dbf73]" />,
-  contract_update: <FileText className="size-4 text-[#1dbf73]" />,
-  timesheet_submitted: <FileText className="size-4 text-[#1dbf73]" />,
-  timesheet_approved: <FileText className="size-4 text-[#1dbf73]" />,
-  payment_received: <DollarSign className="size-4 text-[#1dbf73]" />,
-  payment_released: <DollarSign className="size-4 text-[#1dbf73]" />,
+  new_message: <MessageSquare className="size-4 text-[#2f3cf5]" />,
+  application_received: <Briefcase className="size-4 text-[#2f3cf5]" />,
+  application_status_change: <Briefcase className="size-4 text-[#2f3cf5]" />,
+  job_match: <Briefcase className="size-4 text-[#2f3cf5]" />,
+  contract_update: <FileText className="size-4 text-[#2f3cf5]" />,
+  timesheet_submitted: <FileText className="size-4 text-[#2f3cf5]" />,
+  timesheet_approved: <FileText className="size-4 text-[#2f3cf5]" />,
+  payment_received: <DollarSign className="size-4 text-[#2f3cf5]" />,
+  payment_released: <DollarSign className="size-4 text-[#2f3cf5]" />,
   credential_expiring: <AlertCircle className="size-4 text-amber-500" />,
-  credential_verified: <FileText className="size-4 text-[#1dbf73]" />,
+  credential_verified: <FileText className="size-4 text-[#2f3cf5]" />,
   credential_rejected: <AlertCircle className="size-4 text-red-500" />,
-  review_received: <Star className="size-4 text-[#1dbf73]" />,
+  review_received: <Star className="size-4 text-[#2f3cf5]" />,
   dispute_opened: <AlertCircle className="size-4 text-red-500" />,
 }
 
@@ -126,7 +126,7 @@ export function NotificationsBell() {
           >
             <Bell className="size-5" />
             {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 inline-flex size-4 items-center justify-center rounded-full bg-[#1dbf73] text-[10px] font-semibold text-white">
+              <span className="absolute -right-1 -top-1 inline-flex size-4 items-center justify-center rounded-full bg-[#2f3cf5] text-[10px] font-semibold text-white">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -134,22 +134,22 @@ export function NotificationsBell() {
         }
       />
       <DropdownMenuContent align="end" sideOffset={8} className="w-80 p-0">
-        <div className="flex items-center justify-between border-b border-[#e4e5e7] px-3 py-2">
-          <p className="text-sm font-semibold text-[#404145]">Notifications</p>
+        <div className="flex items-center justify-between border-b border-[#e3dfd6] px-3 py-2">
+          <p className="text-sm font-semibold text-[#1a1a17]">Notifications</p>
           {unreadCount > 0 && (
-            <span className="text-xs text-[#62646a]">{unreadCount} unread</span>
+            <span className="text-xs text-[#5f5d57]">{unreadCount} unread</span>
           )}
         </div>
 
         {recent.length === 0 ? (
           <div className="px-3 py-10 text-center">
-            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#e8faf1]">
-              <Bell className="size-5 text-[#1dbf73]" />
+            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[#eceefe]">
+              <Bell className="size-5 text-[#2f3cf5]" />
             </div>
-            <p className="mt-3 text-sm font-medium text-[#404145]">
+            <p className="mt-3 text-sm font-medium text-[#1a1a17]">
               No notifications
             </p>
-            <p className="mt-1 text-xs text-[#62646a]">You&apos;re all caught up.</p>
+            <p className="mt-1 text-xs text-[#5f5d57]">You&apos;re all caught up.</p>
           </div>
         ) : (
           <div className="max-h-96 overflow-y-auto">
@@ -157,34 +157,34 @@ export function NotificationsBell() {
               <Link
                 key={n.id}
                 href="/notifications"
-                className={`flex items-start gap-3 border-b border-[#f1f3f5] px-3 py-3 last:border-0 hover:bg-[#f9fafb] ${
-                  !n.is_read ? 'bg-[#f0faf5]' : ''
+                className={`flex items-start gap-3 border-b border-[#eeebe4] px-3 py-3 last:border-0 hover:bg-[#f6f4ef] ${
+                  !n.is_read ? 'bg-[#f4f5fe]' : ''
                 }`}
               >
-                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#e8faf1]">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#eceefe]">
                   {typeIcon[n.type] ?? (
-                    <Bell className="size-4 text-[#1dbf73]" />
+                    <Bell className="size-4 text-[#2f3cf5]" />
                   )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p
                     className={`text-sm leading-tight ${
                       n.is_read
-                        ? 'text-[#62646a]'
-                        : 'font-medium text-[#404145]'
+                        ? 'text-[#5f5d57]'
+                        : 'font-medium text-[#1a1a17]'
                     }`}
                   >
                     {n.title}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 text-xs text-[#62646a]">
+                  <p className="mt-0.5 line-clamp-2 text-xs text-[#5f5d57]">
                     {n.body}
                   </p>
-                  <p className="mt-1 text-xs text-[#6b7280]">
+                  <p className="mt-1 text-xs text-[#5f5d57]">
                     {formatRelativeTime(n.created_at)}
                   </p>
                 </div>
                 {!n.is_read && (
-                  <span className="mt-1 size-2 shrink-0 rounded-full bg-[#1dbf73]" />
+                  <span className="mt-1 size-2 shrink-0 rounded-full bg-[#2f3cf5]" />
                 )}
               </Link>
             ))}
@@ -193,7 +193,7 @@ export function NotificationsBell() {
 
         <Link
           href="/notifications"
-          className="block border-t border-[#e4e5e7] px-3 py-2 text-center text-sm font-medium text-[#1dbf73] hover:bg-[#f9fafb]"
+          className="block border-t border-[#e3dfd6] px-3 py-2 text-center text-sm font-medium text-[#2f3cf5] hover:bg-[#f6f4ef]"
         >
           View all notifications
         </Link>

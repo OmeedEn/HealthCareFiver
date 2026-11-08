@@ -713,10 +713,10 @@ export default async function DashboardPage() {
       )}
       {role !== 'client' && (
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">
             {greeting}, {firstName}!
           </h1>
-          <p className="text-[#62646a]">
+          <p className="text-[#5f5d57]">
             Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
           </p>
         </div>
@@ -784,30 +784,30 @@ const VERIFICATION_BANNER: Record<
     title: 'Get verified to go live',
     body: 'Upload your license or certification and a government ID. Our team reviews within 24–48 hours.',
     cta: { label: 'Upload documents', href: '/contractor/credentials/upload' },
-    className: 'border-[#bcebd5] bg-[#e8faf1]',
-    iconClassName: 'text-[#0f8f56]',
+    className: 'border-[#c9cdfb] bg-[#eceefe]',
+    iconClassName: 'text-[#2330c8]',
   },
   pending_review: {
     title: "Your application is under review. We'll email you within 24-48 hours.",
-    className: 'border-[#f5deb3] bg-[#fdf6e3]',
-    iconClassName: 'text-[#b8860b]',
+    className: 'border-[#ecd3a3] bg-[#fbf0dc]',
+    iconClassName: 'text-[#8a5a00]',
   },
   more_info_requested: {
     title: 'Action needed: more information requested',
     cta: { label: 'Upload Requested Document', href: '/contractor/credentials/upload' },
-    className: 'border-[#f5c6cb] bg-[#fdecea]',
-    iconClassName: 'text-[#c0392b]',
+    className: 'border-[#f4c7c2] bg-[#fdecea]',
+    iconClassName: 'text-[#b42318]',
   },
   rejected: {
     title: 'Your verification was not approved',
-    className: 'border-[#f5c6cb] bg-[#fdecea]',
-    iconClassName: 'text-[#c0392b]',
+    className: 'border-[#f4c7c2] bg-[#fdecea]',
+    iconClassName: 'text-[#b42318]',
   },
   suspended: {
     title: 'Your account is suspended',
     body: `Your profile and listings are hidden from clients and you can't take bookings. Email ${SUPPORT_EMAIL} to resolve this.`,
-    className: 'border-[#f5c6cb] bg-[#fdecea]',
-    iconClassName: 'text-[#c0392b]',
+    className: 'border-[#f4c7c2] bg-[#fdecea]',
+    iconClassName: 'text-[#b42318]',
   },
 }
 
@@ -835,7 +835,7 @@ function VerificationBanner({
           {config.title}
         </CardTitle>
         {shownNotes && (
-          <CardDescription className="font-medium text-[#404145]">
+          <CardDescription className="font-medium text-[#1a1a17]">
             {shownNotes}
           </CardDescription>
         )}
@@ -847,7 +847,7 @@ function VerificationBanner({
         <CardContent>
           <Link
             href={config.cta.href}
-            className="text-sm font-black text-[#1dbf73] hover:underline"
+            className="text-sm font-black text-[#2f3cf5] hover:underline"
           >
             {config.cta.label} &rarr;
           </Link>
@@ -890,13 +890,13 @@ function ComplianceBanner({
 
   if (compliance.holdReason && status !== 'suspended') {
     return (
-      <Card className="rounded-md border-[#f5c6cb] bg-[#fdecea]">
+      <Card className="rounded-md border-[#f4c7c2] bg-[#fdecea]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#c0392b]">
+          <CardTitle className="flex items-center gap-2 text-[#b42318]">
             <AlertCircle className="h-5 w-5" />
             Your profile is on hold
           </CardTitle>
-          <CardDescription className="font-medium text-[#404145]">
+          <CardDescription className="font-medium text-[#1a1a17]">
             {compliance.holdReason}
           </CardDescription>
           <CardDescription>
@@ -908,7 +908,7 @@ function ComplianceBanner({
         <CardContent>
           <Link
             href="/contractor/credentials"
-            className="text-sm font-black text-[#1dbf73] hover:underline"
+            className="text-sm font-black text-[#2f3cf5] hover:underline"
           >
             Update documents &rarr;
           </Link>
@@ -948,12 +948,12 @@ function ComplianceBanner({
   return (
     <Card
       className={`rounded-md ${
-        urgent ? 'border-[#f5c6cb] bg-[#fdecea]' : 'border-[#f5deb3] bg-[#fdf6e3]'
+        urgent ? 'border-[#f4c7c2] bg-[#fdecea]' : 'border-[#ecd3a3] bg-[#fbf0dc]'
       }`}
     >
       <CardHeader>
         <CardTitle
-          className={`flex items-center gap-2 ${urgent ? 'text-[#c0392b]' : 'text-[#8a6508]'}`}
+          className={`flex items-center gap-2 ${urgent ? 'text-[#b42318]' : 'text-[#8a5a00]'}`}
         >
           <ShieldCheck className="h-5 w-5" />
           {title}
@@ -964,7 +964,7 @@ function ComplianceBanner({
         <CardContent>
           <Link
             href={MALPRACTICE_UPLOAD_HREF}
-            className="text-sm font-black text-[#1dbf73] hover:underline"
+            className="text-sm font-black text-[#2f3cf5] hover:underline"
           >
             Upload malpractice certificate &rarr;
           </Link>
@@ -1083,13 +1083,13 @@ function ContractorDashboard({
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 Recommended for you
               </CardTitle>
               <CardAction>
                 <Link
                   href="/contractor/jobs"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Browse all jobs &rarr;
                 </Link>
@@ -1097,7 +1097,7 @@ function ContractorDashboard({
             </CardHeader>
             <CardContent>
               {jobs.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   No open jobs right now. Check back soon.
                 </p>
               ) : (
@@ -1112,13 +1112,13 @@ function ContractorDashboard({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 Recommended credentials
               </CardTitle>
               <CardAction>
                 <Link
                   href="/contractor/credentials/upload"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Add credential &rarr;
                 </Link>
@@ -1129,22 +1129,22 @@ function ContractorDashboard({
                 {SUGGESTED_CREDENTIALS.map((cred) => (
                   <div
                     key={cred.name}
-                    className="flex items-center gap-3 rounded-md border border-[#e4e5e7] px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-md border border-[#e3dfd6] px-3 py-2.5"
                   >
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
-                      <ShieldCheck className="size-4 text-[#1dbf73]" />
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                      <ShieldCheck className="size-4 text-[#2f3cf5]" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#404145]">
+                      <p className="text-sm font-medium text-[#1a1a17]">
                         {cred.name}
                       </p>
-                      <p className="text-xs text-[#62646a]">
+                      <p className="text-xs text-[#5f5d57]">
                         {cred.description}
                       </p>
                     </div>
                     <Link
                       href="/contractor/credentials/upload"
-                      className="text-sm font-medium text-[#1dbf73] hover:underline"
+                      className="text-sm font-medium text-[#2f3cf5] hover:underline"
                     >
                       Add &rarr;
                     </Link>
@@ -1158,11 +1158,11 @@ function ContractorDashboard({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">Recent activity</CardTitle>
+              <CardTitle className="text-[#1a1a17]">Recent activity</CardTitle>
               <CardAction>
                 <Link
                   href="/notifications"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   View all &rarr;
                 </Link>
@@ -1170,7 +1170,7 @@ function ContractorDashboard({
             </CardHeader>
             <CardContent>
               {activity.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   No recent activity yet.
                 </p>
               ) : (
@@ -1179,17 +1179,17 @@ function ContractorDashboard({
                     const Icon = getNotificationIcon(item.type)
                     return (
                       <li key={item.id} className="flex items-start gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
-                          <Icon className="size-4 text-[#1dbf73]" />
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                          <Icon className="size-4 text-[#2f3cf5]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[#404145]">
+                          <p className="text-sm font-medium text-[#1a1a17]">
                             {item.title}
                           </p>
-                          <p className="line-clamp-1 text-sm text-[#62646a]">
+                          <p className="line-clamp-1 text-sm text-[#5f5d57]">
                             {item.body}
                           </p>
-                          <p className="text-xs text-[#6b7280]">
+                          <p className="text-xs text-[#5f5d57]">
                             {formatRelativeTime(item.created_at)}
                           </p>
                         </div>
@@ -1203,34 +1203,34 @@ function ContractorDashboard({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">Your interests</CardTitle>
+              <CardTitle className="text-[#1a1a17]">Your interests</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {contractorTypeLabel && (
                 <div>
-                  <p className="mb-2 text-xs font-medium text-[#6b7280]">
+                  <p className="mb-2 text-xs font-medium text-[#5f5d57]">
                     Professional role
                   </p>
-                  <Badge className="bg-[#e8faf1] px-3 py-1 text-sm text-[#0f8f56]">
+                  <Badge className="bg-[#eceefe] px-3 py-1 text-sm text-[#2330c8]">
                     {contractorTypeLabel}
                   </Badge>
                 </div>
               )}
               <div>
-                <p className="mb-2 text-xs font-medium text-[#6b7280]">
+                <p className="mb-2 text-xs font-medium text-[#5f5d57]">
                   Specialties
                 </p>
                 {specialties.length === 0 ? (
                   <Link
                     href="/contractor/profile/edit"
-                    className="text-sm font-medium text-[#1dbf73] hover:underline"
+                    className="text-sm font-medium text-[#2f3cf5] hover:underline"
                   >
                     Add specialties &rarr;
                   </Link>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {specialties.map((s) => (
-                      <Badge key={s} variant="outline" className="text-[#404145]">
+                      <Badge key={s} variant="outline" className="text-[#1a1a17]">
                         {s}
                       </Badge>
                     ))}
@@ -1255,7 +1255,7 @@ const FIRST_RUN_OFFERS = [
 function FirstRunOfferCards() {
   return (
     <section aria-labelledby="first-run-offers" className="space-y-3">
-      <h2 id="first-run-offers" className="text-base font-semibold text-[#404145]">
+      <h2 id="first-run-offers" className="text-base font-semibold text-[#1a1a17]">
         What will you offer?
       </h2>
       <div className="grid gap-3 sm:grid-cols-3">
@@ -1265,20 +1265,20 @@ function FirstRunOfferCards() {
             <Link
               key={o.label}
               href={o.href}
-              className="flex items-start gap-3 rounded-xl border border-[#e4e5e7] bg-white p-4 transition hover:border-[#bcebd5] hover:bg-[#fafefb] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+              className="flex items-start gap-3 rounded-xl border border-[#e3dfd6] bg-white p-4 transition hover:border-[#c9cdfb] hover:bg-[#f4f5fe] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
             >
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1] text-[#1dbf73]">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe] text-[#2f3cf5]">
                 <Icon className="size-4" aria-hidden />
               </span>
               <span>
-                <span className="block text-sm font-semibold text-[#404145]">{o.label}</span>
-                <span className="block text-xs text-[#62646a]">{o.sub}</span>
+                <span className="block text-sm font-semibold text-[#1a1a17]">{o.label}</span>
+                <span className="block text-xs text-[#5f5d57]">{o.sub}</span>
               </span>
             </Link>
           )
         })}
       </div>
-      <p className="text-xs text-[#62646a]">Saved as drafts. Nothing publishes until you’re approved.</p>
+      <p className="text-xs text-[#5f5d57]">Saved as drafts. Nothing publishes until you’re approved.</p>
     </section>
   )
 }
@@ -1357,28 +1357,28 @@ function RecommendedJobCard({ job }: { job: DashboardJob }) {
     : null
 
   return (
-    <div className="flex h-full flex-col gap-3 rounded-lg border border-[#e4e5e7] p-4">
+    <div className="flex h-full flex-col gap-3 rounded-lg border border-[#e3dfd6] p-4">
       <div className="space-y-1">
-        <p className="line-clamp-2 font-semibold text-[#404145]">{job.title}</p>
-        <p className="text-sm text-[#62646a]">
+        <p className="line-clamp-2 font-semibold text-[#1a1a17]">{job.title}</p>
+        <p className="text-sm text-[#5f5d57]">
           {job.facility_name ? job.facility_name : 'Healthcare facility'}
           {location ? ` • ${location}` : ''}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {payRange && (
-          <span className="text-sm font-medium text-[#0f8f56]">
+          <span className="text-sm font-medium text-[#2330c8]">
             {payRange}
           </span>
         )}
         {jobTypeLabel && (
-          <Badge variant="outline" className="text-[#404145]">
+          <Badge variant="outline" className="text-[#1a1a17]">
             {jobTypeLabel}
           </Badge>
         )}
       </div>
       {location && (
-        <div className="flex items-center gap-1 text-xs text-[#6b7280]">
+        <div className="flex items-center gap-1 text-xs text-[#5f5d57]">
           <MapPin className="size-3" />
           <span>{location}</span>
         </div>
@@ -1386,7 +1386,7 @@ function RecommendedJobCard({ job }: { job: DashboardJob }) {
       <div className="mt-auto pt-1">
         <Link
           href={`/contractor/jobs/${job.id}`}
-          className="text-sm font-medium text-[#1dbf73] hover:underline"
+          className="text-sm font-medium text-[#2f3cf5] hover:underline"
         >
           View &rarr;
         </Link>
@@ -1481,13 +1481,13 @@ function FacilityDashboard({
           {/* Your open jobs */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 {isDemo ? 'Your open jobs' : 'Your recent jobs'}
               </CardTitle>
               <CardAction>
                 <Link
                   href="/facility/jobs"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Manage all &rarr;
                 </Link>
@@ -1495,14 +1495,14 @@ function FacilityDashboard({
             </CardHeader>
             <CardContent>
               {jobs.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   No jobs posted yet.
                   {STAFFING_POSTS_ENABLED && (
                     <>
                       {' '}
                       <Link
                         href="/facility/jobs/new"
-                        className="font-medium text-[#1dbf73] hover:underline"
+                        className="font-medium text-[#2f3cf5] hover:underline"
                       >
                         Post your first job
                       </Link>
@@ -1511,7 +1511,7 @@ function FacilityDashboard({
                   )}
                 </p>
               ) : (
-                <ul className="divide-y divide-[#f1f3f5]">
+                <ul className="divide-y divide-[#eeebe4]">
                   {jobs.map((job) => {
                     const location = [job.city, job.state]
                       .filter(Boolean)
@@ -1523,10 +1523,10 @@ function FacilityDashboard({
                           className="group flex items-start justify-between gap-4"
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[#404145] group-hover:text-[#0f8f56]">
+                            <p className="font-semibold text-[#1a1a17] group-hover:text-[#2330c8]">
                               {job.title}
                             </p>
-                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#62646a]">
+                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5f5d57]">
                               {location && (
                                 <span className="inline-flex items-center gap-1">
                                   <MapPin className="size-3" />
@@ -1542,10 +1542,10 @@ function FacilityDashboard({
                             </div>
                           </div>
                           <div className="flex shrink-0 flex-col items-end gap-1">
-                            <Badge className="bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]">
+                            <Badge className="bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]">
                               {job.total_applicants ?? 0} applicants
                             </Badge>
-                            <span className="text-xs text-[#6b7280]">
+                            <span className="text-xs text-[#5f5d57]">
                               {job.status.replace('_', ' ')}
                             </span>
                           </div>
@@ -1561,13 +1561,13 @@ function FacilityDashboard({
           {/* Recent applicants */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 Recent applicants
               </CardTitle>
               <CardAction>
                 <Link
                   href="/facility/contractors"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Browse contractors &rarr;
                 </Link>
@@ -1575,7 +1575,7 @@ function FacilityDashboard({
             </CardHeader>
             <CardContent>
               {applicants.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   Applicants will appear here once your jobs receive
                   applications.
                 </p>
@@ -1598,39 +1598,39 @@ function FacilityDashboard({
                       <li key={a.id}>
                         <Link
                           href={`/facility/contractors/${a.id}`}
-                          className="flex items-start gap-3 rounded-lg p-2 -mx-2 hover:bg-[#f9fafb]"
+                          className="flex items-start gap-3 rounded-lg p-2 -mx-2 hover:bg-[#f6f4ef]"
                         >
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#e8faf1] text-sm font-semibold text-[#0f8f56]">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-sm font-semibold text-[#2330c8]">
                             {initials || '?'}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-baseline gap-2">
-                              <p className="truncate text-sm font-semibold text-[#404145]">
+                              <p className="truncate text-sm font-semibold text-[#1a1a17]">
                                 {a.first_name} {a.last_name}
                               </p>
                               {a.credential && (
                                 <Badge
                                   variant="outline"
-                                  className="text-[10px] font-medium text-[#404145]"
+                                  className="text-[10px] font-medium text-[#1a1a17]"
                                 >
                                   {a.credential}
                                 </Badge>
                               )}
                             </div>
-                            <p className="line-clamp-1 text-xs text-[#62646a]">
+                            <p className="line-clamp-1 text-xs text-[#5f5d57]">
                               {a.job_title && `Applied to ${a.job_title}`}
                               {a.job_title && location && ' · '}
                               {location}
                             </p>
                             <div className="mt-1 flex items-center gap-2 text-xs">
                               {a.average_rating != null && (
-                                <span className="inline-flex items-center gap-1 text-[#404145]">
+                                <span className="inline-flex items-center gap-1 text-[#1a1a17]">
                                   <Star className="size-3 fill-[#fbbf24] text-[#fbbf24]" />
                                   {a.average_rating.toFixed(1)}
                                 </span>
                               )}
                               {payRange && (
-                                <span className="text-[#0f8f56]">
+                                <span className="text-[#2330c8]">
                                   {payRange}
                                 </span>
                               )}
@@ -1650,13 +1650,13 @@ function FacilityDashboard({
           {/* Active contracts */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 Active contracts
               </CardTitle>
               <CardAction>
                 <Link
                   href="/facility/contracts"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   View all &rarr;
                 </Link>
@@ -1664,7 +1664,7 @@ function FacilityDashboard({
             </CardHeader>
             <CardContent>
               {contracts.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   No active contracts.
                 </p>
               ) : (
@@ -1673,15 +1673,15 @@ function FacilityDashboard({
                     <li key={c.id}>
                       <Link
                         href={`/facility/contracts/${c.id}`}
-                        className="block rounded-md p-2 -mx-2 hover:bg-[#f9fafb]"
+                        className="block rounded-md p-2 -mx-2 hover:bg-[#f6f4ef]"
                       >
                         <div className="flex items-center gap-2">
-                          <CheckCircle2 className="size-4 shrink-0 text-[#1dbf73]" />
-                          <p className="line-clamp-1 text-sm font-medium text-[#404145]">
+                          <CheckCircle2 className="size-4 shrink-0 text-[#2f3cf5]" />
+                          <p className="line-clamp-1 text-sm font-medium text-[#1a1a17]">
                             {c.title}
                           </p>
                         </div>
-                        <p className="mt-1 ml-6 line-clamp-1 text-xs text-[#62646a]">
+                        <p className="mt-1 ml-6 line-clamp-1 text-xs text-[#5f5d57]">
                           {c.contractor_name}
                           {c.rate_amount != null && ` · $${c.rate_amount}/hr`}
                         </p>
@@ -1696,13 +1696,13 @@ function FacilityDashboard({
           {/* Recent activity */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">
+              <CardTitle className="text-[#1a1a17]">
                 Recent activity
               </CardTitle>
               <CardAction>
                 <Link
                   href="/notifications"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   View all &rarr;
                 </Link>
@@ -1710,7 +1710,7 @@ function FacilityDashboard({
             </CardHeader>
             <CardContent>
               {activity.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   No recent activity yet.
                 </p>
               ) : (
@@ -1719,17 +1719,17 @@ function FacilityDashboard({
                     const Icon = getNotificationIcon(item.type)
                     return (
                       <li key={item.id} className="flex items-start gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
-                          <Icon className="size-4 text-[#1dbf73]" />
+                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                          <Icon className="size-4 text-[#2f3cf5]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[#404145]">
+                          <p className="text-sm font-medium text-[#1a1a17]">
                             {item.title}
                           </p>
-                          <p className="line-clamp-1 text-sm text-[#62646a]">
+                          <p className="line-clamp-1 text-sm text-[#5f5d57]">
                             {item.body}
                           </p>
-                          <p className="text-xs text-[#6b7280]">
+                          <p className="text-xs text-[#5f5d57]">
                             {formatRelativeTime(item.created_at)}
                           </p>
                         </div>
@@ -1744,20 +1744,20 @@ function FacilityDashboard({
           {/* Tips */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#404145]">
-                <TrendingUp className="size-4 text-[#1dbf73]" />
+              <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+                <TrendingUp className="size-4 text-[#2f3cf5]" />
                 Boost your hires
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-[#62646a]">
+              <ul className="space-y-2 text-sm text-[#5f5d57]">
                 {[
                   'Detailed job descriptions get 3× more qualified applicants.',
                   'List required credentials upfront to save review time.',
                   'Respond to applicants within 24 hours.',
                 ].map((tip) => (
                   <li key={tip} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#1dbf73]" />
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
                     <span>{tip}</span>
                   </li>
                 ))}
@@ -1781,15 +1781,15 @@ function ClassificationBanner({
     return (
       <div
         role="status"
-        className="flex items-start gap-3 rounded-md border border-[#e4e5e7] bg-white p-4"
+        className="flex items-start gap-3 rounded-md border border-[#e3dfd6] bg-white p-4"
       >
-        <AlertCircle className="mt-0.5 size-5 shrink-0 text-[#62646a]" />
-        <div className="text-sm text-[#404145]">
+        <AlertCircle className="mt-0.5 size-5 shrink-0 text-[#5f5d57]" />
+        <div className="text-sm text-[#1a1a17]">
           <p className="font-semibold">Our team reviewed your answers</p>
-          <p className="mt-1 text-[#62646a]">
+          <p className="mt-1 text-[#5f5d57]">
             You can keep using Sanus as a client to browse, save, and book.
             Questions? Email{' '}
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-[#1dbf73] hover:underline">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-[#2f3cf5] hover:underline">
               {SUPPORT_EMAIL}
             </a>
             .
@@ -1801,10 +1801,10 @@ function ClassificationBanner({
   return (
     <div
       role="status"
-      className="flex items-start gap-3 rounded-md border border-[#bcebd5] bg-[#e8faf1] p-4"
+      className="flex items-start gap-3 rounded-md border border-[#c9cdfb] bg-[#eceefe] p-4"
     >
-      <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#0f8f56]" />
-      <div className="text-sm text-[#0f4c3a]">
+      <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#2330c8]" />
+      <div className="text-sm text-[#1a1a17]">
         <p className="font-semibold">
           Thanks, {firstName}. We&apos;re reviewing your answers and will place
           you in the right category within 24-48 hours. We may ask for a few
@@ -1841,23 +1841,23 @@ function ClientDashboard({
         <FinishProfileCard items={checklist} groupLabels={CLIENT_GROUP_LABELS} />
       )}
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">
           Welcome, {firstName}!
         </h1>
-        <p className="text-[#62646a]">
+        <p className="text-[#5f5d57]">
           {classification
             ? 'Find health professionals on Sanus.'
             : 'Find and connect with health professionals on Sanus.'}
         </p>
       </div>
 
-      <Card className="rounded-md border-[#bcebd5] bg-[#e8faf1]">
+      <Card className="rounded-md border-[#c9cdfb] bg-[#eceefe]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#0f8f56]">
+          <CardTitle className="flex items-center gap-2 text-[#2330c8]">
             <Search className="h-5 w-5" />
             Find a professional
           </CardTitle>
-          <CardDescription className="font-semibold text-[#0f8f56]">
+          <CardDescription className="font-semibold text-[#2330c8]">
             Browse clinicians, coaches, consultants, and educators
             {location ? ` near ${location}` : ''}.
           </CardDescription>
@@ -1866,7 +1866,7 @@ function ClientDashboard({
           {!classification && (
             <Link
               href={CLIENT_MATCHES_PATH}
-              className="inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]"
+              className="inline-flex h-10 items-center rounded-md bg-[#2f3cf5] px-4 text-sm font-semibold text-white hover:bg-[#2330c8]"
             >
               See your matches &rarr;
             </Link>
@@ -1875,8 +1875,8 @@ function ClientDashboard({
             href="/find-care"
             className={
               classification
-                ? 'inline-flex h-10 items-center rounded-md bg-[#1dbf73] px-4 text-sm font-semibold text-white hover:bg-[#19a463]'
-                : 'inline-flex h-10 items-center rounded-md border border-[#1dbf73] bg-white px-4 text-sm font-semibold text-[#0f8f56] hover:bg-[#f4fdf8]'
+                ? 'inline-flex h-10 items-center rounded-md bg-[#2f3cf5] px-4 text-sm font-semibold text-white hover:bg-[#2330c8]'
+                : 'inline-flex h-10 items-center rounded-md border border-[#2f3cf5] bg-white px-4 text-sm font-semibold text-[#2330c8] hover:bg-[#f4f5fe]'
             }
           >
             Browse professionals &rarr;
@@ -1888,17 +1888,17 @@ function ClientDashboard({
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#404145]">
-                <CalendarDays className="size-4 text-[#1dbf73]" />
+              <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+                <CalendarDays className="size-4 text-[#2f3cf5]" />
                 Your bookings
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-[#62646a]">
+              <p className="text-sm text-[#5f5d57]">
                 Services you request and events you register for show up in
                 My bookings.
               </p>
-              <Link href="/bookings" className="mt-3 inline-block text-sm font-semibold text-[#1dbf73] hover:underline">
+              <Link href="/bookings" className="mt-3 inline-block text-sm font-semibold text-[#2f3cf5] hover:underline">
                 Go to My bookings
               </Link>
             </CardContent>
@@ -1906,21 +1906,21 @@ function ClientDashboard({
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[#404145]">
-                <MessageSquare className="size-4 text-[#1dbf73]" />
+              <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+                <MessageSquare className="size-4 text-[#2f3cf5]" />
                 Messages
               </CardTitle>
               <CardAction>
                 <Link
                   href="/messages"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Open inbox &rarr;
                 </Link>
               </CardAction>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-[#62646a]">
+              <p className="text-sm text-[#5f5d57]">
                 {classification === 'pending'
                   ? 'Messaging professionals isn’t available while your account is under review.'
                   : classification === 'rejected'
@@ -1934,11 +1934,11 @@ function ClientDashboard({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-[#404145]">Your interests</CardTitle>
+              <CardTitle className="text-[#1a1a17]">Your interests</CardTitle>
               <CardAction>
                 <Link
                   href="/settings#preferences"
-                  className="text-sm font-medium text-[#1dbf73] hover:underline"
+                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
                 >
                   Edit &rarr;
                 </Link>
@@ -1946,11 +1946,11 @@ function ClientDashboard({
             </CardHeader>
             <CardContent>
               {interests.length === 0 ? (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   You haven&apos;t saved any interests yet.{' '}
                   <Link
                     href="/settings#preferences"
-                    className="font-medium text-[#1dbf73] hover:underline"
+                    className="font-medium text-[#2f3cf5] hover:underline"
                   >
                     Add some
                   </Link>
@@ -1961,7 +1961,7 @@ function ClientDashboard({
                   {interests.map((key) => (
                     <Badge
                       key={key}
-                      className="bg-[#e8faf1] px-3 py-1 text-sm text-[#0f8f56]"
+                      className="bg-[#eceefe] px-3 py-1 text-sm text-[#2330c8]"
                     >
                       {CLIENT_INTEREST_LABELS[key] ?? key}
                     </Badge>
@@ -1969,7 +1969,7 @@ function ClientDashboard({
                 </div>
               )}
               {location && (
-                <p className="mt-4 flex items-center gap-1 text-xs text-[#6b7280]">
+                <p className="mt-4 flex items-center gap-1 text-xs text-[#5f5d57]">
                   <MapPin className="size-3" />
                   {location}
                 </p>
@@ -2027,16 +2027,16 @@ function StatCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[#62646a]">
+        <CardTitle className="text-sm font-medium text-[#5f5d57]">
           {title}
         </CardTitle>
-        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
-          <Icon className="size-4 text-[#1dbf73]" />
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2f3cf5]/10 to-[#2f3cf5]/20">
+          <Icon className="size-4 text-[#2f3cf5]" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#404145]">{value}</div>
-        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
+        <div className="text-2xl font-bold text-[#1a1a17]">{value}</div>
+        <p className="mt-1 text-xs text-[#5f5d57]">{description}</p>
       </CardContent>
     </Card>
   )

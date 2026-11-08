@@ -41,7 +41,7 @@ import {
 } from '@/lib/listings/offering'
 import type { PublicListing } from '@/components/listings/listing-card'
 import { ListingStatusBadge } from '@/components/listings/listing-badges'
-import { NavAuth } from '@/components/marketing/nav-auth'
+import { SiteHeader } from '@/components/marketing/site-header'
 import { formatRateAmount, formatRateUnit, type ProfessionalRate } from '@/lib/rates/types'
 import { MessageButton } from './message-button'
 import { BookingRequestButton, PRIMARY_CTA } from './booking-request'
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const SECONDARY_CTA =
-  'inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d1d5db] bg-white px-5 text-sm font-semibold text-[#111827] transition hover:border-[#1dbf73] hover:text-[#0f8f56]'
+  'inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cbc6ba] bg-white px-5 text-sm font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2330c8]'
 
 /** Who's looking, and what they can do from here. */
 type Cta = 'owner' | 'login' | 'client' | 'org' | 'none'
@@ -142,39 +142,12 @@ export default async function ProProfilePage({ params }: Props) {
   )
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] text-[#111827]">
-      <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-bold text-white">
-              S
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#111827]">
-              Sanus<span className="text-[#1dbf73]">.</span>
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/find-care"
-              className="hidden text-sm font-medium text-[#6b7280] hover:text-[#111827] sm:block"
-            >
-              Find care
-            </Link>
-            <NavAuth>
-              <Link
-                href="/login"
-                className="text-sm font-medium text-[#6b7280] hover:text-[#111827]"
-              >
-                Sign In
-              </Link>
-            </NavAuth>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#f6f4ef] text-[#1a1a17]">
+      <SiteHeader />
 
       {isOwner && (
-        <div className="border-b border-[#f5deb3] bg-[#fdf6e3]">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm text-[#6b5208] sm:px-6">
+        <div className="border-b border-[#ecd3a3] bg-[#fbf0dc]">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm text-[#8a5a00] sm:px-6">
             <Eye className="size-4 shrink-0" aria-hidden="true" />
             <p className="flex-1 font-medium">
               {isPublic
@@ -199,8 +172,8 @@ export default async function ProProfilePage({ params }: Props) {
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         {/* Hero */}
-        <section className="overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white">
-          <div className="h-24 bg-gradient-to-r from-[#e8faf1] via-[#f0faf5] to-[#eef6ff] sm:h-28" />
+        <section className="overflow-hidden rounded-2xl border border-[#e3dfd6] bg-white">
+          <div className="h-24 bg-gradient-to-r from-[#eceefe] via-[#f4f5fe] to-[#eceefe] sm:h-28" />
           <div className="px-6 pb-6">
             <div className="-mt-14 flex flex-col gap-5 sm:-mt-16 sm:flex-row sm:items-end">
               {p.avatar_url ? (
@@ -211,61 +184,61 @@ export default async function ProProfilePage({ params }: Props) {
                   className="size-28 shrink-0 rounded-full border-4 border-white object-cover shadow-sm sm:size-32"
                 />
               ) : (
-                <div className="flex size-28 shrink-0 items-center justify-center rounded-full border-4 border-white bg-[#e8faf1] text-3xl font-bold text-[#0f8f56] shadow-sm sm:size-32">
+                <div className="flex size-28 shrink-0 items-center justify-center rounded-full border-4 border-white bg-[#eceefe] text-3xl font-bold text-[#2330c8] shadow-sm sm:size-32">
                   {initials}
                 </div>
               )}
               <div className="min-w-0 flex-1 sm:pb-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-[#111827] sm:text-3xl">
+                  <h1 className="text-2xl font-bold tracking-tight text-[#1a1a17] sm:text-3xl">
                     {name}
                   </h1>
                   {p.credential && (
-                    <span className="rounded-full bg-[#e8faf1] px-2.5 py-0.5 text-xs font-semibold text-[#0f4c3a]">
+                    <span className="rounded-full bg-[#eceefe] px-2.5 py-0.5 text-xs font-semibold text-[#1a1a17]">
                       {p.credential}
                     </span>
                   )}
                   {p.verified && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#1dbf73] px-2.5 py-0.5 text-xs font-semibold text-white">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#2f3cf5] px-2.5 py-0.5 text-xs font-semibold text-white">
                       <BadgeCheck className="size-3.5" aria-hidden="true" />
                       Verified
                     </span>
                   )}
                 </div>
-                {role && <p className="mt-1 font-medium text-[#374151]">{role}</p>}
-                {p.headline && <p className="mt-0.5 text-[#6b7280]">{p.headline}</p>}
+                {role && <p className="mt-1 font-medium text-[#3a3934]">{role}</p>}
+                {p.headline && <p className="mt-0.5 text-[#5f5d57]">{p.headline}</p>}
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#374151]">
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[#3a3934]">
               {location && (
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="size-4 text-[#9ca3af]" aria-hidden="true" />
+                  <MapPin className="size-4 text-[#706d65]" aria-hidden="true" />
                   {location}
                 </span>
               )}
               <RatingInline rating={p.average_rating} count={p.total_reviews} />
               {p.insured && (
                 <span className="inline-flex items-center gap-1.5">
-                  <ShieldCheck className="size-4 text-[#1e5aa8]" aria-hidden="true" />
+                  <ShieldCheck className="size-4 text-[#2330c8]" aria-hidden="true" />
                   Insured
                 </span>
               )}
               {p.yearsOfExperience != null && p.yearsOfExperience > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <BriefcaseMedical className="size-4 text-[#9ca3af]" aria-hidden="true" />
+                  <BriefcaseMedical className="size-4 text-[#706d65]" aria-hidden="true" />
                   {p.yearsOfExperience} year{p.yearsOfExperience === 1 ? '' : 's'} experience
                 </span>
               )}
               {p.languages.length > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Languages className="size-4 text-[#9ca3af]" aria-hidden="true" />
+                  <Languages className="size-4 text-[#706d65]" aria-hidden="true" />
                   {p.languages.join(', ')}
                 </span>
               )}
               {p.telehealthStates.length > 0 && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Globe className="size-4 text-[#9ca3af]" aria-hidden="true" />
+                  <Globe className="size-4 text-[#706d65]" aria-hidden="true" />
                   Telehealth in {p.telehealthStates.join(', ')}
                 </span>
               )}
@@ -281,13 +254,13 @@ export default async function ProProfilePage({ params }: Props) {
             {/* About */}
             <Card title="About" icon={BadgeCheck}>
               {p.bio ? (
-                <p className="whitespace-pre-line leading-relaxed text-[#374151]">{p.bio}</p>
+                <p className="whitespace-pre-line leading-relaxed text-[#3a3934]">{p.bio}</p>
               ) : (
                 <Empty>
                   {isOwner ? (
                     <>
                       Add a bio so clients know how you work.{' '}
-                      <Link href="/contractor/profile/edit#about" className="font-semibold text-[#0f8f56] underline">
+                      <Link href="/contractor/profile/edit#about" className="font-semibold text-[#2330c8] underline">
                         Write your bio
                       </Link>
                     </>
@@ -298,12 +271,12 @@ export default async function ProProfilePage({ params }: Props) {
               )}
               {p.specialties.length > 0 && (
                 <div className="mt-5">
-                  <h3 className="text-sm font-semibold text-[#111827]">Specialties</h3>
+                  <h3 className="text-sm font-semibold text-[#1a1a17]">Specialties</h3>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {p.specialties.map((s) => (
                       <span
                         key={s}
-                        className="rounded-full bg-[#f3f4f6] px-3 py-1 text-sm text-[#374151]"
+                        className="rounded-full bg-[#eeebe4] px-3 py-1 text-sm text-[#3a3934]"
                       >
                         {s}
                       </span>
@@ -320,7 +293,7 @@ export default async function ProProfilePage({ params }: Props) {
                   {isOwner ? (
                     <>
                       List what clients can book.{' '}
-                      <Link href="/contractor/listings/new" className="font-semibold text-[#0f8f56] underline">
+                      <Link href="/contractor/listings/new" className="font-semibold text-[#2330c8] underline">
                         Add a listing
                       </Link>
                     </>
@@ -344,9 +317,9 @@ export default async function ProProfilePage({ params }: Props) {
                   <PhotoGallery photos={photos} name={name} />
                 ) : (
                   <Empty>
-                    <Camera className="mx-auto mb-2 size-5 text-[#9ca3af]" aria-hidden="true" />
+                    <Camera className="mx-auto mb-2 size-5 text-[#706d65]" aria-hidden="true" />
                     Show your practice, workspace, or work.{' '}
-                    <Link href="/contractor/profile/edit#photos" className="font-semibold text-[#0f8f56] underline">
+                    <Link href="/contractor/profile/edit#photos" className="font-semibold text-[#2330c8] underline">
                       Add photos
                     </Link>
                   </Empty>
@@ -362,8 +335,8 @@ export default async function ProProfilePage({ params }: Props) {
                 p.total_reviews > 0 ? (
                   <span className="inline-flex items-center gap-1.5 text-sm">
                     <Stars rating={p.average_rating} />
-                    <span className="font-semibold text-[#111827]">{p.average_rating.toFixed(1)}</span>
-                    <span className="text-[#6b7280]">({p.total_reviews})</span>
+                    <span className="font-semibold text-[#1a1a17]">{p.average_rating.toFixed(1)}</span>
+                    <span className="text-[#5f5d57]">({p.total_reviews})</span>
                   </span>
                 ) : null
               }
@@ -383,22 +356,22 @@ export default async function ProProfilePage({ params }: Props) {
             </Card>
 
             {isOwner && unpublished.length > 0 && (
-              <section className="rounded-2xl border border-dashed border-[#e5e7eb] bg-white p-5">
-                <h2 className="text-sm font-semibold text-[#111827]">
+              <section className="rounded-2xl border border-dashed border-[#e3dfd6] bg-white p-5">
+                <h2 className="text-sm font-semibold text-[#1a1a17]">
                   Not shown to clients yet
                 </h2>
-                <p className="mt-0.5 text-xs text-[#6b7280]">
+                <p className="mt-0.5 text-xs text-[#5f5d57]">
                   Only you can see this list.
                 </p>
                 <ul className="mt-3 space-y-2">
                   {unpublished.map((u) => (
                     <li key={u.id} className="flex items-center justify-between gap-3 text-sm">
-                      <span className="truncate text-[#374151]">{u.title}</span>
+                      <span className="truncate text-[#3a3934]">{u.title}</span>
                       <span className="flex shrink-0 items-center gap-3">
                         <ListingStatusBadge status={u.status} />
                         <Link
                           href={`/contractor/listings/${u.id}/review`}
-                          className="font-medium text-[#1dbf73] hover:underline"
+                          className="font-medium text-[#2f3cf5] hover:underline"
                         >
                           Review
                         </Link>
@@ -412,7 +385,7 @@ export default async function ProProfilePage({ params }: Props) {
 
           {/* Sidebar */}
           <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            <div className="hidden rounded-2xl border border-[#e5e7eb] bg-white p-5 lg:block">
+            <div className="hidden rounded-2xl border border-[#e3dfd6] bg-white p-5 lg:block">
               {ctaBlock}
             </div>
 
@@ -421,7 +394,7 @@ export default async function ProProfilePage({ params }: Props) {
                 {rates.length === 0 ? (
                   <Empty>
                     Clients see your prices here.{' '}
-                    <Link href="/contractor/rates" className="font-semibold text-[#0f8f56] underline">
+                    <Link href="/contractor/rates" className="font-semibold text-[#2330c8] underline">
                       Add your rates
                     </Link>
                   </Empty>
@@ -457,10 +430,10 @@ function Card({
   children: React.ReactNode
 }) {
   return (
-    <section className={`rounded-2xl border border-[#e5e7eb] bg-white ${compact ? 'p-5' : 'p-6'}`}>
+    <section className={`rounded-2xl border border-[#e3dfd6] bg-white ${compact ? 'p-5' : 'p-6'}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-[#111827]">
-          <Icon className="size-5 text-[#1dbf73]" aria-hidden="true" />
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-[#1a1a17]">
+          <Icon className="size-5 text-[#2f3cf5]" aria-hidden="true" />
           {title}
         </h2>
         {aside}
@@ -472,7 +445,7 @@ function Card({
 
 function Empty({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-xl border border-dashed border-[#e5e7eb] bg-[#fafafa] px-4 py-5 text-center text-sm text-[#6b7280]">
+    <p className="rounded-xl border border-dashed border-[#e3dfd6] bg-[#f6f4ef] px-4 py-5 text-center text-sm text-[#5f5d57]">
       {children}
     </p>
   )
@@ -512,7 +485,7 @@ function CtaBlock({
   }
   if (cta === 'none') {
     return (
-      <p className="text-sm text-[#6b7280]">
+      <p className="text-sm text-[#5f5d57]">
         Booking and messaging are available to clients and organizations.
       </p>
     )
@@ -528,9 +501,9 @@ function CtaBlock({
           <MessageSquare className="size-4" aria-hidden="true" />
           Message {who}
         </Link>
-        <p className="pt-1 text-center text-xs text-[#6b7280]">
+        <p className="pt-1 text-center text-xs text-[#5f5d57]">
           New to Sanus?{' '}
-          <Link href="/signup/looking" className="font-semibold text-[#0f8f56] hover:underline">
+          <Link href="/signup/looking" className="font-semibold text-[#2330c8] hover:underline">
             Create a free account
           </Link>
         </p>
@@ -553,7 +526,7 @@ function CtaBlock({
         />
       )}
       <MessageButton proId={proId} firstName={firstName} className={`${SECONDARY_CTA} w-full`} />
-      <p className="pt-1 text-center text-xs text-[#6b7280]">
+      <p className="pt-1 text-center text-xs text-[#5f5d57]">
         No charge to ask. {firstName || 'They'} will confirm the details with you.
       </p>
     </div>
@@ -562,13 +535,13 @@ function CtaBlock({
 
 function RatingInline({ rating, count }: { rating: number; count: number }) {
   if (count <= 0) {
-    return <span className="text-[#6b7280]">New on Sanus</span>
+    return <span className="text-[#5f5d57]">New on Sanus</span>
   }
   return (
     <span className="inline-flex items-center gap-1.5">
       <Star className="size-4 fill-amber-400 text-amber-400" aria-hidden="true" />
       <span className="font-semibold">{rating.toFixed(1)}</span>
-      <span className="text-[#6b7280]">
+      <span className="text-[#5f5d57]">
         ({count} review{count === 1 ? '' : 's'})
       </span>
     </span>
@@ -583,7 +556,7 @@ function Stars({ rating }: { rating: number }) {
         <Star
           key={i}
           aria-hidden="true"
-          className={`size-4 ${i <= full ? 'fill-amber-400 text-amber-400' : 'fill-[#e5e7eb] text-[#e5e7eb]'}`}
+          className={`size-4 ${i <= full ? 'fill-amber-400 text-amber-400' : 'fill-[#e3dfd6] text-[#e3dfd6]'}`}
         />
       ))}
     </span>
@@ -598,15 +571,15 @@ function ReviewItem({ review: r }: { review: PublicReview }) {
     <li className="border-b border-[#f0f0f1] pb-5 last:border-0 last:pb-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Stars rating={r.rating} />
-        {date && <span className="text-xs text-[#9ca3af]">{date}</span>}
+        {date && <span className="text-xs text-[#706d65]">{date}</span>}
       </div>
-      {r.title && <p className="mt-2 font-semibold text-[#111827]">{r.title}</p>}
+      {r.title && <p className="mt-2 font-semibold text-[#1a1a17]">{r.title}</p>}
       {r.content && (
-        <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[#374151]">
+        <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[#3a3934]">
           {r.content}
         </p>
       )}
-      <p className="mt-2 text-xs font-medium text-[#6b7280]">— {r.reviewer}</p>
+      <p className="mt-2 text-xs font-medium text-[#5f5d57]">— {r.reviewer}</p>
     </li>
   )
 }
@@ -636,18 +609,18 @@ function OfferingRow({ listing: l }: { listing: PublicListing }) {
   return (
     <li className="py-4 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-center gap-2 text-xs font-medium">
-        <span className="rounded-md bg-[#e8faf1] px-2 py-0.5 text-[#0f8f56]">
+        <span className="rounded-md bg-[#eceefe] px-2 py-0.5 text-[#2330c8]">
           {KIND_LABELS[l.kind]}
         </span>
-        {kindLine && <span className="text-[#6b7280]">{kindLine}</span>}
+        {kindLine && <span className="text-[#5f5d57]">{kindLine}</span>}
       </div>
-      <h3 className="mt-1.5 font-semibold text-[#111827]">{l.title}</h3>
+      <h3 className="mt-1.5 font-semibold text-[#1a1a17]">{l.title}</h3>
       {l.description && (
-        <p className="mt-1 line-clamp-4 whitespace-pre-line text-sm text-[#374151]">
+        <p className="mt-1 line-clamp-4 whitespace-pre-line text-sm text-[#3a3934]">
           {l.description}
         </p>
       )}
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#6b7280]">
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#5f5d57]">
         {l.kind === 'service' && l.duration_minutes && (
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" aria-hidden="true" />
@@ -691,16 +664,16 @@ function RatesList({ rates }: { rates: ProfessionalRate[] }) {
         return (
           <li key={r.id} className="py-3 first:pt-0 last:pb-0">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="min-w-0 font-medium text-[#111827]">{r.label}</p>
+              <p className="min-w-0 font-medium text-[#1a1a17]">{r.label}</p>
               <p className="shrink-0 text-right">
-                <span className={`font-semibold ${r.on_request || r.amount_cents == null ? 'text-sm text-[#6b7280]' : 'text-[#111827]'}`}>
+                <span className={`font-semibold ${r.on_request || r.amount_cents == null ? 'text-sm text-[#5f5d57]' : 'text-[#1a1a17]'}`}>
                   {formatRateAmount(r)}
                 </span>
-                {unit && <span className="ml-1 text-xs text-[#6b7280]">{unit}</span>}
+                {unit && <span className="ml-1 text-xs text-[#5f5d57]">{unit}</span>}
               </p>
             </div>
             {r.description && (
-              <p className="mt-0.5 text-sm text-[#6b7280]">{r.description}</p>
+              <p className="mt-0.5 text-sm text-[#5f5d57]">{r.description}</p>
             )}
           </li>
         )
@@ -741,10 +714,10 @@ function AvailabilityBlock({
       {a.accepting != null && (
         <p
           className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
-            a.accepting ? 'bg-[#e8faf1] text-[#0f8f56]' : 'bg-[#f3f4f6] text-[#6b7280]'
+            a.accepting ? 'bg-[#eceefe] text-[#2330c8]' : 'bg-[#eeebe4] text-[#5f5d57]'
           }`}
         >
-          <span className={`size-2 rounded-full ${a.accepting ? 'bg-[#1dbf73]' : 'bg-[#9ca3af]'}`} />
+          <span className={`size-2 rounded-full ${a.accepting ? 'bg-[#2f3cf5]' : 'bg-[#706d65]'}`} />
           {a.accepting ? 'Accepting new clients' : 'Not taking new clients right now'}
         </p>
       )}
@@ -752,21 +725,21 @@ function AvailabilityBlock({
         <dl className="space-y-1.5 text-sm">
           {DAY_ORDER.map((d) => (
             <div key={d} className="flex justify-between gap-3">
-              <dt className={byDay.has(d) ? 'font-medium text-[#111827]' : 'text-[#9ca3af]'}>
+              <dt className={byDay.has(d) ? 'font-medium text-[#1a1a17]' : 'text-[#706d65]'}>
                 {DAYS[d]}
               </dt>
-              <dd className={`text-right ${byDay.has(d) ? 'text-[#374151]' : 'text-[#9ca3af]'}`}>
+              <dd className={`text-right ${byDay.has(d) ? 'text-[#3a3934]' : 'text-[#706d65]'}`}>
                 {byDay.get(d)?.join(', ') ?? 'Unavailable'}
               </dd>
             </div>
           ))}
         </dl>
       ) : (
-        <p className="text-sm text-[#6b7280]">
+        <p className="text-sm text-[#5f5d57]">
           {isOwner ? (
             <>
               Show clients when you work.{' '}
-              <Link href="/contractor/availability" className="font-semibold text-[#0f8f56] underline">
+              <Link href="/contractor/availability" className="font-semibold text-[#2330c8] underline">
                 Set your hours
               </Link>
             </>
@@ -776,8 +749,8 @@ function AvailabilityBlock({
         </p>
       )}
       {a.willingToTravel && (
-        <p className="flex items-center gap-2 text-sm text-[#374151]">
-          <Car className="size-4 text-[#9ca3af]" aria-hidden="true" />
+        <p className="flex items-center gap-2 text-sm text-[#3a3934]">
+          <Car className="size-4 text-[#706d65]" aria-hidden="true" />
           {a.travelRadiusMiles ? `Travels up to ${a.travelRadiusMiles} miles` : 'Willing to travel'}
         </p>
       )}

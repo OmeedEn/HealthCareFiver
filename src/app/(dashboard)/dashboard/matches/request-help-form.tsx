@@ -19,8 +19,8 @@ export function RequestHelpForm({ alreadyRequested }: { alreadyRequested: boolea
 
   if (sent) {
     return (
-      <div role="status" className="flex items-start gap-2.5 rounded-lg border border-[#bcebd5] bg-[#e8faf1] p-4 text-sm text-[#0f4c3a]">
-        <CircleCheck className="mt-0.5 size-4 shrink-0 text-[#0f8f56]" aria-hidden />
+      <div role="status" className="flex items-start gap-2.5 rounded-lg border border-[#c9cdfb] bg-[#eceefe] p-4 text-sm text-[#1a1a17]">
+        <CircleCheck className="mt-0.5 size-4 shrink-0 text-[#2330c8]" aria-hidden />
         <p>
           <span className="font-semibold">We&apos;ve got your request.</span> Our team will look for someone who
           fits and email you.
@@ -54,11 +54,11 @@ export function RequestHelpForm({ alreadyRequested }: { alreadyRequested: boolea
         placeholder="e.g. evenings work best, Spanish-speaking"
         error={error}
       />
-      <p className="text-xs text-[#62646a]">Please don&apos;t include medical details.</p>
+      <p className="text-xs text-[#5f5d57]">Please don&apos;t include medical details.</p>
       <Button
         type="submit"
         disabled={pending}
-        className="h-11 w-full bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463] sm:w-auto sm:px-6"
+        className="h-11 w-full bg-[#2f3cf5] text-sm font-semibold text-white hover:bg-[#2330c8] sm:w-auto sm:px-6"
       >
         {pending && <Loader2 className="mr-2 size-4 animate-spin" />}
         Request help finding someone

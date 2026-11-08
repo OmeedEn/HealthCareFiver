@@ -17,7 +17,7 @@ export function InquiryResponseButtons({ id }: { id: string }) {
   }
   return (
     <div className="flex gap-2">
-      <Button size="sm" disabled={busy !== null} onClick={() => respond(true)} className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
+      <Button size="sm" disabled={busy !== null} onClick={() => respond(true)} className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]">
         {busy === 'accept' ? 'Accepting…' : 'Accept'}
       </Button>
       <Button size="sm" variant="outline" disabled={busy !== null} onClick={() => respond(false)}>
@@ -34,8 +34,8 @@ export function InquiryToggle({ initial }: { initial: boolean }) {
     <Card>
       <CardContent className="flex items-center justify-between gap-4 pt-6">
         <div>
-          <p className="font-semibold text-[#404145]">Accept inquiries from organizations</p>
-          <p className="text-sm text-[#62646a]">Turn this off and organizations can’t send you inquiries or invitations.</p>
+          <p className="font-semibold text-[#1a1a17]">Accept inquiries from organizations</p>
+          <p className="text-sm text-[#5f5d57]">Turn this off and organizations can’t send you inquiries or invitations.</p>
         </div>
         <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
           <input
@@ -51,7 +51,7 @@ export function InquiryToggle({ initial }: { initial: boolean }) {
               if (!res.ok) toast.error(res.error ?? 'Could not save')
               else setOn(next)
             }}
-            className="size-5 accent-[#1dbf73]"
+            className="size-5 accent-[#2f3cf5]"
           />
           {on ? 'On' : 'Off'}
         </label>

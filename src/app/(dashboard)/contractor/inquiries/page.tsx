@@ -50,8 +50,8 @@ export default async function ContractorInquiriesPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Inquiries</h1>
-        <p className="text-sm text-[#62646a]">Organizations that want to work with you. Accept to start a conversation.</p>
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Inquiries</h1>
+        <p className="text-sm text-[#5f5d57]">Organizations that want to work with you. Accept to start a conversation.</p>
       </div>
 
       <InquiryToggle initial={me?.accepts_inquiries !== false} />
@@ -62,22 +62,22 @@ export default async function ContractorInquiriesPage() {
         </CardHeader>
         <CardContent>
           {inquiries.length === 0 ? (
-            <p className="text-sm text-[#62646a]">No inquiries yet.</p>
+            <p className="text-sm text-[#5f5d57]">No inquiries yet.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e5e7]">
+            <ul className="divide-y divide-[#e3dfd6]">
               {inquiries.map((i) => {
                 const org = orgById.get(i.facility_id)
                 return (
                   <li key={i.id} className="space-y-2 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-[#404145]">
+                        <p className="font-semibold text-[#1a1a17]">
                           {org?.facility_name || 'An organization'}{' '}
-                          <span className="text-xs font-normal text-[#62646a]">
+                          <span className="text-xs font-normal text-[#5f5d57]">
                             {[org?.city, org?.state].filter(Boolean).join(', ')} · {formatRelativeTime(i.created_at)}
                           </span>
                         </p>
-                        <p className="text-sm text-[#62646a]">
+                        <p className="text-sm text-[#5f5d57]">
                           {INQUIRY_KIND_LABEL[i.kind]}: {inquirySummary(i)}
                         </p>
                       </div>
@@ -85,10 +85,10 @@ export default async function ContractorInquiriesPage() {
                         {i.status === 'sent' ? 'New' : i.status === 'accepted' ? 'Accepted' : 'Declined'}
                       </Badge>
                     </div>
-                    {i.message && <p className="whitespace-pre-line rounded-md bg-[#fafafa] p-3 text-sm text-[#404145]">{i.message}</p>}
+                    {i.message && <p className="whitespace-pre-line rounded-md bg-[#f6f4ef] p-3 text-sm text-[#1a1a17]">{i.message}</p>}
                     {i.status === 'sent' && <InquiryResponseButtons id={i.id} />}
                     {i.status === 'accepted' && i.conversation_id && (
-                      <a href={`/messages/${i.conversation_id}`} className="text-sm font-semibold text-[#1dbf73] hover:underline">
+                      <a href={`/messages/${i.conversation_id}`} className="text-sm font-semibold text-[#2f3cf5] hover:underline">
                         Open conversation →
                       </a>
                     )}

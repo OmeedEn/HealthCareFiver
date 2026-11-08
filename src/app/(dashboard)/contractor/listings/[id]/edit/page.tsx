@@ -26,14 +26,14 @@ export default async function EditListingPage({
     <div className="mx-auto max-w-2xl space-y-6">
       <Link
         href="/contractor/listings"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to listings
       </Link>
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Edit listing</h1>
-        <p className="text-[#62646a]">{listing.title}</p>
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Edit listing</h1>
+        <p className="text-[#5f5d57]">{listing.title}</p>
       </div>
       {listing.status === 'rejected' && (
         <div className="rounded-lg bg-[#fdecea] p-3 text-sm text-[#7a2318]">

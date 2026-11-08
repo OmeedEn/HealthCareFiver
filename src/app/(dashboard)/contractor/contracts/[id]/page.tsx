@@ -75,7 +75,7 @@ function StatusBadge({ status }: { status: string }) {
   const label = STATUS_LABEL[status] ?? status
   if (status === 'active') {
     return (
-      <Badge className="bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]">
+      <Badge className="bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]">
         {label}
       </Badge>
     )
@@ -195,7 +195,7 @@ export default function ContractorContractDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+        <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
       </div>
     )
   }
@@ -221,7 +221,7 @@ export default function ContractorContractDetailPage() {
       {/* Back nav */}
       <Link
         href="/contractor/contracts"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to contracts
@@ -231,12 +231,12 @@ export default function ContractorContractDetailPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-[#404145]">
+            <h1 className="text-2xl font-bold text-[#1a1a17]">
               {facilityName}
             </h1>
             <StatusBadge status={contract.status} />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#62646a]">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[#5f5d57]">
             <span className="inline-flex items-center gap-1.5">
               <Building2 className="size-4" />
               {contract.title}
@@ -257,7 +257,7 @@ export default function ContractorContractDetailPage() {
             <Button
               onClick={handleAccept}
               disabled={accepting}
-              className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
             >
               {accepting && <Loader2 className="size-4 animate-spin" />}
               <CheckCircle2 className="size-4" />
@@ -275,14 +275,14 @@ export default function ContractorContractDetailPage() {
 
       {/* Awaiting approval banner */}
       {contract.status === 'pending_contractor' && (
-        <Card className="border-[#bcebd5] bg-[#e8faf1]">
+        <Card className="border-[#c9cdfb] bg-[#eceefe]">
           <CardContent className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 size-5 shrink-0 text-[#0f8f56]" />
+            <AlertCircle className="mt-0.5 size-5 shrink-0 text-[#2330c8]" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-[#0f8f56]">
+              <p className="text-sm font-semibold text-[#2330c8]">
                 Action required
               </p>
-              <p className="text-sm text-[#404145]">
+              <p className="text-sm text-[#1a1a17]">
                 This contract is awaiting your approval. Review the terms below
                 and accept to get started.
               </p>
@@ -309,7 +309,7 @@ export default function ContractorContractDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Clock className="size-4 text-[#1dbf73]" />
+                <Clock className="size-4 text-[#2f3cf5]" />
                 <CardTitle>Timesheets</CardTitle>
               </div>
               <CardDescription>
@@ -318,8 +318,8 @@ export default function ContractorContractDetailPage() {
             </CardHeader>
             <CardContent>
               {timesheets.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-[#e5e7eb] bg-[#f9fafb] px-4 py-8 text-center">
-                  <p className="text-sm text-[#62646a]">
+                <div className="rounded-lg border border-dashed border-[#e3dfd6] bg-[#f6f4ef] px-4 py-8 text-center">
+                  <p className="text-sm text-[#5f5d57]">
                     No timesheets submitted yet.
                   </p>
                 </div>
@@ -337,17 +337,17 @@ export default function ContractorContractDetailPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <FileText className="size-4 text-[#1dbf73]" />
+                  <FileText className="size-4 text-[#2f3cf5]" />
                   <CardTitle>Contract Terms</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {contract.description && (
                   <div>
-                    <h3 className="mb-1 text-sm font-semibold text-[#404145]">
+                    <h3 className="mb-1 text-sm font-semibold text-[#1a1a17]">
                       Description
                     </h3>
-                    <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                    <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
                       {contract.description}
                     </p>
                   </div>
@@ -357,10 +357,10 @@ export default function ContractorContractDetailPage() {
                 )}
                 {contract.terms && (
                   <div>
-                    <h3 className="mb-1 text-sm font-semibold text-[#404145]">
+                    <h3 className="mb-1 text-sm font-semibold text-[#1a1a17]">
                       Terms
                     </h3>
-                    <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                    <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
                       {contract.terms}
                     </p>
                   </div>
@@ -368,10 +368,10 @@ export default function ContractorContractDetailPage() {
                 {contract.terms && contract.schedule && <Separator />}
                 {contract.schedule && (
                   <div>
-                    <h3 className="mb-1 text-sm font-semibold text-[#404145]">
+                    <h3 className="mb-1 text-sm font-semibold text-[#1a1a17]">
                       Schedule
                     </h3>
-                    <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                    <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
                       {contract.schedule}
                     </p>
                   </div>
@@ -384,7 +384,7 @@ export default function ContractorContractDetailPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <FileText className="size-4 text-[#1dbf73]" />
+                <FileText className="size-4 text-[#2f3cf5]" />
                 <CardTitle>Documents</CardTitle>
               </div>
               <CardDescription>
@@ -392,16 +392,16 @@ export default function ContractorContractDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-3 py-2.5">
+              <div className="flex items-center justify-between rounded-lg border border-[#e3dfd6] bg-[#f6f4ef] px-3 py-2.5">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-9 items-center justify-center rounded-md bg-white ring-1 ring-[#e5e7eb]">
-                    <FileText className="size-4 text-[#1dbf73]" />
+                  <div className="flex size-9 items-center justify-center rounded-md bg-white ring-1 ring-[#e3dfd6]">
+                    <FileText className="size-4 text-[#2f3cf5]" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[#404145]">
+                    <p className="text-sm font-medium text-[#1a1a17]">
                       Contract Agreement.pdf
                     </p>
-                    <p className="text-xs text-[#6b7280]">
+                    <p className="text-xs text-[#5f5d57]">
                       Generated {formatDate(contract.created_at)}
                     </p>
                   </div>
@@ -424,15 +424,15 @@ export default function ContractorContractDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">Facility</span>
-                  <span className="font-medium text-[#404145] text-right">
+                  <span className="text-[#5f5d57]">Facility</span>
+                  <span className="font-medium text-[#1a1a17] text-right">
                     {facilityName}
                   </span>
                 </div>
                 {contract.rate_amount != null && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#62646a]">Rate</span>
-                    <span className="font-medium text-[#404145]">
+                    <span className="text-[#5f5d57]">Rate</span>
+                    <span className="font-medium text-[#1a1a17]">
                       {formatCurrency(contract.rate_amount)}
                       {contract.rate_type ? `/${contract.rate_type}` : ''}
                     </span>
@@ -440,33 +440,33 @@ export default function ContractorContractDetailPage() {
                 )}
                 {contract.start_date && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#62646a]">Start</span>
-                    <span className="font-medium text-[#404145]">
+                    <span className="text-[#5f5d57]">Start</span>
+                    <span className="font-medium text-[#1a1a17]">
                       {formatDate(contract.start_date)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">End</span>
-                  <span className="font-medium text-[#404145]">
+                  <span className="text-[#5f5d57]">End</span>
+                  <span className="font-medium text-[#1a1a17]">
                     {contract.end_date ? formatDate(contract.end_date) : 'Ongoing'}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">Status</span>
+                  <span className="text-[#5f5d57]">Status</span>
                   <StatusBadge status={contract.status} />
                 </div>
                 <Separator />
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">Hours logged</span>
-                  <span className="font-medium text-[#404145]">
+                  <span className="text-[#5f5d57]">Hours logged</span>
+                  <span className="font-medium text-[#1a1a17]">
                     {totalHours.toFixed(1)} hrs
                   </span>
                 </div>
                 {earnings != null && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#62646a]">Estimated earnings</span>
-                    <span className="font-semibold text-[#0f8f56]">
+                    <span className="text-[#5f5d57]">Estimated earnings</span>
+                    <span className="font-semibold text-[#2330c8]">
                       {formatCurrency(earnings)}
                     </span>
                   </div>
@@ -483,13 +483,13 @@ export default function ContractorContractDetailPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">Submitted</span>
-                  <span className="font-medium text-[#404145]">
+                  <span className="text-[#5f5d57]">Submitted</span>
+                  <span className="font-medium text-[#1a1a17]">
                     {timesheets.length} {timesheets.length === 1 ? 'entry' : 'entries'}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#62646a]">Status</span>
+                  <span className="text-[#5f5d57]">Status</span>
                   <Badge variant="outline">Awaiting approval</Badge>
                 </div>
               </CardContent>

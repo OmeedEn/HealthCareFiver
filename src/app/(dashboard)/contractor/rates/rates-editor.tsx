@@ -62,7 +62,7 @@ import {
   updateRate,
 } from '@/lib/rates/actions'
 
-const GREEN = 'bg-[#1dbf73] text-white hover:bg-[#19a463]'
+const GREEN = 'bg-[#2f3cf5] text-white hover:bg-[#2330c8]'
 
 const UNIT_META: Record<RateUnit, { icon: typeof Clock; hint: string; placeholder: string }> = {
   session: { icon: CalendarClock, hint: 'A visit or appointment', placeholder: 'Wellness consult' },
@@ -99,10 +99,10 @@ function RateLine({
   const unit = formatRateUnit(rate)
   return (
     <span className="inline-flex flex-wrap items-baseline gap-x-1.5">
-      <span className={`text-base font-semibold ${muted ? 'text-[#62646a]' : 'text-[#404145]'}`}>
+      <span className={`text-base font-semibold ${muted ? 'text-[#5f5d57]' : 'text-[#1a1a17]'}`}>
         {formatRateAmount(rate)}
       </span>
-      {unit && <span className="text-sm text-[#62646a]">{unit}</span>}
+      {unit && <span className="text-sm text-[#5f5d57]">{unit}</span>}
     </span>
   )
 }
@@ -126,8 +126,8 @@ function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73] disabled:opacity-50 ${
-        checked ? 'bg-[#1dbf73]' : 'bg-[#dadbdd]'
+      className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5] disabled:opacity-50 ${
+        checked ? 'bg-[#2f3cf5]' : 'bg-[#dadbdd]'
       }`}
     >
       <span
@@ -163,7 +163,7 @@ function MoneyInput({
 }) {
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[#62646a]">
+      <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-[#5f5d57]">
         $
       </span>
       <Input
@@ -225,31 +225,31 @@ function RateDialog({
       <DialogContent className="max-h-[92vh] overflow-y-auto p-6 sm:max-w-xl">
         <form onSubmit={submit} className="space-y-5" noValidate>
           <DialogHeader>
-            <DialogTitle className="text-lg text-[#404145]">
+            <DialogTitle className="text-lg text-[#1a1a17]">
               {editing ? 'Edit rate' : 'Add a rate'}
             </DialogTitle>
-            <DialogDescription className="text-[#62646a]">
+            <DialogDescription className="text-[#5f5d57]">
               Clients see this on your full profile — never on search cards.
             </DialogDescription>
           </DialogHeader>
 
           {/* Live preview */}
-          <div className="rounded-xl border border-[#bcebd5] bg-[#f3fcf7] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-[#0f8f56]">Preview</p>
-            <p className="mt-1 text-sm font-medium text-[#404145]">
+          <div className="rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-[#2330c8]">Preview</p>
+            <p className="mt-1 text-sm font-medium text-[#1a1a17]">
               {v.label.trim() || meta.placeholder}
             </p>
             <div className="mt-0.5">
               <RateLine rate={preview} />
             </div>
             {v.description.trim() && (
-              <p className="mt-1 line-clamp-2 text-sm text-[#62646a]">{v.description.trim()}</p>
+              <p className="mt-1 line-clamp-2 text-sm text-[#5f5d57]">{v.description.trim()}</p>
             )}
           </div>
 
           {/* Unit */}
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-[#404145]">How do you charge?</legend>
+            <legend className="text-sm font-medium text-[#1a1a17]">How do you charge?</legend>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {RATE_UNITS.map((u) => {
                 const Icon = UNIT_META[u].icon
@@ -260,10 +260,10 @@ function RateDialog({
                     type="button"
                     aria-pressed={active}
                     onClick={() => set('unit', u)}
-                    className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition focus-visible:outline-2 focus-visible:outline-[#1dbf73] ${
+                    className={`flex flex-col items-start gap-1 rounded-lg border px-3 py-2 text-left text-sm transition focus-visible:outline-2 focus-visible:outline-[#2f3cf5] ${
                       active
-                        ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                        : 'border-[#e4e5e7] text-[#404145] hover:border-[#bcebd5]'
+                        ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                        : 'border-[#e3dfd6] text-[#1a1a17] hover:border-[#c9cdfb]'
                     }`}
                   >
                     <Icon className="size-4" aria-hidden="true" />
@@ -272,13 +272,13 @@ function RateDialog({
                 )
               })}
             </div>
-            <p className="text-xs text-[#62646a]">{meta.hint}</p>
+            <p className="text-xs text-[#5f5d57]">{meta.hint}</p>
           </fieldset>
 
           {v.unit === 'session' && (
             <div className="space-y-2">
-              <Label htmlFor="rate-duration" className="text-[#404145]">
-                Session length <span className="font-normal text-[#95979d]">(optional)</span>
+              <Label htmlFor="rate-duration" className="text-[#1a1a17]">
+                Session length <span className="font-normal text-[#706d65]">(optional)</span>
               </Label>
               <div className="flex flex-wrap items-center gap-2">
                 {DURATION_CHIPS.map((m) => (
@@ -288,8 +288,8 @@ function RateDialog({
                     onClick={() => set('duration_minutes', String(m))}
                     className={`h-8 rounded-full border px-3 text-sm transition ${
                       v.duration_minutes === String(m)
-                        ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                        : 'border-[#e4e5e7] text-[#404145] hover:border-[#bcebd5]'
+                        ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                        : 'border-[#e3dfd6] text-[#1a1a17] hover:border-[#c9cdfb]'
                     }`}
                   >
                     {m} min
@@ -305,7 +305,7 @@ function RateDialog({
                     aria-invalid={!!errors.duration_minutes}
                     className="h-8 w-20"
                   />
-                  <span className="text-sm text-[#62646a]">min</span>
+                  <span className="text-sm text-[#5f5d57]">min</span>
                 </div>
               </div>
               <FieldError id="rate-duration-error" msg={errors.duration_minutes} />
@@ -314,12 +314,12 @@ function RateDialog({
 
           {(v.unit === 'custom' || v.unit === 'package') && (
             <div className="space-y-2">
-              <Label htmlFor="rate-unit-label" className="text-[#404145]">
+              <Label htmlFor="rate-unit-label" className="text-[#1a1a17]">
                 {v.unit === 'custom' ? (
                   'Per what?'
                 ) : (
                   <>
-                    What’s included <span className="font-normal text-[#95979d]">(optional)</span>
+                    What’s included <span className="font-normal text-[#706d65]">(optional)</span>
                   </>
                 )}
               </Label>
@@ -337,7 +337,7 @@ function RateDialog({
 
           {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="rate-label" className="text-[#404145]">
+            <Label htmlFor="rate-label" className="text-[#1a1a17]">
               Name
             </Label>
             <Input
@@ -353,8 +353,8 @@ function RateDialog({
 
           {/* Price */}
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium text-[#404145]">Price</legend>
-            <div className="inline-flex flex-wrap rounded-lg border border-[#e4e5e7] p-0.5">
+            <legend className="text-sm font-medium text-[#1a1a17]">Price</legend>
+            <div className="inline-flex flex-wrap rounded-lg border border-[#e3dfd6] p-0.5">
               {(Object.keys(PRICE_MODE_LABEL) as PriceMode[]).map((m) => (
                 <button
                   key={m}
@@ -362,7 +362,7 @@ function RateDialog({
                   aria-pressed={v.price_mode === m}
                   onClick={() => set('price_mode', m)}
                   className={`h-8 rounded-md px-3 text-sm font-medium transition ${
-                    v.price_mode === m ? 'bg-[#1dbf73] text-white' : 'text-[#62646a] hover:text-[#404145]'
+                    v.price_mode === m ? 'bg-[#2f3cf5] text-white' : 'text-[#5f5d57] hover:text-[#1a1a17]'
                   }`}
                 >
                   {PRICE_MODE_LABEL[m]}
@@ -370,13 +370,13 @@ function RateDialog({
               ))}
             </div>
             {v.price_mode === 'on_request' ? (
-              <p className="text-sm text-[#62646a]">
+              <p className="text-sm text-[#5f5d57]">
                 Clients will see “Contact for pricing” and can message you for a quote.
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="rate-amount" className="text-xs text-[#62646a]">
+                  <Label htmlFor="rate-amount" className="text-xs text-[#5f5d57]">
                     {v.price_mode === 'range' ? 'From' : 'Amount (USD)'}
                   </Label>
                   <MoneyInput
@@ -390,7 +390,7 @@ function RateDialog({
                 </div>
                 {v.price_mode === 'range' && (
                   <div className="space-y-1">
-                    <Label htmlFor="rate-amount-max" className="text-xs text-[#62646a]">
+                    <Label htmlFor="rate-amount-max" className="text-xs text-[#5f5d57]">
                       To
                     </Label>
                     <MoneyInput
@@ -409,8 +409,8 @@ function RateDialog({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="rate-description" className="text-[#404145]">
-              Description <span className="font-normal text-[#95979d]">(optional)</span>
+            <Label htmlFor="rate-description" className="text-[#1a1a17]">
+              Description <span className="font-normal text-[#706d65]">(optional)</span>
             </Label>
             <Textarea
               id="rate-description"
@@ -424,10 +424,10 @@ function RateDialog({
             <FieldError id="rate-description-error" msg={errors.description} />
           </div>
 
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#e4e5e7] px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-[#e3dfd6] px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-[#404145]">Show on my profile</p>
-              <p className="text-xs text-[#62646a]">Turn off to keep it saved but hidden.</p>
+              <p className="text-sm font-medium text-[#1a1a17]">Show on my profile</p>
+              <p className="text-xs text-[#5f5d57]">Turn off to keep it saved but hidden.</p>
             </div>
             <Toggle
               checked={v.is_active}
@@ -590,13 +590,13 @@ export function RatesEditor({
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">Rates</h1>
-          <p className="text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Rates</h1>
+          <p className="text-[#5f5d57]">
             Set how you charge — by session, hour, day, week, month, package, or your own unit.
           </p>
           <Link
             href="/contractor/availability"
-            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#1dbf73] hover:text-[#19a463]"
+            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#2f3cf5] hover:text-[#2330c8]"
           >
             Set your availability <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
@@ -607,9 +607,9 @@ export function RatesEditor({
         </Button>
       </div>
 
-      <div className="flex items-start gap-3 rounded-xl border border-[#e4e5e7] bg-white px-4 py-3">
-        <EyeOff className="mt-0.5 size-4 shrink-0 text-[#62646a]" aria-hidden="true" />
-        <p className="text-sm text-[#62646a]">
+      <div className="flex items-start gap-3 rounded-xl border border-[#e3dfd6] bg-white px-4 py-3">
+        <EyeOff className="mt-0.5 size-4 shrink-0 text-[#5f5d57]" aria-hidden="true" />
+        <p className="text-sm text-[#5f5d57]">
           Your prices are private on search results. Clients only see them after they open your full
           profile — search cards just say “Rates on profile”.
         </p>
@@ -622,14 +622,14 @@ export function RatesEditor({
       )}
 
       {showLegacy && legacyForm && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#bcebd5] bg-[#f3fcf7] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] p-4">
           <div className="flex items-start gap-3">
-            <Sparkles className="mt-0.5 size-5 shrink-0 text-[#1dbf73]" aria-hidden="true" />
+            <Sparkles className="mt-0.5 size-5 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
             <div>
-              <p className="text-sm font-semibold text-[#404145]">Import your hourly rate</p>
-              <p className="text-sm text-[#62646a]">
+              <p className="text-sm font-semibold text-[#1a1a17]">Import your hourly rate</p>
+              <p className="text-sm text-[#5f5d57]">
                 Your profile lists{' '}
-                <span className="font-medium text-[#404145]">
+                <span className="font-medium text-[#1a1a17]">
                   {formatRateAmount(formToPreview(legacyForm))} {formatRateUnit(formToPreview(legacyForm))}
                 </span>
                 . Add it here as your first rate?
@@ -649,12 +649,12 @@ export function RatesEditor({
       )}
 
       {rates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#e4e5e7] bg-white px-6 py-10 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-            <Tag className="size-6 text-[#1dbf73]" aria-hidden="true" />
+        <div className="rounded-xl border border-dashed border-[#e3dfd6] bg-white px-6 py-10 text-center">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+            <Tag className="size-6 text-[#2f3cf5]" aria-hidden="true" />
           </div>
-          <h2 className="mt-3 text-base font-semibold text-[#404145]">No rates yet</h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-[#62646a]">
+          <h2 className="mt-3 text-base font-semibold text-[#1a1a17]">No rates yet</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-[#5f5d57]">
             Add as many as you like — a per-session price, a day rate, a monthly plan, or a package.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -666,7 +666,7 @@ export function RatesEditor({
                   type="button"
                   disabled={!available}
                   onClick={() => openNew(t.form)}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#e4e5e7] px-4 text-sm font-medium text-[#404145] transition hover:border-[#1dbf73] hover:text-[#0f8f56] disabled:opacity-50"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#e3dfd6] px-4 text-sm font-medium text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2330c8] disabled:opacity-50"
                 >
                   <Icon className="size-4" aria-hidden="true" />
                   {t.label}
@@ -685,7 +685,7 @@ export function RatesEditor({
                 <li
                   key={r.id}
                   className={`rounded-xl border bg-white p-4 transition ${
-                    r.is_active ? 'border-[#e4e5e7]' : 'border-dashed border-[#e4e5e7] bg-[#fafafa]'
+                    r.is_active ? 'border-[#e3dfd6]' : 'border-dashed border-[#e3dfd6] bg-[#f6f4ef]'
                   }`}
                 >
                   <div className="flex items-start gap-3">
@@ -709,17 +709,17 @@ export function RatesEditor({
                         <ArrowDown />
                       </Button>
                     </div>
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
-                      <Icon className="size-4 text-[#1dbf73]" aria-hidden="true" />
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                      <Icon className="size-4 text-[#2f3cf5]" aria-hidden="true" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="truncate text-sm font-semibold text-[#404145]">{r.label}</h3>
-                        <span className="rounded-md bg-[#f3f4f6] px-2 py-0.5 text-xs text-[#62646a]">
+                        <h3 className="truncate text-sm font-semibold text-[#1a1a17]">{r.label}</h3>
+                        <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-xs text-[#5f5d57]">
                           {RATE_UNIT_LABEL[r.unit]}
                         </span>
                         {!r.is_active && (
-                          <span className="rounded-md bg-[#f3f4f6] px-2 py-0.5 text-xs font-medium text-[#95979d]">
+                          <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-xs font-medium text-[#706d65]">
                             Hidden
                           </span>
                         )}
@@ -728,7 +728,7 @@ export function RatesEditor({
                         <RateLine rate={r} muted={!r.is_active} />
                       </div>
                       {r.description && (
-                        <p className="mt-1 line-clamp-2 text-sm text-[#62646a]">{r.description}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-[#5f5d57]">{r.description}</p>
                       )}
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
@@ -781,7 +781,7 @@ export function RatesEditor({
                   type="button"
                   onClick={() => openNew()}
                   disabled={!available}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#dadbdd] py-3 text-sm font-medium text-[#62646a] transition hover:border-[#1dbf73] hover:text-[#0f8f56] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#dadbdd] py-3 text-sm font-medium text-[#5f5d57] transition hover:border-[#2f3cf5] hover:text-[#2330c8] disabled:opacity-50"
                 >
                   <Plus className="size-4" aria-hidden="true" />
                   Add another rate
@@ -791,20 +791,20 @@ export function RatesEditor({
           </ul>
 
           {/* What clients see on the full profile */}
-          <aside className="h-fit rounded-xl border border-[#e4e5e7] bg-white p-4 lg:sticky lg:top-6">
-            <p className="text-xs font-medium uppercase tracking-wide text-[#95979d]">
+          <aside className="h-fit rounded-xl border border-[#e3dfd6] bg-white p-4 lg:sticky lg:top-6">
+            <p className="text-xs font-medium uppercase tracking-wide text-[#706d65]">
               On your profile
             </p>
-            <h2 className="mt-1 text-base font-semibold text-[#404145]">Rates</h2>
+            <h2 className="mt-1 text-base font-semibold text-[#1a1a17]">Rates</h2>
             {activeRates.length === 0 ? (
-              <p className="mt-2 text-sm text-[#62646a]">
+              <p className="mt-2 text-sm text-[#5f5d57]">
                 No rates are visible. Clients will see “Contact for pricing”.
               </p>
             ) : (
-              <ul className="mt-3 divide-y divide-[#f1f3f5]">
+              <ul className="mt-3 divide-y divide-[#eeebe4]">
                 {activeRates.map((r) => (
                   <li key={r.id} className="py-2.5 first:pt-0 last:pb-0">
-                    <p className="text-sm text-[#404145]">{r.label}</p>
+                    <p className="text-sm text-[#1a1a17]">{r.label}</p>
                     <RateLine rate={r} />
                   </li>
                 ))}

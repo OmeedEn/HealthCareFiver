@@ -34,15 +34,15 @@ export function TermsConsent({
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
         required
-        className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-[#c5c6c9] accent-[#1dbf73]"
+        className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-[#cbc6ba] accent-[#2f3cf5]"
       />
-      <label htmlFor={id} className="cursor-pointer text-xs leading-5 text-[#62646a]">
+      <label htmlFor={id} className="cursor-pointer text-xs leading-5 text-[#5f5d57]">
         I agree to the{' '}
         <a
           href={TERMS_PATH}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold underline hover:text-[#404145]"
+          className="font-semibold underline hover:text-[#1a1a17]"
         >
           Terms of Service
         </a>{' '}
@@ -51,7 +51,7 @@ export function TermsConsent({
           href={PRIVACY_PATH}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-semibold underline hover:text-[#404145]"
+          className="font-semibold underline hover:text-[#1a1a17]"
         >
           Privacy Policy
         </a>
@@ -64,10 +64,10 @@ export function TermsConsent({
 /** "Next you'll set up 2FA" callout shown on every post-signup screen. */
 export function TwoFactorNotice({ afterConfirm = false }: { afterConfirm?: boolean }) {
   return (
-    <div className="rounded-xl border border-[#bcebd5] bg-[#e8faf1] p-4 text-left">
+    <div className="rounded-xl border border-[#c9cdfb] bg-[#eceefe] p-4 text-left">
       <div className="flex gap-3">
-        <KeyRound className="mt-0.5 size-5 shrink-0 text-[#0f8f56]" />
-        <p className="text-xs text-[#0f8f56]">
+        <KeyRound className="mt-0.5 size-5 shrink-0 text-[#2330c8]" />
+        <p className="text-xs text-[#2330c8]">
           {afterConfirm ? 'After you confirm your email, you' : 'Next, you'}
           &apos;ll set up two-factor authentication with an authenticator app
           (like Google Authenticator, 1Password, or Authy). It&apos;s required
@@ -116,17 +116,17 @@ export function CheckEmailStep({
 
   return (
     <div className="mt-6 text-center">
-      <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#e8faf1]">
-        <MailCheck className="size-8 text-[#1dbf73]" />
+      <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-[#eceefe]">
+        <MailCheck className="size-8 text-[#2f3cf5]" />
       </div>
-      <h2 className="mt-4 text-2xl font-bold text-[#404145]">Check your email</h2>
-      <p className="mt-2 text-sm text-[#62646a]">
+      <h2 className="mt-4 text-2xl font-bold text-[#1a1a17]">Check your email</h2>
+      <p className="mt-2 text-sm text-[#5f5d57]">
         We sent a confirmation link to{' '}
-        <strong className="break-all text-[#404145]">{email}</strong>. Open it in
+        <strong className="break-all text-[#1a1a17]">{email}</strong>. Open it in
         this browser to activate your account — your answers are already
         saved.
       </p>
-      <p className="mt-2 text-xs text-[#62646a]">
+      <p className="mt-2 text-xs text-[#5f5d57]">
         It can take a minute or two to arrive. Check your spam or promotions
         folder if you don&apos;t see it.
       </p>
@@ -145,12 +145,12 @@ export function CheckEmailStep({
         {sending && <Loader2 className="mr-2 size-4 animate-spin" />}
         Resend email
       </Button>
-      <p className="mt-4 text-xs text-[#62646a]">
+      <p className="mt-4 text-xs text-[#5f5d57]">
         Wrong email?{' '}
         <button
           type="button"
           onClick={onStartOver}
-          className="font-semibold text-[#1dbf73] hover:underline"
+          className="font-semibold text-[#2f3cf5] hover:underline"
         >
           Start over
         </button>

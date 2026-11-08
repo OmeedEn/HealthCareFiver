@@ -65,10 +65,10 @@ export default function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="text-2xl font-black tracking-tight text-[#1a1a17]">
         Set a new password
       </h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
+      <p className="mt-1.5 text-sm text-[#5f5d57]">
         Choose a new password for your account.
       </p>
 
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
         <div className="space-y-1.5">
           <Label
             htmlFor="password"
-            className="text-sm font-semibold text-[#404145]"
+            className="text-sm font-semibold text-[#1a1a17]"
           >
             New password
           </Label>
@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
         <div className="space-y-1.5">
           <Label
             htmlFor="confirm"
-            className="text-sm font-semibold text-[#404145]"
+            className="text-sm font-semibold text-[#1a1a17]"
           >
             Confirm new password
           </Label>
@@ -117,18 +117,18 @@ export default function ResetPasswordPage() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+          className="h-11 w-full bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Update password
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-[#62646a]">
+      <p className="mt-6 text-center text-sm text-[#5f5d57]">
         Link expired?{' '}
         <Link
           href="/forgot-password"
-          className="font-bold text-[#1dbf73] hover:underline"
+          className="font-bold text-[#2f3cf5] hover:underline"
         >
           Send a new one
         </Link>

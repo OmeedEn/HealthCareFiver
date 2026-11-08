@@ -83,7 +83,7 @@ export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
             </span>
           )}
           {href && (
-            <span className="flex items-center gap-1 text-[#0f8f56]">
+            <span className="flex items-center gap-1 text-[#2330c8]">
               <Tag className="size-3.5" aria-hidden="true" />
               Rates on profile
             </span>

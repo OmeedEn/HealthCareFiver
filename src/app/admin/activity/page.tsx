@@ -10,7 +10,7 @@ import { AdminDemoNotice } from '@/components/admin/demo-notice'
 export const dynamic = 'force-dynamic'
 
 const KIND_LABEL: Record<ActivityItem['kind'], { label: string; className: string }> = {
-  signup: { label: 'Signup', className: 'bg-[#e8faf1] text-[#0f8f56]' },
+  signup: { label: 'Signup', className: 'bg-[#eceefe] text-[#2330c8]' },
   login: { label: 'Login', className: 'bg-blue-100 text-blue-800' },
   admin: { label: 'Admin', className: 'bg-purple-100 text-purple-800' },
   audit: { label: 'Activity', className: 'bg-gray-100 text-gray-700' },
@@ -33,8 +33,8 @@ export default async function AdminActivityPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Status updates</h1>
-        <p className="mt-1 text-sm text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Status updates</h1>
+        <p className="mt-1 text-sm text-[#5f5d57]">
           Everything happening on the platform: signups, logins, verification decisions, and bug reports.
         </p>
       </div>
@@ -46,8 +46,8 @@ export default async function AdminActivityPage({
             href={k === 'all' ? '/admin/activity' : `/admin/activity?kind=${k}`}
             className={`rounded-full border px-3 py-1 text-xs ${
               kind === k
-                ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#1dbf73]'
+                ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#2f3cf5]'
             }`}
           >
             {k === 'all' ? 'All' : KIND_LABEL[k].label}
@@ -58,22 +58,22 @@ export default async function AdminActivityPage({
       <Card>
         <CardContent className="py-2">
           {items.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[#62646a]">Nothing yet.</p>
+            <p className="py-10 text-center text-sm text-[#5f5d57]">Nothing yet.</p>
           ) : (
-            <ul className="divide-y divide-[#f1f3f5]">
+            <ul className="divide-y divide-[#eeebe4]">
               {items.map((a) => (
                 <li key={a.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
                   <div className="flex min-w-0 items-center gap-3">
                     <Badge className={KIND_LABEL[a.kind].className}>{KIND_LABEL[a.kind].label}</Badge>
                     {a.userId ? (
-                      <Link href={`/admin/users/${a.userId}`} className="text-[#404145] hover:underline">
+                      <Link href={`/admin/users/${a.userId}`} className="text-[#1a1a17] hover:underline">
                         {a.text}
                       </Link>
                     ) : (
-                      <span className="text-[#404145]">{a.text}</span>
+                      <span className="text-[#1a1a17]">{a.text}</span>
                     )}
                   </div>
-                  <span className="text-xs text-[#6b7280]" title={formatDateTime(a.at)}>
+                  <span className="text-xs text-[#5f5d57]" title={formatDateTime(a.at)}>
                     {formatRelativeTime(a.at)}
                   </span>
                 </li>

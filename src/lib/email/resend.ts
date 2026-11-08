@@ -110,7 +110,7 @@ function ctaButton(href: string, label: string): string {
   return `
       <p style="margin:24px 0;">
         <a href="${escapeHtml(href)}"
-           style="display:inline-block;background:#1dbf73;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:8px;">
+           style="display:inline-block;background:#2f3cf5;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:8px;">
           ${escapeHtml(label)}
         </a>
       </p>`
@@ -118,7 +118,7 @@ function ctaButton(href: string, label: string): string {
 
 function layout(body: string): string {
   return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#404145;font-size:15px;line-height:1.6;max-width:560px;">
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a17;font-size:15px;line-height:1.6;max-width:560px;">
       ${body}
       <p style="margin-top:28px;">The Sanus Team</p>
     </div>`
@@ -174,10 +174,10 @@ export async function sendProviderApprovalEmail(
   const goLiveUrl = `${normalizeAppUrl(appUrl)}/go-live`
   const insuranceBlock = options.insuranceDueAt
     ? `
-      <div style="margin:20px 0;padding:14px 16px;background:#fffbeb;border-left:3px solid #f59e0b;">
+      <div style="margin:20px 0;padding:14px 16px;background:#fbf0dc;border-left:3px solid #f59e0b;">
         <p style="margin:0 0 8px;"><strong>Malpractice coverage due by ${escapeHtml(formatEmailDate(options.insuranceDueAt))}.</strong></p>
         <p style="margin:0;">The services you selected require professional liability (malpractice) insurance. You have 30 days after approval to upload your certificate. Until our team reviews it, listings for ${HIGH_RISK_LISTINGS_PHRASE} stay unpublished. You can publish consulting, telehealth or virtual advisory, and educational listings now.</p>
-        <p style="margin:8px 0 0;"><a href="${escapeHtml(uploadUrl(appUrl))}" style="color:#0f8f56;font-weight:700;">Upload your certificate</a></p>
+        <p style="margin:8px 0 0;"><a href="${escapeHtml(uploadUrl(appUrl))}" style="color:#2330c8;font-weight:700;">Upload your certificate</a></p>
       </div>`
     : ''
 
@@ -185,7 +185,7 @@ export async function sendProviderApprovalEmail(
     to: provider.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re approved on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Sanus.</h1>
       ${greeting(provider)}
       <p>Congratulations — our team has reviewed and approved your credentials. Welcome to Sanus.</p>
       <p>Two quick steps to finish going live:</p>
@@ -195,7 +195,7 @@ export async function sendProviderApprovalEmail(
       </ol>
       ${insuranceBlock}
       ${ctaButton(goLiveUrl, 'Finish going live')}
-      <p style="color:#62646a;font-size:13px;">Free to join. A small service fee applies to each booking.</p>
+      <p style="color:#5f5d57;font-size:13px;">Free to join. A small service fee applies to each booking.</p>
     `),
   })
 }
@@ -324,7 +324,7 @@ export async function sendExclusionRescreenDigestEmail(
     .map((p) => {
       const last = p.lastCheckedAt ? escapeHtml(formatEmailDate(p.lastCheckedAt)) : 'never'
       const href = escapeHtml(`${base}/admin/verification/${p.id}`)
-      return `<li><a href="${href}" style="color:#0f8f56;">${escapeHtml(p.name || p.id)}</a> — last checked ${last}</li>`
+      return `<li><a href="${href}" style="color:#2330c8;">${escapeHtml(p.name || p.id)}</a> — last checked ${last}</li>`
     })
     .join('')
   return sendEmail({
@@ -360,7 +360,7 @@ export async function sendVerificationActionEmail(
         <p>Hi ${firstName},</p>
         <p>We need a bit more information before we can approve your application.</p>
         <p><strong>Message from our review team:</strong></p>
-        <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid #1dbf73;">${safeNotes}</blockquote>
+        <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid #2f3cf5;">${safeNotes}</blockquote>
         <p>Upload the requested information and we&#39;ll pick your review back up.</p>
         ${ctaButton(uploadUrl, 'Upload documents')}
       `),
@@ -374,7 +374,7 @@ export async function sendVerificationActionEmail(
       <p>Hi ${firstName},</p>
       <p>Thank you for applying to Sanus. We&#39;re unable to approve your application at this time.</p>
       <p><strong>Message from our review team:</strong></p>
-      <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid #d1d5db;">${safeNotes}</blockquote>
+      <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid #cbc6ba;">${safeNotes}</blockquote>
       <p>If you have questions, just reply to this email.</p>
     `),
   })
@@ -405,7 +405,7 @@ export async function sendOrgApprovalEmail(
     to: org.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#111827;">You&#39;re approved on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Sanus.</h1>
       <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
       <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
       <p>You can now message professionals and review applicants. A few quick steps to finish going live: accept the Organization Agreement, set up payouts, and add your first service or event.</p>
@@ -425,7 +425,7 @@ export async function sendOrgReviewActionEmail(
   const orgName = escapeHtml(org.orgName)
   const quote = (border: string) =>
     `<p><strong>Message from our review team:</strong></p>
-     <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid ${border};">${escapeHtml(notes).replace(/\n/g, '<br />')}</blockquote>`
+     <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid ${border};">${escapeHtml(notes).replace(/\n/g, '<br />')}</blockquote>`
 
   if (action === 'needs_info') {
     return sendEmail({
@@ -434,7 +434,7 @@ export async function sendOrgReviewActionEmail(
       html: layout(`
         ${hi}
         <p>We need a bit more information before we can approve <strong>${orgName}</strong>.</p>
-        ${quote('#1dbf73')}
+        ${quote('#2f3cf5')}
         <p>Update your organization profile and we&#39;ll pick your review back up.</p>
         ${ctaButton(`${normalizeAppUrl(appUrl)}/facility/profile`, 'Update your profile')}
       `),
@@ -448,7 +448,7 @@ export async function sendOrgReviewActionEmail(
       html: layout(`
         ${hi}
         <p><strong>${orgName}</strong> has been suspended on Sanus. Your posts are hidden, and you can&#39;t message professionals or review applicants for now.</p>
-        ${quote('#d1d5db')}
+        ${quote('#cbc6ba')}
         <p>Reply to this email to resolve it.</p>
       `),
     })
@@ -460,7 +460,7 @@ export async function sendOrgReviewActionEmail(
     html: layout(`
       ${hi}
       <p>Thank you for applying to Sanus. We&#39;re unable to approve <strong>${orgName}</strong> at this time.</p>
-      ${quote('#d1d5db')}
+      ${quote('#cbc6ba')}
       <p>If you have questions, just reply to this email.</p>
     `),
   })
@@ -480,7 +480,7 @@ function staffNoteBlock(note: string | null | undefined): string {
   if (!trimmed) return ''
   return `
       <p><strong>A note from our team:</strong></p>
-      <blockquote style="margin:0;padding:12px 16px;background:#f9fafb;border-left:3px solid #1dbf73;">${escapeHtml(trimmed).replace(/\n/g, '<br />')}</blockquote>`
+      <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid #2f3cf5;">${escapeHtml(trimmed).replace(/\n/g, '<br />')}</blockquote>`
 }
 
 /** Subject for the staff-placement email ("Welcome to Sanus, [first name]. …"). */

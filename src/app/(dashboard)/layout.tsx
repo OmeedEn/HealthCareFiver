@@ -110,11 +110,11 @@ export default async function DashboardLayout({
   // No sidebar: the shared top nav (explore links + avatar menu) on top, then
   // the Account sub-nav for the "mine" side of the app.
   return (
-    <div className="min-h-screen bg-[#f7f7f7]">
+    <div className="min-h-screen bg-[#f6f4ef]">
       <PresenceHeartbeat />
       <a
         href="#dashboard-main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#0f4c3a] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-[#1a1a17] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
       >
         Skip to main content
       </a>
@@ -123,7 +123,7 @@ export default async function DashboardLayout({
       {showGoLiveBanner && (
         <div
           role="status"
-          className="border-b border-[#1dbf73]/30 bg-[#e8faf1] text-sm text-[#0f4c3a]"
+          className="border-b border-[#2f3cf5]/30 bg-[#eceefe] text-sm text-[#1a1a17]"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="font-semibold">
@@ -131,7 +131,7 @@ export default async function DashboardLayout({
             </p>
             <Link
               href="/go-live"
-              className="inline-flex shrink-0 items-center justify-center rounded-md bg-[#1dbf73] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#19a463]"
+              className="inline-flex shrink-0 items-center justify-center rounded-md bg-[#2f3cf5] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#2330c8]"
             >
               Go live
             </Link>

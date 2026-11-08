@@ -191,14 +191,14 @@ export function PhotoManager() {
 
   if (state === 'loading') {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#62646a]">
+      <div className="flex items-center gap-2 text-sm text-[#5f5d57]">
         <Loader2 className="size-4 animate-spin" /> Loading photos…
       </div>
     )
   }
   if (state === 'unavailable') {
     return (
-      <p className="rounded-xl border border-dashed border-[#e4e5e7] bg-[#fafafa] px-4 py-5 text-sm text-[#62646a]">
+      <p className="rounded-xl border border-dashed border-[#e3dfd6] bg-[#f6f4ef] px-4 py-5 text-sm text-[#5f5d57]">
         Photo galleries are coming soon.
       </p>
     )
@@ -209,8 +209,8 @@ export function PhotoManager() {
       {photos.length > 0 && (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {photos.map((p, i) => (
-            <li key={p.id} className="overflow-hidden rounded-xl border border-[#e4e5e7] bg-white">
-              <div className="relative aspect-[4/3] bg-[#f1f1f2]">
+            <li key={p.id} className="overflow-hidden rounded-xl border border-[#e3dfd6] bg-white">
+              <div className="relative aspect-[4/3] bg-[#eeebe4]">
                 {/* eslint-disable-next-line @next/next/no-img-element -- Supabase storage host */}
                 <img src={p.url} alt={p.caption ?? `Photo ${i + 1}`} className="size-full object-cover" />
                 {i === 0 && (
@@ -226,7 +226,7 @@ export function PhotoManager() {
                   placeholder="Add a caption"
                   aria-label={`Caption for photo ${i + 1}`}
                   onBlur={(e) => void saveCaption(p, e.target.value)}
-                  className="h-9 w-full rounded-md border border-[#e4e5e7] px-2.5 text-sm outline-none focus:border-[#1dbf73]"
+                  className="h-9 w-full rounded-md border border-[#e3dfd6] px-2.5 text-sm outline-none focus:border-[#2f3cf5]"
                 />
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1">
@@ -255,12 +255,12 @@ export function PhotoManager() {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy || photos.length >= MAX_PHOTOS}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#bcebd5] bg-[#f6fdf9] px-4 py-6 text-sm font-semibold text-[#0f8f56] transition hover:border-[#1dbf73] disabled:opacity-60 ${photos.length > 0 ? 'mt-4' : ''}`}
+        className={`flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#c9cdfb] bg-[#f6fdf9] px-4 py-6 text-sm font-semibold text-[#2330c8] transition hover:border-[#2f3cf5] disabled:opacity-60 ${photos.length > 0 ? 'mt-4' : ''}`}
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
         {photos.length >= MAX_PHOTOS ? `Limit of ${MAX_PHOTOS} photos reached` : 'Add photos'}
       </button>
-      <p className="mt-1.5 text-xs text-[#62646a]">
+      <p className="mt-1.5 text-xs text-[#5f5d57]">
         Your practice, workspace, or work. JPG, PNG, or WebP up to 8 MB, {MAX_PHOTOS} photos max.
         Don&apos;t include patients or anything that identifies them.
       </p>
@@ -296,8 +296,8 @@ function IconButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex size-8 items-center justify-center rounded-md border border-[#e4e5e7] transition disabled:opacity-40 ${
-        danger ? 'text-[#b42318] hover:bg-[#fef3f2]' : 'text-[#404145] hover:bg-[#f1f1f2]'
+      className={`inline-flex size-8 items-center justify-center rounded-md border border-[#e3dfd6] transition disabled:opacity-40 ${
+        danger ? 'text-[#b42318] hover:bg-[#fef3f2]' : 'text-[#1a1a17] hover:bg-[#eeebe4]'
       }`}
     >
       {children}

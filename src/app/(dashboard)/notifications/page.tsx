@@ -37,7 +37,7 @@ function hrefOf(n: Notification): string | null {
 
 const typeIcons: Record<string, React.ReactNode> = {
   message: <MessageSquare className="size-5 text-blue-500" />,
-  new_message: <MessageSquare className="size-5 text-[#1dbf73]" />,
+  new_message: <MessageSquare className="size-5 text-[#2f3cf5]" />,
   application: <Briefcase className="size-5 text-green-500" />,
   contract: <FileText className="size-5 text-purple-500" />,
   payment: <DollarSign className="size-5 text-emerald-500" />,

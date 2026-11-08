@@ -26,7 +26,7 @@ function isActive(pathname: string, item: (typeof ADMIN_SECTIONS)[number]) {
 export function Count({ n }: { n?: number }) {
   if (!n) return null
   return (
-    <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
+    <span className="rounded-full bg-[#2f3cf5] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
       {n}
     </span>
   )
@@ -44,8 +44,8 @@ export function AdminNav({ badges }: { badges: Record<string, number> }) {
             href={item.href}
             className={`inline-flex items-center gap-1.5 border-b-2 py-1 ${
               active
-                ? 'border-[#1dbf73] font-semibold text-[#404145]'
-                : 'border-transparent text-[#62646a] hover:text-[#1dbf73]'
+                ? 'border-[#2f3cf5] font-semibold text-[#1a1a17]'
+                : 'border-transparent text-[#5f5d57] hover:text-[#2f3cf5]'
             }`}
           >
             {item.label}

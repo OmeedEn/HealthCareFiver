@@ -51,7 +51,7 @@ export function ReportBugButton() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button variant="ghost" size="sm" className="gap-1.5 text-[#62646a]">
+          <Button variant="ghost" size="sm" className="gap-1.5 text-[#5f5d57]">
             <Bug className="size-4" />
             <span className="hidden sm:inline">Report a bug</span>
           </Button>
@@ -94,7 +94,7 @@ export function ReportBugButton() {
             </select>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={submitting} className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
+            <Button type="submit" disabled={submitting} className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]">
               {submitting && <Loader2 className="mr-1.5 size-4 animate-spin" />}
               Send report
             </Button>

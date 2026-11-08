@@ -25,7 +25,7 @@ export function LiveStatus({ userId, initialLastSeen }: { userId: string; initia
   return (
     <span className="inline-flex items-center gap-1.5 text-xs">
       <PresenceDot lastSeenAt={lastSeen} now={now} />
-      <span className={isOnline(lastSeen, now) ? 'font-medium text-[#0f8f56]' : 'text-[#9ca3af]'}>
+      <span className={isOnline(lastSeen, now) ? 'font-medium text-[#2330c8]' : 'text-[#706d65]'}>
         {lastSeenLabel(lastSeen, now)}
       </span>
     </span>

@@ -20,7 +20,7 @@ import { userMenuFor } from './nav-config'
 import { initialsOf, type SessionUser } from './use-session-user'
 
 const ITEM_CLASS =
-  'flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[#374151] outline-hidden select-none data-highlighted:bg-[#f3f4f6] data-highlighted:text-[#111827] [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-[#6b7280]'
+  'flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-sm text-[#3a3934] outline-hidden select-none data-highlighted:bg-[#eeebe4] data-highlighted:text-[#1a1a17] [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-[#5f5d57]'
 
 export function useSignOut() {
   const router = useRouter()
@@ -39,7 +39,7 @@ export function UserAvatar({ user, className }: { user: SessionUser; className?:
   return (
     <Avatar className={className}>
       {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt="" />}
-      <AvatarFallback className="bg-[#e8faf1] text-xs font-semibold text-[#0f8f56]">
+      <AvatarFallback className="bg-[#eceefe] text-xs font-semibold text-[#2330c8]">
         {initialsOf(user.name)}
       </AvatarFallback>
     </Avatar>
@@ -55,18 +55,18 @@ export function UserMenu({ user }: { user: SessionUser }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label="Account menu"
-        className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2 outline-none transition hover:bg-[#f3f4f6] focus-visible:ring-2 focus-visible:ring-[#1dbf73]"
+        className="flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2 outline-none transition hover:bg-[#eeebe4] focus-visible:ring-2 focus-visible:ring-[#2f3cf5]"
       >
         <UserAvatar user={user} />
-        <span className="hidden max-w-[9rem] truncate text-sm font-medium text-[#111827] xl:block">
+        <span className="hidden max-w-[9rem] truncate text-sm font-medium text-[#1a1a17] xl:block">
           {user.name}
         </span>
-        <ChevronDown className="size-4 text-[#6b7280]" />
+        <ChevronDown className="size-4 text-[#5f5d57]" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-60 p-1">
         <div className="px-2 py-2">
-          <p className="truncate text-sm font-semibold text-[#111827]">{user.name}</p>
-          {user.email && <p className="truncate text-xs text-[#6b7280]">{user.email}</p>}
+          <p className="truncate text-sm font-semibold text-[#1a1a17]">{user.name}</p>
+          {user.email && <p className="truncate text-xs text-[#5f5d57]">{user.email}</p>}
         </div>
         {groups.map((group, i) => (
           <Fragment key={i}>

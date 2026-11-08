@@ -24,13 +24,13 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-2 md:px-6">
-          <Link href="/admin" className="text-lg font-semibold text-[#404145]">
+          <Link href="/admin" className="text-lg font-semibold text-[#1a1a17]">
             Sanus Admin
           </Link>
           <AdminNav badges={badges} />
-          <div className="ml-auto flex items-center gap-3 text-xs text-[#62646a]">
+          <div className="ml-auto flex items-center gap-3 text-xs text-[#5f5d57]">
             <span>{adminEmail}</span>
-            <Link href="/dashboard" className="hover:text-[#1dbf73]">
+            <Link href="/dashboard" className="hover:text-[#2f3cf5]">
               Back to app
             </Link>
             <AdminSignOutButton />

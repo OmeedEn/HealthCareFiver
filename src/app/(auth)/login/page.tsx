@@ -36,10 +36,10 @@ export default function LoginPage() {
 function LoginFormFallback() {
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="text-2xl font-black tracking-tight text-[#1a1a17]">
         Welcome back
       </h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
+      <p className="mt-1.5 text-sm text-[#5f5d57]">
         Sign in to your Sanus account to continue
       </p>
     </div>
@@ -143,24 +143,24 @@ function LoginForm() {
 
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="text-2xl font-black tracking-tight text-[#1a1a17]">
         Welcome back
       </h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
+      <p className="mt-1.5 text-sm text-[#5f5d57]">
         Sign in to your Sanus account to continue
       </p>
 
       {unconfirmedEmail && (
         <div
           role="alert"
-          className="mt-6 flex gap-3 rounded-lg border border-[#f5d68a] bg-[#fffaeb] p-4"
+          className="mt-6 flex gap-3 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-4"
         >
-          <MailWarning className="mt-0.5 h-5 w-5 shrink-0 text-[#b7791f]" />
-          <div className="text-sm text-[#404145]">
+          <MailWarning className="mt-0.5 h-5 w-5 shrink-0 text-[#8a5a00]" />
+          <div className="text-sm text-[#1a1a17]">
             <p className="font-semibold">Your account isn&apos;t confirmed yet</p>
-            <p className="mt-1 text-[#62646a]">
+            <p className="mt-1 text-[#5f5d57]">
               We sent a confirmation link to{' '}
-              <span className="font-medium text-[#404145]">{unconfirmedEmail}</span>.
+              <span className="font-medium text-[#1a1a17]">{unconfirmedEmail}</span>.
               Click it to activate your account, then sign in. Don&apos;t see
               it? Check your spam or junk folder.
             </p>
@@ -168,7 +168,7 @@ function LoginForm() {
               type="button"
               onClick={handleResend}
               disabled={resending}
-              className="mt-2 inline-flex items-center font-semibold text-[#1dbf73] hover:underline disabled:opacity-60"
+              className="mt-2 inline-flex items-center font-semibold text-[#2f3cf5] hover:underline disabled:opacity-60"
             >
               {resending && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
               Resend confirmation email
@@ -178,11 +178,11 @@ function LoginForm() {
       )}
 
       {noGoogleAccount && (
-        <div role="alert" className="mt-6 rounded-lg border border-[#f5d68a] bg-[#fffaeb] p-4 text-sm text-[#404145]">
+        <div role="alert" className="mt-6 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-4 text-sm text-[#1a1a17]">
           <p className="font-semibold">No Sanus account uses that Google account</p>
-          <p className="mt-1 text-[#62646a]">
+          <p className="mt-1 text-[#5f5d57]">
             Sign in with your email and password, or{' '}
-            <Link href="/signup" className="font-semibold text-[#1dbf73] hover:underline">
+            <Link href="/signup" className="font-semibold text-[#2f3cf5] hover:underline">
               create an account
             </Link>{' '}
             (you can use Google there).
@@ -195,22 +195,22 @@ function LoginForm() {
         variant="outline"
         onClick={handleGoogle}
         disabled={googleLoading}
-        className="mt-8 h-11 w-full text-sm font-semibold text-[#404145]"
+        className="mt-8 h-11 w-full text-sm font-semibold text-[#1a1a17]"
       >
         {googleLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <GoogleIcon />}
         Continue with Google
       </Button>
-      <p className="mt-2 text-center text-xs text-[#95979d]">For accounts created with Google.</p>
+      <p className="mt-2 text-center text-xs text-[#706d65]">For accounts created with Google.</p>
 
-      <div className="mt-6 flex items-center gap-3 text-xs text-[#95979d]">
-        <span className="h-px flex-1 bg-[#e4e5e7]" />
+      <div className="mt-6 flex items-center gap-3 text-xs text-[#706d65]">
+        <span className="h-px flex-1 bg-[#e3dfd6]" />
         or sign in with email
-        <span className="h-px flex-1 bg-[#e4e5e7]" />
+        <span className="h-px flex-1 bg-[#e3dfd6]" />
       </div>
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-sm font-semibold text-[#404145]">
+          <Label htmlFor="email" className="text-sm font-semibold text-[#1a1a17]">
             Email address
           </Label>
           <Input
@@ -227,12 +227,12 @@ function LoginForm() {
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password" className="text-sm font-semibold text-[#404145]">
+            <Label htmlFor="password" className="text-sm font-semibold text-[#1a1a17]">
               Password
             </Label>
             <Link
               href="/forgot-password"
-              className="text-xs font-semibold text-[#1dbf73] hover:underline"
+              className="text-xs font-semibold text-[#2f3cf5] hover:underline"
             >
               Forgot password?
             </Link>
@@ -252,7 +252,7 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+          className="h-11 w-full bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
         >
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign In
@@ -261,11 +261,11 @@ function LoginForm() {
 
       <Separator className="my-6" />
 
-      <p className="text-center text-sm text-[#62646a]">
+      <p className="text-center text-sm text-[#5f5d57]">
         Don&apos;t have an account?{' '}
         <Link
           href="/signup"
-          className="font-bold text-[#1dbf73] hover:underline"
+          className="font-bold text-[#2f3cf5] hover:underline"
         >
           Create one free
         </Link>

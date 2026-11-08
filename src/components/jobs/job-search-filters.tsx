@@ -252,7 +252,7 @@ function FilterFields({
             value={filters.pay_min}
             onChange={(e) => onChange('pay_min', e.target.value)}
           />
-          <span className="text-[#62646a]">–</span>
+          <span className="text-[#5f5d57]">–</span>
           <Input
             type="number"
             placeholder="Max"
@@ -326,7 +326,7 @@ export function JobSearchFilters({
             <SlidersHorizontalIcon className="size-4" />
             Filters
             {activeCount > 0 && (
-              <span className="ml-1 inline-flex size-5 items-center justify-center rounded-full bg-[#1dbf73] text-[10px] font-semibold text-white">
+              <span className="ml-1 inline-flex size-5 items-center justify-center rounded-full bg-[#2f3cf5] text-[10px] font-semibold text-white">
                 {activeCount}
               </span>
             )}
@@ -349,7 +349,7 @@ export function JobSearchFilters({
               Clear all
             </Button>
             <Button
-              className="flex-1 bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="flex-1 bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
               onClick={() => setOpen(false)}
             >
               Done

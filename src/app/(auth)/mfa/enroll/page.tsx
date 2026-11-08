@@ -18,10 +18,10 @@ export default function MfaEnrollPage() {
 function Header() {
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="text-2xl font-black tracking-tight text-[#1a1a17]">
         Protect your account
       </h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
+      <p className="mt-1.5 text-sm text-[#5f5d57]">
         One last step: connect an authenticator app so only you can sign in.
       </p>
     </div>
@@ -30,19 +30,19 @@ function Header() {
 
 function WhyExplainer() {
   return (
-    <div className="mt-6 rounded-lg border border-[#e4e5e7] bg-[#fafefb] px-4 py-3">
-      <p className="flex items-center gap-2 text-sm font-semibold text-[#404145]">
-        <ShieldCheck className="size-4 text-[#1dbf73]" aria-hidden="true" />
+    <div className="mt-6 rounded-lg border border-[#e3dfd6] bg-[#f4f5fe] px-4 py-3">
+      <p className="flex items-center gap-2 text-sm font-semibold text-[#1a1a17]">
+        <ShieldCheck className="size-4 text-[#2f3cf5]" aria-hidden="true" />
         Why is this required?
       </p>
-      <p className="mt-1 text-xs leading-relaxed text-[#62646a]">
+      <p className="mt-1 text-xs leading-relaxed text-[#5f5d57]">
         Sanus handles health information, so every account uses two-step
         sign-in: your password plus a 6-digit code from an app on your phone.
         Even if someone learns your password, they can’t get in without your
         phone.
       </p>
-      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#404145]">
-        <Clock className="size-3.5 text-[#95979d]" aria-hidden="true" />
+      <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-[#1a1a17]">
+        <Clock className="size-3.5 text-[#706d65]" aria-hidden="true" />
         Takes about a minute.
       </p>
     </div>
@@ -66,22 +66,22 @@ function EnrollForm() {
   if (done) {
     return (
       <div>
-        <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-          <CheckCircle2 className="size-6 text-[#1dbf73]" aria-hidden="true" />
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+          <CheckCircle2 className="size-6 text-[#2f3cf5]" aria-hidden="true" />
         </div>
-        <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">
+        <h1 className="mt-4 text-2xl font-black tracking-tight text-[#1a1a17]">
           You’re all set
         </h1>
-        <p className="mt-1.5 text-sm text-[#62646a]">
+        <p className="mt-1.5 text-sm text-[#5f5d57]">
           Two-step sign-in is on. Next time you sign in, open your
           authenticator app and enter the code it shows for Sanus.
         </p>
 
-        <div className="mt-6 rounded-lg border border-[#e4e5e7] bg-[#fafefb] px-4 py-3">
-          <p className="text-sm font-semibold text-[#404145]">
+        <div className="mt-6 rounded-lg border border-[#e3dfd6] bg-[#f4f5fe] px-4 py-3">
+          <p className="text-sm font-semibold text-[#1a1a17]">
             Tip: add a backup authenticator
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-[#62646a]">
+          <p className="mt-1 text-xs leading-relaxed text-[#5f5d57]">
             If you lose or replace your phone, a backup keeps you from being
             locked out. When you have a minute, go to{' '}
             <strong>Settings → Security</strong> and add an authenticator on a
@@ -94,7 +94,7 @@ function EnrollForm() {
           type="button"
           onClick={handleContinue}
           autoFocus
-          className="mt-6 h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+          className="mt-6 h-11 w-full bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
         >
           Continue
         </Button>

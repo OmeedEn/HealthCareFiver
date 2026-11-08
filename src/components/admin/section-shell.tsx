@@ -26,8 +26,8 @@ export async function SectionShell({
     <div className="space-y-6">
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">{title}</h1>
-          {description && <p className="mt-1 text-sm text-[#62646a]">{description}</p>}
+          <h1 className="text-2xl font-bold text-[#1a1a17]">{title}</h1>
+          {description && <p className="mt-1 text-sm text-[#5f5d57]">{description}</p>}
         </div>
         <SectionTabs tabs={tabs.map((t) => ({ href: t.href, label: t.label, count: counts?.[t.key] }))} />
       </div>

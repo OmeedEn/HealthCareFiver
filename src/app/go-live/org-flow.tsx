@@ -212,7 +212,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
     continueLabel: listingSaved ? 'Go to Services & events' : 'Go to your dashboard',
     render: () => (
       <>
-        <ul className="divide-y divide-[#f1f1f2] rounded-xl border border-[#e4e5e7] px-4">
+        <ul className="divide-y divide-[#eeebe4] rounded-xl border border-[#e3dfd6] px-4">
           <DoneRow done label="Organization Agreement accepted" />
           <DoneRow
             done={payoutsDone}
@@ -223,7 +223,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
               ) : (
                 <>
                   {payoutsSkipped || !plan.showPayouts ? 'Not set up yet. ' : 'Stripe is finishing your setup. '}
-                  <Link href="/facility/payouts" className="font-semibold text-[#1dbf73] hover:underline">
+                  <Link href="/facility/payouts" className="font-semibold text-[#2f3cf5] hover:underline">
                     Set up payouts
                   </Link>
                 </>
@@ -237,7 +237,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
               listingSaved ? (
                 'Submit it for review from Services & events. Our team reviews every listing before it goes live.'
               ) : (
-                <Link href="/facility/listings" className="font-semibold text-[#1dbf73] hover:underline">
+                <Link href="/facility/listings" className="font-semibold text-[#2f3cf5] hover:underline">
                   Add a service or event
                 </Link>
               )
@@ -245,7 +245,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
           />
         </ul>
         {listingSaved && (
-          <Link href="/dashboard" className="block text-center text-sm font-semibold text-[#62646a] hover:underline">
+          <Link href="/dashboard" className="block text-center text-sm font-semibold text-[#5f5d57] hover:underline">
             Go to your dashboard
           </Link>
         )}

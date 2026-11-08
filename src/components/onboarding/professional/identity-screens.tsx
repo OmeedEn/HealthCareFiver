@@ -234,12 +234,12 @@ export function identityScreens({
               set({ website_url: '', no_website: true })
               advance()
             }}
-            className="rounded text-sm font-semibold text-[#1dbf73] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+            className="rounded text-sm font-semibold text-[#2f3cf5] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
           >
             {PRO_COPY.noWebsite}
           </button>
           {answers.no_website && !answers.website_url && (
-            <p className="text-xs text-[#62646a]">
+            <p className="text-xs text-[#5f5d57]">
               No problem. We’ll ask for your resume or CV instead.
             </p>
           )}
@@ -264,9 +264,9 @@ export function firstOpenIdentityScreen(screens: Screen[]): number {
 }
 
 const OPTION_CLASS =
-  'flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-left text-sm font-medium transition outline-none focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30'
+  'flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2 text-left text-sm font-medium transition outline-none focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30'
 const optionState = (on: boolean) =>
-  on ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f4c3a]' : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+  on ? 'border-[#2f3cf5] bg-[#eceefe] text-[#1a1a17]' : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
 
 /**
  * Searchable list with an always-visible "Other / not listed" choice at the
@@ -298,7 +298,7 @@ function ProfessionSearch({
         {PRO_COPY.profession}
       </label>
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#95979d]" aria-hidden />
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#706d65]" aria-hidden />
         <input
           id={inputId}
           value={query}
@@ -307,7 +307,7 @@ function ProfessionSearch({
           placeholder={placeholder}
           autoComplete="off"
           aria-controls={listId}
-          className="h-12 w-full rounded-lg border border-input bg-white pr-3 pl-9 text-base text-[#404145] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-12 w-full rounded-lg border border-input bg-white pr-3 pl-9 text-base text-[#1a1a17] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         />
       </div>
       <ul id={listId} aria-label="Suggestions" className="grid gap-2">
@@ -326,13 +326,13 @@ function ProfessionSearch({
                 className={`${OPTION_CLASS} ${optionState(on)}`}
               >
                 {m}
-                {on && <Check className="size-4 shrink-0 text-[#1dbf73]" aria-hidden />}
+                {on && <Check className="size-4 shrink-0 text-[#2f3cf5]" aria-hidden />}
               </button>
             </li>
           )
         })}
         {query.trim() && matches.length === 0 && (
-          <li className="px-1 text-xs text-[#62646a]">No matches. Choose “{PROFESSION_OTHER_LABEL}” below.</li>
+          <li className="px-1 text-xs text-[#5f5d57]">No matches. Choose “{PROFESSION_OTHER_LABEL}” below.</li>
         )}
         <li>
           <button
@@ -350,10 +350,10 @@ function ProfessionSearch({
             className={`${OPTION_CLASS} ${optionState(other)}`}
           >
             <span className="flex items-center gap-2">
-              <PenLine className="size-4 shrink-0 text-[#95979d]" aria-hidden />
+              <PenLine className="size-4 shrink-0 text-[#706d65]" aria-hidden />
               {PROFESSION_OTHER_LABEL}
             </span>
-            {other && <Check className="size-4 shrink-0 text-[#1dbf73]" aria-hidden />}
+            {other && <Check className="size-4 shrink-0 text-[#2f3cf5]" aria-hidden />}
           </button>
         </li>
       </ul>
@@ -397,10 +397,10 @@ function CertificationsEditor({
           key={i}
           role="group"
           aria-label={rows.length > 1 ? `Certification ${i + 1}` : 'Certification'}
-          className="space-y-3 rounded-xl border border-[#e4e5e7] bg-white p-4"
+          className="space-y-3 rounded-xl border border-[#e3dfd6] bg-white p-4"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold tracking-wide text-[#62646a] uppercase" aria-hidden>
+            <span className="text-xs font-semibold tracking-wide text-[#5f5d57] uppercase" aria-hidden>
               {rows.length > 1 ? `Certification ${i + 1}` : 'Certification'}
             </span>
             {rows.length > 1 && (
@@ -408,7 +408,7 @@ function CertificationsEditor({
                 type="button"
                 onClick={() => onChange(rows.filter((_, j) => j !== i))}
                 aria-label={`Remove certification ${i + 1}`}
-                className="-mr-1 flex size-8 items-center justify-center rounded-full text-[#95979d] transition hover:bg-[#f1f1f2] hover:text-[#404145] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+                className="-mr-1 flex size-8 items-center justify-center rounded-full text-[#706d65] transition hover:bg-[#eeebe4] hover:text-[#1a1a17] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
               >
                 <X className="size-4" aria-hidden />
               </button>
@@ -438,7 +438,7 @@ function CertificationsEditor({
         <button
           type="button"
           onClick={() => onChange([...rows, { ...EMPTY_CERTIFICATION }])}
-          className="inline-flex items-center gap-1.5 rounded text-sm font-semibold text-[#1dbf73] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+          className="inline-flex items-center gap-1.5 rounded text-sm font-semibold text-[#2f3cf5] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
         >
           <Plus className="size-4" aria-hidden />
           {PRO_COPY.addCertification}

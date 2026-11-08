@@ -387,7 +387,7 @@ export default function ContractorProfileEditPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-[#62646a]" />
+        <Loader2 className="size-6 animate-spin text-[#5f5d57]" />
       </div>
     )
   }
@@ -401,7 +401,7 @@ export default function ContractorProfileEditPage() {
     <div className="mx-auto w-full max-w-7xl">
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to dashboard
@@ -409,14 +409,14 @@ export default function ContractorProfileEditPage() {
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#404145]">Edit profile</h1>
-          <p className="mt-1.5 text-base text-[#62646a]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#1a1a17]">Edit profile</h1>
+          <p className="mt-1.5 text-base text-[#5f5d57]">
             Sections marked “On your profile” are what clients see, in the same order.
           </p>
         </div>
         <Link
           href={publicHref}
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#1dbf73] bg-white px-4 text-sm font-semibold text-[#0f8f56] transition hover:bg-[#f0faf5]"
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#2f3cf5] bg-white px-4 text-sm font-semibold text-[#2330c8] transition hover:bg-[#f4f5fe]"
         >
           <Eye className="size-4" aria-hidden="true" />
           Preview public profile
@@ -427,7 +427,7 @@ export default function ContractorProfileEditPage() {
         <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* Summary + section nav */}
           <aside className="space-y-4 lg:sticky lg:top-0 lg:self-start">
-            <div className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
+            <div className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
               <div className="flex items-center gap-4 lg:flex-col lg:text-center">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -437,15 +437,15 @@ export default function ContractorProfileEditPage() {
                     className="size-16 shrink-0 rounded-full object-cover lg:size-24"
                   />
                 ) : (
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#e8faf1] text-xl font-bold text-[#1dbf73] lg:size-24 lg:text-3xl">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-xl font-bold text-[#2f3cf5] lg:size-24 lg:text-3xl">
                     {getInitials(formData.first_name, formData.last_name)}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-bold text-[#404145]">
+                  <p className="truncate text-lg font-bold text-[#1a1a17]">
                     {fullName || 'Your name'}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 text-sm text-[#62646a]">
+                  <p className="mt-0.5 line-clamp-2 text-sm text-[#5f5d57]">
                     {formData.headline || 'Add a headline'}
                   </p>
                 </div>
@@ -453,12 +453,12 @@ export default function ContractorProfileEditPage() {
 
               <div className="mt-6">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-[#404145]">Profile strength</span>
-                  <span className="font-bold text-[#1dbf73]">{completion}%</span>
+                  <span className="font-semibold text-[#1a1a17]">Profile strength</span>
+                  <span className="font-bold text-[#2f3cf5]">{completion}%</span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e4e5e7]">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]">
                   <div
-                    className="h-full rounded-full bg-[#1dbf73] transition-all"
+                    className="h-full rounded-full bg-[#2f3cf5] transition-all"
                     style={{ width: `${completion}%` }}
                   />
                 </div>
@@ -467,13 +467,13 @@ export default function ContractorProfileEditPage() {
               <div
                 className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
                   formData.is_available
-                    ? 'bg-[#e8faf1] text-[#0f8f56]'
-                    : 'bg-[#f1f1f2] text-[#62646a]'
+                    ? 'bg-[#eceefe] text-[#2330c8]'
+                    : 'bg-[#eeebe4] text-[#5f5d57]'
                 }`}
               >
                 <span
                   className={`size-2 rounded-full ${
-                    formData.is_available ? 'bg-[#1dbf73]' : 'bg-[#95979d]'
+                    formData.is_available ? 'bg-[#2f3cf5]' : 'bg-[#706d65]'
                   }`}
                 />
                 {formData.is_available ? 'Available for work' : 'Not available'}
@@ -482,15 +482,15 @@ export default function ContractorProfileEditPage() {
 
             <nav
               aria-label="Profile sections"
-              className="hidden rounded-2xl border border-[#e4e5e7] bg-white p-2 lg:block"
+              className="hidden rounded-2xl border border-[#e3dfd6] bg-white p-2 lg:block"
             >
               {SECTIONS.map(({ id, title, icon: Icon }) => (
                 <a
                   key={id}
                   href={`#${id}`}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#62646a] transition hover:bg-[#f0faf5] hover:text-[#404145]"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5f5d57] transition hover:bg-[#f4f5fe] hover:text-[#1a1a17]"
                 >
-                  <Icon className="size-4 text-[#1dbf73]" />
+                  <Icon className="size-4 text-[#2f3cf5]" />
                   {title}
                 </a>
               ))}
@@ -653,8 +653,8 @@ export default function ContractorProfileEditPage() {
                         }
                         className={`h-9 min-w-12 rounded-lg border px-2.5 text-sm font-semibold transition ${
                           on
-                            ? 'border-[#1dbf73] bg-[#1dbf73] text-white'
-                            : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#1dbf73]'
+                            ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white'
+                            : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#2f3cf5]'
                         }`}
                       >
                         {s.value}
@@ -803,10 +803,10 @@ export default function ContractorProfileEditPage() {
         </div>
 
         {/* Sticky save bar: negative margins/offsets cancel the dashboard main's p-4 md:p-6 so it sits flush. */}
-        <div className="sticky -bottom-4 z-10 -mx-4 mt-8 md:-bottom-6 border-t border-[#e4e5e7] bg-white/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6">
+        <div className="sticky -bottom-4 z-10 -mx-4 mt-8 md:-bottom-6 border-t border-[#e3dfd6] bg-white/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6">
           <div className="mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="hidden text-sm text-[#62646a] sm:block">
-              Profile <span className="font-semibold text-[#404145]">{completion}%</span> complete
+            <p className="hidden text-sm text-[#5f5d57] sm:block">
+              Profile <span className="font-semibold text-[#1a1a17]">{completion}%</span> complete
             </p>
             <div className="flex gap-3">
               <Button
@@ -820,7 +820,7 @@ export default function ContractorProfileEditPage() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="h-11 flex-1 bg-[#1dbf73] px-8 text-sm font-semibold text-white hover:bg-[#19a463] sm:flex-none"
+                className="h-11 flex-1 bg-[#2f3cf5] px-8 text-sm font-semibold text-white hover:bg-[#2330c8] sm:flex-none"
               >
                 {saving ? (
                   <>
@@ -880,21 +880,21 @@ function Section({
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="scroll-mt-6 rounded-2xl border border-[#e4e5e7] bg-white"
+      className="scroll-mt-6 rounded-2xl border border-[#e3dfd6] bg-white"
     >
-      <div className="flex items-start gap-4 border-b border-[#efeff0] px-6 py-5 md:px-8">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+      <div className="flex items-start gap-4 border-b border-[#eeebe4] px-6 py-5 md:px-8">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5]">
           <Icon className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id={`${id}-title`} className="text-lg font-bold text-[#404145]">
+          <h2 id={`${id}-title`} className="text-lg font-bold text-[#1a1a17]">
             {title}
           </h2>
-          <p className="mt-0.5 text-sm text-[#62646a]">{description}</p>
+          <p className="mt-0.5 text-sm text-[#5f5d57]">{description}</p>
         </div>
         <span
           className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-            visibility === 'public' ? 'bg-[#e8faf1] text-[#0f8f56]' : 'bg-[#f1f1f2] text-[#62646a]'
+            visibility === 'public' ? 'bg-[#eceefe] text-[#2330c8]' : 'bg-[#eeebe4] text-[#5f5d57]'
           }`}
         >
           {visibility === 'public' ? <Eye className="size-3.5" aria-hidden="true" /> : <Lock className="size-3.5" aria-hidden="true" />}
@@ -916,7 +916,7 @@ function FieldLabel({
   children: React.ReactNode
 }) {
   return (
-    <Label htmlFor={htmlFor} className="text-sm font-semibold text-[#404145]">
+    <Label htmlFor={htmlFor} className="text-sm font-semibold text-[#1a1a17]">
       {children}
       {required && <span className="text-red-600">*</span>}
     </Label>
@@ -924,7 +924,7 @@ function FieldLabel({
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1.5 text-xs text-[#62646a]">{children}</p>
+  return <p className="mt-1.5 text-xs text-[#5f5d57]">{children}</p>
 }
 
 function LinkCard({
@@ -941,16 +941,16 @@ function LinkCard({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-4 rounded-xl border border-[#e4e5e7] bg-white p-4 transition hover:border-[#1dbf73] hover:bg-[#f0faf5]"
+      className="group flex items-center gap-4 rounded-xl border border-[#e3dfd6] bg-white p-4 transition hover:border-[#2f3cf5] hover:bg-[#f4f5fe]"
     >
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5]">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-[#404145]">Edit {title.toLowerCase()}</span>
-        <span className="mt-0.5 block text-xs text-[#62646a]">{description}</span>
+        <span className="block text-sm font-bold text-[#1a1a17]">Edit {title.toLowerCase()}</span>
+        <span className="mt-0.5 block text-xs text-[#5f5d57]">{description}</span>
       </span>
-      <ChevronRight className="size-5 shrink-0 text-[#95979d] transition group-hover:translate-x-0.5 group-hover:text-[#1dbf73]" />
+      <ChevronRight className="size-5 shrink-0 text-[#706d65] transition group-hover:translate-x-0.5 group-hover:text-[#2f3cf5]" />
     </Link>
   )
 }
@@ -976,15 +976,15 @@ function ToggleTile({
   return (
     <label
       htmlFor={id}
-      className={`relative flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-[#1dbf73]/30 ${
+      className={`relative flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-[#2f3cf5]/30 ${
         checked
-          ? 'border-[#1dbf73] bg-[#f0faf5]'
-          : 'border-[#e4e5e7] bg-white hover:border-[#bcebd5]'
+          ? 'border-[#2f3cf5] bg-[#f4f5fe]'
+          : 'border-[#e3dfd6] bg-white hover:border-[#c9cdfb]'
       }`}
     >
       <span>
-        <span className="block text-sm font-semibold text-[#404145]">{title}</span>
-        <span className="mt-0.5 block text-xs text-[#62646a]">{description}</span>
+        <span className="block text-sm font-semibold text-[#1a1a17]">{title}</span>
+        <span className="mt-0.5 block text-xs text-[#5f5d57]">{description}</span>
       </span>
       <input
         type="checkbox"
@@ -997,7 +997,7 @@ function ToggleTile({
       <span
         aria-hidden="true"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-          checked ? 'bg-[#1dbf73]' : 'bg-[#d5d6d9]'
+          checked ? 'bg-[#2f3cf5]' : 'bg-[#cbc6ba]'
         }`}
       >
         <span
@@ -1005,7 +1005,7 @@ function ToggleTile({
             checked ? 'translate-x-5.5' : 'translate-x-0.5'
           }`}
         >
-          {checked && <Check className="size-3 text-[#1dbf73]" />}
+          {checked && <Check className="size-3 text-[#2f3cf5]" />}
         </span>
       </span>
     </label>

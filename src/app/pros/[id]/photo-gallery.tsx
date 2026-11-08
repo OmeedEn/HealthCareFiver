@@ -20,7 +20,7 @@ export function PhotoGallery({ photos, name }: { photos: PublicPhoto[]; name: st
             <button
               type="button"
               onClick={() => setIndex(i)}
-              className="group block aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#f3f4f6] focus-visible:ring-3 focus-visible:ring-[#1dbf73]/40 focus-visible:outline-none"
+              className="group block aspect-[4/3] w-full overflow-hidden rounded-xl bg-[#eeebe4] focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/40 focus-visible:outline-none"
               aria-label={p.caption ? `View photo: ${p.caption}` : `View photo ${i + 1}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- Supabase storage host */}
@@ -47,25 +47,25 @@ export function PhotoGallery({ photos, name }: { photos: PublicPhoto[]; name: st
                 alt={current.caption ?? `Photo from ${name}`}
                 className="max-h-[75vh] w-full rounded-lg object-contain"
               />
-              <figcaption className="mt-2 flex items-center justify-between gap-3 text-sm text-[#374151]">
+              <figcaption className="mt-2 flex items-center justify-between gap-3 text-sm text-[#3a3934]">
                 <span className="min-w-0 truncate">{current.caption}</span>
                 {photos.length > 1 && (
                   <span className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
                       onClick={() => step(-1)}
-                      className="rounded-md p-1.5 hover:bg-[#f3f4f6]"
+                      className="rounded-md p-1.5 hover:bg-[#eeebe4]"
                       aria-label="Previous photo"
                     >
                       <ChevronLeft className="size-5" />
                     </button>
-                    <span className="text-xs text-[#6b7280]">
+                    <span className="text-xs text-[#5f5d57]">
                       {(index ?? 0) + 1} / {photos.length}
                     </span>
                     <button
                       type="button"
                       onClick={() => step(1)}
-                      className="rounded-md p-1.5 hover:bg-[#f3f4f6]"
+                      className="rounded-md p-1.5 hover:bg-[#eeebe4]"
                       aria-label="Next photo"
                     >
                       <ChevronRight className="size-5" />

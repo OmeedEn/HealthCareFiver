@@ -119,22 +119,22 @@ export function TwoFactorSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Smartphone className="size-4 text-[#1dbf73]" />
+          <Smartphone className="size-4 text-[#2f3cf5]" />
           Two-factor authentication
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-[#404145]">
+        <p className="text-sm text-[#1a1a17]">
           Sanus asks for a 6-digit code from an authenticator app each time you
           sign in. This is required for every account.
         </p>
 
         {demo ? (
-          <p className="text-xs text-[#62646a]">
+          <p className="text-xs text-[#5f5d57]">
             Authenticator management isn’t available in demo mode.
           </p>
         ) : factors === null ? (
-          <div className="flex items-center gap-2 text-xs text-[#62646a]">
+          <div className="flex items-center gap-2 text-xs text-[#5f5d57]">
             <Loader2 className="size-4 animate-spin" aria-hidden="true" />
             Loading authenticators…
           </div>
@@ -155,18 +155,18 @@ export function TwoFactorSettings() {
                   return (
                     <li
                       key={f.id}
-                      className="flex flex-col gap-2 rounded-md border border-[#e4e5e7] bg-[#fafefb] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-2 rounded-md border border-[#e3dfd6] bg-[#f4f5fe] px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="flex min-w-0 items-center gap-2">
                         <ShieldCheck
-                          className="size-4 shrink-0 text-[#1dbf73]"
+                          className="size-4 shrink-0 text-[#2f3cf5]"
                           aria-hidden="true"
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-[#404145]">
+                          <p className="truncate text-sm font-medium text-[#1a1a17]">
                             {f.name}
                           </p>
-                          <p className="text-xs text-[#62646a]">
+                          <p className="text-xs text-[#5f5d57]">
                             Added{' '}
                             {new Date(f.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
@@ -178,13 +178,13 @@ export function TwoFactorSettings() {
                       </div>
 
                       {isLast ? (
-                        <p className="text-xs text-[#95979d] sm:max-w-[14rem] sm:text-right">
+                        <p className="text-xs text-[#706d65] sm:max-w-[14rem] sm:text-right">
                           Your only authenticator — add a backup before
                           removing it.
                         </p>
                       ) : confirming ? (
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-[#62646a]">
+                          <span className="text-xs text-[#5f5d57]">
                             Remove this authenticator?
                           </span>
                           <Button
@@ -230,8 +230,8 @@ export function TwoFactorSettings() {
             )}
 
             {adding ? (
-              <div className="rounded-md border border-[#e4e5e7] p-4">
-                <p className="mb-4 text-sm font-semibold text-[#404145]">
+              <div className="rounded-md border border-[#e3dfd6] p-4">
+                <p className="mb-4 text-sm font-semibold text-[#1a1a17]">
                   {kind === 'backup'
                     ? 'Add a backup authenticator'
                     : 'Set up your authenticator'}
@@ -243,16 +243,16 @@ export function TwoFactorSettings() {
                 />
               </div>
             ) : (
-              <div className="flex flex-col gap-3 rounded-md border border-dashed border-[#e4e5e7] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 rounded-md border border-dashed border-[#e3dfd6] px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-medium text-[#404145]">
+                  <p className="text-sm font-medium text-[#1a1a17]">
                     {count === 0
                       ? 'Set up an authenticator'
                       : count === 1
                         ? 'Add a backup authenticator'
                         : 'Add another authenticator'}
                   </p>
-                  <p className="text-xs text-[#62646a]">
+                  <p className="text-xs text-[#5f5d57]">
                     {count === 1
                       ? 'Recommended. Put a second authenticator on another device (like a tablet or old phone) so losing your phone doesn’t lock you out.'
                       : 'Use any authenticator app on another device.'}

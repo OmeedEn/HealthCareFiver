@@ -59,22 +59,22 @@ export default async function AdminOrgListingsPage({ searchParams }: { searchPar
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-[#404145]">Organization listings</h2>
-        <p className="text-sm text-[#62646a]">Services and events organizations submitted. Nothing goes live until it&apos;s published here.</p>
+        <h2 className="text-lg font-semibold text-[#1a1a17]">Organization listings</h2>
+        <p className="text-sm text-[#5f5d57]">Services and events organizations submitted. Nothing goes live until it&apos;s published here.</p>
       </div>
       <div className="flex gap-2">
         {(['in_review', 'published'] as const).map((s) => (
           <Link
             key={s}
             href={s === 'in_review' ? '/admin/review/org-listings' : '/admin/review/org-listings?status=published'}
-            className={`rounded-full border px-3 py-1 text-sm ${filter === s ? 'border-[#1dbf73] bg-[#e8faf1] font-semibold text-[#0f8f56]' : 'border-[#e4e5e7] text-[#62646a]'}`}
+            className={`rounded-full border px-3 py-1 text-sm ${filter === s ? 'border-[#2f3cf5] bg-[#eceefe] font-semibold text-[#2330c8]' : 'border-[#e3dfd6] text-[#5f5d57]'}`}
           >
             {s === 'in_review' ? 'Awaiting review' : 'Live'}
           </Link>
         ))}
       </div>
 
-      {rows.length === 0 && <p className="text-sm text-[#62646a]">{error ? 'Could not load listings.' : 'Nothing here.'}</p>}
+      {rows.length === 0 && <p className="text-sm text-[#5f5d57]">{error ? 'Could not load listings.' : 'Nothing here.'}</p>}
 
       {rows.map((l) => {
         const org = l.facility_profiles
@@ -88,8 +88,8 @@ export default async function AdminOrgListingsPage({ searchParams }: { searchPar
                 <Badge variant="secondary">{l.kind === 'service' ? 'Service' : labelFor(ORG_EVENT_TYPES, l.event_type)}</Badge>
                 {risky.length > 0 && <Badge variant="destructive">Check wording: {risky.join(', ')}</Badge>}
               </CardTitle>
-              <p className="text-sm text-[#62646a]">
-                <Link href={`/admin/organizations/${l.facility_id}`} className="font-semibold text-[#1dbf73] hover:underline">
+              <p className="text-sm text-[#5f5d57]">
+                <Link href={`/admin/organizations/${l.facility_id}`} className="font-semibold text-[#2f3cf5] hover:underline">
                   {org?.facility_name || 'Organization'}
                 </Link>{' '}
                 · {org?.verification_status} · agreement {org?.org_agreement_accepted_at ? 'accepted' : 'NOT accepted'}
@@ -97,8 +97,8 @@ export default async function AdminOrgListingsPage({ searchParams }: { searchPar
               </p>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              {l.description && <p className="whitespace-pre-line text-[#404145]">{l.description}</p>}
-              <p className="text-[#62646a]">
+              {l.description && <p className="whitespace-pre-line text-[#1a1a17]">{l.description}</p>}
+              <p className="text-[#5f5d57]">
                 {[
                   labelFor(l.kind === 'service' ? LISTING_FORMATS : EVENT_FORMATS, l.format),
                   l.locations,
@@ -108,10 +108,10 @@ export default async function AdminOrgListingsPage({ searchParams }: { searchPar
                   l.audiences.map((a) => labelFor(l.kind === 'service' ? SERVICE_AUDIENCES : EVENT_AUDIENCES, a)).join(', '),
                 ].filter(Boolean).join(' · ')}
               </p>
-              <div className="flex flex-wrap items-start gap-3 border-t border-[#f1f3f5] pt-3">
+              <div className="flex flex-wrap items-start gap-3 border-t border-[#eeebe4] pt-3">
                 {filter === 'in_review' && (
                   <form action={reviewOrgListing.bind(null, l.id, 'publish')}>
-                    <Button type="submit" className="bg-[#1dbf73] text-white hover:bg-[#19a463]">Publish</Button>
+                    <Button type="submit" className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]">Publish</Button>
                   </form>
                 )}
                 <form action={reviewOrgListing.bind(null, l.id, filter === 'in_review' ? 'request_changes' : 'unpublish')} className="flex flex-1 items-start gap-2">

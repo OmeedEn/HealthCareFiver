@@ -22,7 +22,7 @@ export function PublishGateNotice({ gate }: { gate: PublishGate }) {
   if (gate.kind === 'ok') return null
   if (gate.kind === 'agreement') {
     return (
-      <div className="flex items-start gap-2 rounded-lg border border-[#bcebd5] bg-[#e8faf1] p-3 text-sm text-[#0f5f3c]">
+      <div className="flex items-start gap-2 rounded-lg border border-[#c9cdfb] bg-[#eceefe] p-3 text-sm text-[#1a2496]">
         <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <p>
           <Link href="/go-live" className="font-semibold underline">
@@ -33,8 +33,8 @@ export function PublishGateNotice({ gate }: { gate: PublishGate }) {
     )
   }
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-[#e4e5e7] bg-[#f7f7f7] p-3 text-sm text-[#404145]">
-      <Lock className="mt-0.5 size-4 shrink-0 text-[#62646a]" aria-hidden="true" />
+    <div className="flex items-start gap-2 rounded-lg border border-[#e3dfd6] bg-[#f6f4ef] p-3 text-sm text-[#1a1a17]">
+      <Lock className="mt-0.5 size-4 shrink-0 text-[#5f5d57]" aria-hidden="true" />
       <p>
         {gate.kind === 'not_approved'
           ? 'You can publish once your application is approved. Until then you can build and save listings as drafts.'

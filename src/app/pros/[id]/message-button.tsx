@@ -5,7 +5,7 @@ import { Loader2, MessageSquare } from 'lucide-react'
 import { startConversation, type StartConversationState } from './actions'
 
 const BUTTON =
-  'inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#d1d5db] bg-white px-5 text-sm font-semibold text-[#111827] transition hover:border-[#1dbf73] hover:text-[#0f8f56] disabled:opacity-60'
+  'inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[#cbc6ba] bg-white px-5 text-sm font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2330c8] disabled:opacity-60'
 
 export function MessageButton({
   proId,

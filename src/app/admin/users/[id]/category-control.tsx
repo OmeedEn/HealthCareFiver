@@ -63,7 +63,7 @@ export function CategoryControl({
           }}
           disabled={pending}
           aria-label="New category"
-          className="h-9 rounded-md border border-[#e4e5e7] bg-white px-2 text-sm outline-none focus:border-[#1dbf73]"
+          className="h-9 rounded-md border border-[#e3dfd6] bg-white px-2 text-sm outline-none focus:border-[#2f3cf5]"
         >
           <option value="">Change category to…</option>
           {OPTIONS.map((o) => (
@@ -80,7 +80,7 @@ export function CategoryControl({
       </div>
 
       {confirming && target && (
-        <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-[#404145]">
+        <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-[#1a1a17]">
           <p>
             Change from <strong>{currentPath && currentPath in SIGNUP_PATH_SHORT_LABELS ? SIGNUP_PATH_SHORT_LABELS[currentPath as SignupPath] : 'no category'}</strong> to{' '}
             <strong>{SIGNUP_PATH_SHORT_LABELS[target]}</strong>? {WHAT_HAPPENS[target]}
@@ -99,7 +99,7 @@ export function CategoryControl({
             Email them the Finish setup link
           </label>
           <div className="flex gap-2">
-            <Button size="sm" disabled={pending} className="bg-[#1dbf73] text-white hover:bg-[#19a463]" onClick={apply}>
+            <Button size="sm" disabled={pending} className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]" onClick={apply}>
               {pending ? 'Saving…' : 'Confirm change'}
             </Button>
             <Button size="sm" variant="outline" disabled={pending} onClick={() => setConfirming(false)}>

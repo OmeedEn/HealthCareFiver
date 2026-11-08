@@ -28,7 +28,7 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
   const location = [p.city, p.state].filter(Boolean).join(', ')
 
   return (
-    <article className="flex flex-col rounded-2xl border border-[#e5e7eb] bg-white p-5 transition hover:shadow-md">
+    <article className="flex flex-col rounded-2xl border border-[#e3dfd6] bg-white p-5 transition hover:shadow-md">
       <div className="flex items-start gap-3.5">
         {p.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element -- arbitrary Supabase storage host
@@ -43,25 +43,25 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            <h3 className="truncate text-base font-semibold text-[#111827]">
+            <h3 className="truncate text-base font-semibold text-[#1a1a17]">
               {p.first_name} {p.last_name}
             </h3>
-            <span className="rounded-full bg-[#e8faf1] px-2 py-0.5 text-xs font-semibold text-[#0f4c3a]">
+            <span className="rounded-full bg-[#eceefe] px-2 py-0.5 text-xs font-semibold text-[#1a1a17]">
               {p.credential}
             </span>
             {p.insured && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#eef6ff] px-2 py-0.5 text-xs font-semibold text-[#1e5aa8]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#eceefe] px-2 py-0.5 text-xs font-semibold text-[#2330c8]">
                 <ShieldCheck className="size-3" aria-hidden />
                 Insured
               </span>
             )}
           </div>
-          <p className="mt-0.5 truncate text-sm text-[#6b7280]">{p.specialty}</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-[#6b7280]">
+          <p className="mt-0.5 truncate text-sm text-[#5f5d57]">{p.specialty}</p>
+          <p className="mt-1 flex items-center gap-1 text-xs text-[#5f5d57]">
             {p.total_reviews > 0 ? (
               <>
                 <Star className="size-3.5 fill-amber-400 text-amber-400" aria-hidden />
-                <span className="font-semibold text-[#111827]">{p.average_rating.toFixed(1)}</span>({p.total_reviews})
+                <span className="font-semibold text-[#1a1a17]">{p.average_rating.toFixed(1)}</span>({p.total_reviews})
               </>
             ) : (
               'New on Sanus'
@@ -70,16 +70,16 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
         </div>
       </div>
 
-      {p.headline && <p className="mt-3 line-clamp-2 text-sm text-[#374151]">{p.headline}</p>}
+      {p.headline && <p className="mt-3 line-clamp-2 text-sm text-[#3a3934]">{p.headline}</p>}
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {p.matched_interests.map((k) => (
-          <span key={k} className="rounded-md bg-[#e8faf1] px-2 py-0.5 text-xs font-medium text-[#0f8f56]">
+          <span key={k} className="rounded-md bg-[#eceefe] px-2 py-0.5 text-xs font-medium text-[#2330c8]">
             {CLIENT_INTEREST_LABELS[k] ?? k}
           </span>
         ))}
         {p.formats.map((f) => (
-          <span key={f} className="rounded-md bg-[#f3f4f6] px-2 py-0.5 text-xs text-[#374151]">
+          <span key={f} className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-xs text-[#3a3934]">
             {FORMAT_LABELS[f] ?? f}
           </span>
         ))}
@@ -87,22 +87,22 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         {/* Prices live on the full profile only, never on browse cards. */}
-        <span className="flex items-center gap-1 font-medium text-[#0f8f56]">
+        <span className="flex items-center gap-1 font-medium text-[#2330c8]">
           <Tag className="size-3.5" aria-hidden />
           Rates on profile
         </span>
         {location && (
-          <span className="flex items-center gap-1 text-[#6b7280]">
+          <span className="flex items-center gap-1 text-[#5f5d57]">
             <MapPin className="size-3.5" aria-hidden />
             {location}
-            {p.same_state && <span className="font-medium text-[#0f8f56]">· Near you</span>}
+            {p.same_state && <span className="font-medium text-[#2330c8]">· Near you</span>}
           </span>
         )}
       </div>
 
       <Link
         href={`/pros/${p.id}`}
-        className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#1dbf73] text-sm font-semibold text-[#1dbf73] transition hover:bg-[#1dbf73] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+        className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#2f3cf5] text-sm font-semibold text-[#2f3cf5] transition hover:bg-[#2f3cf5] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
       >
         View profile
       </Link>

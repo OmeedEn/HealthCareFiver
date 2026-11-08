@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     'Draft Independent Contractor and Platform Agreement for professionals on Sanus. Pending legal review.',
 }
 
-const linkClass = 'text-[#0f8f56] underline'
+const linkClass = 'text-[#2330c8] underline'
 
 const sections: LegalSection[] = [
   {

@@ -104,7 +104,7 @@ export function MessageAttachmentView({
       rel="noopener noreferrer"
       className={cn(
         'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:underline',
-        own ? 'border-white/30' : 'border-[#e4e5e7] bg-white'
+        own ? 'border-white/30' : 'border-[#e3dfd6] bg-white'
       )}
     >
       <FileTextIcon className="size-4 shrink-0" />

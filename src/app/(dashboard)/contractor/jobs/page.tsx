@@ -296,8 +296,8 @@ export default function ContractorJobsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Find Jobs</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Find Jobs</h1>
+        <p className="text-[#5f5d57]">
           Browse and search open healthcare positions
         </p>
       </div>
@@ -316,7 +316,7 @@ export default function ContractorJobsPage() {
               </label>
               <SearchIcon
                 aria-hidden="true"
-                className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-[#5f5d57]"
               />
               <Input
                 id="contractor-job-search"
@@ -360,7 +360,7 @@ export default function ContractorJobsPage() {
                     key={chip.key}
                     type="button"
                     onClick={() => setFilters((f) => clearFilterKey(f, chip.key))}
-                    className="inline-flex items-center gap-1 rounded-full bg-[#e8faf1] px-3 py-1 text-xs font-medium text-[#0f8f56] hover:bg-[#d3f4e3]"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#eceefe] px-3 py-1 text-xs font-medium text-[#2330c8] hover:bg-[#dfe2fd]"
                   >
                     {chip.label}
                     <XIcon className="size-3" />
@@ -375,7 +375,7 @@ export default function ContractorJobsPage() {
                       sort: filters.sort,
                     })
                   }
-                  className="ml-1 text-xs font-medium text-[#62646a] hover:text-[#404145] hover:underline"
+                  className="ml-1 text-xs font-medium text-[#5f5d57] hover:text-[#1a1a17] hover:underline"
                 >
                   Clear all
                 </button>
@@ -389,19 +389,19 @@ export default function ContractorJobsPage() {
       <div className="min-w-0">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+              <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
             </div>
           ) : jobs.length === 0 ? (
             <Card>
               <CardContent>
                 <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                    <BriefcaseIcon className="size-6 text-[#1dbf73]" />
+                  <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                    <BriefcaseIcon className="size-6 text-[#2f3cf5]" />
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-[#404145]">
+                  <h3 className="mt-4 text-base font-semibold text-[#1a1a17]">
                     No jobs found
                   </h3>
-                  <p className="mt-1 text-sm text-[#62646a]">
+                  <p className="mt-1 text-sm text-[#5f5d57]">
                     Try adjusting your search or filters.
                   </p>
                 </div>
@@ -428,7 +428,7 @@ export default function ContractorJobsPage() {
                     disabled={loadingMore}
                   >
                     {loadingMore && (
-                      <Loader2 className="size-4 animate-spin text-[#1dbf73]" />
+                      <Loader2 className="size-4 animate-spin text-[#2f3cf5]" />
                     )}
                     Load More
                   </Button>

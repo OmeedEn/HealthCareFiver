@@ -59,20 +59,20 @@ export async function OrgFinishSection({ userId }: { userId: string }) {
       {needsFirstListing && (
         <section
           aria-labelledby="first-listing-title"
-          className="rounded-xl border-2 border-[#1dbf73] bg-[#f3fcf7] p-5 sm:p-6"
+          className="rounded-xl border-2 border-[#2f3cf5] bg-[#f4f5fe] p-5 sm:p-6"
         >
-          <h2 id="first-listing-title" className="text-base font-semibold text-[#404145]">
+          <h2 id="first-listing-title" className="text-base font-semibold text-[#1a1a17]">
             You&apos;re approved. Create your first listing.
           </h2>
-          <p className="mt-1 text-sm text-[#62646a]">
+          <p className="mt-1 text-sm text-[#5f5d57]">
             Clients find organizations in Find care through listings. Until you add a service or event, your
             organization won&apos;t show up there.
           </p>
           <div className="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
-            <Link href="/facility/listings?new=service" className="text-[#1dbf73] hover:underline">
+            <Link href="/facility/listings?new=service" className="text-[#2f3cf5] hover:underline">
               Add a service &rarr;
             </Link>
-            <Link href="/facility/listings?new=event" className="text-[#1dbf73] hover:underline">
+            <Link href="/facility/listings?new=event" className="text-[#2f3cf5] hover:underline">
               Add an event &rarr;
             </Link>
           </div>

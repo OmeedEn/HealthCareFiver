@@ -59,13 +59,13 @@ export function MessagesLink() {
       href="/messages"
       aria-label={`Messages${unread > 0 ? ` (${unread} unread)` : ''}`}
       aria-current={active ? 'page' : undefined}
-      className={`relative inline-flex size-9 items-center justify-center rounded-md transition hover:bg-[#f3f4f6] ${
-        active ? 'text-[#1dbf73]' : 'text-[#374151]'
+      className={`relative inline-flex size-9 items-center justify-center rounded-md transition hover:bg-[#eeebe4] ${
+        active ? 'text-[#2f3cf5]' : 'text-[#3a3934]'
       }`}
     >
       <MessageSquare className="size-5" />
       {unread > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 inline-flex size-4 items-center justify-center rounded-full bg-[#1dbf73] text-[10px] font-semibold text-white">
+        <span className="absolute -right-0.5 -top-0.5 inline-flex size-4 items-center justify-center rounded-full bg-[#2f3cf5] text-[10px] font-semibold text-white">
           {unread > 9 ? '9+' : unread}
         </span>
       )}

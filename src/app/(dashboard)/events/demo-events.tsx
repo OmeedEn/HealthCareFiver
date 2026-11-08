@@ -106,17 +106,17 @@ function EventCard({
           {config?.label ?? event.type}
         </Badge>
         {event.price === 0 && (
-          <Badge className="absolute right-3 top-3 bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90">
+          <Badge className="absolute right-3 top-3 bg-[#2f3cf5] text-white hover:bg-[#2f3cf5]/90">
             Free
           </Badge>
         )}
       </div>
 
       <CardHeader className="pb-2">
-        <CardTitle className="font-heading text-base leading-snug text-[#111827]">
+        <CardTitle className="font-heading text-base leading-snug text-[#1a1a17]">
           <Link
             href={`/events/${event.id}`}
-            className="hover:text-[#1dbf73] transition-colors"
+            className="hover:text-[#2f3cf5] transition-colors"
           >
             {event.title}
           </Link>
@@ -124,7 +124,7 @@ function EventCard({
       </CardHeader>
 
       <CardContent className="space-y-3">
-        <div className="flex flex-col gap-1.5 text-sm text-[#6b7280]">
+        <div className="flex flex-col gap-1.5 text-sm text-[#5f5d57]">
           <div className="flex items-center gap-2">
             <Calendar className="h-3.5 w-3.5" />
             <span>{formatDate(event.date)}</span>
@@ -148,16 +148,16 @@ function EventCard({
         <div className="flex items-center justify-between pt-1">
           <div>
             {event.price === 0 ? (
-              <span className="text-sm font-semibold text-[#1dbf73]">
+              <span className="text-sm font-semibold text-[#2f3cf5]">
                 Free for members
               </span>
             ) : (
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-[#111827]">
+                <span className="text-lg font-bold text-[#1a1a17]">
                   ${event.memberPrice}
                 </span>
                 {event.memberPrice < event.price && (
-                  <span className="text-sm text-[#6b7280] line-through">
+                  <span className="text-sm text-[#5f5d57] line-through">
                     ${event.price}
                   </span>
                 )}
@@ -166,7 +166,7 @@ function EventCard({
           </div>
           <Button
             size="sm"
-            className="bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90"
+            className="bg-[#2f3cf5] text-white hover:bg-[#2f3cf5]/90"
             onClick={() => onRegister(event.title)}
           >
             Register
@@ -214,10 +214,10 @@ export function DemoEvents() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-[#111827]">
+        <h1 className="font-heading text-2xl font-bold text-[#1a1a17]">
           Events & Education
         </h1>
-        <p className="mt-1 text-[#6b7280]">
+        <p className="mt-1 text-[#5f5d57]">
           Expand your skills with webinars, workshops, and certification
           courses.
         </p>
@@ -226,7 +226,7 @@ export function DemoEvents() {
       {/* Search and filter */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6b7280]" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f5d57]" />
           <Input
             placeholder="Search events..."
             value={searchQuery}
@@ -242,8 +242,8 @@ export function DemoEvents() {
               size="sm"
               className={
                 typeFilter === type
-                  ? 'bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90'
-                  : 'text-[#6b7280]'
+                  ? 'bg-[#2f3cf5] text-white hover:bg-[#2f3cf5]/90'
+                  : 'text-[#5f5d57]'
               }
               onClick={() => setTypeFilter(type)}
             >
@@ -273,8 +273,8 @@ export function DemoEvents() {
           {upcomingEvents.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <GraduationCap className="h-12 w-12 text-[#6b7280]" />
-                <p className="mt-3 text-[#6b7280]">
+                <GraduationCap className="h-12 w-12 text-[#5f5d57]" />
+                <p className="mt-3 text-[#5f5d57]">
                   No upcoming events match your search.
                 </p>
               </CardContent>
@@ -296,8 +296,8 @@ export function DemoEvents() {
           {pastEvents.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Calendar className="h-12 w-12 text-[#6b7280]" />
-                <p className="mt-3 text-[#6b7280]">
+                <Calendar className="h-12 w-12 text-[#5f5d57]" />
+                <p className="mt-3 text-[#5f5d57]">
                   No past events to show.
                 </p>
               </CardContent>
@@ -319,12 +319,12 @@ export function DemoEvents() {
           {myRegistrations.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <Award className="h-12 w-12 text-[#6b7280]" />
-                <p className="mt-3 text-[#6b7280]">
+                <Award className="h-12 w-12 text-[#5f5d57]" />
+                <p className="mt-3 text-[#5f5d57]">
                   You have not registered for any events yet.
                 </p>
                 <Button
-                  className="mt-4 bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90"
+                  className="mt-4 bg-[#2f3cf5] text-white hover:bg-[#2f3cf5]/90"
                   onClick={() => {
                     const tab = document.querySelector(
                       '[data-value="upcoming"]'

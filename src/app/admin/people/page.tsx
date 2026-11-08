@@ -82,8 +82,8 @@ export default async function AdminPeoplePage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">People</h1>
-          <p className="mt-1 text-sm text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">People</h1>
+          <p className="mt-1 text-sm text-[#5f5d57]">
             {users.length} accounts · professionals, organizations and clients. Click a name for details, notes, category and suspend.
           </p>
         </div>
@@ -93,12 +93,12 @@ export default async function AdminPeoplePage({
             name="q"
             defaultValue={q}
             placeholder="Search name, email, phone…"
-            className="h-9 w-64 rounded-md border border-[#e4e5e7] bg-white px-3 text-sm outline-none focus:border-[#1dbf73]"
+            className="h-9 w-64 rounded-md border border-[#e3dfd6] bg-white px-3 text-sm outline-none focus:border-[#2f3cf5]"
           />
           <select
             name="role"
             defaultValue={role}
-            className="h-9 rounded-md border border-[#e4e5e7] bg-white px-2 text-sm"
+            className="h-9 rounded-md border border-[#e3dfd6] bg-white px-2 text-sm"
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
@@ -106,21 +106,21 @@ export default async function AdminPeoplePage({
               </option>
             ))}
           </select>
-          <button className="h-9 rounded-md bg-[#1dbf73] px-3 text-sm font-medium text-white hover:bg-[#19a463]">
+          <button className="h-9 rounded-md bg-[#2f3cf5] px-3 text-sm font-medium text-white hover:bg-[#2330c8]">
             Search
           </button>
         </form>
       </div>
 
-      <div className="inline-flex flex-wrap gap-1 rounded-lg border border-[#e4e5e7] bg-white p-1">
+      <div className="inline-flex flex-wrap gap-1 rounded-lg border border-[#e3dfd6] bg-white p-1">
         {ROLES.filter((r) => r.value === 'all' || users.some((u) => u.role === r.value)).map((r) => (
           <Link
             key={r.value}
             href={hrefWith({ role: r.value })}
             className={`rounded-md px-3 py-1.5 text-sm ${
               role === r.value
-                ? 'bg-[#e8faf1] font-semibold text-[#0f8f56]'
-                : 'text-[#62646a] hover:text-[#1dbf73]'
+                ? 'bg-[#eceefe] font-semibold text-[#2330c8]'
+                : 'text-[#5f5d57] hover:text-[#2f3cf5]'
             }`}
           >
             {r.label}{' '}
@@ -138,8 +138,8 @@ export default async function AdminPeoplePage({
             href={hrefWith({ filter: key })}
             className={`rounded-full border px-3 py-1 text-xs ${
               filter === key || (key === 'all' && !FILTERS[filter])
-                ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#1dbf73]'
+                ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#2f3cf5]'
             }`}
           >
             {f.label} ({users.filter(f.test).length})
@@ -150,7 +150,7 @@ export default async function AdminPeoplePage({
       <Card>
         <CardContent className="p-0">
           {visible.length === 0 ? (
-            <p className="py-12 text-center text-sm text-[#62646a]">No users match.</p>
+            <p className="py-12 text-center text-sm text-[#5f5d57]">No users match.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -169,21 +169,21 @@ export default async function AdminPeoplePage({
                 {visible.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="font-medium">
-                      <Link href={`/admin/users/${u.id}`} className="text-[#404145] hover:text-[#1dbf73] hover:underline">
+                      <Link href={`/admin/users/${u.id}`} className="text-[#1a1a17] hover:text-[#2f3cf5] hover:underline">
                         {u.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-[#62646a]">{u.email ?? '—'}</TableCell>
+                    <TableCell className="text-[#5f5d57]">{u.email ?? '—'}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{u.role ? (ROLE_LABEL[u.role] ?? u.role) : 'no profile'}</Badge>
                     </TableCell>
-                    <TableCell className="text-[#62646a]" title={u.createdAt}>
+                    <TableCell className="text-[#5f5d57]" title={u.createdAt}>
                       {formatDate(u.createdAt)}
                     </TableCell>
                     <TableCell>
                       <EmailConfirmedBadge at={u.emailConfirmedAt} />
                     </TableCell>
-                    <TableCell className="text-[#62646a]">
+                    <TableCell className="text-[#5f5d57]">
                       {u.lastSignInAt ? formatRelativeTime(u.lastSignInAt) : 'Never'}
                     </TableCell>
                     <TableCell>
@@ -191,7 +191,7 @@ export default async function AdminPeoplePage({
                     </TableCell>
                     <TableCell>
                       {u.isActive ? (
-                        <Badge className="bg-[#e8faf1] text-[#0f8f56]">Active</Badge>
+                        <Badge className="bg-[#eceefe] text-[#2330c8]">Active</Badge>
                       ) : (
                         <Badge className="bg-red-100 text-red-700">Suspended</Badge>
                       )}

@@ -19,7 +19,7 @@ export function SectionTabs({ tabs }: { tabs: SectionTab[] }) {
 
   return (
     <div className="-mx-1 overflow-x-auto">
-      <div className="inline-flex min-w-max gap-1 rounded-lg border border-[#e4e5e7] bg-white p-1">
+      <div className="inline-flex min-w-max gap-1 rounded-lg border border-[#e3dfd6] bg-white p-1">
         {tabs.map((t) => (
           <Link
             key={t.href}
@@ -27,13 +27,13 @@ export function SectionTabs({ tabs }: { tabs: SectionTab[] }) {
             className={cn(
               'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm',
               active === t.href
-                ? 'bg-[#e8faf1] font-semibold text-[#0f8f56]'
-                : 'text-[#62646a] hover:text-[#1dbf73]'
+                ? 'bg-[#eceefe] font-semibold text-[#2330c8]'
+                : 'text-[#5f5d57] hover:text-[#2f3cf5]'
             )}
           >
             {t.label}
             {!!t.count && (
-              <span className="rounded-full bg-[#1dbf73] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
+              <span className="rounded-full bg-[#2f3cf5] px-1.5 text-[11px] font-semibold leading-[18px] text-white">
                 {t.count}
               </span>
             )}

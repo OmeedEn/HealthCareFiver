@@ -50,7 +50,7 @@ export function ApplicantActions({
 
   if (!actions || actions.length === 0) return null
   if (blockedReason) {
-    return <p className="max-w-xs text-xs text-[#62646a]">{blockedReason}</p>
+    return <p className="max-w-xs text-xs text-[#5f5d57]">{blockedReason}</p>
   }
 
   const handleAction = async (newStatus: string) => {

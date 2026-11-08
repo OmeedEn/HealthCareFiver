@@ -21,10 +21,10 @@ export default function MfaVerifyPage() {
 function Header() {
   return (
     <div>
-      <h1 className="text-2xl font-black tracking-tight text-[#404145]">
+      <h1 className="text-2xl font-black tracking-tight text-[#1a1a17]">
         Two-factor verification
       </h1>
-      <p className="mt-1.5 text-sm text-[#62646a]">
+      <p className="mt-1.5 text-sm text-[#5f5d57]">
         Open your authenticator app and enter the 6-digit code it shows for
         Sanus.
       </p>
@@ -122,10 +122,10 @@ function VerifyForm() {
       >
         {hasBackup && factors && (
           <fieldset className="space-y-1.5">
-            <legend className="text-sm font-semibold text-[#404145]">
+            <legend className="text-sm font-semibold text-[#1a1a17]">
               Which authenticator are you using?
             </legend>
-            <p className="text-xs text-[#62646a]">
+            <p className="text-xs text-[#5f5d57]">
               Each authenticator shows its own code, so pick the one you have
               with you.
             </p>
@@ -135,8 +135,8 @@ function VerifyForm() {
                   key={f.id}
                   className={`flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm ${
                     factorId === f.id
-                      ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                      : 'border-[#e4e5e7] text-[#404145] hover:bg-[#fafefb]'
+                      ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                      : 'border-[#e3dfd6] text-[#1a1a17] hover:bg-[#f4f5fe]'
                   }`}
                 >
                   <input
@@ -148,7 +148,7 @@ function VerifyForm() {
                       setFactorId(f.id)
                       setCodeError(null)
                     }}
-                    className="accent-[#1dbf73]"
+                    className="accent-[#2f3cf5]"
                   />
                   {f.name}
                 </label>
@@ -158,7 +158,7 @@ function VerifyForm() {
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="code" className="text-sm font-semibold text-[#404145]">
+          <Label htmlFor="code" className="text-sm font-semibold text-[#1a1a17]">
             Authentication code
           </Label>
           <CodeInput
@@ -178,7 +178,7 @@ function VerifyForm() {
         <Button
           type="submit"
           disabled={!factorId || loading || code.length !== 6}
-          className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+          className="h-11 w-full bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
         >
           {(loading || factors === null) && (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -196,8 +196,8 @@ function VerifyForm() {
 
 function LostAccessHelp({ hasBackup }: { hasBackup: boolean }) {
   return (
-    <details className="mt-6 rounded-lg border border-[#e4e5e7] bg-[#fafefb] px-4 py-3 text-xs text-[#62646a]">
-      <summary className="cursor-pointer text-sm font-semibold text-[#404145]">
+    <details className="mt-6 rounded-lg border border-[#e3dfd6] bg-[#f4f5fe] px-4 py-3 text-xs text-[#5f5d57]">
+      <summary className="cursor-pointer text-sm font-semibold text-[#1a1a17]">
         Lost access to your authenticator?
       </summary>
       <div className="mt-2 space-y-2 leading-relaxed">
@@ -225,7 +225,7 @@ function LostAccessHelp({ hasBackup }: { hasBackup: boolean }) {
             href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
               'Lost access to my authenticator'
             )}`}
-            className="font-semibold text-[#1dbf73] hover:underline"
+            className="font-semibold text-[#2f3cf5] hover:underline"
           >
             {SUPPORT_EMAIL}
           </a>{' '}

@@ -25,9 +25,9 @@ export function AccountTabs({ role }: { role: NavRole }) {
   }, [current])
 
   return (
-    <div className="border-b border-[#e5e7eb] bg-white">
+    <div className="border-b border-[#e3dfd6] bg-white">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 sm:px-6">
-        <span className="hidden shrink-0 text-sm font-bold text-[#111827] md:block">Account</span>
+        <span className="hidden shrink-0 text-sm font-bold text-[#1a1a17] md:block">Account</span>
         <nav
           aria-label="Account"
           className="-mb-px flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -35,7 +35,7 @@ export function AccountTabs({ role }: { role: NavRole }) {
           {groups.map((group, gi) => (
             <Fragment key={group.label}>
               {gi > 0 && (
-                <span aria-hidden className="mx-2 h-5 w-px shrink-0 bg-[#e5e7eb]" />
+                <span aria-hidden className="mx-2 h-5 w-px shrink-0 bg-[#e3dfd6]" />
               )}
               <div role="group" aria-label={group.label} className="flex shrink-0 items-center gap-1">
                 {group.items.map((item) => {
@@ -49,8 +49,8 @@ export function AccountTabs({ role }: { role: NavRole }) {
                       aria-current={active ? 'page' : undefined}
                       className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-2.5 py-3 text-sm font-medium transition-colors ${
                         active
-                          ? 'border-[#1dbf73] text-[#0f8f56]'
-                          : 'border-transparent text-[#62646a] hover:text-[#404145]'
+                          ? 'border-[#2f3cf5] text-[#2330c8]'
+                          : 'border-transparent text-[#5f5d57] hover:text-[#1a1a17]'
                       }`}
                     >
                       <Icon className="size-4" />

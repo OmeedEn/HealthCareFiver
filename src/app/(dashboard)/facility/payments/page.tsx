@@ -89,14 +89,14 @@ function StatCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[#62646a]">{title}</CardTitle>
-        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
-          <Icon className="size-4 text-[#1dbf73]" />
+        <CardTitle className="text-sm font-medium text-[#5f5d57]">{title}</CardTitle>
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2f3cf5]/10 to-[#2f3cf5]/20">
+          <Icon className="size-4 text-[#2f3cf5]" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#404145]">{value}</div>
-        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
+        <div className="text-2xl font-bold text-[#1a1a17]">{value}</div>
+        <p className="mt-1 text-xs text-[#5f5d57]">{description}</p>
       </CardContent>
     </Card>
   )
@@ -111,7 +111,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
 
   if (normalized === 'released' || normalized === 'paid') {
     return (
-      <Badge className="bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]">
+      <Badge className="bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]">
         {label}
       </Badge>
     )
@@ -173,7 +173,7 @@ export default function FacilityPaymentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+        <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
       </div>
     )
   }
@@ -181,8 +181,8 @@ export default function FacilityPaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Payments</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Payments</h1>
+        <p className="text-[#5f5d57]">
           Track facility spend, escrow, and payouts to your contractors.
         </p>
       </div>
@@ -216,26 +216,26 @@ export default function FacilityPaymentsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold text-[#404145]">
+          <CardTitle className="text-lg font-semibold text-[#1a1a17]">
             Payment history
           </CardTitle>
         </CardHeader>
         <CardContent>
           {payments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                <CreditCard className="size-6 text-[#1dbf73]" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                <CreditCard className="size-6 text-[#2f3cf5]" />
               </div>
-              <h3 className="mt-4 text-base font-semibold text-[#404145]">
+              <h3 className="mt-4 text-base font-semibold text-[#1a1a17]">
                 No payments yet
               </h3>
-              <p className="mt-1 max-w-sm text-sm text-[#62646a]">
+              <p className="mt-1 max-w-sm text-sm text-[#5f5d57]">
                 Once you fund contracts, your outbound payments will appear
                 here.
               </p>
               <Link
                 href={STAFFING_POSTS_ENABLED ? '/facility/jobs/new' : '/facility/listings'}
-                className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#1dbf73] px-4 text-sm font-medium text-white transition-colors hover:bg-[#19a463]"
+                className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#2f3cf5] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2330c8]"
               >
                 {STAFFING_POSTS_ENABLED ? 'Post a job' : 'Add services or events'}
               </Link>
@@ -249,21 +249,21 @@ export default function FacilityPaymentsPage() {
                 return (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between border-b border-[#f1f3f5] py-3 last:border-0"
+                    className="flex items-center justify-between border-b border-[#eeebe4] py-3 last:border-0"
                   >
                     <div className="min-w-0 flex-1 pr-4">
-                      <p className="truncate font-medium text-[#404145]">
+                      <p className="truncate font-medium text-[#1a1a17]">
                         {contractorName}
                       </p>
-                      <p className="mt-0.5 text-xs text-[#62646a]">
+                      <p className="mt-0.5 text-xs text-[#5f5d57]">
                         {formatDate(p.created_at)}
                         {p.contracts?.title ? (
-                          <span className="ml-2 text-[#6b7280]">
+                          <span className="ml-2 text-[#5f5d57]">
                             {p.contracts.title}
                           </span>
                         ) : null}
                         {p.platform_fee > 0 ? (
-                          <span className="ml-2 text-[#6b7280]">
+                          <span className="ml-2 text-[#5f5d57]">
                             Fee {formatCurrency(p.platform_fee)}
                           </span>
                         ) : null}
@@ -275,14 +275,14 @@ export default function FacilityPaymentsPage() {
                           href={p.invoice_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hidden items-center gap-1 text-xs text-[#1dbf73] hover:text-[#19a463] sm:inline-flex"
+                          className="hidden items-center gap-1 text-xs text-[#2f3cf5] hover:text-[#2330c8] sm:inline-flex"
                         >
                           <FileText className="size-3.5" />
                           Invoice
                         </a>
                       ) : null}
                       <div className="flex flex-col items-end">
-                        <span className="font-semibold text-[#404145]">
+                        <span className="font-semibold text-[#1a1a17]">
                           {formatCurrency(p.amount ?? 0)}
                         </span>
                         <div className="mt-1">

@@ -99,7 +99,7 @@ export async function OrgQueue({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[#62646a]">
+      <p className="text-sm text-[#5f5d57]">
         Every organization is reviewed before it can publish, message professionals, or review
         applicants. Oldest first.
       </p>
@@ -112,8 +112,8 @@ export async function OrgQueue({
             className={cn(
               'rounded-full border px-3 py-1 text-sm',
               filter === t.key
-                ? 'border-[#1dbf73] bg-[#e8faf1] font-semibold text-[#0f8f56]'
-                : 'border-[#e4e5e7] text-[#62646a] hover:border-[#1dbf73]'
+                ? 'border-[#2f3cf5] bg-[#eceefe] font-semibold text-[#2330c8]'
+                : 'border-[#e3dfd6] text-[#5f5d57] hover:border-[#2f3cf5]'
             )}
           >
             {t.label} <span className="text-xs opacity-70">{t.count}</span>
@@ -131,7 +131,7 @@ export async function OrgQueue({
           {error ? (
             <p className="text-sm text-red-600">Could not load organizations. Check the server logs.</p>
           ) : rows.length === 0 ? (
-            <p className="text-sm text-[#62646a]">Nothing here.</p>
+            <p className="text-sm text-[#5f5d57]">Nothing here.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -160,11 +160,11 @@ export async function OrgQueue({
                       <TableCell>
                         <Link
                           href={`/admin/organizations/${r.id}`}
-                          className="font-semibold text-[#404145] hover:text-[#1dbf73]"
+                          className="font-semibold text-[#1a1a17] hover:text-[#2f3cf5]"
                         >
                           {r.facility_name || 'Unnamed organization'}
                         </Link>
-                        <div className="text-xs text-[#62646a]">{r.profiles?.email}</div>
+                        <div className="text-xs text-[#5f5d57]">{r.profiles?.email}</div>
                       </TableCell>
                       <TableCell className="text-sm">
                         {[r.city, r.state].filter(Boolean).join(', ') || '—'}
@@ -189,7 +189,7 @@ export async function OrgQueue({
                       <TableCell>
                         {freeEmail && <Badge variant="outline">Free email</Badge>}
                       </TableCell>
-                      <TableCell className="text-sm text-[#62646a]">
+                      <TableCell className="text-sm text-[#5f5d57]">
                         {formatRelativeTime(r.created_at)}
                       </TableCell>
                     </TableRow>

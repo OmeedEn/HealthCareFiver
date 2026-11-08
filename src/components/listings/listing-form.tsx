@@ -126,7 +126,7 @@ export function ListingForm({
   if (!draft) {
     return (
       <div>
-        <h2 className="text-base font-semibold text-[#404145]">
+        <h2 className="text-base font-semibold text-[#1a1a17]">
           What kind of listing is this?
         </h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -137,14 +137,14 @@ export function ListingForm({
                 key={k.kind}
                 type="button"
                 onClick={() => setDraft(emptyListing(k.kind))}
-                className="flex flex-col items-start gap-2 rounded-xl border border-[#e4e5e7] bg-white p-4 text-left transition hover:border-[#bcebd5] hover:bg-[#fafefb]"
+                className="flex flex-col items-start gap-2 rounded-xl border border-[#e3dfd6] bg-white p-4 text-left transition hover:border-[#c9cdfb] hover:bg-[#f4f5fe]"
               >
-                <div className="flex size-9 items-center justify-center rounded-lg bg-[#f7f7f7] text-[#62646a]">
+                <div className="flex size-9 items-center justify-center rounded-lg bg-[#f6f4ef] text-[#5f5d57]">
                   <Icon className="size-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-[#404145]">{k.label}</p>
-                  <p className="mt-0.5 text-xs text-[#62646a]">{k.sub}</p>
+                  <p className="text-sm font-semibold text-[#1a1a17]">{k.label}</p>
+                  <p className="mt-0.5 text-xs text-[#5f5d57]">{k.sub}</p>
                 </div>
               </button>
             )
@@ -160,7 +160,7 @@ export function ListingForm({
   return (
     <div className="space-y-6">
       {status && status !== 'draft' && (
-        <div className="flex items-start gap-2 rounded-lg border border-[#f5deb3] bg-[#fdf6e3] p-3 text-sm text-[#6b5208]">
+        <div className="flex items-start gap-2 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-3 text-sm text-[#8a5a00]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <p>
             {status === 'published'
@@ -170,34 +170,34 @@ export function ListingForm({
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-sm text-[#62646a]">
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#f3f4f6] px-2 py-1 font-medium text-[#404145]">
-          <Check className="size-3.5 text-[#1dbf73]" />
+      <div className="flex items-center gap-2 text-sm text-[#5f5d57]">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#eeebe4] px-2 py-1 font-medium text-[#1a1a17]">
+          <Check className="size-3.5 text-[#2f3cf5]" />
           {kindMeta.label}
         </span>
         {listingId === null && (
           <button
             type="button"
             onClick={() => setDraft(null)}
-            className="font-medium text-[#1dbf73] hover:underline"
+            className="font-medium text-[#2f3cf5] hover:underline"
           >
             Change
           </button>
         )}
       </div>
 
-      <div className="rounded-xl border border-[#e4e5e7] bg-white p-5">
+      <div className="rounded-xl border border-[#e3dfd6] bg-white p-5">
         <ListingFields draft={draft} errors={errors} onChange={update} />
-        <fieldset className="mt-5 space-y-2 border-t border-[#f1f1f2] pt-5">
-          <legend className="text-sm font-semibold text-[#404145]">{HANDS_ON_QUESTION}</legend>
+        <fieldset className="mt-5 space-y-2 border-t border-[#eeebe4] pt-5">
+          <legend className="text-sm font-semibold text-[#1a1a17]">{HANDS_ON_QUESTION}</legend>
           <div className="grid grid-cols-2 gap-2">
             {(['yes', 'no'] as const).map((v) => (
               <label
                 key={v}
                 className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition ${
                   handsOn === v
-                    ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                    : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+                    ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                    : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
                 }`}
               >
                 <input
@@ -216,7 +216,7 @@ export function ListingForm({
                       return next
                     })
                   }}
-                  className="accent-[#1dbf73]"
+                  className="accent-[#2f3cf5]"
                 />
                 {v === 'yes' ? 'Yes' : 'No'}
               </label>
@@ -227,8 +227,8 @@ export function ListingForm({
       </div>
 
       {requiresMalpractice && (
-        <div className="flex items-start gap-2 rounded-lg border border-[#e4e5e7] bg-[#fafafa] p-3 text-sm text-[#404145]">
-          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#8a6508]" aria-hidden="true" />
+        <div className="flex items-start gap-2 rounded-lg border border-[#e3dfd6] bg-[#f6f4ef] p-3 text-sm text-[#1a1a17]">
+          <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#8a5a00]" aria-hidden="true" />
           <p>
             In-person care, home visits, prescribing, injectables, and IVs need
             malpractice coverage.{' '}
@@ -240,7 +240,7 @@ export function ListingForm({
                 certificate is reviewed.{' '}
                 <Link
                   href="/contractor/credentials/upload?type=malpractice_insurance"
-                  className="font-semibold text-[#1dbf73] hover:underline"
+                  className="font-semibold text-[#2f3cf5] hover:underline"
                 >
                   Upload malpractice certificate
                 </Link>

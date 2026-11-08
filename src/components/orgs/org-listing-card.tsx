@@ -65,43 +65,43 @@ export function OrgListingCard({
     .filter(Boolean)
 
   return (
-    <article id={`listing-${l.id}`} className="flex scroll-mt-24 flex-col rounded-2xl border border-[#e5e7eb] bg-white p-5">
-      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#6b7280]">
-        <span className="rounded-md bg-[#f3f4f6] px-2 py-0.5 text-[#374151]">{kindLine}</span>
+    <article id={`listing-${l.id}`} className="flex scroll-mt-24 flex-col rounded-2xl border border-[#e3dfd6] bg-white p-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#5f5d57]">
+        <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-[#3a3934]">{kindLine}</span>
         {l.kind === 'event' && l.offersCeu && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-[#eef6ff] px-2 py-0.5 text-[#1e5aa8]">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#eceefe] px-2 py-0.5 text-[#2330c8]">
             <Award className="size-3" aria-hidden="true" />
             CEU/CME credit
           </span>
         )}
       </div>
-      <h3 className="mt-2 text-base font-semibold text-[#111827]">{l.title}</h3>
+      <h3 className="mt-2 text-base font-semibold text-[#1a1a17]">{l.title}</h3>
       {showOrg && org && (
         <Link
           href={`/orgs/${org.id}`}
-          className="mt-0.5 inline-flex w-fit items-center gap-1 text-sm font-medium text-[#0f8f56] hover:underline"
+          className="mt-0.5 inline-flex w-fit items-center gap-1 text-sm font-medium text-[#2330c8] hover:underline"
         >
           <Building2 className="size-3.5" aria-hidden="true" />
           {org.name}
         </Link>
       )}
       {l.description && (
-        <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-sm text-[#374151]">{l.description}</p>
+        <p className="mt-1.5 line-clamp-3 whitespace-pre-line text-sm text-[#3a3934]">{l.description}</p>
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#6b7280]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#5f5d57]">
         {hidePrice ? (
           org ? (
             <Link
               href={`/orgs/${org.id}#listing-${l.id}`}
-              className="font-semibold text-[#1dbf73] hover:underline"
+              className="font-semibold text-[#2f3cf5] hover:underline"
             >
               {orgListingBrowseHint(l)}
             </Link>
           ) : (
-            <span className="font-semibold text-[#1dbf73]">{orgListingBrowseHint(l)}</span>
+            <span className="font-semibold text-[#2f3cf5]">{orgListingBrowseHint(l)}</span>
           )
         ) : (
-          <span className="font-semibold text-[#1dbf73]">{orgListingPrice(l)}</span>
+          <span className="font-semibold text-[#2f3cf5]">{orgListingPrice(l)}</span>
         )}
         {l.kind === 'event' && (
           <span className="inline-flex items-center gap-1">
@@ -126,7 +126,7 @@ export function OrgListingCard({
           </span>
         )}
       </div>
-      {audiences.length > 0 && <p className="mt-1.5 text-xs text-[#6b7280]">For {audiences.join(', ').toLowerCase()}</p>}
+      {audiences.length > 0 && <p className="mt-1.5 text-xs text-[#5f5d57]">For {audiences.join(', ').toLowerCase()}</p>}
       {footer && <div className="mt-auto pt-4">{footer}</div>}
     </article>
   )
@@ -143,7 +143,7 @@ export function OrgListingCta({ listing, signedIn }: { listing: PublicOrgListing
     return (
       <Link
         href="/signup/looking"
-        className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#1dbf73] text-sm font-semibold text-[#1dbf73] transition hover:bg-[#1dbf73] hover:text-white"
+        className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-[#2f3cf5] text-sm font-semibold text-[#2f3cf5] transition hover:bg-[#2f3cf5] hover:text-white"
       >
         Sign up to {verb}
       </Link>

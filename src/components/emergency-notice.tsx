@@ -22,9 +22,9 @@ export function EmergencyNotice({ variant = 'boxed' }: { variant?: 'boxed' | 'in
       .
     </>
   )
-  if (variant === 'inline') return <p className="text-xs text-[#62646a]">{body}</p>
+  if (variant === 'inline') return <p className="text-xs text-[#5f5d57]">{body}</p>
   return (
-    <div role="note" className="flex gap-2.5 rounded-lg border border-[#f3d9a4] bg-[#fffaf0] p-3 text-sm text-[#5c4300]">
+    <div role="note" className="flex gap-2.5 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-3 text-sm text-[#8a5a00]">
       <Phone className="mt-0.5 size-4 shrink-0" aria-hidden />
       <p>{body}</p>
     </div>

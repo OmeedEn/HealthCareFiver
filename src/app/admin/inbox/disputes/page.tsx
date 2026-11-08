@@ -14,8 +14,8 @@ const STATUS: Record<string, { label: string; className: string }> = {
   open: { label: 'Open', className: 'bg-red-100 text-red-700' },
   under_review: { label: 'Under review', className: 'bg-blue-100 text-blue-800' },
   escalated: { label: 'Escalated', className: 'bg-amber-100 text-amber-800' },
-  resolved_contractor: { label: 'Resolved for professional', className: 'bg-[#e8faf1] text-[#0f8f56]' },
-  resolved_facility: { label: 'Resolved for organization', className: 'bg-[#e8faf1] text-[#0f8f56]' },
+  resolved_contractor: { label: 'Resolved for professional', className: 'bg-[#eceefe] text-[#2330c8]' },
+  resolved_facility: { label: 'Resolved for organization', className: 'bg-[#eceefe] text-[#2330c8]' },
   closed: { label: 'Closed', className: 'bg-gray-100 text-gray-700' },
 }
 
@@ -75,7 +75,7 @@ export default async function AdminDisputesPage({
     }
   }
   const party = (id: string) => (
-    <Link href={`/admin/users/${id}`} className="text-[#404145] hover:text-[#1dbf73] hover:underline">
+    <Link href={`/admin/users/${id}`} className="text-[#1a1a17] hover:text-[#2f3cf5] hover:underline">
       {names.get(id) ?? id.slice(0, 8)}
     </Link>
   )
@@ -89,8 +89,8 @@ export default async function AdminDisputesPage({
             href={t.key === 'open' ? '/admin/inbox/disputes' : `/admin/inbox/disputes?tab=${t.key}`}
             className={`rounded-full border px-3 py-1 text-xs ${
               t.key === activeTab.key
-                ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#1dbf73]'
+                ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#2f3cf5]'
             }`}
           >
             {t.label}
@@ -106,7 +106,7 @@ export default async function AdminDisputesPage({
 
       {!error && disputes.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-[#62646a]">
+          <CardContent className="py-12 text-center text-sm text-[#5f5d57]">
             No disputes here. Disputes are opened by either side of a contract.
           </CardContent>
         </Card>
@@ -119,29 +119,29 @@ export default async function AdminDisputesPage({
                 <CardContent className="space-y-3 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge className={s.className}>{s.label}</Badge>
-                    <h3 className="font-semibold text-[#404145]">{d.reason}</h3>
+                    <h3 className="font-semibold text-[#1a1a17]">{d.reason}</h3>
                   </div>
-                  <p className="text-xs text-[#62646a]">
+                  <p className="text-xs text-[#5f5d57]">
                     {party(d.opened_by)} vs {party(d.against)}
                     {d.contracts?.title ? ` · ${d.contracts.title}` : ''} · opened {formatDateTime(d.created_at)} (
                     {formatRelativeTime(d.created_at)})
                   </p>
                   {d.description && (
-                    <p className="whitespace-pre-wrap rounded-md bg-gray-50 p-3 text-sm text-[#404145]">{d.description}</p>
+                    <p className="whitespace-pre-wrap rounded-md bg-gray-50 p-3 text-sm text-[#1a1a17]">{d.description}</p>
                   )}
                   {d.resolution && (
-                    <p className="text-sm text-[#404145]">
+                    <p className="text-sm text-[#1a1a17]">
                       <span className="font-medium">Resolution:</span> {d.resolution}
                     </p>
                   )}
                   <form
                     action={updateDispute.bind(null, d.id)}
-                    className="flex flex-wrap items-center gap-2 border-t border-[#f1f3f5] pt-3"
+                    className="flex flex-wrap items-center gap-2 border-t border-[#eeebe4] pt-3"
                   >
                     <select
                       name="status"
                       defaultValue={d.status}
-                      className="h-9 rounded-md border border-[#e4e5e7] bg-white px-2 text-sm"
+                      className="h-9 rounded-md border border-[#e3dfd6] bg-white px-2 text-sm"
                     >
                       {Object.entries(STATUS).map(([value, { label }]) => (
                         <option key={value} value={value}>
@@ -153,9 +153,9 @@ export default async function AdminDisputesPage({
                       name="resolution"
                       defaultValue={d.resolution ?? ''}
                       placeholder="Resolution notes (required to resolve or close)"
-                      className="h-9 min-w-48 flex-1 rounded-md border border-[#e4e5e7] px-3 text-sm outline-none focus:border-[#1dbf73]"
+                      className="h-9 min-w-48 flex-1 rounded-md border border-[#e3dfd6] px-3 text-sm outline-none focus:border-[#2f3cf5]"
                     />
-                    <button className="h-9 rounded-md bg-[#1dbf73] px-3 text-sm font-medium text-white hover:bg-[#19a463]">
+                    <button className="h-9 rounded-md bg-[#2f3cf5] px-3 text-sm font-medium text-white hover:bg-[#2330c8]">
                       Save
                     </button>
                   </form>

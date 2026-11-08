@@ -44,7 +44,7 @@ export function RequestBookingButton({ listing }: { listing: PublicOrgListing })
         type="button"
         onClick={() => void start()}
         disabled={checking}
-        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-semibold text-white transition hover:bg-[#19a463] disabled:opacity-70"
+        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[#2f3cf5] text-sm font-semibold text-white transition hover:bg-[#2330c8] disabled:opacity-70"
       >
         {label}
       </button>
@@ -99,7 +99,7 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
                     const n = Number(e.target.value)
                     if (Number.isFinite(n)) setQuantity(Math.max(1, Math.min(maxSpots, Math.round(n))))
                   }}
-                  className="h-14 w-20 rounded-xl border border-[#e4e5e7] bg-white text-center text-3xl font-bold text-[#404145] outline-none [appearance:textfield] focus:border-[#1dbf73] focus:ring-3 focus:ring-[#1dbf73]/20 [&::-webkit-inner-spin-button]:appearance-none"
+                  className="h-14 w-20 rounded-xl border border-[#e3dfd6] bg-white text-center text-3xl font-bold text-[#1a1a17] outline-none [appearance:textfield] focus:border-[#2f3cf5] focus:ring-3 focus:ring-[#2f3cf5]/20 [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <StepButton label="One more" disabled={quantity >= maxSpots} onClick={() => setQuantity((q) => Math.min(maxSpots, q + 1))}>
                   <Plus className="size-5" />
@@ -170,7 +170,7 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
       },
       render: ({ errors }) => (
         <>
-          <dl className="space-y-2 rounded-xl border border-[#e4e5e7] bg-white p-5 text-sm">
+          <dl className="space-y-2 rounded-xl border border-[#e3dfd6] bg-white p-5 text-sm">
             <Row label={listing.kind === 'event' ? 'Event' : 'Service'} value={listing.title} />
             {listing.kind === 'event' && <Row label="Spots" value={String(quantity)} />}
             {listing.kind === 'service' && (
@@ -185,9 +185,9 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
             label="I agree to the Booking Terms and will keep booking, payment, and messages on Sanus."
             error={errors.terms}
           />
-          <p className="text-xs text-[#62646a]">
+          <p className="text-xs text-[#5f5d57]">
             Read the{' '}
-            <Link href={BOOKING_TERMS_PATH} target="_blank" className="font-semibold text-[#0f8f56] underline">
+            <Link href={BOOKING_TERMS_PATH} target="_blank" className="font-semibold text-[#2330c8] underline">
               Booking Terms
             </Link>
             .
@@ -210,8 +210,8 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-[#62646a]">{label}</dt>
-      <dd className="text-right font-semibold text-[#404145]">{value}</dd>
+      <dt className="text-[#5f5d57]">{label}</dt>
+      <dd className="text-right font-semibold text-[#1a1a17]">{value}</dd>
     </div>
   )
 }
@@ -235,7 +235,7 @@ function StepButton({
       // Keep focus in the number field so Enter still continues.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className="flex size-12 items-center justify-center rounded-full border border-[#e4e5e7] bg-white text-[#404145] transition hover:border-[#1dbf73] hover:text-[#1dbf73] disabled:opacity-40"
+      className="flex size-12 items-center justify-center rounded-full border border-[#e3dfd6] bg-white text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2f3cf5] disabled:opacity-40"
     >
       {children}
     </button>

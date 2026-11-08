@@ -241,8 +241,8 @@ export function useListingQuestions({
   }
 
   const malpracticeNote = (
-    <p className="flex items-start gap-2 rounded-lg border border-[#e4e5e7] bg-[#fafafa] p-3 text-sm text-[#404145]">
-      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#8a6508]" aria-hidden="true" />
+    <p className="flex items-start gap-2 rounded-lg border border-[#e3dfd6] bg-[#f6f4ef] p-3 text-sm text-[#1a1a17]">
+      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#8a5a00]" aria-hidden="true" />
       <span>
         This needs malpractice coverage.{' '}
         {insured ? (
@@ -252,7 +252,7 @@ export function useListingQuestions({
             It can go live once your malpractice certificate is reviewed.{' '}
             <Link
               href="/contractor/credentials/upload?type=malpractice_insurance"
-              className="font-semibold text-[#1dbf73] hover:underline"
+              className="font-semibold text-[#2f3cf5] hover:underline"
             >
               Upload it anytime
             </Link>

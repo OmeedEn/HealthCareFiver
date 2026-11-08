@@ -15,11 +15,11 @@ import { useSessionUser, type SessionUser } from './use-session-user'
 export function SanusLogo() {
   return (
     <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Sanus home">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#1dbf73] text-base font-bold text-white">
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2f3cf5] text-base font-bold text-white">
         S
       </div>
-      <span className="text-2xl font-bold tracking-tight text-[#111827]">
-        Sanus<span className="text-[#1dbf73]">.</span>
+      <span className="text-2xl font-bold tracking-tight text-[#1a1a17]">
+        Sanus<span className="text-[#2f3cf5]">.</span>
       </span>
     </Link>
   )
@@ -52,13 +52,13 @@ function SignedOutActions() {
     <>
       <Link
         href="/login"
-        className="hidden text-sm font-medium text-[#6b7280] transition hover:text-[#111827] sm:block"
+        className="hidden text-sm font-medium text-[#5f5d57] transition hover:text-[#1a1a17] sm:block"
       >
         Sign in
       </Link>
       <Link
         href="/signup"
-        className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
+        className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
       >
         Join Sanus
       </Link>
@@ -96,18 +96,18 @@ function MobileMenu({
 
   const linkClass = (active: boolean) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${
-      active ? 'bg-[#f0faf5] font-semibold text-[#1dbf73]' : 'text-[#374151] hover:bg-[#f3f4f6]'
+      active ? 'bg-[#f4f5fe] font-semibold text-[#2f3cf5]' : 'text-[#3a3934] hover:bg-[#eeebe4]'
     }`
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" showCloseButton className="w-80 gap-0 overflow-y-auto p-0">
-        <SheetHeader className="border-b border-[#e5e7eb] px-4 py-4">
+        <SheetHeader className="border-b border-[#e3dfd6] px-4 py-4">
           <SheetTitle className="text-left">Menu</SheetTitle>
         </SheetHeader>
 
         <nav aria-label="Explore" className="px-3 py-3">
-          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
+          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#706d65]">
             Explore
           </p>
           {PUBLIC_NAV.map((item) => {
@@ -122,16 +122,16 @@ function MobileMenu({
 
         {user ? (
           <>
-            <div className="flex items-center gap-3 border-t border-[#e5e7eb] px-6 py-4">
+            <div className="flex items-center gap-3 border-t border-[#e3dfd6] px-6 py-4">
               <UserAvatar user={user} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[#111827]">{user.name}</p>
-                {user.email && <p className="truncate text-xs text-[#6b7280]">{user.email}</p>}
+                <p className="truncate text-sm font-semibold text-[#1a1a17]">{user.name}</p>
+                {user.email && <p className="truncate text-xs text-[#5f5d57]">{user.email}</p>}
               </div>
             </div>
             {accountGroups.map((group) => (
               <nav key={group.label} aria-label={group.label} className="px-3 pb-3">
-                <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
+                <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#706d65]">
                   {group.label}
                 </p>
                 {group.items.map((item) => {
@@ -152,7 +152,7 @@ function MobileMenu({
             ))}
             {extraLinks.length > 0 && (
               <nav aria-label="Profile" className="px-3 pb-3">
-                <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#9ca3af]">
+                <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-[#706d65]">
                   Profile
                 </p>
                 {extraLinks.map((item) => {
@@ -166,7 +166,7 @@ function MobileMenu({
                 })}
               </nav>
             )}
-            <div className="border-t border-[#e5e7eb] px-3 py-3">
+            <div className="border-t border-[#e3dfd6] px-3 py-3">
               <button
                 type="button"
                 onClick={() => {
@@ -181,18 +181,18 @@ function MobileMenu({
             </div>
           </>
         ) : (
-          <div className="flex flex-col gap-2 border-t border-[#e5e7eb] px-6 py-4">
+          <div className="flex flex-col gap-2 border-t border-[#e3dfd6] px-6 py-4">
             <Link
               href="/signup"
               onClick={close}
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white hover:bg-[#19a463]"
+              className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white hover:bg-[#2330c8]"
             >
               Join Sanus
             </Link>
             <Link
               href="/login"
               onClick={close}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-[#e5e7eb] px-5 text-sm font-semibold text-[#374151] hover:bg-[#f3f4f6]"
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-[#e3dfd6] px-5 text-sm font-semibold text-[#3a3934] hover:bg-[#eeebe4]"
             >
               Sign in
             </Link>
@@ -227,13 +227,13 @@ export function TopNav({
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[#e5e7eb] bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-20">
+    <header className="sticky top-0 z-40 border-b border-[#e3dfd6] bg-white/95 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:h-20">
         <SanusLogo />
 
         <nav
           aria-label="Main"
-          className="hidden items-center gap-7 text-sm font-medium text-[#6b7280] lg:flex"
+          className="hidden items-center gap-7 text-sm font-medium text-[#5f5d57] lg:flex"
         >
           {PUBLIC_NAV.map((item) => (
             <Link
@@ -242,8 +242,8 @@ export function TopNav({
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={
                 isActive(item.href)
-                  ? 'font-semibold text-[#1dbf73]'
-                  : 'transition hover:text-[#111827]'
+                  ? 'font-semibold text-[#2f3cf5]'
+                  : 'transition hover:text-[#1a1a17]'
               }
             >
               {item.label}
@@ -267,7 +267,7 @@ export function TopNav({
             onClick={() => setOpen(true)}
             aria-expanded={open}
             aria-label="Open menu"
-            className="rounded-md p-1.5 text-[#374151] hover:bg-[#f3f4f6] lg:hidden"
+            className="rounded-md p-1.5 text-[#3a3934] hover:bg-[#eeebe4] lg:hidden"
           >
             <Menu className="h-5 w-5" />
           </button>

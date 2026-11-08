@@ -168,7 +168,7 @@ export function ChecklistItem({
                   href={l.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-[#1dbf73] hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-[#2f3cf5] hover:underline"
                 >
                   {l.label}
                   <ExternalLink className="size-3" />

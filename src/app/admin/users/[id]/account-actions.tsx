@@ -41,10 +41,10 @@ export function AccountActions({ userId, isActive }: { userId: string; isActive:
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="font-sans">
           <DialogHeader>
-            <DialogTitle className="text-[#404145]">
+            <DialogTitle className="text-[#1a1a17]">
               {isActive ? 'Suspend this account?' : 'Reactivate this account?'}
             </DialogTitle>
-            <DialogDescription className="text-[#62646a]">
+            <DialogDescription className="text-[#5f5d57]">
               {isActive
                 ? 'This blocks sign-in until you reactivate the account. A session that’s already open ends when its token expires (within about an hour). Verification status and listings are not changed, and no email is sent.'
                 : 'They can sign in again. Their verification status is not changed.'}

@@ -263,13 +263,13 @@ export default function MessagesPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">Messages</h1>
-          <p className="text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Messages</h1>
+          <p className="text-[#5f5d57]">
             {copy.subtitle}
           </p>
         </div>
         <Button
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
           disabled={!currentUserId || openingSupport}
           onClick={openSupportThread}
         >
@@ -285,7 +285,7 @@ export default function MessagesPage() {
       {restricted && (
         <p
           role="status"
-          className="rounded-md border border-[#e4e5e7] bg-white px-4 py-3 text-sm text-[#62646a]"
+          className="rounded-md border border-[#e3dfd6] bg-white px-4 py-3 text-sm text-[#5f5d57]"
         >
           Messaging professionals isn&apos;t available on your account.
           You can still browse, save, and book.
@@ -295,7 +295,7 @@ export default function MessagesPage() {
       <Card>
         <CardContent>
           <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#6b7280]" />
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#5f5d57]" />
             <Input
               type="search"
               placeholder="Search by name or message"
@@ -309,27 +309,27 @@ export default function MessagesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2Icon className="size-6 animate-spin text-[#1dbf73]" />
+          <Loader2Icon className="size-6 animate-spin text-[#2f3cf5]" />
         </div>
       ) : currentUserId ? (
         filteredConversations.length === 0 ? (
           <Card>
             <CardContent>
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                  <MessageSquareIcon className="size-6 text-[#1dbf73]" />
+                <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                  <MessageSquareIcon className="size-6 text-[#2f3cf5]" />
                 </div>
-                <h3 className="mt-4 text-base font-semibold text-[#404145]">
+                <h3 className="mt-4 text-base font-semibold text-[#1a1a17]">
                   {search ? 'No matching conversations' : 'No messages yet'}
                 </h3>
-                <p className="mt-1 max-w-sm text-sm text-[#62646a]">
+                <p className="mt-1 max-w-sm text-sm text-[#5f5d57]">
                   {search
                     ? 'Try a different name or keyword to find a conversation.'
                     : copy.empty}
                 </p>
                 {!search && (
                   <Link href={copy.cta.href} className="mt-6">
-                    <Button className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
+                    <Button className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]">
                       {copy.cta.label}
                     </Button>
                   </Link>

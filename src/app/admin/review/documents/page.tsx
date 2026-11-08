@@ -194,7 +194,7 @@ export default function AdminCredentialsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 font-sans">
-        <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+        <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
       </div>
     )
   }
@@ -203,10 +203,10 @@ export default function AdminCredentialsPage() {
     <div className="space-y-6 font-sans">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-[#404145]">
+          <h2 className="text-lg font-semibold text-[#1a1a17]">
             Documents
           </h2>
-          <p className="text-sm text-[#62646a]">
+          <p className="text-sm text-[#5f5d57]">
             Verify professional licenses, certifications, and compliance documents, and see
             what organizations awaiting review have uploaded.
           </p>
@@ -216,19 +216,19 @@ export default function AdminCredentialsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-[#404145]">Professional credentials</CardTitle>
+          <CardTitle className="text-[#1a1a17]">Professional credentials</CardTitle>
         </CardHeader>
         <CardContent>
           {credentials.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                <ShieldCheck className="size-6 text-[#0f8f56]" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                <ShieldCheck className="size-6 text-[#2330c8]" />
               </div>
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-[#404145]">
+                <p className="text-sm font-semibold text-[#1a1a17]">
                   Queue is clear
                 </p>
-                <p className="text-sm text-[#6b7280]">
+                <p className="text-sm text-[#5f5d57]">
                   Nothing to review right now. New submissions will appear here.
                 </p>
               </div>
@@ -238,17 +238,17 @@ export default function AdminCredentialsPage() {
               {credentials.map((credential) => (
                 <div
                   key={credential.id}
-                  className="flex items-start gap-3 border-b border-[#f1f3f5] py-3 last:border-0"
+                  className="flex items-start gap-3 border-b border-[#eeebe4] py-3 last:border-0"
                 >
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#e8faf1]">
-                    <ShieldCheck className="size-5 text-[#0f8f56]" />
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#eceefe]">
+                    <ShieldCheck className="size-5 text-[#2330c8]" />
                   </div>
                   <div className="flex flex-1 flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <Link
                           href={`/admin/users/${credential.contractor_id}`}
-                          className="text-sm font-semibold text-[#404145] hover:text-[#1dbf73] hover:underline"
+                          className="text-sm font-semibold text-[#1a1a17] hover:text-[#2f3cf5] hover:underline"
                         >
                           {credential.contractor_profiles?.first_name ?? ''}{' '}
                           {credential.contractor_profiles?.last_name ?? ''}
@@ -265,21 +265,21 @@ export default function AdminCredentialsPage() {
                             : 'Pending upload'}
                         </Badge>
                       </div>
-                      <p className="text-sm text-[#62646a]">
+                      <p className="text-sm text-[#5f5d57]">
                         {credential.name}
-                        <span className="text-[#6b7280]">
+                        <span className="text-[#5f5d57]">
                           {' '}
                           · {credential.credential_type}
                         </span>
                       </p>
-                      <p className="text-xs text-[#6b7280]">
+                      <p className="text-xs text-[#5f5d57]">
                         Submitted {formatDate(credential.created_at)}
                       </p>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs">
                         {credential.email && (
                           <a
                             href={`mailto:${credential.email}?subject=${encodeURIComponent(`Your ${credential.name} credential`)}`}
-                            className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline"
+                            className="inline-flex items-center gap-1 text-[#2330c8] hover:underline"
                           >
                             <Mail className="size-3" />
                             {credential.email}
@@ -288,7 +288,7 @@ export default function AdminCredentialsPage() {
                         {credential.phone && (
                           <a
                             href={`tel:${credential.phone}`}
-                            className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline"
+                            className="inline-flex items-center gap-1 text-[#2330c8] hover:underline"
                           >
                             <Phone className="size-3" />
                             {credential.phone}
@@ -296,21 +296,21 @@ export default function AdminCredentialsPage() {
                         )}
                         <Link
                           href={`/admin/messages/${credential.contractor_id}`}
-                          className="inline-flex items-center gap-1 font-medium text-[#0f8f56] hover:underline"
+                          className="inline-flex items-center gap-1 font-medium text-[#2330c8] hover:underline"
                         >
                           <MessageSquare className="size-3" />
                           Message in app
                         </Link>
                         <Link
                           href={`/admin/users/${credential.contractor_id}`}
-                          className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                          className="inline-flex items-center gap-1 text-[#5f5d57] hover:text-[#2f3cf5] hover:underline"
                         >
                           <User className="size-3" />
                           Full profile
                         </Link>
                         <Link
                           href={`/admin/verification/${credential.contractor_id}`}
-                          className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                          className="inline-flex items-center gap-1 text-[#5f5d57] hover:text-[#2f3cf5] hover:underline"
                         >
                           <ShieldCheck className="size-3" />
                           Verification review
@@ -337,7 +337,7 @@ export default function AdminCredentialsPage() {
                           View
                         </Button>
                       ) : (
-                        <span className="text-xs text-[#6b7280]">
+                        <span className="text-xs text-[#5f5d57]">
                           No document
                         </span>
                       )}
@@ -345,7 +345,7 @@ export default function AdminCredentialsPage() {
                         size="xs"
                         disabled={processing === credential.id}
                         onClick={() => handleApprove(credential.id)}
-                        className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                        className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                       >
                         {processing === credential.id ? (
                           <Loader2
@@ -384,25 +384,25 @@ export default function AdminCredentialsPage() {
       {!demo && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[#404145]">Organization documents</CardTitle>
+            <CardTitle className="text-[#1a1a17]">Organization documents</CardTitle>
           </CardHeader>
           <CardContent>
             {orgDocs.length === 0 ? (
-              <p className="text-sm text-[#6b7280]">
+              <p className="text-sm text-[#5f5d57]">
                 No uploads from organizations awaiting review.
               </p>
             ) : (
-              <ul className="divide-y divide-[#f1f3f5]">
+              <ul className="divide-y divide-[#eeebe4]">
                 {orgDocs.map((d) => (
                   <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
                     <div className="min-w-0">
                       <Link
                         href={`/admin/organizations/${d.facilityId}`}
-                        className="font-semibold text-[#404145] hover:text-[#1dbf73] hover:underline"
+                        className="font-semibold text-[#1a1a17] hover:text-[#2f3cf5] hover:underline"
                       >
                         {d.orgName}
                       </Link>
-                      <p className="text-xs text-[#62646a]">
+                      <p className="text-xs text-[#5f5d57]">
                         {d.kind} · {d.filename} · uploaded {formatDate(d.uploadedAt)}
                       </p>
                     </div>
@@ -412,14 +412,14 @@ export default function AdminCredentialsPage() {
                           href={d.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-[#1dbf73] hover:underline"
+                          className="inline-flex items-center gap-1 text-xs text-[#2f3cf5] hover:underline"
                         >
                           View <ExternalLink className="size-3" />
                         </a>
                       )}
                       <Link
                         href={`/admin/organizations/${d.facilityId}`}
-                        className="text-xs text-[#62646a] hover:text-[#1dbf73] hover:underline"
+                        className="text-xs text-[#5f5d57] hover:text-[#2f3cf5] hover:underline"
                       >
                         Review organization
                       </Link>
@@ -435,16 +435,16 @@ export default function AdminCredentialsPage() {
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="font-sans">
           <DialogHeader>
-            <DialogTitle className="text-[#404145]">
+            <DialogTitle className="text-[#1a1a17]">
               Reject Credential
             </DialogTitle>
-            <DialogDescription className="text-[#62646a]">
+            <DialogDescription className="text-[#5f5d57]">
               Provide a reason for rejecting this credential. The professional
               gets an in-app notification with your note.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="reject-notes" className="text-[#404145]">
+            <Label htmlFor="reject-notes" className="text-[#1a1a17]">
               Rejection Notes
             </Label>
             <Textarea

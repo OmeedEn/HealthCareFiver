@@ -54,7 +54,7 @@ export function ProfileCard({ data }: { data: ProfileCardData }) {
   return (
     <section
       aria-label="Your profile"
-      className="overflow-hidden rounded-2xl border border-[#bcebd5] bg-gradient-to-br from-[#f0faf5] via-white to-white shadow-sm"
+      className="overflow-hidden rounded-2xl border border-[#c9cdfb] bg-gradient-to-br from-[#f4f5fe] via-white to-white shadow-sm"
     >
       <div className="flex flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
@@ -68,46 +68,46 @@ export function ProfileCard({ data }: { data: ProfileCardData }) {
           ) : (
             <Link
               href="/contractor/profile/edit#basic"
-              className="flex size-20 shrink-0 items-center justify-center rounded-full border-4 border-white bg-[#e8faf1] text-2xl font-bold text-[#0f8f56] shadow-sm sm:size-24"
+              className="flex size-20 shrink-0 items-center justify-center rounded-full border-4 border-white bg-[#eceefe] text-2xl font-bold text-[#2330c8] shadow-sm sm:size-24"
               aria-label="Add a headshot"
             >
               {initials}
             </Link>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold tracking-wide text-[#0f8f56] uppercase">
+            <p className="text-xs font-semibold tracking-wide text-[#2330c8] uppercase">
               Your public profile
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <h2 className="truncate text-xl font-bold text-[#404145] sm:text-2xl">{name}</h2>
+              <h2 className="truncate text-xl font-bold text-[#1a1a17] sm:text-2xl">{name}</h2>
               {data.verified && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#1dbf73] px-2 py-0.5 text-xs font-semibold text-white">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#2f3cf5] px-2 py-0.5 text-xs font-semibold text-white">
                   <BadgeCheck className="size-3.5" aria-hidden="true" />
                   Verified
                 </span>
               )}
             </div>
-            <p className="mt-0.5 line-clamp-1 text-sm text-[#62646a]">
+            <p className="mt-0.5 line-clamp-1 text-sm text-[#5f5d57]">
               {data.headline || 'Add a headline so clients know what you do.'}
             </p>
             <div className="mt-3 max-w-sm">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#404145]">Profile {pct}% complete</span>
+                <span className="font-semibold text-[#1a1a17]">Profile {pct}% complete</span>
                 {next && (
-                  <Link href={next.href} className="font-semibold text-[#0f8f56] hover:underline">
+                  <Link href={next.href} className="font-semibold text-[#2330c8] hover:underline">
                     Next: {next.label}
                   </Link>
                 )}
               </div>
               <div
-                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[#e4e5e7]"
+                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
                 role="progressbar"
                 aria-valuenow={pct}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-label="Profile completeness"
               >
-                <div className="h-full rounded-full bg-[#1dbf73]" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-[#2f3cf5]" style={{ width: `${pct}%` }} />
               </div>
             </div>
           </div>
@@ -116,7 +116,7 @@ export function ProfileCard({ data }: { data: ProfileCardData }) {
         <div className="flex w-full flex-col gap-2.5 lg:w-auto lg:min-w-72">
           <Link
             href="/contractor/profile/edit"
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#1dbf73] px-6 text-base font-bold text-white shadow-sm transition hover:bg-[#19a463] focus-visible:ring-4 focus-visible:ring-[#1dbf73]/30 focus-visible:outline-none"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2f3cf5] px-6 text-base font-bold text-white shadow-sm transition hover:bg-[#2330c8] focus-visible:ring-4 focus-visible:ring-[#2f3cf5]/30 focus-visible:outline-none"
           >
             <Pencil className="size-5" aria-hidden="true" />
             Edit profile
@@ -152,7 +152,7 @@ function SecondaryLink({
   return (
     <Link
       href={href}
-      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-[#e4e5e7] bg-white px-2 text-xs font-semibold text-[#404145] transition hover:border-[#1dbf73] hover:text-[#0f8f56] sm:text-sm"
+      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-[#e3dfd6] bg-white px-2 text-xs font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2330c8] sm:text-sm"
       title={title}
     >
       <Icon className="size-4 shrink-0" aria-hidden="true" />

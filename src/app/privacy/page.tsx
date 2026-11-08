@@ -24,7 +24,7 @@ const sections: LegalSection[] = [
         <p>
           Sanus is a marketplace and does not itself provide medical care.
           See our{' '}
-          <Link href="/terms" className="text-[#0f8f56] underline">
+          <Link href="/terms" className="text-[#2330c8] underline">
             Terms of Service
           </Link>{' '}
           for more on our role.

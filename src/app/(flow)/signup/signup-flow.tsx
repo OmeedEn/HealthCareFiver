@@ -227,9 +227,9 @@ function SignupFlowRun({ start, onStartOver }: { start: SignupStart | null; onSt
           }}
           columns={1}
         />
-        <p className="text-center text-sm text-[#62646a]">
+        <p className="text-center text-sm text-[#5f5d57]">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-[#1dbf73] hover:underline">
+          <Link href="/login" className="font-semibold text-[#2f3cf5] hover:underline">
             Sign in
           </Link>
         </p>
@@ -288,7 +288,7 @@ function SignupFlowRun({ start, onStartOver }: { start: SignupStart | null; onSt
           <button
             type="button"
             onClick={onStartOver}
-            className="rounded text-xs font-medium text-[#95979d] underline-offset-4 transition hover:text-[#62646a] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+            className="rounded text-xs font-medium text-[#706d65] underline-offset-4 transition hover:text-[#5f5d57] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
           >
             Start over
           </button>

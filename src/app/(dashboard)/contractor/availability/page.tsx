@@ -227,13 +227,13 @@ export default function AvailabilityPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">Availability</h1>
-          <p className="text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Availability</h1>
+          <p className="text-[#5f5d57]">
             Set your weekly availability and block out time off
           </p>
         </div>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+          <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
         </div>
       </div>
     )
@@ -255,13 +255,13 @@ export default function AvailabilityPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">Availability</h1>
-          <p className="text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Availability</h1>
+          <p className="text-[#5f5d57]">
             Set your weekly availability and block out time off
           </p>
           <Link
             href="/contractor/rates"
-            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#1dbf73] hover:text-[#19a463]"
+            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#2f3cf5] hover:text-[#2330c8]"
           >
             Set your rates <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
@@ -269,7 +269,7 @@ export default function AvailabilityPage() {
         <Button
           onClick={addSlot}
           disabled={saving}
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
         >
           <Plus className="size-4 mr-2" />
           Add slot
@@ -279,11 +279,11 @@ export default function AvailabilityPage() {
       {/* Weekly schedule overview grid */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[#404145]">
-            <Calendar className="size-5 text-[#1dbf73]" />
+          <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+            <Calendar className="size-5 text-[#2f3cf5]" />
             Weekly schedule
           </CardTitle>
-          <CardDescription className="text-[#62646a]">
+          <CardDescription className="text-[#5f5d57]">
             Your recurring availability for each day of the week
           </CardDescription>
         </CardHeader>
@@ -298,11 +298,11 @@ export default function AvailabilityPage() {
                   key={day}
                   className={`rounded-lg border p-3 ${
                     hasShifts
-                      ? 'border-[#bcebd5] bg-[#e8faf1]'
-                      : 'border-[#f1f3f5] bg-white'
+                      ? 'border-[#c9cdfb] bg-[#eceefe]'
+                      : 'border-[#eeebe4] bg-white'
                   }`}
                 >
-                  <div className="text-sm font-medium text-[#404145]">
+                  <div className="text-sm font-medium text-[#1a1a17]">
                     {day.slice(0, 3)}
                   </div>
                   {hasShifts ? (
@@ -310,7 +310,7 @@ export default function AvailabilityPage() {
                       {dayShifts.map((s) => (
                         <div
                           key={s.id}
-                          className="text-xs text-[#0f8f56]"
+                          className="text-xs text-[#2330c8]"
                         >
                           {(s.start_time || '08:00').slice(0, 5)}–
                           {(s.end_time || '17:00').slice(0, 5)}
@@ -318,7 +318,7 @@ export default function AvailabilityPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="mt-1 text-xs text-[#6b7280]">Off</div>
+                    <div className="mt-1 text-xs text-[#5f5d57]">Off</div>
                   )}
                 </div>
               )
@@ -327,23 +327,23 @@ export default function AvailabilityPage() {
 
           {/* Editable list of recurring slots */}
           {recurringSlots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#f1f3f5] py-10 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                <Calendar className="size-6 text-[#1dbf73]" />
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-[#eeebe4] py-10 text-center">
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                <Calendar className="size-6 text-[#2f3cf5]" />
               </div>
-              <h3 className="mt-3 text-lg font-semibold text-[#404145]">
+              <h3 className="mt-3 text-lg font-semibold text-[#1a1a17]">
                 No recurring availability
               </h3>
-              <p className="mt-1 text-sm text-[#62646a]">
+              <p className="mt-1 text-sm text-[#5f5d57]">
                 Click &quot;Add slot&quot; above to set hours for a day.
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-[#404145]">
+              <h2 className="text-lg font-semibold text-[#1a1a17]">
                 Weekly slots
               </h2>
-              <div className="divide-y divide-[#f1f3f5] rounded-lg border border-[#f1f3f5]">
+              <div className="divide-y divide-[#eeebe4] rounded-lg border border-[#eeebe4]">
                 {recurringSlots.map((slot) => (
                   <div
                     key={slot.id}
@@ -381,7 +381,7 @@ export default function AvailabilityPage() {
                         }
                         className="w-32"
                       />
-                      <span className="text-sm text-[#62646a]">to</span>
+                      <span className="text-sm text-[#5f5d57]">to</span>
                       <Input
                         type="time"
                         value={slot.end_time || '17:00'}
@@ -394,7 +394,7 @@ export default function AvailabilityPage() {
 
                     <Badge
                       variant="outline"
-                      className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                      className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]"
                     >
                       Available
                     </Badge>
@@ -406,7 +406,7 @@ export default function AvailabilityPage() {
                         onClick={() => deleteSlot(slot.id)}
                         aria-label="Remove slot"
                       >
-                        <Trash2 className="size-4 text-[#62646a]" />
+                        <Trash2 className="size-4 text-[#5f5d57]" />
                       </Button>
                     </div>
                   </div>
@@ -422,11 +422,11 @@ export default function AvailabilityPage() {
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <CardTitle className="flex items-center gap-2 text-[#404145]">
-                <CalendarOff className="size-5 text-[#1dbf73]" />
+              <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+                <CalendarOff className="size-5 text-[#2f3cf5]" />
                 Date blocks
               </CardTitle>
-              <CardDescription className="text-[#62646a]">
+              <CardDescription className="text-[#5f5d57]">
                 Block specific dates when you&apos;re not available
               </CardDescription>
             </div>
@@ -439,18 +439,18 @@ export default function AvailabilityPage() {
         <CardContent>
           {blockedSlots.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                <Calendar className="size-6 text-[#1dbf73]" />
+              <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                <Calendar className="size-6 text-[#2f3cf5]" />
               </div>
-              <h3 className="mt-3 text-lg font-semibold text-[#404145]">
+              <h3 className="mt-3 text-lg font-semibold text-[#1a1a17]">
                 No date blocks
               </h3>
-              <p className="mt-1 text-sm text-[#62646a]">
+              <p className="mt-1 text-sm text-[#5f5d57]">
                 Add a block to mark vacation or other time off.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#f1f3f5]">
+            <div className="divide-y divide-[#eeebe4]">
               {blockedSlots.map((slot) => (
                 <div
                   key={slot.id}
@@ -465,7 +465,7 @@ export default function AvailabilityPage() {
                       }
                       className="w-40"
                     />
-                    <span className="text-sm text-[#62646a]">to</span>
+                    <span className="text-sm text-[#5f5d57]">to</span>
                     <Input
                       type="date"
                       value={slot.end_date || ''}
@@ -486,7 +486,7 @@ export default function AvailabilityPage() {
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className="border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
+                      className="border-[#f4c7c2] bg-[#fdecea] text-[#b42318]"
                     >
                       Blocked
                     </Badge>
@@ -496,7 +496,7 @@ export default function AvailabilityPage() {
                       onClick={() => deleteSlot(slot.id)}
                       aria-label="Remove block"
                     >
-                      <Trash2 className="size-4 text-[#62646a]" />
+                      <Trash2 className="size-4 text-[#5f5d57]" />
                     </Button>
                   </div>
                 </div>

@@ -23,7 +23,7 @@ export function AdminSignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={busy}
-      className="inline-flex items-center gap-1 font-medium hover:text-[#1dbf73] disabled:opacity-50"
+      className="inline-flex items-center gap-1 font-medium hover:text-[#2f3cf5] disabled:opacity-50"
     >
       <LogOut className="size-3.5" aria-hidden="true" />
       {busy ? 'Signing out…' : 'Log out'}

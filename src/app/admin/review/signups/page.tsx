@@ -34,8 +34,8 @@ const label = (opts: readonly { value: string; label: string }[], v: string) =>
 function Field({ name, children }: { name: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">{name}</dt>
-      <dd className="break-words text-sm text-[#404145]">{children}</dd>
+      <dt className="text-xs uppercase tracking-wide text-[#706d65]">{name}</dt>
+      <dd className="break-words text-sm text-[#1a1a17]">{children}</dd>
     </div>
   )
 }
@@ -46,7 +46,7 @@ function WebsiteAnswer({ value }: { value: string | null }) {
   const href = website ?? linkedin
   if (!href) return <>{value}</>
   return (
-    <a href={href} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline">
+    <a href={href} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-1 text-[#2330c8] hover:underline">
       {value} <ExternalLink className="size-3" />
     </a>
   )
@@ -54,7 +54,7 @@ function WebsiteAnswer({ value }: { value: string | null }) {
 
 /** Shown for questions the single-question flow no longer asks (collected after placement). */
 function AskedLater() {
-  return <span className="text-[#9ca3af]">Asked later</span>
+  return <span className="text-[#706d65]">Asked later</span>
 }
 
 /** "City, ST", whichever part is known, or null. */
@@ -101,7 +101,7 @@ function ShareReport({ rows }: { rows: SignupPathShare[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base text-[#404145]">Signups by door</CardTitle>
+        <CardTitle className="text-base text-[#1a1a17]">Signups by door</CardTitle>
         <CardDescription>
           Non-admin accounts by the door they signed up through. &ldquo;No door&rdquo; is accounts created
           outside the two-door signup (e.g. invited or pre-backfill).
@@ -121,7 +121,7 @@ function ShareReport({ rows }: { rows: SignupPathShare[] }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[420px] text-sm">
             <thead>
-              <tr className="border-b text-left text-xs uppercase tracking-wide text-[#9ca3af]">
+              <tr className="border-b text-left text-xs uppercase tracking-wide text-[#706d65]">
                 <th className="py-2 pr-4 font-medium">Door</th>
                 <th className="py-2 pr-4 text-right font-medium">Last 30 days</th>
                 <th className="py-2 pr-4 text-right font-medium">Share</th>
@@ -131,15 +131,15 @@ function ShareReport({ rows }: { rows: SignupPathShare[] }) {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.path ?? 'none'} className={`border-b border-[#f1f3f5] ${r.path === 'UNSURE' && alert ? 'bg-amber-50' : ''}`}>
-                  <td className="py-2 pr-4 text-[#404145]">{r.path ? SIGNUP_PATH_SHORT_LABELS[r.path] : 'No door'}</td>
+                <tr key={r.path ?? 'none'} className={`border-b border-[#eeebe4] ${r.path === 'UNSURE' && alert ? 'bg-amber-50' : ''}`}>
+                  <td className="py-2 pr-4 text-[#1a1a17]">{r.path ? SIGNUP_PATH_SHORT_LABELS[r.path] : 'No door'}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{r.last30}</td>
-                  <td className="py-2 pr-4 text-right tabular-nums text-[#62646a]">{pct(r.last30, total30)}</td>
+                  <td className="py-2 pr-4 text-right tabular-nums text-[#5f5d57]">{pct(r.last30, total30)}</td>
                   <td className="py-2 pr-4 text-right tabular-nums">{r.allTime}</td>
-                  <td className="py-2 text-right tabular-nums text-[#62646a]">{pct(r.allTime, totalAll)}</td>
+                  <td className="py-2 text-right tabular-nums text-[#5f5d57]">{pct(r.allTime, totalAll)}</td>
                 </tr>
               ))}
-              <tr className="font-medium text-[#404145]">
+              <tr className="font-medium text-[#1a1a17]">
                 <td className="py-2 pr-4">Total</td>
                 <td className="py-2 pr-4 text-right tabular-nums">{total30}</td>
                 <td />
@@ -149,7 +149,7 @@ function ShareReport({ rows }: { rows: SignupPathShare[] }) {
             </tbody>
           </table>
         </div>
-        <p className="text-xs text-[#6b7280]">
+        <p className="text-xs text-[#5f5d57]">
           Not sure share: {pct(unsure?.last30 ?? 0, total30)} in the last 30 days, {pct(unsure?.allTime ?? 0, totalAll)} all
           time. Alert threshold {Math.round(UNSURE_SHARE_ALERT * 100)}%.
         </p>
@@ -179,8 +179,8 @@ export default async function ClassificationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-[#404145]">Needs classification</h2>
-        <p className="mt-1 text-sm text-[#62646a]">
+        <h2 className="text-lg font-semibold text-[#1a1a17]">Needs classification</h2>
+        <p className="mt-1 text-sm text-[#5f5d57]">
           People who picked &ldquo;Not sure&rdquo; at signup. Until they&apos;re placed they can browse, save,
           and book as a client, but can&apos;t message professionals. Assigning switches their account type
           and emails them a Finish setup link; rejecting keeps them a client.
@@ -188,22 +188,22 @@ export default async function ClassificationPage() {
       </div>
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-[#404145]">
+        <h2 className="text-lg font-semibold text-[#1a1a17]">
           Waiting <Badge variant="outline" className="ml-1 align-middle">{queue.length}</Badge>
         </h2>
         {queue.length === 0 ? (
           <Card>
-            <CardContent className="py-6 text-sm text-[#6b7280]">Nobody is waiting for placement.</CardContent>
+            <CardContent className="py-6 text-sm text-[#5f5d57]">Nobody is waiting for placement.</CardContent>
           </Card>
         ) : (
           queue.map((item) => (
             <Card key={item.userId}>
               <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2">
                 <div>
-                  <CardTitle className="text-base text-[#404145]">{item.name}</CardTitle>
+                  <CardTitle className="text-base text-[#1a1a17]">{item.name}</CardTitle>
                   <CardDescription>Signed up {formatDateTime(item.signedUpAt)}</CardDescription>
                 </div>
-                <Link href={`/admin/users/${item.userId}`} className="text-sm text-[#62646a] hover:text-[#1dbf73]">
+                <Link href={`/admin/users/${item.userId}`} className="text-sm text-[#5f5d57] hover:text-[#2f3cf5]">
                   Full account →
                 </Link>
               </CardHeader>
@@ -214,14 +214,14 @@ export default async function ClassificationPage() {
                   {item.request ? (
                     <>
                       <div className="min-w-0 sm:col-span-2 lg:col-span-3">
-                        <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">What they do</dt>
-                        <dd className="whitespace-pre-wrap break-words text-sm text-[#404145]">{item.request.what_you_do}</dd>
+                        <dt className="text-xs uppercase tracking-wide text-[#706d65]">What they do</dt>
+                        <dd className="whitespace-pre-wrap break-words text-sm text-[#1a1a17]">{item.request.what_you_do}</dd>
                       </div>
                       <Answers r={item.request} />
                     </>
                   ) : (
                     <Field name="Answers">
-                      <span className="text-[#b8860b]">Hasn&apos;t answered the Not sure questions yet.</span>
+                      <span className="text-[#8a5a00]">Hasn&apos;t answered the Not sure questions yet.</span>
                     </Field>
                   )}
                 </dl>
@@ -236,7 +236,7 @@ export default async function ClassificationPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base text-[#404145]">Recent &ldquo;What do you do?&rdquo; answers</CardTitle>
+          <CardTitle className="text-base text-[#1a1a17]">Recent &ldquo;What do you do?&rdquo; answers</CardTitle>
           <CardDescription>
             The latest {answers.length} Not sure answers, including ones already placed — look for
             recurring kinds of work that don&apos;t fit an existing door.
@@ -244,19 +244,19 @@ export default async function ClassificationPage() {
         </CardHeader>
         <CardContent>
           {answers.length === 0 ? (
-            <p className="text-sm text-[#6b7280]">No answers yet.</p>
+            <p className="text-sm text-[#5f5d57]">No answers yet.</p>
           ) : (
-            <ul className="divide-y divide-[#f1f3f5]">
+            <ul className="divide-y divide-[#eeebe4]">
               {answers.map((a) => (
                 <li key={a.user_id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm">
                   <div className="min-w-0 flex-1">
-                    <p className="whitespace-pre-wrap break-words text-[#404145]">{a.what_you_do}</p>
-                    <p className="mt-1 text-xs text-[#6b7280]">
-                      <Link href={`/admin/users/${a.user_id}`} className="hover:text-[#1dbf73]">{a.name}</Link>
+                    <p className="whitespace-pre-wrap break-words text-[#1a1a17]">{a.what_you_do}</p>
+                    <p className="mt-1 text-xs text-[#5f5d57]">
+                      <Link href={`/admin/users/${a.user_id}`} className="hover:text-[#2f3cf5]">{a.name}</Link>
                       {' · '}{label(UNSURE_TEAM_SIZES, a.team_size)}
                       {cityState(a) ? ` · ${cityState(a)}` : ''} · {formatDateTime(a.created_at)}
                     </p>
-                    {a.decision_note && <p className="mt-1 text-xs text-[#62646a]">Note: {a.decision_note}</p>}
+                    {a.decision_note && <p className="mt-1 text-xs text-[#5f5d57]">Note: {a.decision_note}</p>}
                   </div>
                   <Badge variant="outline">
                     {a.decision === 'REJECTED'

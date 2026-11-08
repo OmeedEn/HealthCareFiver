@@ -95,7 +95,7 @@ export function HeadshotUpload({
     <div className="flex items-center gap-4">
       <Avatar size="lg" className="size-20">
         {avatarUrl && <AvatarImage src={avatarUrl} alt="Your headshot" />}
-        <AvatarFallback className="bg-[#e8faf1] text-xl font-semibold text-[#0f8f56]">
+        <AvatarFallback className="bg-[#eceefe] text-xl font-semibold text-[#2330c8]">
           {initials || '?'}
         </AvatarFallback>
       </Avatar>
@@ -113,7 +113,7 @@ export function HeadshotUpload({
           )}
           {avatarUrl ? 'Change headshot' : 'Upload headshot'}
         </Button>
-        <p className="text-xs text-[#62646a]">
+        <p className="text-xs text-[#5f5d57]">
           A clear, friendly photo of your face. JPG, PNG, or WebP, up to 5 MB.
         </p>
         <input

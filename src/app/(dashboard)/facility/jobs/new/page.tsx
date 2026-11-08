@@ -115,9 +115,9 @@ function SectionTitle({
   children: React.ReactNode
 }) {
   return (
-    <CardTitle className="flex items-center gap-2 text-[#404145]">
-      <span className="flex size-8 items-center justify-center rounded-lg bg-[#e8faf1]">
-        <Icon className="size-4 text-[#1dbf73]" />
+    <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-[#eceefe]">
+        <Icon className="size-4 text-[#2f3cf5]" />
       </span>
       {children}
     </CardTitle>
@@ -276,15 +276,15 @@ export default function FacilityNewJobPage() {
     <div className="mx-auto max-w-4xl space-y-6 pb-24">
       <Link
         href="/facility/jobs"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to jobs
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Post a new job</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Post a new job</h1>
+        <p className="text-[#5f5d57]">
           Fill in the details below to create a new posting. You can save as
           a draft and publish later, or publish now to start receiving
           applicants.
@@ -311,7 +311,7 @@ export default function FacilityNewJobPage() {
               onChange={(e) => updateField('title', e.target.value)}
               required
             />
-            <p className="text-xs text-[#62646a]">
+            <p className="text-xs text-[#5f5d57]">
               A clear, specific title gets 3× more qualified applicants.
             </p>
           </div>
@@ -327,7 +327,7 @@ export default function FacilityNewJobPage() {
               value={form.description}
               onChange={(e) => updateField('description', e.target.value)}
             />
-            <p className="text-xs text-[#62646a]">
+            <p className="text-xs text-[#5f5d57]">
               {form.description.length} characters. Aim for 150–300 words.
             </p>
           </div>
@@ -717,12 +717,12 @@ export default function FacilityNewJobPage() {
       </Card>
 
       {/* Sticky action bar */}
-      <div className="sticky bottom-0 -mx-4 border-t border-[#e4e5e7] bg-white px-4 py-3 sm:-mx-6 sm:px-6">
+      <div className="sticky bottom-0 -mx-4 border-t border-[#e3dfd6] bg-white px-4 py-3 sm:-mx-6 sm:px-6">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
-          <p className="hidden text-xs text-[#62646a] sm:block">
+          <p className="hidden text-xs text-[#5f5d57] sm:block">
             {form.title.trim() ? (
               <>
-                <span className="font-medium text-[#404145]">
+                <span className="font-medium text-[#1a1a17]">
                   Ready to {form.contractor_type ? 'publish' : 'save'}
                 </span>
                 {' · '}
@@ -737,7 +737,7 @@ export default function FacilityNewJobPage() {
           </p>
           <div className="ml-auto flex items-center gap-3">
             {publishBlockedReason && (
-              <p className="max-w-xs text-right text-xs text-[#b8860b]">
+              <p className="max-w-xs text-right text-xs text-[#8a5a00]">
                 {publishBlockedReason}
               </p>
             )}
@@ -755,7 +755,7 @@ export default function FacilityNewJobPage() {
               disabled={loading !== null || !form.title.trim() || !!publishBlockedReason}
               title={publishBlockedReason ?? undefined}
               onClick={() => handleSubmit('open')}
-              className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
             >
               {loading === 'open' && (
                 <Loader2 className="mr-2 size-4 animate-spin" />
@@ -811,7 +811,7 @@ function ChipListField({
           size="icon"
           onClick={onAdd}
           aria-label={`Add ${label.toLowerCase()}`}
-          className="border-[#bcebd5] text-[#0f8f56] hover:bg-[#e8faf1]"
+          className="border-[#c9cdfb] text-[#2330c8] hover:bg-[#eceefe]"
         >
           <PlusIcon className="size-4" />
         </Button>
@@ -823,7 +823,7 @@ function ChipListField({
               key={s}
               type="button"
               onClick={() => onRemove(s)}
-              className="inline-flex items-center gap-1 rounded-full bg-[#e8faf1] px-3 py-1 text-xs font-medium text-[#0f8f56] hover:bg-[#d3f4e3]"
+              className="inline-flex items-center gap-1 rounded-full bg-[#eceefe] px-3 py-1 text-xs font-medium text-[#2330c8] hover:bg-[#dfe2fd]"
             >
               {s}
               <XIcon className="size-3" />
@@ -831,7 +831,7 @@ function ChipListField({
           ))}
         </div>
       ) : helper ? (
-        <p className="text-xs text-[#62646a]">{helper}</p>
+        <p className="text-xs text-[#5f5d57]">{helper}</p>
       ) : null}
     </div>
   )
@@ -853,8 +853,8 @@ function BrandedCheckbox({
       htmlFor={id}
       className={`flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2.5 text-sm transition-colors ${
         checked
-          ? 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]'
-          : 'border-[#e4e5e7] bg-white text-[#404145] hover:bg-[#f7f7f7]'
+          ? 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]'
+          : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:bg-[#f6f4ef]'
       }`}
     >
       <input
@@ -862,7 +862,7 @@ function BrandedCheckbox({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-4 cursor-pointer accent-[#1dbf73]"
+        className="size-4 cursor-pointer accent-[#2f3cf5]"
       />
       <span className="font-medium">{label}</span>
     </label>
@@ -884,7 +884,7 @@ function CurrencyInput({
 }) {
   return (
     <div className="relative">
-      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
+      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#5f5d57]">
         $
       </span>
       <Input
@@ -898,7 +898,7 @@ function CurrencyInput({
         className={suffix ? 'pl-7 pr-12' : 'pl-7'}
       />
       {suffix && (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#6b7280]">
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#5f5d57]">
           {suffix}
         </span>
       )}

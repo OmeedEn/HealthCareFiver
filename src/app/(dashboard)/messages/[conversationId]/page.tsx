@@ -277,7 +277,7 @@ export default function ConversationPage() {
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-[#e4e5e7] pb-3">
+      <div className="flex items-center gap-3 border-b border-[#e3dfd6] pb-3">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -290,7 +290,7 @@ export default function ConversationPage() {
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-sm font-semibold text-[#404145]">
+          <h1 className="truncate text-sm font-semibold text-[#1a1a17]">
             {otherName}
           </h1>
         </div>
@@ -299,7 +299,7 @@ export default function ConversationPage() {
       {/* Messages */}
       {loading ? (
         <div className="flex flex-1 items-center justify-center">
-          <Loader2Icon className="size-6 animate-spin text-[#1dbf73]" />
+          <Loader2Icon className="size-6 animate-spin text-[#2f3cf5]" />
         </div>
       ) : currentUserId ? (
         <>
@@ -320,7 +320,7 @@ export default function ConversationPage() {
           {sendBlocked ? (
             <p
               role="status"
-              className="border-t border-[#e4e5e7] px-4 py-3 text-center text-sm text-[#62646a]"
+              className="border-t border-[#e3dfd6] px-4 py-3 text-center text-sm text-[#5f5d57]"
             >
               Messaging professionals isn&apos;t available on your account.
               You can still browse, save, and book.

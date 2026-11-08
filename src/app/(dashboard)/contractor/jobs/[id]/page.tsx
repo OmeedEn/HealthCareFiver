@@ -181,7 +181,7 @@ export default async function ContractorJobDetailPage({
     <div className="space-y-6">
       <Link
         href="/contractor/jobs"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to jobs
@@ -190,14 +190,14 @@ export default async function ContractorJobDetailPage({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-[#404145]">{typedJob.title}</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a17]">{typedJob.title}</h1>
           {facility && (
-            <p className="flex items-center gap-1.5 text-[#62646a]">
+            <p className="flex items-center gap-1.5 text-[#5f5d57]">
               <Building className="size-4" />
               {facility.facility_name}
             </p>
           )}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-[#62646a]">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-[#5f5d57]">
             {location && (
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="size-4" />
@@ -235,7 +235,7 @@ export default async function ContractorJobDetailPage({
             )}
             {typedJob.is_remote && <Badge variant="outline">Remote</Badge>}
             {typedJob.status === 'open' && (
-              <Badge className="bg-[#e8faf1] text-[#0f8f56]">Open</Badge>
+              <Badge className="bg-[#eceefe] text-[#2330c8]">Open</Badge>
             )}
           </div>
         </div>
@@ -252,7 +252,7 @@ export default async function ContractorJobDetailPage({
                 <CardTitle>Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="whitespace-pre-wrap text-sm leading-relaxed text-[#62646a]">
+                <div className="whitespace-pre-wrap text-sm leading-relaxed text-[#5f5d57]">
                   {typedJob.description}
                 </div>
               </CardContent>
@@ -267,8 +267,8 @@ export default async function ContractorJobDetailPage({
             <CardContent className="space-y-4">
               {typedJob.contractor_type && (
                 <div className="space-y-1">
-                  <p className="text-xs text-[#6b7280]">Contractor Type</p>
-                  <p className="text-sm text-[#111827]">
+                  <p className="text-xs text-[#5f5d57]">Contractor Type</p>
+                  <p className="text-sm text-[#1a1a17]">
                     {CONTRACTOR_TYPE_LABELS[typedJob.contractor_type] ??
                       typedJob.contractor_type}
                   </p>
@@ -276,8 +276,8 @@ export default async function ContractorJobDetailPage({
               )}
               {typedJob.years_experience_min != null && (
                 <div className="space-y-1">
-                  <p className="text-xs text-[#6b7280]">Minimum Experience</p>
-                  <p className="text-sm text-[#111827]">
+                  <p className="text-xs text-[#5f5d57]">Minimum Experience</p>
+                  <p className="text-sm text-[#1a1a17]">
                     {typedJob.years_experience_min} year
                     {typedJob.years_experience_min !== 1 ? 's' : ''}
                   </p>
@@ -286,7 +286,7 @@ export default async function ContractorJobDetailPage({
               {typedJob.specialties_required &&
                 typedJob.specialties_required.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-xs text-[#6b7280]">
+                    <p className="text-xs text-[#5f5d57]">
                       Required Specialties
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -301,7 +301,7 @@ export default async function ContractorJobDetailPage({
               {typedJob.required_credentials &&
                 typedJob.required_credentials.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-xs text-[#6b7280]">
+                    <p className="text-xs text-[#5f5d57]">
                       Required Credentials
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -316,7 +316,7 @@ export default async function ContractorJobDetailPage({
               {typedJob.required_certifications &&
                 typedJob.required_certifications.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-xs text-[#6b7280]">
+                    <p className="text-xs text-[#5f5d57]">
                       Required Certifications
                     </p>
                     <div className="flex flex-wrap gap-1.5">
@@ -330,10 +330,10 @@ export default async function ContractorJobDetailPage({
                 )}
               {typedJob.additional_requirements && (
                 <div className="space-y-1">
-                  <p className="text-xs text-[#6b7280]">
+                  <p className="text-xs text-[#5f5d57]">
                     Additional Requirements
                   </p>
-                  <p className="whitespace-pre-wrap text-sm text-[#62646a]">
+                  <p className="whitespace-pre-wrap text-sm text-[#5f5d57]">
                     {typedJob.additional_requirements}
                   </p>
                 </div>
@@ -345,7 +345,7 @@ export default async function ContractorJobDetailPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-1.5">
-                <Calendar className="size-4 text-[#1dbf73]" />
+                <Calendar className="size-4 text-[#2f3cf5]" />
                 Schedule
               </CardTitle>
             </CardHeader>
@@ -353,40 +353,40 @@ export default async function ContractorJobDetailPage({
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {typedJob.start_date && (
                   <div className="space-y-1">
-                    <dt className="text-xs text-[#6b7280]">Start Date</dt>
-                    <dd className="text-sm text-[#111827]">
+                    <dt className="text-xs text-[#5f5d57]">Start Date</dt>
+                    <dd className="text-sm text-[#1a1a17]">
                       {formatDate(typedJob.start_date)}
                     </dd>
                   </div>
                 )}
                 {typedJob.end_date && (
                   <div className="space-y-1">
-                    <dt className="text-xs text-[#6b7280]">End Date</dt>
-                    <dd className="text-sm text-[#111827]">
+                    <dt className="text-xs text-[#5f5d57]">End Date</dt>
+                    <dd className="text-sm text-[#1a1a17]">
                       {formatDate(typedJob.end_date)}
                     </dd>
                   </div>
                 )}
                 {typedJob.shifts_per_week != null && (
                   <div className="space-y-1">
-                    <dt className="text-xs text-[#6b7280]">Shifts / Week</dt>
-                    <dd className="text-sm text-[#111827]">
+                    <dt className="text-xs text-[#5f5d57]">Shifts / Week</dt>
+                    <dd className="text-sm text-[#1a1a17]">
                       {typedJob.shifts_per_week}
                     </dd>
                   </div>
                 )}
                 {typedJob.hours_per_week != null && (
                   <div className="space-y-1">
-                    <dt className="text-xs text-[#6b7280]">Hours / Week</dt>
-                    <dd className="text-sm text-[#111827]">
+                    <dt className="text-xs text-[#5f5d57]">Hours / Week</dt>
+                    <dd className="text-sm text-[#1a1a17]">
                       {typedJob.hours_per_week}
                     </dd>
                   </div>
                 )}
                 {typedJob.hours_per_shift != null && (
                   <div className="space-y-1">
-                    <dt className="text-xs text-[#6b7280]">Hours / Shift</dt>
-                    <dd className="text-sm text-[#111827]">
+                    <dt className="text-xs text-[#5f5d57]">Hours / Shift</dt>
+                    <dd className="text-sm text-[#1a1a17]">
                       {typedJob.hours_per_shift}
                     </dd>
                   </div>
@@ -400,28 +400,28 @@ export default async function ContractorJobDetailPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-1.5">
-                  <Building className="size-4 text-[#1dbf73]" />
+                  <Building className="size-4 text-[#2f3cf5]" />
                   About the Facility
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <p className="text-sm font-semibold text-[#111827]">
+                <p className="text-sm font-semibold text-[#1a1a17]">
                   {facility.facility_name}
                 </p>
                 {facility.facility_type && (
-                  <p className="text-sm text-[#62646a]">
+                  <p className="text-sm text-[#5f5d57]">
                     {facility.facility_type}
                   </p>
                 )}
                 {(facility.city || facility.state) && (
-                  <p className="inline-flex items-center gap-1.5 text-sm text-[#62646a]">
+                  <p className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57]">
                     <MapPin className="size-3.5" />
                     {[facility.city, facility.state].filter(Boolean).join(', ')}
                   </p>
                 )}
                 {facility.average_rating != null && (
-                  <p className="inline-flex items-center gap-1.5 text-sm text-[#62646a]">
-                    <Star className="size-3.5 text-[#1dbf73]" />
+                  <p className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57]">
+                    <Star className="size-3.5 text-[#2f3cf5]" />
                     {facility.average_rating.toFixed(1)} / 5
                   </p>
                 )}
@@ -433,16 +433,16 @@ export default async function ContractorJobDetailPage({
         {/* Sidebar */}
         <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
           {/* Apply CTA */}
-          <Card className="border-[#bcebd5] bg-[#e8faf1]">
+          <Card className="border-[#c9cdfb] bg-[#eceefe]">
             <CardContent className="space-y-4 pt-6">
               <div className="space-y-1">
-                <p className="text-xs font-medium tracking-wide text-[#0f8f56] uppercase">
+                <p className="text-xs font-medium tracking-wide text-[#2330c8] uppercase">
                   Pay Rate
                 </p>
-                <p className="text-2xl font-bold text-[#111827]">
+                <p className="text-2xl font-bold text-[#1a1a17]">
                   {payRange}
                   {payTypeLabel && (
-                    <span className="text-base font-medium text-[#62646a]">
+                    <span className="text-base font-medium text-[#5f5d57]">
                       {payTypeLabel}
                     </span>
                   )}
@@ -467,35 +467,35 @@ export default async function ContractorJobDetailPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-1.5">
-                <DollarSign className="size-4 text-[#1dbf73]" />
+                <DollarSign className="size-4 text-[#2f3cf5]" />
                 Compensation
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-[#6b7280]">Pay Rate</span>
-                <span className="text-[#111827]">
+                <span className="text-[#5f5d57]">Pay Rate</span>
+                <span className="text-[#1a1a17]">
                   {payRange}
                   {payTypeLabel}
                 </span>
               </div>
               {typedJob.overtime_rate != null && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6b7280]">Overtime Rate</span>
-                  <span className="text-[#111827]">
+                  <span className="text-[#5f5d57]">Overtime Rate</span>
+                  <span className="text-[#1a1a17]">
                     {formatCurrency(typedJob.overtime_rate)}/hr
                   </span>
                 </div>
               )}
               {typedJob.travel_reimbursement && (
-                <div className="flex items-center gap-1.5 text-[#62646a]">
-                  <CheckCircle2 className="size-3.5 text-[#1dbf73]" />
+                <div className="flex items-center gap-1.5 text-[#5f5d57]">
+                  <CheckCircle2 className="size-3.5 text-[#2f3cf5]" />
                   Travel Reimbursement
                 </div>
               )}
               {typedJob.housing_provided && (
-                <div className="flex items-center gap-1.5 text-[#62646a]">
-                  <CheckCircle2 className="size-3.5 text-[#1dbf73]" />
+                <div className="flex items-center gap-1.5 text-[#5f5d57]">
+                  <CheckCircle2 className="size-3.5 text-[#2f3cf5]" />
                   Housing Provided
                 </div>
               )}
@@ -506,14 +506,14 @@ export default async function ContractorJobDetailPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-1.5">
-                <MapPin className="size-4 text-[#1dbf73]" />
+                <MapPin className="size-4 text-[#2f3cf5]" />
                 Location
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-1 text-sm text-[#62646a]">
+            <CardContent className="space-y-1 text-sm text-[#5f5d57]">
               <p>{location || 'Location not specified'}</p>
               {typedJob.is_remote && (
-                <p className="text-[#0f8f56]">Remote eligible</p>
+                <p className="text-[#2330c8]">Remote eligible</p>
               )}
             </CardContent>
           </Card>
@@ -522,24 +522,24 @@ export default async function ContractorJobDetailPage({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-1.5">
-                <Briefcase className="size-4 text-[#1dbf73]" />
+                <Briefcase className="size-4 text-[#2f3cf5]" />
                 Job Info
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="inline-flex items-center gap-1.5 text-[#6b7280]">
+                <span className="inline-flex items-center gap-1.5 text-[#5f5d57]">
                   <Users className="size-3.5" />
                   Applicants
                 </span>
-                <span className="text-[#111827]">
+                <span className="text-[#1a1a17]">
                   {typedJob.total_applicants ?? 0}
                 </span>
               </div>
               {typedJob.positions_available != null && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6b7280]">Positions</span>
-                  <span className="text-[#111827]">
+                  <span className="text-[#5f5d57]">Positions</span>
+                  <span className="text-[#1a1a17]">
                     {typedJob.positions_filled ?? 0} /{' '}
                     {typedJob.positions_available} filled
                   </span>
@@ -547,8 +547,8 @@ export default async function ContractorJobDetailPage({
               )}
               {typedJob.published_at && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[#6b7280]">Posted</span>
-                  <span className="text-[#111827]">
+                  <span className="text-[#5f5d57]">Posted</span>
+                  <span className="text-[#1a1a17]">
                     {formatRelativeTime(typedJob.published_at)}
                   </span>
                 </div>

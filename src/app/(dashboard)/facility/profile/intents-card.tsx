@@ -39,13 +39,13 @@ export function OrgIntentsCard({ initial }: { initial: OrgIntent[] }) {
                 aria-pressed={on}
                 onClick={() => setValue(on ? value.filter((k) => k !== i.key) : [...value, i.key])}
                 className={`flex items-start gap-2 rounded-lg border p-3 text-left text-sm transition ${
-                  on ? 'border-[#1dbf73] bg-[#e8faf1]' : 'border-[#e4e5e7] hover:border-[#bcebd5]'
+                  on ? 'border-[#2f3cf5] bg-[#eceefe]' : 'border-[#e3dfd6] hover:border-[#c9cdfb]'
                 }`}
               >
-                <span className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border ${on ? 'border-[#1dbf73] bg-[#1dbf73] text-white' : 'border-[#c5c6c9]'}`}>
+                <span className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border ${on ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white' : 'border-[#cbc6ba]'}`}>
                   {on && <Check className="size-3" />}
                 </span>
-                <span className="font-medium text-[#404145]">{i.label}</span>
+                <span className="font-medium text-[#1a1a17]">{i.label}</span>
               </button>
             )
           })}
@@ -54,7 +54,7 @@ export function OrgIntentsCard({ initial }: { initial: OrgIntent[] }) {
           type="button"
           onClick={save}
           disabled={!dirty || value.length === 0 || saving}
-          className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+          className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
         >
           {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
           Save
