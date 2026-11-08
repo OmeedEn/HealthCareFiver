@@ -13,10 +13,15 @@ import { Loader2, MailWarning } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { GoogleIcon } from '@/components/auth/signup-account'
 
+// With no `?redirectTo=`, sign-in lands on /login/continue, which the proxy
+// resolves to the homepage (or the onboarding wizard / MFA / /admin as
+// needed). See landingUrl in src/proxy.ts.
+const DEFAULT_LANDING = '/login/continue'
+
 // Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
 function safeRedirect(target: string | null): string {
-  if (!target) return '/dashboard'
-  if (!target.startsWith('/') || target.startsWith('//')) return '/dashboard'
+  if (!target) return DEFAULT_LANDING
+  if (!target.startsWith('/') || target.startsWith('//')) return DEFAULT_LANDING
   return target
 }
 
