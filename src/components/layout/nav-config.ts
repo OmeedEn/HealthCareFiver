@@ -18,7 +18,6 @@ import {
   PlusCircle,
   Search,
   Users,
-  AlertTriangle,
   Bell,
   Store,
   Megaphone,
@@ -139,11 +138,9 @@ const ADMIN_ACCOUNT_NAV: NavGroup[] = [
     label: 'Admin',
     items: [
       { label: 'Admin Console', href: '/admin', icon: LayoutDashboard },
-      { label: 'Verification', href: '/admin/verification', icon: ShieldCheck },
-      { label: 'Users', href: '/admin/users', icon: Users },
-      { label: 'Credentials', href: '/admin/credentials', icon: FileText },
-      { label: 'Support inbox', href: '/admin/messages', icon: MessageSquare },
-      { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
+      { label: 'Review', href: '/admin/review', icon: ShieldCheck },
+      { label: 'People', href: '/admin/people', icon: Users },
+      { label: 'Inbox', href: '/admin/inbox', icon: MessageSquare },
     ],
   },
   {

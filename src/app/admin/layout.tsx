@@ -24,7 +24,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-2 md:px-6">
-          <Link href="/admin/verification" className="text-lg font-semibold text-[#404145]">
+          <Link href="/admin" className="text-lg font-semibold text-[#404145]">
             Sanus Admin
           </Link>
           <AdminNav badges={badges} />
