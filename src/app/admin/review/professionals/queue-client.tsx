@@ -21,7 +21,7 @@ import {
   STATUS_LABEL,
   VERIFICATION_STATUSES,
   daysUntil,
-} from './_lib/shared'
+} from '@/app/admin/verification/_lib/shared'
 
 export interface QueueRow {
   id: string

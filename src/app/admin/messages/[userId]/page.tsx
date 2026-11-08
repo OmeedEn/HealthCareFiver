@@ -76,7 +76,7 @@ export default async function AdminUserMessagesPage({
     <div className="flex h-[calc(100vh-9rem)] flex-col gap-3 font-sans">
       <div className="flex flex-wrap items-center gap-3 border-b border-[#e4e5e7] pb-3">
         <Link
-          href="/admin/messages"
+          href="/admin/inbox/messages"
           className="inline-flex items-center gap-1 text-sm text-[#62646a] hover:text-[#1dbf73]"
         >
           <ArrowLeftIcon className="size-4" /> All messages

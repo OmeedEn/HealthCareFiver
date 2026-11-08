@@ -21,7 +21,7 @@ export default function AdminError({
       <CardContent className="space-y-3 pt-6 text-sm text-[#404145]">
         <p className="text-base font-semibold">Something went wrong on this page.</p>
         <p className="text-[#62646a]">
-          Try again, or go back to the Verification queue. If it keeps happening, check the server logs.
+          Try again, or go back to the admin overview. If it keeps happening, check the server logs.
           {error.digest && <span className="block text-xs text-[#95979d]">Reference: {error.digest}</span>}
         </p>
         <div className="flex gap-2">
@@ -29,10 +29,10 @@ export default function AdminError({
             Try again
           </Button>
           <Link
-            href="/admin/verification"
+            href="/admin"
             className="inline-flex h-7 items-center rounded-md border border-[#e4e5e7] px-2.5 text-sm hover:border-[#1dbf73]"
           >
-            Verification
+            Overview
           </Link>
         </div>
       </CardContent>

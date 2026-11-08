@@ -134,8 +134,8 @@ export default async function AdminUserDetailPage({
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm text-[#62646a] hover:text-[#1dbf73]">
-        <ArrowLeft className="size-4" /> All users
+      <Link href="/admin/people" className="inline-flex items-center gap-1 text-sm text-[#62646a] hover:text-[#1dbf73]">
+        <ArrowLeft className="size-4" /> All people
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -206,7 +206,7 @@ export default async function AdminUserDetailPage({
                   &ldquo;What do you do?&rdquo;{' '}
                   {classification.data.decision ? `· decided ${classification.data.decision.toLowerCase()}` : '· '}
                   {!classification.data.decision && (
-                    <Link href="/admin/classification" className="normal-case text-[#1dbf73] hover:underline">waiting in the queue</Link>
+                    <Link href="/admin/review/signups" className="normal-case text-[#1dbf73] hover:underline">waiting in the queue</Link>
                   )}
                 </dt>
                 <dd className="whitespace-pre-wrap break-words text-sm text-[#404145]">{classification.data.what_you_do}</dd>
@@ -344,7 +344,7 @@ export default async function AdminUserDetailPage({
               <li key={b.id} className="flex items-center gap-2">
                 <SeverityBadge severity={b.severity} />
                 <BugStatusBadge status={b.status} />
-                <Link href={`/admin/bugs?id=${b.id}`} className="text-[#404145] hover:underline">{b.title}</Link>
+                <Link href={`/admin/inbox/bugs?tab=all&id=${b.id}`} className="text-[#404145] hover:underline">{b.title}</Link>
                 <span className="text-xs text-[#6b7280]">{formatRelativeTime(b.created_at)}</span>
               </li>
             ))}

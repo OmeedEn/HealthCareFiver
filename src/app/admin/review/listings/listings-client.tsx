@@ -323,7 +323,7 @@ export function ListingsClient({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Listings review</h1>
+          <h2 className="text-lg font-semibold">Listings review</h2>
           <p className="text-sm text-muted-foreground">
             Every listing is reviewed before it goes live.
           </p>
