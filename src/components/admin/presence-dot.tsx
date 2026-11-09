@@ -37,7 +37,7 @@ export function PresenceDot({
       title={label}
       className={cn(
         'inline-block size-2.5 shrink-0 rounded-full',
-        online ? 'bg-[#1dbf73] ring-2 ring-[#1dbf73]/25' : 'border border-[#c5c6c9] bg-white',
+        online ? 'bg-[#2f3cf5] ring-2 ring-[#2f3cf5]/25' : 'border border-[#cbc6ba] bg-white',
         className
       )}
     />
@@ -54,7 +54,7 @@ export function ReplyStateBadge({ needsReply, awaitingUser }: { needsReply: bool
   }
   if (awaitingUser) {
     return (
-      <span className="shrink-0 rounded-full bg-[#f1f3f5] px-2 py-0.5 text-[11px] font-medium text-[#62646a]">
+      <span className="shrink-0 rounded-full bg-[#eeebe4] px-2 py-0.5 text-[11px] font-medium text-[#5f5d57]">
         Waiting on them
       </span>
     )

@@ -48,9 +48,16 @@ export const PRO_COPY = {
   profession: 'What’s your profession or specialty?',
   otherProfession: 'What’s your profession?',
   credentialBasis: 'Do you hold a state license or certification?',
+  /** Allied or certified: optional, never a hard stop. */
+  hasCertifications: 'Do you have any certifications?',
+  hasCertificationsSub: 'Not required to join. If you have any, we’ll verify them.',
   license: 'What’s your license number?',
   licenseWhy: 'We check this with your state licensing board.',
   certifyingOrg: 'Which organization certified you?',
+  /** Allied with certifications: the certification entry screen. */
+  certifications: 'Add your certifications',
+  certificationsWhy: 'We check each certification with the organization that issued it.',
+  addCertification: 'Add another certification',
   website: 'Share a link to your website or LinkedIn.',
   noWebsite: 'I don’t have one',
   account: 'Create your account',
@@ -99,6 +106,72 @@ export const CREDENTIAL_BASIS_OPTIONS: { value: CredentialBasis; label: string }
   { value: 'none', label: 'Neither' },
 ]
 
+/** Allied or certified: "Do you have any certifications?" (stored as credential_basis). */
+export const ALLIED_CERTIFICATION_OPTIONS: {
+  value: Extract<CredentialBasis, 'certification' | 'none'>
+  label: string
+  sub: string
+}[] = [
+  { value: 'certification', label: 'Yes', sub: 'I’ll add them on the next screen.' },
+  { value: 'none', label: 'No', sub: 'No problem. Certifications aren’t required.' },
+]
+
+/* ───────────── Certifications (allied with certifications) ───────────── */
+
+export const CERTIFICATION_NAME_MAX = 100
+export const CERTIFICATION_ORG_MAX = 150
+export const CERTIFICATIONS_MAX = 5
+
+export interface CertificationEntry {
+  /** e.g. Certified Personal Trainer */
+  name: string
+  /** e.g. NASM */
+  organization: string
+}
+
+export const EMPTY_CERTIFICATION: CertificationEntry = { name: '', organization: '' }
+
+/** Rows with anything typed in them (trimmed); blank rows are dropped. */
+export function filledCertifications(list: readonly CertificationEntry[] | null | undefined): CertificationEntry[] {
+  return (list ?? [])
+    // Also reads client input on the server: anything but a string is blank.
+    .map((c) => ({
+      name: typeof c?.name === 'string' ? c.name.trim() : '',
+      organization: typeof c?.organization === 'string' ? c.organization.trim() : '',
+    }))
+    .filter((c) => c.name || c.organization)
+    .slice(0, CERTIFICATIONS_MAX)
+}
+
+/**
+ * contractor_profiles has one certifying_organization text column, so every
+ * certification is kept there (no migration) as
+ * "Organization (Certification); Organization (Certification)". Admin
+ * screens show it as-is. A legacy value (just an organization) parses back
+ * as one row with no certification name.
+ */
+export function formatCertifications(list: readonly CertificationEntry[]): string {
+  const clean = (v: string) => v.replace(/[;()]/g, ' ').replace(/\s+/g, ' ').trim()
+  return filledCertifications(list)
+    .map((c) => {
+      const org = clean(c.organization)
+      const name = clean(c.name)
+      return name ? `${org} (${name})` : org
+    })
+    .filter(Boolean)
+    .join('; ')
+}
+
+export function parseCertifications(stored: string | null | undefined): CertificationEntry[] {
+  if (!stored || !stored.trim()) return []
+  return filledCertifications(
+    stored.split(';').map((part) => {
+      const m = part.trim().match(/^(.+?)\s*\(([^()]*)\)$/)
+      return m ? { organization: m[1], name: m[2] } : { organization: part, name: '' }
+    })
+  )
+}
+
 /** Screen 7 options → the existing self_disclosures jsonb keys (admin flags read these). */
 export const DISCLOSURE_OPTIONS = [
   { value: 'license_action', label: 'License ever suspended, revoked, restricted, surrendered, or investigated' },
@@ -118,10 +191,19 @@ export interface ProSignupAnswers {
   profession: string
   /** Other: "What's your profession?" */
   other_profession: string
-  /** Other: license / certification / none. */
+  /**
+   * Other: license / certification / none. Allied: certification ("Do you
+   * have any certifications?" Yes) / none (No).
+   */
   credential_basis: CredentialBasis | ''
   license_number: string
   license_state: string
+  /** Allied with certifications: one row per certification. */
+  certifications: CertificationEntry[]
+  /**
+   * Legacy single answer, and the stored column's text on the post-account
+   * fallback. Read only when `certifications` is empty.
+   */
   certifying_organization: string
   website_url: string
   /** "I don't have one" on the website screen. */
@@ -135,16 +217,37 @@ export const EMPTY_PRO_ANSWERS: ProSignupAnswers = {
   credential_basis: '',
   license_number: '',
   license_state: '',
+  certifications: [{ ...EMPTY_CERTIFICATION }],
   certifying_organization: '',
   website_url: '',
   no_website: false,
 }
 
-/** Branch once enough is known (Other needs its basis), else null. */
+/**
+ * Categories that ask a credential question before screen 3 (Other:
+ * license / certification / neither; Allied: any certifications?).
+ */
+export function asksCredentialBasis(category: ProfessionalCategory | '' | null | undefined): boolean {
+  return category === 'other' || category === 'allied'
+}
+
+/** Branch once enough is known (Other and Allied need their credential answer), else null. */
 export function branchOf(a: Pick<ProSignupAnswers, 'category' | 'credential_basis'>): ProfessionalBranch | null {
   if (!a.category) return null
-  if (a.category === 'other' && !a.credential_basis) return null
+  if (asksCredentialBasis(a.category) && !a.credential_basis) return null
   return effectiveBranch(a.category, a.credential_basis || null)
+}
+
+/**
+ * Self-disclosures (screen 7): licensed and allied branches, plus every
+ * allied-or-certified professional, certified or not (hands-on work is the
+ * same with or without a certificate). Unknown branch: shown.
+ */
+export function asksDisclosures(
+  category: ProfessionalCategory | '' | null | undefined,
+  branch: ProfessionalBranch | null
+): boolean {
+  return !branch || category === 'allied' || branchHasComplianceQuestions(branch)
 }
 
 /** Screen 3 id for a branch. */
@@ -160,15 +263,19 @@ export function preAccountScreenIds(a: Pick<ProSignupAnswers, 'category' | 'cred
   const ids: ProQuestionId[] = [PRO_Q.category]
   if (a.category === 'other') ids.push(PRO_Q.otherProfession, PRO_Q.credentialBasis)
   else ids.push(PRO_Q.profession)
+  if (a.category === 'allied') ids.push(PRO_Q.credentialBasis)
   const branch = branchOf(a)
   ids.push(branch ? identityScreenFor(branch) : PRO_Q.license)
   return ids
 }
 
-/** Post-account screen ids (5–8). Consultants and educators skip 7. */
-export function postAccountScreenIds(branch: ProfessionalBranch | null): ProQuestionId[] {
+/** Post-account screen ids (5–8). Consultants and educators skip 7 (see asksDisclosures). */
+export function postAccountScreenIds(
+  branch: ProfessionalBranch | null,
+  category: ProfessionalCategory | '' | null = null
+): ProQuestionId[] {
   const ids: ProQuestionId[] = [PRO_Q.credentialUpload, PRO_Q.governmentId]
-  if (!branch || branchHasComplianceQuestions(branch)) ids.push(PRO_Q.disclosures)
+  if (asksDisclosures(category, branch)) ids.push(PRO_Q.disclosures)
   ids.push(PRO_Q.submit)
   return ids
 }
@@ -200,7 +307,18 @@ export const proValid = {
   profession: (v: string) => v.trim().length > 0 && v.trim().length <= PROFESSION_MAX,
   licenseNumber: (v: string) => /^[A-Za-z0-9][A-Za-z0-9 .\-/#]{0,49}$/.test(v.trim()),
   state: (v: string) => STATE_CODES.has(v),
-  certifyingOrg: (v: string) => v.trim().length > 0 && v.trim().length <= 150,
+  certifyingOrg: (v: string) => v.trim().length > 0 && v.trim().length <= CERTIFICATION_ORG_MAX,
+  /** One certification row on the entry screen: both fields. */
+  certification: (c: CertificationEntry) =>
+    c.name.trim().length > 0 &&
+    c.name.trim().length <= CERTIFICATION_NAME_MAX &&
+    c.organization.trim().length > 0 &&
+    c.organization.trim().length <= CERTIFICATION_ORG_MAX,
+  /** The entry screen: at least one row, and every filled row complete. */
+  certifications: (list: readonly CertificationEntry[]): boolean => {
+    const filled = filledCertifications(list)
+    return filled.length > 0 && filled.every((c) => proValid.certification(c))
+  },
   website: (v: string) => normalizeWebsiteUrl(v) !== null,
 }
 
@@ -220,7 +338,12 @@ export const proAnswersSchema = z
     credential_basis: z.enum(['license', 'certification', 'none', '']).default(''),
     license_number: text(50),
     license_state: text(2),
-    certifying_organization: text(150),
+    certifications: z
+      .array(z.object({ name: text(CERTIFICATION_NAME_MAX), organization: text(CERTIFICATION_ORG_MAX) }))
+      .max(CERTIFICATIONS_MAX)
+      .default([]),
+    /** Legacy single answer (older tab or cookie); read when `certifications` is empty. */
+    certifying_organization: text(1000),
     website_url: text(500),
     no_website: z.boolean().default(false),
   })
@@ -232,13 +355,19 @@ export const proAnswersSchema = z
     } else if (!a.profession) {
       issue('profession', 'Tell us your profession or specialty')
     }
-    const branch = effectiveBranch(a.category, a.credential_basis || null)
+    const basis = basisOf(a)
+    if (a.category === 'allied' && basis !== 'certification' && basis !== 'none') {
+      issue('credential_basis', 'Tell us whether you have any certifications')
+    }
+    const branch = effectiveBranch(a.category, basis || null)
     if (branch === 'clinical') {
       if (!proValid.licenseNumber(a.license_number)) issue('license_number', 'Enter your license number')
       if (!proValid.state(a.license_state)) issue('license_state', 'Choose the state that issued your license')
     } else if (branch === 'allied') {
-      if (!proValid.certifyingOrg(a.certifying_organization)) {
-        issue('certifying_organization', 'Tell us which organization certified you')
+      // The organization is required; a legacy (organization-only) answer has no certification name.
+      const certs = certificationsOf(a)
+      if (!certs.length || !certs.every((c) => proValid.certifyingOrg(c.organization))) {
+        issue('certifications', 'Add your certification and the organization that issued it')
       }
     } else if (!a.no_website && !proValid.website(a.website_url)) {
       issue('website_url', 'Enter a link like linkedin.com/in/yourname, or choose “I don’t have one”')
@@ -246,6 +375,26 @@ export const proAnswersSchema = z
   })
 export type ProAnswersInput = z.input<typeof proAnswersSchema>
 export type ProAnswersParsed = z.output<typeof proAnswersSchema>
+
+/** The certifications given: the rows, else the legacy single text. */
+export function certificationsOf(
+  a: Pick<ProSignupAnswers, 'certifications' | 'certifying_organization'>
+): CertificationEntry[] {
+  const rows = filledCertifications(a.certifications)
+  return rows.length ? rows : parseCertifications(a.certifying_organization)
+}
+
+/**
+ * The credential answer to store. An allied answer from before "Do you have
+ * any certifications?" existed (older tab or cookie) has no basis but names
+ * its certifying organization: that's a yes.
+ */
+export function basisOf(
+  a: Pick<ProSignupAnswers, 'category' | 'credential_basis' | 'certifications' | 'certifying_organization'>
+): CredentialBasis | '' {
+  if (a.category === 'allied' && !a.credential_basis && certificationsOf(a).length) return 'certification'
+  return a.credential_basis
+}
 
 /**
  * contractor_profiles columns for screens 1–3, plus the question ids they
@@ -256,17 +405,19 @@ export function contractorColumnsFromAnswers(a: ProAnswersParsed): {
   answered: ProQuestionId[]
 } {
   const isOther = a.category === 'other'
-  const branch = effectiveBranch(a.category, a.credential_basis || null)
+  const basis = basisOf(a)
+  const branch = effectiveBranch(a.category, basis || null)
   const columns: Record<string, unknown> = {
     professional_category: a.category,
     other_profession: isOther ? a.other_profession : null,
-    credential_basis: isOther ? a.credential_basis : null,
+    credential_basis: asksCredentialBasis(a.category) ? basis || null : null,
   }
   const answered: ProQuestionId[] = [PRO_Q.category]
   if (isOther) answered.push(PRO_Q.otherProfession, PRO_Q.credentialBasis)
   else {
     Object.assign(columns, professionColumns(a.category as ProfessionalBranch, a.profession))
     answered.push(PRO_Q.profession)
+    if (a.category === 'allied') answered.push(PRO_Q.credentialBasis)
   }
   if (branch === 'clinical') {
     columns.state_license_number = a.license_number
@@ -274,7 +425,7 @@ export function contractorColumnsFromAnswers(a: ProAnswersParsed): {
     columns.license_states = [a.license_state]
     answered.push(PRO_Q.license)
   } else if (branch === 'allied') {
-    columns.certifying_organization = a.certifying_organization
+    columns.certifying_organization = formatCertifications(certificationsOf(a))
     answered.push(PRO_Q.certifyingOrg)
   } else {
     columns.website_url = a.no_website ? null : normalizeWebsiteUrl(a.website_url)

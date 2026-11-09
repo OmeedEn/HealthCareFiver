@@ -7,20 +7,20 @@ import { Check } from 'lucide-react'
 import { TOTAL_STEPS } from './shared'
 
 export const PRIMARY_BTN =
-  'h-11 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]'
+  'h-11 bg-[#2f3cf5] text-sm font-semibold text-white hover:bg-[#2330c8]'
 
 export function Progress({ step }: { step: number }) {
   const pct = (step / TOTAL_STEPS) * 100
   return (
     <div>
-      <div className="flex items-center justify-between text-xs font-medium text-[#62646a]">
+      <div className="flex items-center justify-between text-xs font-medium text-[#5f5d57]">
         <span>
           Step {step} of {TOTAL_STEPS}
         </span>
         <span>{Math.round(pct)}%</span>
       </div>
       <div
-        className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#e4e5e7]"
+        className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
         role="progressbar"
         aria-valuemin={1}
         aria-valuemax={TOTAL_STEPS}
@@ -28,7 +28,7 @@ export function Progress({ step }: { step: number }) {
         aria-label={`Step ${step} of ${TOTAL_STEPS}`}
       >
         <div
-          className="h-full rounded-full bg-[#1dbf73] transition-all"
+          className="h-full rounded-full bg-[#2f3cf5] transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -39,8 +39,8 @@ export function Progress({ step }: { step: number }) {
 export function StepHeading({ title, sub }: { title: string; sub?: string }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-[#404145]">{title}</h1>
-      {sub && <p className="mt-1.5 text-sm text-[#62646a]">{sub}</p>}
+      <h1 className="text-2xl font-bold tracking-tight text-[#1a1a17]">{title}</h1>
+      {sub && <p className="mt-1.5 text-sm text-[#5f5d57]">{sub}</p>}
     </div>
   )
 }
@@ -87,9 +87,9 @@ export function TextField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
-        {optional && <span className="ml-1 font-normal text-[#95979d]">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-[#706d65]">(optional)</span>}
       </Label>
       <Input
         id={id}
@@ -106,7 +106,7 @@ export function TextField({
         aria-describedby={error ? `${id}-err` : undefined}
         className="h-11 bg-white"
       />
-      {hint && !error && <p className="text-xs text-[#62646a]">{hint}</p>}
+      {hint && !error && <p className="text-xs text-[#5f5d57]">{hint}</p>}
       <FieldError id={`${id}-err`} msg={error} />
     </div>
   )
@@ -137,9 +137,9 @@ export function TextAreaField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
-        {optional && <span className="ml-1 font-normal text-[#95979d]">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-[#706d65]">(optional)</span>}
       </Label>
       <Textarea
         id={id}
@@ -157,7 +157,7 @@ export function TextAreaField({
         {counter && maxLength && (
           <p
             className={`ml-auto shrink-0 text-xs ${
-              value.length >= maxLength ? 'text-red-600' : 'text-[#95979d]'
+              value.length >= maxLength ? 'text-red-600' : 'text-[#706d65]'
             }`}
             aria-live="polite"
           >
@@ -188,7 +188,7 @@ export function SelectField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
       </Label>
       <select
@@ -196,7 +196,7 @@ export function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
-        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#404145] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#1a1a17] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
       >
         <option value="" disabled>
           {placeholder}
@@ -228,7 +228,7 @@ export function ChipMultiSelect({
 }) {
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-semibold text-[#404145]">{label}</legend>
+      <legend className="text-sm font-semibold text-[#1a1a17]">{label}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => {
           const on = value.includes(o)
@@ -240,8 +240,8 @@ export function ChipMultiSelect({
               onClick={() => onChange(on ? value.filter((x) => x !== o) : [...value, o])}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 on
-                  ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                  : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#bcebd5]'
+                  ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                  : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#c9cdfb]'
               }`}
             >
               {on && <Check className="size-3" />}
@@ -275,15 +275,15 @@ export function RadioCards<T extends string>({
 }) {
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-semibold text-[#404145]">{legend}</legend>
+      <legend className="text-sm font-semibold text-[#1a1a17]">{legend}</legend>
       <div className={`grid gap-2 ${columns === 2 ? 'grid-cols-2' : 'sm:grid-cols-3'}`}>
         {options.map((o) => (
           <label
             key={o.value}
             className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition ${
               value === o.value
-                ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+                ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
             }`}
           >
             <input
@@ -292,7 +292,7 @@ export function RadioCards<T extends string>({
               value={o.value}
               checked={value === o.value}
               onChange={() => onChange(o.value)}
-              className="accent-[#1dbf73]"
+              className="accent-[#2f3cf5]"
             />
             {o.label}
           </label>
@@ -324,14 +324,14 @@ export function CheckRow({
 }) {
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm text-[#404145]">
+      <label htmlFor={id} className="flex cursor-pointer items-start gap-3 text-sm text-[#1a1a17]">
         <input
           id={id}
           type="checkbox"
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           aria-invalid={error ? true : undefined}
-          className="mt-0.5 size-4 shrink-0 rounded border-[#c5c6c9] accent-[#1dbf73]"
+          className="mt-0.5 size-4 shrink-0 rounded border-[#cbc6ba] accent-[#2f3cf5]"
         />
         <span>{label}</span>
       </label>
@@ -352,13 +352,13 @@ export function Toggle({
   label: string
 }) {
   return (
-    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#404145]">
+    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#1a1a17]">
       <input
         id={id}
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-4 rounded border-[#c5c6c9] accent-[#1dbf73]"
+        className="size-4 rounded border-[#cbc6ba] accent-[#2f3cf5]"
       />
       {label}
     </label>

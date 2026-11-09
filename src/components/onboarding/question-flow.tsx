@@ -216,7 +216,7 @@ export function QuestionFlow({
               onClick={back}
               disabled={saving}
               aria-label="Back"
-              className="-ml-2 flex size-9 shrink-0 items-center justify-center rounded-full text-[#62646a] transition hover:bg-[#f1f1f2] hover:text-[#404145] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+              className="-ml-2 flex size-9 shrink-0 items-center justify-center rounded-full text-[#5f5d57] transition hover:bg-[#eeebe4] hover:text-[#1a1a17] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
             >
               <ArrowLeft className="size-5" />
             </button>
@@ -224,28 +224,28 @@ export function QuestionFlow({
             <span className="size-9 shrink-0" />
           )}
           <div
-            className="h-1 flex-1 overflow-hidden rounded-full bg-[#e4e5e7]"
+            className="h-1 flex-1 overflow-hidden rounded-full bg-[#e3dfd6]"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
             aria-label="Progress"
           >
-            <div className="h-full rounded-full bg-[#1dbf73] transition-all duration-300" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-[#2f3cf5] transition-all duration-300" style={{ width: `${pct}%` }} />
           </div>
           <span className="w-9 shrink-0" aria-hidden />
         </div>
       ) : (
         <div>
-          <div className="flex items-center justify-between text-xs font-medium text-[#62646a]">
-            <span className="font-semibold uppercase tracking-wide text-[#1dbf73]">{screen.section}</span>
+          <div className="flex items-center justify-between text-xs font-medium text-[#5f5d57]">
+            <span className="font-semibold uppercase tracking-wide text-[#2f3cf5]">{screen.section}</span>
             <span className="flex items-center gap-3">
               {saving ? (
                 <span className="inline-flex items-center gap-1">
                   <Loader2 className="size-3 animate-spin" /> Saving
                 </span>
               ) : showSaved ? (
-                <span className="inline-flex items-center gap-1 text-[#0f8f56]">
+                <span className="inline-flex items-center gap-1 text-[#2330c8]">
                   <Check className="size-3" /> Saved
                 </span>
               ) : null}
@@ -253,16 +253,16 @@ export function QuestionFlow({
             </span>
           </div>
           <div
-            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e4e5e7]"
+            className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={pct}
             aria-label={`${screen.section ?? 'Progress'}: question ${position} of ${stepTotal}`}
           >
-            <div className="h-full rounded-full bg-[#1dbf73] transition-all duration-300" style={{ width: `${pct}%` }} />
+            <div className="h-full rounded-full bg-[#2f3cf5] transition-all duration-300" style={{ width: `${pct}%` }} />
           </div>
-          <p className="mt-2 text-xs text-[#95979d]">
+          <p className="mt-2 text-xs text-[#706d65]">
             {stepOrder.length > 1 && `Step ${stepOrder.indexOf(step) + 1} of ${stepOrder.length} · `}
             Question {position} of {stepTotal}
           </p>
@@ -298,15 +298,15 @@ export function QuestionFlow({
         }}
       >
         <h1
-          className={`font-bold tracking-tight text-[#404145] ${
+          className={`font-bold tracking-tight text-[#1a1a17] ${
             minimal ? 'text-2xl sm:text-[2rem] sm:leading-tight' : 'text-2xl sm:text-3xl'
           }`}
         >
           {screen.title}
-          {screen.optional && <span className="ml-2 align-middle text-sm font-medium text-[#95979d]">Optional</span>}
+          {screen.optional && <span className="ml-2 align-middle text-sm font-medium text-[#706d65]">Optional</span>}
         </h1>
-        {screen.sub && <p className="mt-2 text-base text-[#62646a]">{screen.sub}</p>}
-        {screen.whyWeAsk && <p className="mt-2 text-xs text-[#95979d]">{screen.whyWeAsk}</p>}
+        {screen.sub && <p className="mt-2 text-base text-[#5f5d57]">{screen.sub}</p>}
+        {screen.whyWeAsk && <p className="mt-2 text-xs text-[#706d65]">{screen.whyWeAsk}</p>}
 
         <div ref={bodyRef} className={`space-y-5 ${minimal ? 'mt-6' : 'mt-8'}`}>
           {screen.render({ errors, advance: () => setAdvanceToken((n) => n + 1) })}
@@ -329,7 +329,7 @@ export function QuestionFlow({
                 type="button"
                 onClick={() => void skip()}
                 disabled={saving}
-                className="mx-auto block rounded text-sm font-semibold text-[#62646a] underline-offset-4 hover:text-[#404145] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+                className="mx-auto block rounded text-sm font-semibold text-[#5f5d57] underline-offset-4 hover:text-[#1a1a17] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
               >
                 Skip for now
               </button>
@@ -352,7 +352,7 @@ export function QuestionFlow({
                     type="button"
                     onClick={() => void skip()}
                     disabled={saving}
-                    className="text-sm font-semibold text-[#62646a] hover:text-[#404145] hover:underline"
+                    className="text-sm font-semibold text-[#5f5d57] hover:text-[#1a1a17] hover:underline"
                   >
                     Skip for now
                   </button>
@@ -366,7 +366,7 @@ export function QuestionFlow({
               </div>
             </div>
             {!multiline && (
-              <p className="mt-3 text-right text-xs text-[#95979d]">
+              <p className="mt-3 text-right text-xs text-[#706d65]">
                 Press <kbd className="font-sans font-semibold">Enter</kbd> to continue
               </p>
             )}

@@ -211,19 +211,19 @@ export default async function AdminOrganizationPage({
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/verification?tab=organizations" className="text-sm text-[#62646a] hover:text-[#1dbf73]">
+      <Link href="/admin/review/organizations" className="text-sm text-[#5f5d57] hover:text-[#2f3cf5]">
         &larr; All organizations
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">{org.facility_name || 'Unnamed organization'}</h1>
-          <p className="text-sm text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">{org.facility_name || 'Unnamed organization'}</h1>
+          <p className="text-sm text-[#5f5d57]">
             {account?.email} · signed up {account?.created_at ? formatDateTime(account.created_at) : '—'}
           </p>
-          <p className="text-sm text-[#62646a]">
+          <p className="text-sm text-[#5f5d57]">
             Signup door:{' '}
-            <span className="font-semibold text-[#404145]">
+            <span className="font-semibold text-[#1a1a17]">
               {isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : 'Not recorded (legacy signup)'}
             </span>
           </p>
@@ -236,7 +236,7 @@ export default async function AdminOrganizationPage({
             <MessageUserButton userId={id} />
             <Link
               href={`/admin/users/${id}`}
-              className="inline-flex h-7 items-center rounded-md border border-[#e4e5e7] px-2.5 text-sm text-[#404145] hover:border-[#1dbf73]"
+              className="inline-flex h-7 items-center rounded-md border border-[#e3dfd6] px-2.5 text-sm text-[#1a1a17] hover:border-[#2f3cf5]"
             >
               Account
             </Link>
@@ -245,8 +245,8 @@ export default async function AdminOrganizationPage({
       </div>
 
       {!org.onboarding_submitted_at && (
-        <Card className="border-[#f5deb3] bg-[#fdf6e3]">
-          <CardContent className="pt-6 text-sm text-[#404145]">
+        <Card className="border-[#ecd3a3] bg-[#fbf0dc]">
+          <CardContent className="pt-6 text-sm text-[#1a1a17]">
             <span className="font-semibold">Application not submitted yet.</span> They&apos;ve answered{' '}
             {answeredCount} of {ORG_FLOW_IDS.length - 1} signup questions. Review once they submit.
           </CardContent>
@@ -254,9 +254,9 @@ export default async function AdminOrganizationPage({
       )}
 
       {missing.length > 0 && (
-        <Card className="border-[#f5c6cb] bg-[#fdecea]">
-          <CardContent className="space-y-2 pt-6 text-sm text-[#404145]">
-            <p className="font-semibold text-[#c0392b]">Missing — can&apos;t be approved until these are in</p>
+        <Card className="border-[#f4c7c2] bg-[#fdecea]">
+          <CardContent className="space-y-2 pt-6 text-sm text-[#1a1a17]">
+            <p className="font-semibold text-[#b42318]">Missing — can&apos;t be approved until these are in</p>
             <div className="flex flex-wrap gap-2">
               {missing.map((m) => (
                 <Badge key={m.id} variant="destructive">
@@ -264,7 +264,7 @@ export default async function AdminOrganizationPage({
                 </Badge>
               ))}
             </div>
-            <p className="text-[#62646a]">They see these in their dashboard under Needed for approval. Use Request more info to nudge them.</p>
+            <p className="text-[#5f5d57]">They see these in their dashboard under Needed for approval. Use Request more info to nudge them.</p>
           </CardContent>
         </Card>
       )}
@@ -275,7 +275,7 @@ export default async function AdminOrganizationPage({
             <span className="font-semibold">Last note to the organization:</span>{' '}
             <span className="whitespace-pre-line">{org.verification_notes}</span>
             {org.verification_reviewed_at && (
-              <span className="text-[#62646a]"> ({formatDateTime(org.verification_reviewed_at)})</span>
+              <span className="text-[#5f5d57]"> ({formatDateTime(org.verification_reviewed_at)})</span>
             )}
           </CardContent>
         </Card>
@@ -292,13 +292,13 @@ export default async function AdminOrganizationPage({
               <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[160px_1fr]">
                 {DETAIL_FIELDS.map(([key, label]) => (
                   <div key={key} className="contents">
-                    <dt className="text-[#62646a]">{label}</dt>
-                    <dd className="break-words text-[#404145]">{display(org as Record<string, unknown>, key)}</dd>
+                    <dt className="text-[#5f5d57]">{label}</dt>
+                    <dd className="break-words text-[#1a1a17]">{display(org as Record<string, unknown>, key)}</dd>
                   </div>
                 ))}
               </dl>
               <div className="mt-4 text-sm">
-                <span className="text-[#62646a]">Wants to: </span>
+                <span className="text-[#5f5d57]">Wants to: </span>
                 {intents.length
                   ? intents.map((k) => ORG_INTENTS.find((i) => i.key === k)?.label ?? k).join(' · ')
                   : '—'}
@@ -314,10 +314,10 @@ export default async function AdminOrganizationPage({
               <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[220px_1fr]">
                 {verifyFields(org as Record<string, unknown>, isCompany).map(([key, label]) => (
                   <div key={key} className="contents">
-                    <dt className="text-[#62646a]">{label}</dt>
-                    <dd className="break-words text-[#404145]">
+                    <dt className="text-[#5f5d57]">{label}</dt>
+                    <dd className="break-words text-[#1a1a17]">
                       {key === 'lead_linkedin' && linkedinHref ? (
-                        <a href={linkedinHref} target="_blank" rel="noreferrer noopener" className="font-semibold text-[#1dbf73] hover:underline">
+                        <a href={linkedinHref} target="_blank" rel="noreferrer noopener" className="font-semibold text-[#2f3cf5] hover:underline">
                           {String(org.lead_linkedin)}
                         </a>
                       ) : (
@@ -329,18 +329,18 @@ export default async function AdminOrganizationPage({
               </dl>
 
               <div>
-                <p className="mb-2 text-sm font-semibold text-[#404145]">Self-disclosures</p>
+                <p className="mb-2 text-sm font-semibold text-[#1a1a17]">Self-disclosures</p>
                 <ul className="space-y-2 text-sm">
                   {ORG_DISCLOSURES.map((q) => {
                     const a = disclosures[q.key]
                     const yes = a?.answer === true
                     return (
                       <li key={q.key} className={yes ? 'rounded-md bg-[#fdecea] p-2' : ''}>
-                        <span className="text-[#62646a]">{q.question}</span>{' '}
-                        <strong className={yes ? 'text-[#c0392b]' : 'text-[#404145]'}>
+                        <span className="text-[#5f5d57]">{q.question}</span>{' '}
+                        <strong className={yes ? 'text-[#b42318]' : 'text-[#1a1a17]'}>
                           {a == null ? '—' : yes ? 'Yes' : 'No'}
                         </strong>
-                        {yes && a?.details && <p className="mt-1 whitespace-pre-line text-[#404145]">{a.details}</p>}
+                        {yes && a?.details && <p className="mt-1 whitespace-pre-line text-[#1a1a17]">{a.details}</p>}
                       </li>
                     )
                   })}
@@ -348,27 +348,27 @@ export default async function AdminOrganizationPage({
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-semibold text-[#404145]">Documents</p>
+                <p className="mb-2 text-sm font-semibold text-[#1a1a17]">Documents</p>
                 {orgDocs && orgDocs.length > 0 ? (
                   <ul className="space-y-1 text-sm">
                     {orgDocs.map((d) => (
                       <li key={d.id}>
-                        <span className="text-[#62646a]">
+                        <span className="text-[#5f5d57]">
                           {ORG_DOCUMENT_KINDS.find((k) => k.kind === d.kind)?.label ?? d.kind}:
                         </span>{' '}
                         {docLinks.get(d.id) ? (
-                          <a href={docLinks.get(d.id)} target="_blank" rel="noreferrer" className="font-semibold text-[#1dbf73] hover:underline">
+                          <a href={docLinks.get(d.id)} target="_blank" rel="noreferrer" className="font-semibold text-[#2f3cf5] hover:underline">
                             {d.filename}
                           </a>
                         ) : (
                           d.filename
                         )}{' '}
-                        <span className="text-xs text-[#95979d]">{formatDateTime(d.uploaded_at)}</span>
+                        <span className="text-xs text-[#706d65]">{formatDateTime(d.uploaded_at)}</span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-[#62646a]">None uploaded.</p>
+                  <p className="text-sm text-[#5f5d57]">None uploaded.</p>
                 )}
               </div>
             </CardContent>
@@ -383,33 +383,33 @@ export default async function AdminOrganizationPage({
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div>
-                <p className="font-semibold text-[#404145]">Services &amp; events</p>
+                <p className="font-semibold text-[#1a1a17]">Services &amp; events</p>
                 {listings && listings.length > 0 ? (
-                  <ul className="list-disc pl-5 text-[#404145]">
+                  <ul className="list-disc pl-5 text-[#1a1a17]">
                     {listings.map((l) => (
                       <li key={l.id}>
                         {l.title}{' '}
-                        <span className="text-[#62646a]">
+                        <span className="text-[#5f5d57]">
                           ({l.kind === 'service' ? 'service' : labelFor(ORG_EVENT_TYPES, l.event_type)}, {l.status})
                         </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-[#62646a]">None.</p>
+                  <p className="text-[#5f5d57]">None.</p>
                 )}
               </div>
               <div>
-                <p className="font-semibold text-[#404145]">Looking for</p>
+                <p className="font-semibold text-[#1a1a17]">Looking for</p>
                 {(() => {
                   const lf = (org.looking_for ?? {}) as Record<string, unknown>
                   const list = (k: string, opts: readonly { value: string; label: string }[]) =>
                     (Array.isArray(lf[k]) ? (lf[k] as string[]) : []).map((v) => labelFor(opts, v)).join(', ')
                   if (!Array.isArray(lf.types) || !(lf.types as string[]).length) {
-                    return <p className="text-[#62646a]">Not set.</p>
+                    return <p className="text-[#5f5d57]">Not set.</p>
                   }
                   return (
-                    <p className="text-[#404145]">
+                    <p className="text-[#1a1a17]">
                       {[
                         list('types', PROFESSIONAL_TIERS),
                         list('engagement_types', LOOKING_FOR_ENGAGEMENTS),
@@ -425,7 +425,7 @@ export default async function AdminOrganizationPage({
                   )
                 })()}
               </div>
-              <p className="text-[#62646a]">Job and staffing posts (including drafts): {draftCount ?? 0}</p>
+              <p className="text-[#5f5d57]">Job and staffing posts (including drafts): {draftCount ?? 0}</p>
             </CardContent>
           </Card>
 
@@ -441,17 +441,17 @@ export default async function AdminOrganizationPage({
                 const entry = checklist[item.key]
                 const itemEvidence = evidence.filter((e) => e.check_key === item.key)
                 return (
-                  <div key={item.key} className="rounded-lg border border-[#e4e5e7] p-4">
+                  <div key={item.key} className="rounded-lg border border-[#e3dfd6] p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-[#404145]">
+                        <p className="font-semibold text-[#1a1a17]">
                           {i + 1}. {item.label}
                         </p>
-                        <p className="text-sm text-[#62646a]">{item.help}</p>
+                        <p className="text-sm text-[#5f5d57]">{item.help}</p>
                         {item.links && (
                           <div className="mt-1 flex flex-wrap gap-3">
                             {item.links.map((l) => (
-                              <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-[#1dbf73] hover:underline">
+                              <a key={l.href} href={l.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-[#2f3cf5] hover:underline">
                                 {l.label} <ExternalLink className="h-3 w-3" />
                               </a>
                             ))}
@@ -464,13 +464,13 @@ export default async function AdminOrganizationPage({
                       >
                         <input type="hidden" name="done" value={entry?.done ? 'false' : 'true'} />
                         <input type="hidden" name="note" value={entry?.note ?? ''} />
-                        <Button type="submit" size="sm" variant={entry?.done ? 'default' : 'outline'} className={entry?.done ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]' : ''}>
+                        <Button type="submit" size="sm" variant={entry?.done ? 'default' : 'outline'} className={entry?.done ? 'bg-[#2f3cf5] text-white hover:bg-[#2330c8]' : ''}>
                           {entry?.done ? '✓ Done' : 'Mark done'}
                         </Button>
                       </ActionForm>
                     </div>
                     {entry?.at && (
-                      <p className="mt-1 text-xs text-[#62646a]">
+                      <p className="mt-1 text-xs text-[#5f5d57]">
                         {entry.done ? 'Checked' : 'Unchecked'} {formatDateTime(entry.at)}
                       </p>
                     )}
@@ -478,10 +478,10 @@ export default async function AdminOrganizationPage({
                     {itemEvidence.length > 0 && (
                       <ul className="mt-3 space-y-1 text-sm">
                         {itemEvidence.map((e) => (
-                          <li key={e.id} className="text-[#404145]">
-                            <span className="text-xs text-[#62646a]">{formatDateTime(e.created_at)}</span>{' '}
+                          <li key={e.id} className="text-[#1a1a17]">
+                            <span className="text-xs text-[#5f5d57]">{formatDateTime(e.created_at)}</span>{' '}
                             {signed.get(e.id) && (
-                              <a href={signed.get(e.id)} target="_blank" rel="noreferrer" className="font-semibold text-[#1dbf73] hover:underline">
+                              <a href={signed.get(e.id)} target="_blank" rel="noreferrer" className="font-semibold text-[#2f3cf5] hover:underline">
                                 {e.storage_path!.split('/').pop()}
                               </a>
                             )}
@@ -499,7 +499,7 @@ export default async function AdminOrganizationPage({
                         className="mt-3 flex flex-wrap items-center gap-2"
                       >
                         <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" className="max-w-[220px] text-xs" />
-                        <input type="text" name="note" placeholder="Note (optional)" className="h-8 min-w-0 flex-1 rounded-md border border-[#e4e5e7] px-2 text-sm" />
+                        <input type="text" name="note" placeholder="Note (optional)" className="h-8 min-w-0 flex-1 rounded-md border border-[#e3dfd6] px-2 text-sm" />
                         <Button type="submit" size="sm" variant="outline">Save evidence</Button>
                       </ActionForm>
                     )}
@@ -532,7 +532,7 @@ export default async function AdminOrganizationPage({
                   )}
                   <Button
                     type="submit"
-                    className={`w-full ${decision === 'approve' ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]' : ''}`}
+                    className={`w-full ${decision === 'approve' ? 'bg-[#2f3cf5] text-white hover:bg-[#2330c8]' : ''}`}
                     variant={decision === 'approve' ? 'default' : decision === 'reject' || decision === 'suspend' ? 'destructive' : 'outline'}
                   >
                     {ORG_DECISION_LABEL[decision]}
@@ -540,7 +540,7 @@ export default async function AdminOrganizationPage({
                 </ActionForm>
               ))}
               {status !== 'approved' && progress.done < progress.total && (
-                <p className="text-xs text-[#b8860b]">
+                <p className="text-xs text-[#8a5a00]">
                   {progress.total - progress.done} checklist item(s) still open.
                 </p>
               )}
@@ -553,15 +553,15 @@ export default async function AdminOrganizationPage({
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               {flags.length > 0 ? (
-                <ul className="list-disc space-y-1 pl-5 font-medium text-[#c0392b]">
+                <ul className="list-disc space-y-1 pl-5 font-medium text-[#b42318]">
                   {flags.map((f) => <li key={f}>{f}</li>)}
                 </ul>
               ) : (
-                <p className="text-[#0f8f56]">None detected automatically.</p>
+                <p className="text-[#2330c8]">None detected automatically.</p>
               )}
               <div>
-                <p className="font-semibold text-[#404145]">Also watch for</p>
-                <ul className="list-disc space-y-0.5 pl-5 text-[#62646a]">
+                <p className="font-semibold text-[#1a1a17]">Also watch for</p>
+                <ul className="list-disc space-y-0.5 pl-5 text-[#5f5d57]">
                   {ORG_RED_FLAGS.map((f) => <li key={f}>{f}</li>)}
                 </ul>
               </div>

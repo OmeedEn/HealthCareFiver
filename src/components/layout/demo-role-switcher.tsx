@@ -34,8 +34,8 @@ export function DemoRoleSwitcher({ current }: DemoRoleSwitcherProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e4e5e7] bg-white p-1 text-sm shadow-sm">
-      <span className="ml-2 mr-1 hidden text-xs font-medium uppercase tracking-wide text-[#6b7280] sm:inline">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e3dfd6] bg-white p-1 text-sm shadow-sm">
+      <span className="ml-2 mr-1 hidden text-xs font-medium uppercase tracking-wide text-[#5f5d57] sm:inline">
         View as
       </span>
       {ROLES.map((r) => {
@@ -50,8 +50,8 @@ export function DemoRoleSwitcher({ current }: DemoRoleSwitcherProps) {
             aria-pressed={active}
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
               active
-                ? 'bg-[#e8faf1] text-[#0f8f56]'
-                : 'text-[#62646a] hover:bg-[#f7f7f7] hover:text-[#404145]'
+                ? 'bg-[#eceefe] text-[#2330c8]'
+                : 'text-[#5f5d57] hover:bg-[#f6f4ef] hover:text-[#1a1a17]'
             } disabled:opacity-60`}
           >
             <Icon className="size-3.5" />

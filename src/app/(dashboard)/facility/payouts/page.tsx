@@ -74,13 +74,13 @@ export default async function OrgPayoutsPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Payouts</h1>
-        <p className="text-sm text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Payouts</h1>
+        <p className="text-sm text-[#5f5d57]">
           Get paid for bookings of your services and events, straight to your bank account.
         </p>
       </div>
 
-      <section className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
+      <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
         {state === 'ready' ? (
           <Status icon={CheckCircle2} tone="green" title="Payouts are ready" text="Paid bookings are sent to your bank account through Stripe after each booking takes place." />
         ) : state === 'in_progress' ? (
@@ -100,27 +100,27 @@ export default async function OrgPayoutsPage({ searchParams }: Props) {
               returnTo="org-payouts"
               variant="button"
               label={state === 'in_progress' ? 'Continue setup' : 'Set up payouts'}
-              className="h-11 bg-[#1dbf73] px-6 font-semibold text-white hover:bg-[#19a463]"
+              className="h-11 bg-[#2f3cf5] px-6 font-semibold text-white hover:bg-[#2330c8]"
             />
           )}
           {state === 'ready' && <StripeDashboardButton />}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-[#e4e5e7] bg-white p-6 text-sm text-[#404145]">
+      <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6 text-sm text-[#1a1a17]">
         <h2 className="text-base font-semibold">How payment works</h2>
-        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[#62646a]">
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-[#5f5d57]">
           <li>A customer requests your service or event and you accept it (or they accept your quote).</li>
           <li>They pay on Sanus. We hold the payment until the booking takes place.</li>
           <li>After it happens, we send the payment to your bank through Stripe, minus the Sanus fee.</li>
         </ol>
-        <p className="mt-4 flex items-start gap-2 text-xs text-[#62646a]">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#1dbf73]" aria-hidden="true" />
+        <p className="mt-4 flex items-start gap-2 text-xs text-[#5f5d57]">
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
           Stripe collects your bank and identity details. Sanus never sees or stores them.
         </p>
-        <p className="mt-3 text-xs text-[#62646a]">
+        <p className="mt-3 text-xs text-[#5f5d57]">
           Paid services and events need payouts set up before they can be submitted for review.{' '}
-          <Link href="/facility/listings" className="font-semibold text-[#1dbf73] hover:underline">Services &amp; events</Link>
+          <Link href="/facility/listings" className="font-semibold text-[#2f3cf5] hover:underline">Services &amp; events</Link>
         </p>
       </section>
     </div>
@@ -128,9 +128,9 @@ export default async function OrgPayoutsPage({ searchParams }: Props) {
 }
 
 const TONE = {
-  green: 'bg-[#e8faf1] text-[#1dbf73]',
-  amber: 'bg-[#fdf6e3] text-[#b08a0e]',
-  gray: 'bg-[#f1f1f2] text-[#62646a]',
+  green: 'bg-[#eceefe] text-[#2f3cf5]',
+  amber: 'bg-[#fbf0dc] text-[#8a5a00]',
+  gray: 'bg-[#eeebe4] text-[#5f5d57]',
 } as const
 
 function Status({
@@ -150,8 +150,8 @@ function Status({
         <Icon className="size-6" aria-hidden="true" />
       </span>
       <div>
-        <h2 className="text-lg font-semibold text-[#404145]">{title}</h2>
-        <p className="mt-1 text-sm text-[#62646a]">{text}</p>
+        <h2 className="text-lg font-semibold text-[#1a1a17]">{title}</h2>
+        <p className="mt-1 text-sm text-[#5f5d57]">{text}</p>
       </div>
     </div>
   )

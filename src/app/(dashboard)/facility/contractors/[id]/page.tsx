@@ -170,9 +170,9 @@ export default async function ContractorDetailPage({
     if (!row) {
       return (
         <div className="space-y-3 py-12 text-center">
-          <p className="text-sm text-[#62646a]">Contractor not found.</p>
+          <p className="text-sm text-[#5f5d57]">Contractor not found.</p>
           <Link href="/facility/contractors">
-            <Button variant="link" className="text-[#1dbf73]">
+            <Button variant="link" className="text-[#2f3cf5]">
               Back to search
             </Button>
           </Link>
@@ -240,7 +240,7 @@ export default async function ContractorDetailPage({
     <div className="mx-auto max-w-4xl space-y-6">
       <Link
         href="/facility/contractors"
-        className="inline-flex items-center text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to search
@@ -258,26 +258,26 @@ export default async function ContractorDetailPage({
                     alt={`${contractor.first_name} ${contractor.last_name}`}
                   />
                 )}
-                <AvatarFallback className="bg-[#e8faf1] text-2xl font-semibold text-[#0f8f56]">
+                <AvatarFallback className="bg-[#eceefe] text-2xl font-semibold text-[#2330c8]">
                   {getInitials(contractor.first_name, contractor.last_name)}
                 </AvatarFallback>
               </Avatar>
 
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold text-[#404145]">
+                  <h1 className="text-2xl font-bold text-[#1a1a17]">
                     {contractor.first_name} {contractor.last_name}
                   </h1>
                   <Badge
                     variant="outline"
-                    className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                    className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]"
                   >
                     {typeLabel}
                   </Badge>
                 </div>
 
                 {contractor.headline && (
-                  <p className="text-sm text-[#404145]">{contractor.headline}</p>
+                  <p className="text-sm text-[#1a1a17]">{contractor.headline}</p>
                 )}
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
@@ -285,11 +285,11 @@ export default async function ContractorDetailPage({
                     contractor.average_rating > 0 && (
                       <div className="flex items-center gap-1.5">
                         <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
-                        <span className="font-medium text-[#404145]">
+                        <span className="font-medium text-[#1a1a17]">
                           {contractor.average_rating.toFixed(1)}
                         </span>
                         {contractor.total_reviews != null && (
-                          <span className="text-[#62646a]">
+                          <span className="text-[#5f5d57]">
                             ({contractor.total_reviews}{' '}
                             {contractor.total_reviews === 1
                               ? 'review'
@@ -300,18 +300,18 @@ export default async function ContractorDetailPage({
                       </div>
                     )}
                   {locationStr && (
-                    <div className="flex items-center gap-1 text-[#62646a]">
+                    <div className="flex items-center gap-1 text-[#5f5d57]">
                       <MapPin className="size-4" />
                       {locationStr}
                     </div>
                   )}
                   {contractor.years_of_experience != null && (
-                    <div className="flex items-center gap-1 text-[#62646a]">
+                    <div className="flex items-center gap-1 text-[#5f5d57]">
                       <Clock className="size-4" />
                       {contractor.years_of_experience} years experience
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-[#0f8f56]">
+                  <div className="flex items-center gap-1 text-[#2330c8]">
                     <CheckCircle2 className="size-4" />
                     {verifiedCredentials} verified credentials
                   </div>
@@ -338,13 +338,13 @@ export default async function ContractorDetailPage({
           {/* Bio */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">About</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">About</h2>
               {contractor.bio ? (
-                <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
                   {contractor.bio}
                 </p>
               ) : (
-                <p className="text-sm text-[#6b7280]">
+                <p className="text-sm text-[#5f5d57]">
                   No bio provided.
                 </p>
               )}
@@ -355,7 +355,7 @@ export default async function ContractorDetailPage({
           {contractor.specialties && contractor.specialties.length > 0 && (
             <Card>
               <CardContent className="space-y-3">
-                <h2 className="text-lg font-semibold text-[#404145]">
+                <h2 className="text-lg font-semibold text-[#1a1a17]">
                   Specialties
                 </h2>
                 <div className="flex flex-wrap gap-2">
@@ -372,7 +372,7 @@ export default async function ContractorDetailPage({
           {/* Reviews */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Reviews</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Reviews</h2>
               {reviews.length > 0 ? (
                 <div className="space-y-4">
                   {reviews.map((review, idx) => (
@@ -385,19 +385,19 @@ export default async function ContractorDetailPage({
                               className={
                                 i < review.rating
                                   ? 'size-4 fill-[#fbbf24] text-[#fbbf24]'
-                                  : 'size-4 text-[#d1d5db]'
+                                  : 'size-4 text-[#cbc6ba]'
                               }
                             />
                           ))}
                         </div>
                         {review.title && (
-                          <span className="font-medium text-[#404145]">
+                          <span className="font-medium text-[#1a1a17]">
                             {review.title}
                           </span>
                         )}
                       </div>
                       {review.content && (
-                        <p className="text-sm text-[#62646a]">
+                        <p className="text-sm text-[#5f5d57]">
                           {review.content}
                         </p>
                       )}
@@ -408,7 +408,7 @@ export default async function ContractorDetailPage({
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-[#6b7280]">No reviews yet.</p>
+                <p className="text-sm text-[#5f5d57]">No reviews yet.</p>
               )}
             </CardContent>
           </Card>
@@ -418,41 +418,41 @@ export default async function ContractorDetailPage({
         <div className="space-y-6">
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Rate</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Rate</h2>
               {contractor.hourly_rate_min != null ||
               contractor.hourly_rate_max != null ? (
-                <p className="text-2xl font-bold text-[#404145]">
+                <p className="text-2xl font-bold text-[#1a1a17]">
                   {contractor.hourly_rate_min != null &&
                     formatCurrency(contractor.hourly_rate_min)}
                   {contractor.hourly_rate_max != null &&
                     ` - ${formatCurrency(contractor.hourly_rate_max)}`}
-                  <span className="text-sm font-normal text-[#62646a]">
+                  <span className="text-sm font-normal text-[#5f5d57]">
                     /hr
                   </span>
                 </p>
               ) : (
-                <p className="text-sm text-[#6b7280]">Rate not specified</p>
+                <p className="text-sm text-[#5f5d57]">Rate not specified</p>
               )}
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">
+              <h2 className="text-lg font-semibold text-[#1a1a17]">
                 Availability
               </h2>
               <Badge
                 variant="outline"
                 className={
                   contractor.is_available
-                    ? 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]'
+                    ? 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]'
                     : ''
                 }
               >
                 {contractor.is_available ? 'Available' : 'Not Available'}
               </Badge>
               {contractor.willing_to_travel && (
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   Willing to travel
                   {contractor.travel_radius_miles != null &&
                     ` (${contractor.travel_radius_miles} mi radius)`}
@@ -463,20 +463,20 @@ export default async function ContractorDetailPage({
 
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Stats</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Stats</h2>
               <div className="space-y-2 text-sm">
                 {contractor.total_jobs_completed != null && (
                   <div className="flex justify-between">
-                    <span className="text-[#62646a]">Jobs Completed</span>
-                    <span className="font-medium text-[#404145]">
+                    <span className="text-[#5f5d57]">Jobs Completed</span>
+                    <span className="font-medium text-[#1a1a17]">
                       {contractor.total_jobs_completed}
                     </span>
                   </div>
                 )}
                 {contractor.years_of_experience != null && (
                   <div className="flex justify-between">
-                    <span className="text-[#62646a]">Experience</span>
-                    <span className="font-medium text-[#404145]">
+                    <span className="text-[#5f5d57]">Experience</span>
+                    <span className="font-medium text-[#1a1a17]">
                       {contractor.years_of_experience} years
                     </span>
                   </div>

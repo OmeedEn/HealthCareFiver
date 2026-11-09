@@ -46,7 +46,7 @@ export function LanguagesInput({
   }
 
   const chipBase =
-    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73]/40'
+    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f3cf5]/40'
 
   return (
     <div className="space-y-3">
@@ -62,8 +62,8 @@ export function LanguagesInput({
               onClick={() => toggle(language)}
               className={`${chipBase} ${
                 isOn
-                  ? 'border-[#1dbf73] bg-[#e8faf1] font-medium text-[#0f8f56]'
-                  : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#c5c6c9] disabled:opacity-50'
+                  ? 'border-[#2f3cf5] bg-[#eceefe] font-medium text-[#2330c8]'
+                  : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#cbc6ba] disabled:opacity-50'
               }`}
             >
               {isOn && <Check className="size-3.5" />}
@@ -77,7 +77,7 @@ export function LanguagesInput({
             type="button"
             aria-pressed
             onClick={() => toggle(language)}
-            className={`${chipBase} border-[#1dbf73] bg-[#e8faf1] font-medium text-[#0f8f56]`}
+            className={`${chipBase} border-[#2f3cf5] bg-[#eceefe] font-medium text-[#2330c8]`}
           >
             {language}
             <X className="size-3.5" aria-label={`Remove ${language}`} />

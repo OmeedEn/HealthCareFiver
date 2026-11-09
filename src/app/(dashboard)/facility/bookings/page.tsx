@@ -33,18 +33,18 @@ export default async function OrgBookingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Bookings</h1>
-        <p className="text-sm text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Bookings</h1>
+        <p className="text-sm text-[#5f5d57]">
           Requests and registrations for your services and events. Accept, send a quote, or decline, and message
           customers right here.
         </p>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#d5d6d9] bg-white py-14 text-center">
-          <Inbox className="size-10 text-[#c5c6c9]" aria-hidden="true" />
-          <p className="font-semibold text-[#404145]">No booking requests yet</p>
-          <p className="max-w-sm text-sm text-[#62646a]">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cbc6ba] bg-white py-14 text-center">
+          <Inbox className="size-10 text-[#cbc6ba]" aria-hidden="true" />
+          <p className="font-semibold text-[#1a1a17]">No booking requests yet</p>
+          <p className="max-w-sm text-sm text-[#5f5d57]">
             When someone requests one of your live services or events, it lands here and we notify you.
           </p>
         </div>

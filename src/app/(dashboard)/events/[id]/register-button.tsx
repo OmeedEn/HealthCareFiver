@@ -15,7 +15,7 @@ export function EventDetailRegisterButton({ title }: { title: string }) {
 
   return (
     <Button
-      className="w-full bg-[#1dbf73] text-white hover:bg-[#1dbf73]/90"
+      className="w-full bg-[#2f3cf5] text-white hover:bg-[#2f3cf5]/90"
       size="lg"
       onClick={handleRegister}
     >

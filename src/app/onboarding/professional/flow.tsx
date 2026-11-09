@@ -15,11 +15,11 @@ import {
   PRO_COPY,
   PRO_Q,
   PRO_SKIPPABLE,
+  asksDisclosures,
   branchOf,
   postAccountScreenIds,
   type ProSignupAnswers,
 } from '@/lib/onboarding/questions/professional'
-import { branchHasComplianceQuestions } from '@/lib/onboarding/professional-branch'
 import type { OnboardingProgress } from '@/lib/onboarding/progress'
 import type { SignupPath } from '@/lib/onboarding/signup-path'
 import { isDemoMode } from '@/lib/demo/data'
@@ -179,7 +179,7 @@ export function ProfessionalOnboardingFlow({
 
   const credentialDoc = docFor('credential')
   const idDoc = docFor('government_id')
-  const showDisclosures = !branch || branchHasComplianceQuestions(branch)
+  const showDisclosures = asksDisclosures(answers.category, branch)
   const step = includeIdentity ? 1 : 2
 
   const post: Screen[] = [
@@ -279,7 +279,7 @@ export function ProfessionalOnboardingFlow({
       <div className="space-y-4">
         <CheckRow id="attest_accurate" checked={attest} onChange={setAttest} label={PRO_COPY.attestAccurate} />
         <CheckRow id="authorize_checks" checked={authorize} onChange={setAuthorize} label={PRO_COPY.authorizeChecks} />
-        <p className="text-xs text-[#62646a]">
+        <p className="text-xs text-[#5f5d57]">
           We review every application within 24-48 hours. Anything you skipped waits in your dashboard.
         </p>
       </div>
@@ -303,7 +303,7 @@ export function ProfessionalOnboardingFlow({
 
   // Screens 1–3 and the account are behind them: give them their share of
   // the bar so it doesn't restart at zero after the account screen.
-  const postCount = postAccountScreenIds(branch).length
+  const postCount = postAccountScreenIds(branch, answers.category).length
   const stepWeights: Record<number, number> = includeIdentity
     ? { 0: ACCOUNT_SHARE, 1: 1 - ACCOUNT_SHARE }
     : {
@@ -337,15 +337,15 @@ function Tile({ on, label, onClick }: { on: boolean; label: string; onClick: () 
       type="button"
       aria-pressed={on}
       onClick={onClick}
-      className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left text-sm font-medium transition outline-none focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 ${
+      className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left text-sm font-medium transition outline-none focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 ${
         on
-          ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f4c3a] shadow-[inset_0_0_0_1px_#1dbf73]'
-          : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+          ? 'border-[#2f3cf5] bg-[#eceefe] text-[#1a1a17] shadow-[inset_0_0_0_1px_#2f3cf5]'
+          : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
       }`}
     >
       <span
         className={`flex size-5 shrink-0 items-center justify-center rounded border ${
-          on ? 'border-[#1dbf73] bg-[#1dbf73] text-white' : 'border-[#c5c6c9] bg-white'
+          on ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white' : 'border-[#cbc6ba] bg-white'
         }`}
         aria-hidden
       >

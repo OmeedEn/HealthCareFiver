@@ -96,13 +96,13 @@ export default async function FacilityProfilePage() {
   if (!facility) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <h1 className="text-2xl font-bold text-[#404145]">Facility Profile</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Facility Profile</h1>
         <Card>
           <CardContent className="py-12 text-center">
-            <h3 className="font-medium text-[#404145]">
+            <h3 className="font-medium text-[#1a1a17]">
               No facility profile found
             </h3>
-            <p className="mt-1 text-sm text-[#62646a]">
+            <p className="mt-1 text-sm text-[#5f5d57]">
               Please set up your facility profile below.
             </p>
           </CardContent>
@@ -143,26 +143,26 @@ export default async function FacilityProfilePage() {
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <Avatar size="lg" className="size-24">
-                <AvatarFallback className="bg-[#e8faf1] text-2xl font-semibold text-[#0f8f56]">
+                <AvatarFallback className="bg-[#eceefe] text-2xl font-semibold text-[#2330c8]">
                   {initials || <Building className="size-10" />}
                 </AvatarFallback>
               </Avatar>
 
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold text-[#404145]">
+                  <h1 className="text-2xl font-bold text-[#1a1a17]">
                     {facility.facility_name}
                   </h1>
                   <Badge
                     variant="outline"
-                    className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                    className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]"
                   >
                     {typeLabel}
                   </Badge>
                   {facility.is_verified && (
                     <Badge
                       variant="outline"
-                      className="border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]"
+                      className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]"
                     >
                       <ShieldCheck className="size-3" data-icon="inline-start" />
                       Verified
@@ -170,7 +170,7 @@ export default async function FacilityProfilePage() {
                   )}
                 </div>
 
-                <p className="text-sm text-[#62646a]">
+                <p className="text-sm text-[#5f5d57]">
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="size-4" />
                     {shortLocation || address || 'Location not set'}
@@ -180,11 +180,11 @@ export default async function FacilityProfilePage() {
                 {facility.average_rating != null && (
                   <div className="flex items-center gap-1.5 text-sm">
                     <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
-                    <span className="font-medium text-[#404145]">
+                    <span className="font-medium text-[#1a1a17]">
                       {facility.average_rating.toFixed(1)}
                     </span>
                     {facility.total_reviews != null && (
-                      <span className="text-[#62646a]">
+                      <span className="text-[#5f5d57]">
                         ({facility.total_reviews}{' '}
                         {facility.total_reviews === 1 ? 'review' : 'reviews'})
                       </span>
@@ -196,7 +196,7 @@ export default async function FacilityProfilePage() {
 
             <div className="shrink-0">
               <Button
-                className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                 render={<Link href="/facility/profile/edit" />}
               >
                 <Pencil className="size-4" data-icon="inline-start" />
@@ -214,13 +214,13 @@ export default async function FacilityProfilePage() {
           {/* About */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">About</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">About</h2>
               {facility.description ? (
-                <p className="text-sm whitespace-pre-wrap text-[#62646a]">
+                <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
                   {facility.description}
                 </p>
               ) : (
-                <p className="text-sm text-[#6b7280]">
+                <p className="text-sm text-[#5f5d57]">
                   Add a short description so contractors learn about your
                   facility.
                 </p>
@@ -231,7 +231,7 @@ export default async function FacilityProfilePage() {
           {/* Services */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Services</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Services</h2>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">{typeLabel}</Badge>
                 {facility.is_verified && (
@@ -244,28 +244,28 @@ export default async function FacilityProfilePage() {
           {/* Details */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Details</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Details</h2>
               <div className="grid gap-3 text-sm sm:grid-cols-2">
                 {address && (
                   <div className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-[#62646a]" />
-                    <span className="text-[#404145]">{address}</span>
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-[#5f5d57]" />
+                    <span className="text-[#1a1a17]">{address}</span>
                   </div>
                 )}
                 {facility.phone && (
                   <div className="flex items-center gap-2">
-                    <Phone className="size-4 shrink-0 text-[#62646a]" />
-                    <span className="text-[#404145]">{facility.phone}</span>
+                    <Phone className="size-4 shrink-0 text-[#5f5d57]" />
+                    <span className="text-[#1a1a17]">{facility.phone}</span>
                   </div>
                 )}
                 {facility.website && (
                   <div className="flex items-center gap-2">
-                    <Globe className="size-4 shrink-0 text-[#62646a]" />
+                    <Globe className="size-4 shrink-0 text-[#5f5d57]" />
                     <a
                       href={facility.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="truncate text-[#1dbf73] hover:underline"
+                      className="truncate text-[#2f3cf5] hover:underline"
                     >
                       {facility.website}
                     </a>
@@ -273,8 +273,8 @@ export default async function FacilityProfilePage() {
                 )}
                 {facility.ein && (
                   <div className="flex items-center gap-2">
-                    <Briefcase className="size-4 shrink-0 text-[#62646a]" />
-                    <span className="text-[#404145]">EIN: {facility.ein}</span>
+                    <Briefcase className="size-4 shrink-0 text-[#5f5d57]" />
+                    <span className="text-[#1a1a17]">EIN: {facility.ein}</span>
                   </div>
                 )}
               </div>
@@ -284,22 +284,22 @@ export default async function FacilityProfilePage() {
           {/* Reviews */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">Reviews</h2>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Reviews</h2>
               {facility.average_rating != null &&
               facility.total_reviews != null &&
               facility.total_reviews > 0 ? (
                 <div className="flex items-center gap-2 text-sm">
                   <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
-                  <span className="font-medium text-[#404145]">
+                  <span className="font-medium text-[#1a1a17]">
                     {facility.average_rating.toFixed(1)}
                   </span>
-                  <span className="text-[#62646a]">
+                  <span className="text-[#5f5d57]">
                     average across {facility.total_reviews}{' '}
                     {facility.total_reviews === 1 ? 'review' : 'reviews'}
                   </span>
                 </div>
               ) : (
-                <p className="text-sm text-[#6b7280]">
+                <p className="text-sm text-[#5f5d57]">
                   No reviews yet. Reviews from contractors will appear here.
                 </p>
               )}
@@ -312,20 +312,20 @@ export default async function FacilityProfilePage() {
           {/* Contact person */}
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#404145]">
+              <h2 className="text-lg font-semibold text-[#1a1a17]">
                 Contact Person
               </h2>
               {facility.contact_name || facility.contact_email ? (
                 <div className="space-y-2 text-sm">
                   {facility.contact_name && (
                     <div className="flex items-start gap-2">
-                      <User className="mt-0.5 size-4 shrink-0 text-[#62646a]" />
+                      <User className="mt-0.5 size-4 shrink-0 text-[#5f5d57]" />
                       <div>
-                        <p className="font-medium text-[#404145]">
+                        <p className="font-medium text-[#1a1a17]">
                           {facility.contact_name}
                         </p>
                         {facility.contact_title && (
-                          <p className="text-[#62646a]">
+                          <p className="text-[#5f5d57]">
                             {facility.contact_title}
                           </p>
                         )}
@@ -334,10 +334,10 @@ export default async function FacilityProfilePage() {
                   )}
                   {facility.contact_email && (
                     <div className="flex items-center gap-2">
-                      <Mail className="size-4 shrink-0 text-[#62646a]" />
+                      <Mail className="size-4 shrink-0 text-[#5f5d57]" />
                       <a
                         href={`mailto:${facility.contact_email}`}
-                        className="text-[#1dbf73] hover:underline"
+                        className="text-[#2f3cf5] hover:underline"
                       >
                         {facility.contact_email}
                       </a>
@@ -345,7 +345,7 @@ export default async function FacilityProfilePage() {
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-[#6b7280]">No contact set.</p>
+                <p className="text-sm text-[#5f5d57]">No contact set.</p>
               )}
             </CardContent>
           </Card>
@@ -353,35 +353,35 @@ export default async function FacilityProfilePage() {
           {/* Quick info */}
           <Card>
             <CardContent className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#404145]">
+              <h2 className="text-lg font-semibold text-[#1a1a17]">
                 Quick info
               </h2>
 
               <div className="flex items-center gap-3 text-sm">
-                <Building className="size-4 text-[#62646a]" />
-                <span className="text-[#62646a]">Type</span>
-                <span className="ml-auto font-medium text-[#404145]">
+                <Building className="size-4 text-[#5f5d57]" />
+                <span className="text-[#5f5d57]">Type</span>
+                <span className="ml-auto font-medium text-[#1a1a17]">
                   {typeLabel}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
-                <MapPin className="size-4 text-[#62646a]" />
-                <span className="text-[#62646a]">Location</span>
-                <span className="ml-auto font-medium text-[#404145]">
+                <MapPin className="size-4 text-[#5f5d57]" />
+                <span className="text-[#5f5d57]">Location</span>
+                <span className="ml-auto font-medium text-[#1a1a17]">
                   {shortLocation || 'Not set'}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-sm">
-                <ShieldCheck className="size-4 text-[#62646a]" />
-                <span className="text-[#62646a]">Status</span>
+                <ShieldCheck className="size-4 text-[#5f5d57]" />
+                <span className="text-[#5f5d57]">Status</span>
                 <span className="ml-auto">
                   <Badge
                     variant="outline"
                     className={
                       facility.is_verified
-                        ? 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]'
+                        ? 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]'
                         : ''
                     }
                   >
@@ -392,9 +392,9 @@ export default async function FacilityProfilePage() {
 
               {facility.phone && (
                 <div className="flex items-center gap-3 text-sm">
-                  <Phone className="size-4 text-[#62646a]" />
-                  <span className="text-[#62646a]">Phone</span>
-                  <span className="ml-auto font-medium text-[#404145]">
+                  <Phone className="size-4 text-[#5f5d57]" />
+                  <span className="text-[#5f5d57]">Phone</span>
+                  <span className="ml-auto font-medium text-[#1a1a17]">
                     {facility.phone}
                   </span>
                 </div>

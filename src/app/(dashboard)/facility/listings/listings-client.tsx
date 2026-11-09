@@ -53,16 +53,16 @@ function AddTile({
     <button
       type="button"
       onClick={onClick}
-      className="group flex items-center gap-4 rounded-2xl border border-[#e4e5e7] bg-white p-5 text-left transition hover:border-[#1dbf73] hover:bg-[#f0faf5] focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 focus-visible:outline-none"
+      className="group flex items-center gap-4 rounded-2xl border border-[#e3dfd6] bg-white p-5 text-left transition hover:border-[#2f3cf5] hover:bg-[#f4f5fe] focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 focus-visible:outline-none"
     >
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73] transition group-hover:bg-[#1dbf73] group-hover:text-white">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5] transition group-hover:bg-[#2f3cf5] group-hover:text-white">
         <Icon className="size-6" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-base font-semibold text-[#404145]">{title}</span>
-        <span className="mt-0.5 block text-sm text-[#62646a]">{sub}</span>
+        <span className="block text-base font-semibold text-[#1a1a17]">{title}</span>
+        <span className="mt-0.5 block text-sm text-[#5f5d57]">{sub}</span>
       </span>
-      <Plus className="size-5 shrink-0 text-[#95979d] transition group-hover:text-[#1dbf73]" />
+      <Plus className="size-5 shrink-0 text-[#706d65] transition group-hover:text-[#2f3cf5]" />
     </button>
   )
 }
@@ -154,7 +154,7 @@ function ListingFlowDialog({
             close(true)
           }}
         />
-        <p className="text-center text-xs text-[#95979d]">
+        <p className="text-center text-xs text-[#706d65]">
           Your answers save as you go. Close anytime and pick up where you left off.
         </p>
       </DialogContent>
@@ -175,7 +175,7 @@ export function DeleteListingButton({ id }: { id: string }) {
         setBusy(false)
         if (!res.ok) toast.error(res.error ?? 'Could not delete')
       }}
-      className="text-[#95979d] hover:text-red-600 disabled:opacity-50"
+      className="text-[#706d65] hover:text-red-600 disabled:opacity-50"
     >
       <Trash2 className="size-4" />
     </button>
@@ -199,7 +199,7 @@ export function ListingStatusButton({
       variant={action === 'submit' ? 'default' : 'outline'}
       disabled={busy || !!disabledReason}
       title={disabledReason ?? undefined}
-      className={action === 'submit' ? 'bg-[#1dbf73] text-white hover:bg-[#19a463]' : ''}
+      className={action === 'submit' ? 'bg-[#2f3cf5] text-white hover:bg-[#2330c8]' : ''}
       onClick={async () => {
         setBusy(true)
         const res = action === 'submit' ? await submitOrgListing(id) : await withdrawOrgListing(id)

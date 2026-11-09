@@ -96,7 +96,7 @@ export function DocumentUpload({
   }
 
   const btn =
-    'flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition outline-none focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 disabled:opacity-60'
+    'flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border text-sm font-semibold transition outline-none focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 disabled:opacity-60'
 
   return (
     <div className="space-y-3">
@@ -125,9 +125,9 @@ export function DocumentUpload({
       />
 
       {doc && (
-        <div className="flex items-center gap-3 rounded-xl border border-[#bcebd5] bg-[#f4fcf8] p-3.5 text-sm" role="status">
-          <CheckCircle2 className="size-5 shrink-0 text-[#1dbf73]" aria-hidden />
-          <span className="min-w-0 flex-1 truncate text-[#0f4c3a]">
+        <div className="flex items-center gap-3 rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] p-3.5 text-sm" role="status">
+          <CheckCircle2 className="size-5 shrink-0 text-[#2f3cf5]" aria-hidden />
+          <span className="min-w-0 flex-1 truncate text-[#1a1a17]">
             {verified ? 'Verified' : 'Uploaded'}
             {doc.document_filename ? ` · ${doc.document_filename}` : ''}
           </span>
@@ -138,7 +138,7 @@ export function DocumentUpload({
         <div className="grid gap-2.5 sm:grid-cols-2">
           <button
             type="button"
-            className={`${btn} border-[#1dbf73] bg-[#e8faf1] text-[#0f4c3a] hover:bg-[#d9f6e8]`}
+            className={`${btn} border-[#2f3cf5] bg-[#eceefe] text-[#1a1a17] hover:bg-[#dfe2fd]`}
             onClick={() => cameraRef.current?.click()}
             disabled={busy}
           >
@@ -147,7 +147,7 @@ export function DocumentUpload({
           </button>
           <button
             type="button"
-            className={`${btn} border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]`}
+            className={`${btn} border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]`}
             onClick={() => fileRef.current?.click()}
             disabled={busy}
           >
@@ -157,7 +157,7 @@ export function DocumentUpload({
         </div>
       )}
 
-      <p className="flex items-center gap-1.5 text-xs text-[#95979d]">
+      <p className="flex items-center gap-1.5 text-xs text-[#706d65]">
         <Lock className="size-3.5" aria-hidden /> Private and encrypted. PDF or photo, up to 10 MB.
       </p>
     </div>

@@ -324,17 +324,17 @@ function CredentialUploadForm() {
     <div className="space-y-6">
       <Link
         href="/contractor/credentials"
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to credentials
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">
           {isMalpractice ? 'Upload malpractice certificate' : 'Upload credential'}
         </h1>
-        <p className="text-[#62646a]">
+        <p className="text-[#5f5d57]">
           {isMalpractice
             ? 'Upload your certificate of professional liability (malpractice) insurance. Once our team reviews it, your profile shows an "Insured" badge and listings for in-person care, home visits, prescribing, injectables, or IVs can go live.'
             : "Add a professional license, certification, or other credential. We'll verify it and make it visible to facilities once approved."}
@@ -392,7 +392,7 @@ function CredentialUploadForm() {
                   required
                 />
                 {typeHint && (
-                  <p className="text-xs text-[#62646a]">{typeHint.name}</p>
+                  <p className="text-xs text-[#5f5d57]">{typeHint.name}</p>
                 )}
               </div>
 
@@ -508,31 +508,31 @@ function CredentialUploadForm() {
               />
 
               {file ? (
-                <div className="flex items-center gap-4 rounded-lg border border-[#bcebd5] bg-[#e8faf1] p-4">
+                <div className="flex items-center gap-4 rounded-lg border border-[#c9cdfb] bg-[#eceefe] p-4">
                   {previewUrl ? (
                     <img
                       src={previewUrl}
                       alt="Document preview"
-                      className="size-20 shrink-0 rounded-md border border-[#bcebd5] bg-white object-cover"
+                      className="size-20 shrink-0 rounded-md border border-[#c9cdfb] bg-white object-cover"
                     />
                   ) : (
-                    <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-[#bcebd5] bg-white">
+                    <div className="flex size-20 shrink-0 items-center justify-center rounded-md border border-[#c9cdfb] bg-white">
                       {isImageMime(file.type) ? (
-                        <ImageIcon className="size-8 text-[#0f8f56]" />
+                        <ImageIcon className="size-8 text-[#2330c8]" />
                       ) : (
-                        <FileText className="size-8 text-[#0f8f56]" />
+                        <FileText className="size-8 text-[#2330c8]" />
                       )}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[#404145]">
+                    <p className="truncate text-sm font-semibold text-[#1a1a17]">
                       {file.name}
                     </p>
-                    <p className="text-xs text-[#62646a]">
+                    <p className="text-xs text-[#5f5d57]">
                       {formatFileSize(file.size)} ·{' '}
                       {file.type.split('/')[1].toUpperCase()}
                     </p>
-                    <div className="mt-2 flex items-center gap-1.5 text-xs text-[#0f8f56]">
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-[#2330c8]">
                       <CheckCircle2 className="size-3.5" />
                       Ready to upload
                     </div>
@@ -559,20 +559,20 @@ function CredentialUploadForm() {
                   onDrop={handleDrop}
                   className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-10 text-center transition-colors ${
                     dragOver
-                      ? 'border-[#1dbf73] bg-[#e8faf1]'
-                      : 'border-[#e4e5e7] hover:border-[#1dbf73] hover:bg-[#fafefb]'
+                      ? 'border-[#2f3cf5] bg-[#eceefe]'
+                      : 'border-[#e3dfd6] hover:border-[#2f3cf5] hover:bg-[#f4f5fe]'
                   }`}
                 >
-                  <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-                    <Upload className="size-6 text-[#1dbf73]" />
+                  <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+                    <Upload className="size-6 text-[#2f3cf5]" />
                   </div>
-                  <p className="mt-4 text-sm font-semibold text-[#404145]">
+                  <p className="mt-4 text-sm font-semibold text-[#1a1a17]">
                     Drag and drop, or click to browse
                   </p>
-                  <p className="mt-1 text-sm text-[#62646a]">
+                  <p className="mt-1 text-sm text-[#5f5d57]">
                     PDF, PNG, JPG, GIF, or WebP — up to 10 MB
                   </p>
-                  <div className="mt-4 flex items-center gap-4 text-xs text-[#6b7280]">
+                  <div className="mt-4 flex items-center gap-4 text-xs text-[#5f5d57]">
                     <span className="inline-flex items-center gap-1">
                       <FileText className="size-3.5" />
                       PDF
@@ -585,7 +585,7 @@ function CredentialUploadForm() {
                 </label>
               )}
 
-              <p className="text-xs text-[#6b7280]">
+              <p className="text-xs text-[#5f5d57]">
                 A clear scan or photo with all four corners visible speeds up
                 verification.
               </p>
@@ -603,7 +603,7 @@ function CredentialUploadForm() {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
             >
               {saving ? (
                 <>
@@ -625,7 +625,7 @@ function CredentialUploadForm() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Clock className="size-4 text-[#1dbf73]" />
+                <Clock className="size-4 text-[#2f3cf5]" />
                 How verification works
               </CardTitle>
             </CardHeader>
@@ -648,14 +648,14 @@ function CredentialUploadForm() {
                 },
               ].map((s) => (
                 <div key={s.step} className="flex gap-3">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#e8faf1] text-xs font-semibold text-[#0f8f56]">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-xs font-semibold text-[#2330c8]">
                     {s.step}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#404145]">
+                    <p className="text-sm font-medium text-[#1a1a17]">
                       {s.title}
                     </p>
-                    <p className="text-xs text-[#62646a]">{s.body}</p>
+                    <p className="text-xs text-[#5f5d57]">{s.body}</p>
                   </div>
                 </div>
               ))}
@@ -665,12 +665,12 @@ function CredentialUploadForm() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Lightbulb className="size-4 text-[#1dbf73]" />
+                <Lightbulb className="size-4 text-[#2f3cf5]" />
                 Tips for fast approval
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm text-[#62646a]">
+              <ul className="space-y-2 text-sm text-[#5f5d57]">
                 {[
                   'Use a flat, well-lit surface — no glare.',
                   'Make sure expiration date is readable.',
@@ -678,7 +678,7 @@ function CredentialUploadForm() {
                   'PDFs from the issuing authority are preferred.',
                 ].map((tip) => (
                   <li key={tip} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#1dbf73]" />
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
                     <span>{tip}</span>
                   </li>
                 ))}
@@ -689,12 +689,12 @@ function CredentialUploadForm() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <ShieldCheck className="size-4 text-[#1dbf73]" />
+                <ShieldCheck className="size-4 text-[#2f3cf5]" />
                 Common credentials
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-1.5 text-sm text-[#62646a]">
+              <ul className="space-y-1.5 text-sm text-[#5f5d57]">
                 <li>State nursing or medical license</li>
                 <li>BLS / ACLS / PALS certifications</li>
                 <li>NPI number</li>
@@ -705,10 +705,10 @@ function CredentialUploadForm() {
             </CardContent>
           </Card>
 
-          <Card className="border-[#bcebd5] bg-[#e8faf1]">
+          <Card className="border-[#c9cdfb] bg-[#eceefe]">
             <CardContent className="flex items-start gap-3">
-              <Lock className="mt-0.5 size-4 shrink-0 text-[#0f8f56]" />
-              <p className="text-xs text-[#0f8f56]">
+              <Lock className="mt-0.5 size-4 shrink-0 text-[#2330c8]" />
+              <p className="text-xs text-[#2330c8]">
                 Documents are private. Only our verification team can view the
                 file you upload — facilities only see the credential name and
                 status.

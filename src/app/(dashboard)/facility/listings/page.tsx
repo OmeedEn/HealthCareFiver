@@ -61,16 +61,16 @@ export default async function FacilityListingsPage({
     <div className="space-y-6">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold text-[#404145]">Services & events</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Services & events</h1>
           <Link
             href={`/orgs/${user.id}`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#1dbf73] hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2f3cf5] hover:underline"
           >
             <ExternalLink className="size-4" aria-hidden="true" />
             {approved ? 'View your public page' : 'Preview your public page'}
           </Link>
         </div>
-        <p className="text-sm text-[#62646a]">
+        <p className="text-sm text-[#5f5d57]">
           {!approved
             ? 'Save listings as drafts now. Nothing goes live until your organization is approved.'
             : 'Submit a draft for review when it’s ready. Our team reviews every listing before it goes live.'}
@@ -80,7 +80,7 @@ export default async function FacilityListingsPage({
       {approved && !agreed && <OrgAgreementCard />}
 
       {needsPayoutsSetup && (
-        <p className="rounded-xl border border-[#f5deb3] bg-[#fdf6e3] p-4 text-sm text-[#6b5208]">
+        <p className="rounded-xl border border-[#ecd3a3] bg-[#fbf0dc] p-4 text-sm text-[#8a5a00]">
           Set up payouts so customers can pay for your paid services and events.{' '}
           <Link href="/facility/payouts" className="font-semibold underline">Set up payouts</Link>
         </p>
@@ -94,19 +94,19 @@ export default async function FacilityListingsPage({
         </CardHeader>
         <CardContent>
           {listings.length === 0 ? (
-            <p className="text-sm text-[#62646a]">Nothing yet. Add a service or an event above.</p>
+            <p className="text-sm text-[#5f5d57]">Nothing yet. Add a service or an event above.</p>
           ) : (
-            <ul className="divide-y divide-[#e4e5e7]">
+            <ul className="divide-y divide-[#e3dfd6]">
               {listings.map((l) => (
                 <li key={l.id} className="flex flex-wrap items-start justify-between gap-3 py-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#404145]">
+                    <p className="font-semibold text-[#1a1a17]">
                       {l.title}{' '}
-                      <span className="text-xs font-normal text-[#62646a]">
+                      <span className="text-xs font-normal text-[#5f5d57]">
                         {l.kind === 'service' ? 'Service' : labelFor(ORG_EVENT_TYPES, l.event_type)}
                       </span>
                     </p>
-                    <p className="text-sm text-[#62646a]">
+                    <p className="text-sm text-[#5f5d57]">
                       {[
                         labelFor(l.kind === 'service' ? LISTING_FORMATS : EVENT_FORMATS, l.format),
                         l.locations,
@@ -151,7 +151,7 @@ export default async function FacilityListingsPage({
                     {l.status === 'draft' && <DeleteListingButton id={l.id} />}
                   </div>
                   {l.status === 'draft' && l.review_notes && (
-                    <p className="w-full rounded-md bg-[#fdecea] p-2 text-sm text-[#404145]">
+                    <p className="w-full rounded-md bg-[#fdecea] p-2 text-sm text-[#1a1a17]">
                       <span className="font-semibold">Changes requested:</span> {l.review_notes}
                     </p>
                   )}

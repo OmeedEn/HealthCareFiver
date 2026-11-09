@@ -57,7 +57,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
     <div className="mx-auto max-w-3xl space-y-6">
       <Link
         href={side === 'org' ? '/facility/bookings' : '/bookings'}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         {side === 'org' ? 'All bookings' : 'My bookings'}
@@ -65,15 +65,15 @@ export default async function BookingPage({ params, searchParams }: Props) {
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">{s.title}</h1>
-          <p className="mt-1 text-sm text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">{s.title}</h1>
+          <p className="mt-1 text-sm text-[#5f5d57]">
             {side === 'customer' ? `With ${counterpart}` : `Requested by ${counterpart}`} · {new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
         <BookingStatusBadge booking={b} side={side} />
       </div>
 
-      <section className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
+      <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
         <dl className="grid gap-4 text-sm sm:grid-cols-2">
           <Detail label="What" value={b.kind === 'event' ? (labelFor(ORG_EVENT_TYPES, s.event_type) || 'Event') : 'Service'} />
           <Detail label="Format" value={[labelFor(b.kind === 'event' ? EVENT_FORMATS : LISTING_FORMATS, s.format), s.format === 'virtual' ? null : s.locations].filter(Boolean).join(' · ') || '—'} />
@@ -96,19 +96,19 @@ export default async function BookingPage({ params, searchParams }: Props) {
           <CustomerBookingActions booking={b} cancelNote={cancelNote} paymentsOpen={isStripeConfigured()} />
         ))}
 
-      <section className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
-        <h2 className="text-lg font-semibold text-[#404145]">Messages</h2>
+      <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
+        <h2 className="text-lg font-semibold text-[#1a1a17]">Messages</h2>
         {messages.length === 0 ? (
-          <p className="mt-2 text-sm text-[#62646a]">No messages yet.</p>
+          <p className="mt-2 text-sm text-[#5f5d57]">No messages yet.</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {messages.map((m) => {
               const mine = m.sender_id === user.id
               return (
                 <li key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${mine ? 'bg-[#1dbf73] text-white' : 'bg-[#f3f4f5] text-[#404145]'}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${mine ? 'bg-[#2f3cf5] text-white' : 'bg-[#eeebe4] text-[#1a1a17]'}`}>
                     <p className="whitespace-pre-line">{m.body}</p>
-                    <p className={`mt-1 text-[11px] ${mine ? 'text-white/80' : 'text-[#95979d]'}`}>
+                    <p className={`mt-1 text-[11px] ${mine ? 'text-white/80' : 'text-[#706d65]'}`}>
                       {mine ? 'You' : counterpart} · {when(m.created_at)}
                     </p>
                   </div>
@@ -120,8 +120,8 @@ export default async function BookingPage({ params, searchParams }: Props) {
         <div className="mt-5">
           <BookingMessageForm bookingId={b.id} />
         </div>
-        <p className="flex items-start gap-2 text-xs text-[#62646a]">
-          <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#1dbf73]" aria-hidden="true" />
+        <p className="flex items-start gap-2 text-xs text-[#5f5d57]">
+          <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
           Keep contact details off messages. Booking, payment, and messages stay on Sanus so you’re protected.
         </p>
       </section>
@@ -166,7 +166,7 @@ function NextStep({ booking: b, side }: { booking: BookingRow; side: 'customer' 
           cancelled: 'This booking was cancelled.',
         }[b.status]
   return (
-    <p className="flex items-start gap-2 rounded-xl border border-[#bcebd5] bg-[#f0faf5] p-4 text-sm text-[#0f4c3a]">
+    <p className="flex items-start gap-2 rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] p-4 text-sm text-[#1a1a17]">
       <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
       {text}
     </p>
@@ -227,16 +227,16 @@ function MoneyPanel({ booking: b, side }: { booking: BookingRow; side: 'customer
   }
   if (!lines.length) return null
   return (
-    <section className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
-      <h2 className="flex items-center gap-2 text-lg font-semibold text-[#404145]">
-        <Wallet className="size-5 text-[#1dbf73]" aria-hidden="true" />
+    <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-[#1a1a17]">
+        <Wallet className="size-5 text-[#2f3cf5]" aria-hidden="true" />
         Payment
       </h2>
       <dl className="mt-3 space-y-2 text-sm">
         {lines.map(([k, v]) => (
           <div key={k} className="flex flex-wrap justify-between gap-x-4 gap-y-1">
-            <dt className="text-[#62646a]">{k}</dt>
-            <dd className="font-medium text-[#404145] sm:text-right">{v}</dd>
+            <dt className="text-[#5f5d57]">{k}</dt>
+            <dd className="font-medium text-[#1a1a17] sm:text-right">{v}</dd>
           </div>
         ))}
       </dl>
@@ -247,17 +247,17 @@ function MoneyPanel({ booking: b, side }: { booking: BookingRow; side: 'customer
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-xs font-semibold uppercase tracking-wide text-[#95979d]">{label}</dt>
-      <dd className="mt-1 font-medium text-[#404145]">{value}</dd>
+      <dt className="text-xs font-semibold uppercase tracking-wide text-[#706d65]">{label}</dt>
+      <dd className="mt-1 font-medium text-[#1a1a17]">{value}</dd>
     </div>
   )
 }
 
 function Note({ label, text }: { label: string; text: string }) {
   return (
-    <div className="mt-5 rounded-xl bg-[#fafafa] p-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#95979d]">{label}</p>
-      <p className="mt-1 whitespace-pre-line text-sm text-[#404145]">{text}</p>
+    <div className="mt-5 rounded-xl bg-[#f6f4ef] p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#706d65]">{label}</p>
+      <p className="mt-1 whitespace-pre-line text-sm text-[#1a1a17]">{text}</p>
     </div>
   )
 }

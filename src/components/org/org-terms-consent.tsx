@@ -2,7 +2,7 @@
 
 import { ORG_AGREEMENT_PATH, PRIVACY_PATH, TERMS_PATH } from '@/lib/legal'
 
-const LINK = 'font-semibold underline hover:text-[#404145]'
+const LINK = 'font-semibold underline hover:text-[#1a1a17]'
 
 /**
  * The organization account screen's one consent checkbox: Terms of Service,
@@ -25,9 +25,9 @@ export function OrgTermsConsent({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-[#c5c6c9] accent-[#1dbf73] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73]"
+        className="mt-0.5 size-4 shrink-0 cursor-pointer rounded border-[#cbc6ba] accent-[#2f3cf5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
       />
-      <label htmlFor={id} className="cursor-pointer text-sm leading-5 text-[#62646a]">
+      <label htmlFor={id} className="cursor-pointer text-sm leading-5 text-[#5f5d57]">
         I agree to the{' '}
         <a href={TERMS_PATH} target="_blank" rel="noopener noreferrer" className={LINK}>
           Terms of Service

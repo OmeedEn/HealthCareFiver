@@ -379,7 +379,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-[#1dbf73]" />
+        <Loader2 className="size-6 animate-spin text-[#2f3cf5]" />
       </div>
     )
   }
@@ -391,8 +391,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Settings</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Settings</h1>
+        <p className="text-[#5f5d57]">
           Manage your account, notifications, and security preferences.
         </p>
       </div>
@@ -430,12 +430,12 @@ export default function SettingsPage() {
                         alt="Avatar"
                         width={96}
                         height={96}
-                        className="size-24 rounded-full border border-[#e4e5e7] object-cover"
+                        className="size-24 rounded-full border border-[#e3dfd6] object-cover"
                         unoptimized
                       />
                     ) : (
-                      <Avatar className="size-24 border border-[#e4e5e7]">
-                        <AvatarFallback className="bg-[#e8faf1] text-xl font-semibold text-[#0f8f56]">
+                      <Avatar className="size-24 border border-[#e3dfd6]">
+                        <AvatarFallback className="bg-[#eceefe] text-xl font-semibold text-[#2330c8]">
                           {initials}
                         </AvatarFallback>
                       </Avatar>
@@ -445,7 +445,7 @@ export default function SettingsPage() {
                       onClick={() => avatarInputRef.current?.click()}
                       disabled={avatarUploading}
                       aria-label="Upload new photo"
-                      className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#1dbf73] text-white shadow-sm hover:bg-[#19a463] disabled:opacity-60"
+                      className="absolute -bottom-1 -right-1 flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#2f3cf5] text-white shadow-sm hover:bg-[#2330c8] disabled:opacity-60"
                     >
                       {avatarUploading ? (
                         <Loader2 className="size-4 animate-spin" />
@@ -455,10 +455,10 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-[#404145]">
+                    <p className="text-sm font-semibold text-[#1a1a17]">
                       {profile.email || 'Your account'}
                     </p>
-                    <p className="text-xs text-[#62646a]">
+                    <p className="text-xs text-[#5f5d57]">
                       JPG, PNG, WebP, or GIF — up to 5 MB. Square images look
                       best.
                     </p>
@@ -485,7 +485,7 @@ export default function SettingsPage() {
                   <div className="relative">
                     <Mail
                       aria-hidden="true"
-                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5f5d57]"
                     />
                     <Input
                       id="email"
@@ -501,7 +501,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   {emailChanged && (
-                    <p className="text-xs text-[#0f8f56]">
+                    <p className="text-xs text-[#2330c8]">
                       You&apos;ll get a confirmation link at the new address
                       before the change takes effect.
                     </p>
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                   <div className="relative">
                     <Phone
                       aria-hidden="true"
-                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                      className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5f5d57]"
                     />
                     <Input
                       id="phone"
@@ -529,7 +529,7 @@ export default function SettingsPage() {
                       className="pl-9"
                     />
                   </div>
-                  <p className="text-xs text-[#62646a]">
+                  <p className="text-xs text-[#5f5d57]">
                     Used for shift reminders and time-sensitive alerts only —
                     never shared with facilities.
                   </p>
@@ -539,7 +539,7 @@ export default function SettingsPage() {
                   <Button
                     onClick={handleProfileSave}
                     disabled={saving}
-                    className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                    className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                   >
                     {saving && (
                       <Loader2
@@ -563,7 +563,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Mail className="size-4 text-[#1dbf73]" />
+                <Mail className="size-4 text-[#2f3cf5]" />
                 Email notifications
               </CardTitle>
             </CardHeader>
@@ -574,20 +574,20 @@ export default function SettingsPage() {
                 return (
                   <div
                     key={row.key}
-                    className="flex items-start justify-between gap-4 border-b border-[#f1f3f5] py-4 last:border-0"
+                    className="flex items-start justify-between gap-4 border-b border-[#eeebe4] py-4 last:border-0"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#e8faf1]">
-                        <Icon className="size-4 text-[#1dbf73]" />
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                        <Icon className="size-4 text-[#2f3cf5]" />
                       </div>
                       <div className="min-w-0">
                         <Label
                           htmlFor={row.key}
-                          className="text-sm font-medium text-[#404145]"
+                          className="text-sm font-medium text-[#1a1a17]"
                         >
                           {row.title}
                         </Label>
-                        <p className="text-xs text-[#62646a]">
+                        <p className="text-xs text-[#5f5d57]">
                           {row.description}
                         </p>
                       </div>
@@ -599,7 +599,7 @@ export default function SettingsPage() {
                       aria-checked={enabled}
                       onClick={() => togglePreference(row.key)}
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                        enabled ? 'bg-[#1dbf73]' : 'bg-[#e4e5e7]'
+                        enabled ? 'bg-[#2f3cf5]' : 'bg-[#e3dfd6]'
                       }`}
                     >
                       <span
@@ -616,7 +616,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handlePreferencesSave}
                   disabled={savingPrefs}
-                  className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                  className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                 >
                   {savingPrefs && (
                     <Loader2
@@ -637,7 +637,7 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <KeyRound className="size-4 text-[#1dbf73]" />
+                  <KeyRound className="size-4 text-[#2f3cf5]" />
                   Change password
                 </CardTitle>
               </CardHeader>
@@ -651,7 +651,7 @@ export default function SettingsPage() {
                     <div className="relative">
                       <Lock
                         aria-hidden="true"
-                        className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6b7280]"
+                        className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5f5d57]"
                       />
                       <Input
                         id="current-password"
@@ -675,7 +675,7 @@ export default function SettingsPage() {
                         onChange={(e) => setNewPassword(e.target.value)}
                         required
                       />
-                      <p className="text-xs text-[#62646a]">
+                      <p className="text-xs text-[#5f5d57]">
                         At least 8 characters.
                       </p>
                     </div>
@@ -696,7 +696,7 @@ export default function SettingsPage() {
                     <Button
                       type="submit"
                       disabled={saving}
-                      className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                      className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                     >
                       {saving && (
                         <Loader2
@@ -717,26 +717,26 @@ export default function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Monitor className="size-4 text-[#1dbf73]" />
+                  <Monitor className="size-4 text-[#2f3cf5]" />
                   Active sessions
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between rounded-md border border-[#e4e5e7] bg-[#fafefb] px-3 py-3">
+                <div className="flex items-center justify-between rounded-md border border-[#e3dfd6] bg-[#f4f5fe] px-3 py-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#404145]">
+                    <p className="text-sm font-medium text-[#1a1a17]">
                       This device
                     </p>
-                    <p className="text-xs text-[#62646a]">
+                    <p className="text-xs text-[#5f5d57]">
                       Active now · last used just now
                     </p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8faf1] px-2 py-0.5 text-xs font-medium text-[#0f8f56]">
-                    <span className="size-1.5 rounded-full bg-[#1dbf73]" />
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eceefe] px-2 py-0.5 text-xs font-medium text-[#2330c8]">
+                    <span className="size-1.5 rounded-full bg-[#2f3cf5]" />
                     Current
                   </span>
                 </div>
-                <p className="mt-3 text-xs text-[#62646a]">
+                <p className="mt-3 text-xs text-[#5f5d57]">
                   Full session management is coming soon. Until then, you can
                   sign out from any session by signing out and back in.
                 </p>

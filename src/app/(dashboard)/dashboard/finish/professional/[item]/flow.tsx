@@ -181,7 +181,7 @@ export function FinishItemFlow({
                   setNoOtherNames(true)
                   advance()
                 }}
-                className="rounded text-sm font-semibold text-[#1dbf73] underline-offset-4 hover:underline"
+                className="rounded text-sm font-semibold text-[#2f3cf5] underline-offset-4 hover:underline"
               >
                 I haven’t used other names
               </button>
@@ -323,7 +323,7 @@ function TagInput({
                 type="button"
                 onClick={() => onChange(values.filter((y) => y !== x))}
                 aria-label={`Remove ${x}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#1dbf73] bg-[#e8faf1] px-3 py-1.5 text-sm font-medium text-[#0f8f56]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#2f3cf5] bg-[#eceefe] px-3 py-1.5 text-sm font-medium text-[#2330c8]"
               >
                 {x}
                 <X className="size-3.5" aria-hidden />
@@ -342,7 +342,7 @@ function TagInput({
                 key={s}
                 type="button"
                 onClick={() => add(s)}
-                className="inline-flex items-center gap-1 rounded-full border border-[#e4e5e7] bg-white px-3 py-1.5 text-sm text-[#62646a] hover:border-[#bcebd5]"
+                className="inline-flex items-center gap-1 rounded-full border border-[#e3dfd6] bg-white px-3 py-1.5 text-sm text-[#5f5d57] hover:border-[#c9cdfb]"
               >
                 <Plus className="size-3.5" aria-hidden />
                 {s}
@@ -373,7 +373,7 @@ function TagInput({
           type="button"
           onClick={() => add(draft)}
           disabled={!draft.trim()}
-          className="h-11 rounded-lg border border-[#e4e5e7] bg-white px-4 text-sm font-semibold text-[#404145] disabled:opacity-50"
+          className="h-11 rounded-lg border border-[#e3dfd6] bg-white px-4 text-sm font-semibold text-[#1a1a17] disabled:opacity-50"
         >
           Add
         </button>
@@ -395,7 +395,7 @@ function StatePicker({ values, onChange }: { values: string[]; onChange: (v: str
           const s = e.target.value
           if (s && !values.includes(s)) onChange([...values, s])
         }}
-        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#404145] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#1a1a17] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <option value="">Add a state…</option>
         {US_STATES.filter((s) => !values.includes(s.value)).map((s) => (
@@ -412,7 +412,7 @@ function StatePicker({ values, onChange }: { values: string[]; onChange: (v: str
                 type="button"
                 onClick={() => onChange(values.filter((x) => x !== s))}
                 aria-label={`Remove ${US_STATES.find((x) => x.value === s)?.label ?? s}`}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#1dbf73] bg-[#e8faf1] px-3 py-1.5 text-sm font-medium text-[#0f8f56]"
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#2f3cf5] bg-[#eceefe] px-3 py-1.5 text-sm font-medium text-[#2330c8]"
               >
                 {US_STATES.find((x) => x.value === s)?.label ?? s}
                 <X className="size-3.5" aria-hidden />

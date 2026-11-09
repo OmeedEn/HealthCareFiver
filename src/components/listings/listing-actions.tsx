@@ -51,7 +51,7 @@ export function SubmitForReviewButton({ listingId }: { listingId: string }) {
         Submit for review
       </Button>
       {blocked && (
-        <p className="text-sm text-[#c0392b]" role="alert">
+        <p className="text-sm text-[#b42318]" role="alert">
           {blocked.error}
           {blocked.href && (
             <>
@@ -89,7 +89,7 @@ export function DeleteListingButton({ listingId }: { listingId: string }) {
       type="button"
       onClick={remove}
       disabled={pending}
-      className="inline-flex items-center gap-1 text-sm font-medium text-[#c0392b] hover:underline disabled:opacity-50"
+      className="inline-flex items-center gap-1 text-sm font-medium text-[#b42318] hover:underline disabled:opacity-50"
     >
       {pending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
       Delete

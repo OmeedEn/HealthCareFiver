@@ -25,8 +25,8 @@ export default async function NewUrgentNeedPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Post an urgent need or staffing opportunity</h1>
-        <p className="text-sm text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Post an urgent need or staffing opportunity</h1>
+        <p className="text-sm text-[#5f5d57]">
           Saved as a draft. It publishes once your organization is approved.
         </p>
       </div>

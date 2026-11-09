@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'Draft terms for booking services and events on Sanus. Pending legal review.',
 }
 
-const linkClass = 'text-[#0f8f56] underline'
+const linkClass = 'text-[#2330c8] underline'
 
 const sections: LegalSection[] = [
   {

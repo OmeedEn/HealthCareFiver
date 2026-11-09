@@ -89,8 +89,8 @@ export default async function ContractorReviewsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Reviews</h1>
-        <p className="text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Reviews</h1>
+        <p className="text-[#5f5d57]">
           Feedback from facilities you&apos;ve worked with
         </p>
       </div>
@@ -98,19 +98,19 @@ export default async function ContractorReviewsPage() {
       {reviews.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-              <Star className="size-6 text-[#1dbf73]" />
+            <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+              <Star className="size-6 text-[#2f3cf5]" />
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-[#404145]">
+            <h3 className="mt-4 text-lg font-semibold text-[#1a1a17]">
               No reviews yet
             </h3>
-            <p className="mt-1 max-w-sm text-sm text-[#62646a]">
+            <p className="mt-1 max-w-sm text-sm text-[#5f5d57]">
               Reviews from facilities will appear here after you complete
               contracts
             </p>
             <Link
               href="/contractor/jobs"
-              className="mt-6 inline-flex h-9 items-center justify-center rounded-md bg-[#1dbf73] px-4 text-sm font-medium text-white transition-colors hover:bg-[#19a463]"
+              className="mt-6 inline-flex h-9 items-center justify-center rounded-md bg-[#2f3cf5] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2330c8]"
             >
               Browse jobs
             </Link>
@@ -122,7 +122,7 @@ export default async function ContractorReviewsPage() {
             <CardContent className="py-8">
               <div className="grid gap-8 md:grid-cols-[auto_1fr] md:items-center">
                 <div className="flex flex-col items-center text-center md:items-start md:text-left">
-                  <p className="text-4xl font-bold text-[#404145]">
+                  <p className="text-4xl font-bold text-[#1a1a17]">
                     {averageRating.toFixed(1)}
                   </p>
                   <div className="mt-2 flex items-center gap-0.5">
@@ -132,12 +132,12 @@ export default async function ContractorReviewsPage() {
                         className={
                           i < roundedAverage
                             ? 'size-5 fill-[#fbbf24] text-[#fbbf24]'
-                            : 'size-5 text-[#e5e7eb]'
+                            : 'size-5 text-[#e3dfd6]'
                         }
                       />
                     ))}
                   </div>
-                  <p className="mt-2 text-sm text-[#62646a]">
+                  <p className="mt-2 text-sm text-[#5f5d57]">
                     {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
                   </p>
                 </div>
@@ -148,17 +148,17 @@ export default async function ContractorReviewsPage() {
                       key={row.stars}
                       className="flex items-center gap-3 text-sm"
                     >
-                      <span className="flex w-8 items-center gap-0.5 text-[#62646a]">
+                      <span className="flex w-8 items-center gap-0.5 text-[#5f5d57]">
                         {row.stars}
                         <Star className="size-3 fill-[#fbbf24] text-[#fbbf24]" />
                       </span>
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#e8faf1]">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#eceefe]">
                         <div
-                          className="h-full rounded-full bg-[#1dbf73]"
+                          className="h-full rounded-full bg-[#2f3cf5]"
                           style={{ width: `${row.pct}%` }}
                         />
                       </div>
-                      <span className="w-10 text-right text-xs text-[#62646a]">
+                      <span className="w-10 text-right text-xs text-[#5f5d57]">
                         {row.pct}%
                       </span>
                     </div>
@@ -169,7 +169,7 @@ export default async function ContractorReviewsPage() {
           </Card>
 
           <div>
-            <h2 className="mb-3 text-lg font-semibold text-[#404145]">
+            <h2 className="mb-3 text-lg font-semibold text-[#1a1a17]">
               All reviews
             </h2>
             <div className="space-y-4">
@@ -187,16 +187,16 @@ export default async function ContractorReviewsPage() {
                   <Card key={review.id}>
                     <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
                       <div className="space-y-1">
-                        <CardTitle className="text-sm font-semibold text-[#404145]">
+                        <CardTitle className="text-sm font-semibold text-[#1a1a17]">
                           {reviewerName}
                         </CardTitle>
                         {review.title && (
-                          <p className="text-sm text-[#404145]">
+                          <p className="text-sm text-[#1a1a17]">
                             {review.title}
                           </p>
                         )}
                       </div>
-                      <p className="shrink-0 text-xs text-[#62646a]">
+                      <p className="shrink-0 text-xs text-[#5f5d57]">
                         {dateStr}
                       </p>
                     </CardHeader>
@@ -208,12 +208,12 @@ export default async function ContractorReviewsPage() {
                             className={
                               i < reviewRounded
                                 ? 'size-4 fill-[#fbbf24] text-[#fbbf24]'
-                                : 'size-4 text-[#e5e7eb]'
+                                : 'size-4 text-[#e3dfd6]'
                             }
                           />
                         ))}
                       </div>
-                      <p className="text-sm leading-relaxed text-[#404145]">
+                      <p className="text-sm leading-relaxed text-[#1a1a17]">
                         {review.content}
                       </p>
                     </CardContent>

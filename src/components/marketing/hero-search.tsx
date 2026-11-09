@@ -21,34 +21,29 @@ export function HeroSearch() {
     <form
       onSubmit={handleSubmit}
       role="search"
-      className="rounded-2xl bg-white p-2 shadow-xl shadow-black/10"
+      className="flex flex-col gap-2 sm:flex-row sm:gap-0"
     >
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <div className="flex min-h-12 flex-1 items-center gap-3 px-4">
-          <Search
-            aria-hidden="true"
-            className="h-5 w-5 shrink-0 text-[#6b7280]"
-          />
-          <label htmlFor="hero-search" className="sr-only">
-            Search healthcare professionals
-          </label>
-          <input
-            id="hero-search"
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder='Try "ICU nurse", "CNA night shift", or "respiratory therapist"'
-            className="h-full flex-1 bg-transparent text-sm text-[#111827] placeholder-[#9ca3af] outline-none sm:text-base"
-            autoComplete="off"
-          />
-        </div>
-        <button
-          type="submit"
-          className="inline-flex h-12 items-center justify-center rounded-xl bg-[#1dbf73] px-6 text-sm font-semibold text-white transition hover:bg-[#19a463] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73] focus-visible:ring-offset-2"
-        >
-          Search
-        </button>
+      <label htmlFor="hero-search" className="sr-only">
+        Search healthcare professionals
+      </label>
+      <div className="flex h-14 flex-1 items-center gap-3 rounded-md border-2 border-ink bg-surface px-4 transition-colors focus-within:border-brand sm:rounded-r-none sm:border-r-0">
+        <Search aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+        <input
+          id="hero-search"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder='Try "ICU nurse", "CNA night shift", or "respiratory therapist"'
+          className="h-full flex-1 bg-transparent text-base text-ink placeholder:text-ink-faint outline-none"
+          autoComplete="off"
+        />
       </div>
+      <button
+        type="submit"
+        className="inline-flex h-14 items-center justify-center rounded-md bg-ink px-7 text-sm font-semibold text-paper transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:rounded-l-none"
+      >
+        Search
+      </button>
     </form>
   )
 }

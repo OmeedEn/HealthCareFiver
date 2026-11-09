@@ -417,7 +417,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-start gap-3">
-        <Button variant="ghost" size="icon" render={<Link href="/admin/verification" />}>
+        <Button variant="ghost" size="icon" render={<Link href="/admin/review/professionals" />}>
           <ArrowLeft className="size-4" />
         </Button>
         <div className="min-w-0 flex-1">
@@ -611,7 +611,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
                       href={nppesUrl(profile.npi_number)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[#1dbf73] hover:underline"
+                      className="inline-flex items-center gap-1 text-[#2f3cf5] hover:underline"
                     >
                       {profile.npi_number} <ExternalLink className="size-3" />
                     </a>
@@ -645,7 +645,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
                       href={profile.website_url}
                       target="_blank"
                       rel="noopener noreferrer nofollow"
-                      className="inline-flex items-center gap-1 break-all text-[#1dbf73] hover:underline"
+                      className="inline-flex items-center gap-1 break-all text-[#2f3cf5] hover:underline"
                     >
                       {profile.website_url} <ExternalLink className="size-3 shrink-0" />
                     </a>
@@ -973,7 +973,7 @@ export function ApplicantClient({ data, demo = false }: { data: ApplicantData; d
                 </li>
               ))}
             </ul>
-            <Link href="/admin/listings" className="mt-2 inline-block text-xs text-[#1dbf73] hover:underline">
+            <Link href="/admin/review/listings" className="mt-2 inline-block text-xs text-[#2f3cf5] hover:underline">
               Open listings review →
             </Link>
           </CardContent>

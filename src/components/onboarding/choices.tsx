@@ -21,7 +21,7 @@ export function OptionChips({
 }) {
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-semibold text-[#404145]">{legend}</legend>
+      <legend className="text-sm font-semibold text-[#1a1a17]">{legend}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => {
           const on = value.includes(o.value)
@@ -33,8 +33,8 @@ export function OptionChips({
               onClick={() => onChange(on ? value.filter((x) => x !== o.value) : [...value, o.value])}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                 on
-                  ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-                  : 'border-[#e4e5e7] bg-white text-[#62646a] hover:border-[#bcebd5]'
+                  ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+                  : 'border-[#e3dfd6] bg-white text-[#5f5d57] hover:border-[#c9cdfb]'
               }`}
             >
               {on && <Check className="size-3" />}
@@ -100,7 +100,7 @@ export function IconChoices({
 
   return (
     <div className="space-y-2">
-      <p id={legendId} className={hideLegend ? 'sr-only' : 'text-sm font-semibold text-[#404145]'}>
+      <p id={legendId} className={hideLegend ? 'sr-only' : 'text-sm font-semibold text-[#1a1a17]'}>
         {legend}
       </p>
       <div
@@ -157,7 +157,7 @@ export function IconMultiChoices({
   const legendId = useId()
   return (
     <div className="space-y-2">
-      <p id={legendId} className={hideLegend ? 'sr-only' : 'text-sm font-semibold text-[#404145]'}>
+      <p id={legendId} className={hideLegend ? 'sr-only' : 'text-sm font-semibold text-[#1a1a17]'}>
         {legend}
       </p>
       <div role="group" aria-labelledby={legendId} className={`grid gap-2.5 ${COLS[columns]}`}>
@@ -209,7 +209,7 @@ function ChoiceTile({
       tabIndex={tabIndex}
       data-value={option.value}
       onClick={onClick}
-      className={`relative flex rounded-xl border text-left transition outline-none focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 ${
+      className={`relative flex rounded-xl border text-left transition outline-none focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 ${
         compact
           ? 'min-h-11 items-center gap-2 px-3 py-2 text-sm'
           : stacked
@@ -217,23 +217,23 @@ function ChoiceTile({
             : 'min-h-[4.25rem] items-center gap-3 p-3 text-sm'
       } ${
         on
-          ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f4c3a] shadow-[inset_0_0_0_1px_#1dbf73]'
-          : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5] hover:bg-[#fafefb]'
+          ? 'border-[#2f3cf5] bg-[#eceefe] text-[#1a1a17] shadow-[inset_0_0_0_1px_#2f3cf5]'
+          : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb] hover:bg-[#f4f5fe]'
       }`}
     >
       <span
         className={`flex shrink-0 items-center justify-center rounded-lg ${compact ? 'size-7' : 'size-9'} ${
-          on ? 'bg-[#1dbf73] text-white' : 'bg-[#f3f4f5] text-[#62646a]'
+          on ? 'bg-[#2f3cf5] text-white' : 'bg-[#eeebe4] text-[#5f5d57]'
         }`}
       >
         <Icon className={compact ? 'size-4' : 'size-5'} />
       </span>
       <span className={compact || stacked ? '' : 'pr-5'}>
         <span className="block font-semibold leading-snug">{option.label}</span>
-        {option.sub && <span className="mt-0.5 block text-xs font-normal text-[#62646a]">{option.sub}</span>}
+        {option.sub && <span className="mt-0.5 block text-xs font-normal text-[#5f5d57]">{option.sub}</span>}
       </span>
       {on && !compact && (
-        <Check className="absolute top-2.5 right-2.5 size-3.5 text-[#1dbf73]" aria-hidden="true" />
+        <Check className="absolute top-2.5 right-2.5 size-3.5 text-[#2f3cf5]" aria-hidden="true" />
       )}
     </button>
   )
@@ -256,7 +256,7 @@ export function SectionActions({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
       {onSkip ? (
-        <button type="button" onClick={onSkip} className="text-sm font-semibold text-[#62646a] hover:text-[#404145]">
+        <button type="button" onClick={onSkip} className="text-sm font-semibold text-[#5f5d57] hover:text-[#1a1a17]">
           {skipLabel}
         </button>
       ) : (
@@ -266,7 +266,7 @@ export function SectionActions({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="inline-flex h-10 items-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white hover:bg-[#19a463] disabled:opacity-60"
+        className="inline-flex h-10 items-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white hover:bg-[#2330c8] disabled:opacity-60"
       >
         {saving ? 'Saving…' : saveLabel}
       </button>

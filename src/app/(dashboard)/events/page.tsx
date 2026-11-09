@@ -20,8 +20,8 @@ export default async function EventsPage() {
   return (
     <div className="space-y-2">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-[#111827]">Events &amp; training</h1>
-        <p className="mt-1 text-[#6b7280]">
+        <h1 className="font-heading text-2xl font-bold text-[#1a1a17]">Events &amp; training</h1>
+        <p className="mt-1 text-[#5f5d57]">
           Webinars, workshops, CEU courses, and certifications from verified organizations.
         </p>
       </div>

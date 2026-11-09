@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
-import { countPendingClassification } from '@/lib/admin/classification'
-import { countNeedsReply } from '@/lib/admin/support'
-import { countPendingVerification } from '@/lib/admin/verification-counts'
+import { getQueueCounts, inboxTotal, reviewTotal } from '@/lib/admin/queue-counts'
 import { AdminSignOutButton } from './sign-out-button'
 import { AdminNav } from './admin-nav'
 
@@ -15,34 +13,24 @@ export default async function AdminLayout({
   let adminEmail = 'admin (demo)'
   const badges: Record<string, number> = {}
   if (!isDemoMode()) {
-    const { admin, db } = await requireAdmin()
+    const { admin } = await requireAdmin()
     adminEmail = admin.email ?? admin.id
-    const [classification, verification, credentials, unreadMessages] = await Promise.all([
-      countPendingClassification(db),
-      countPendingVerification(db),
-      db
-        .from('credentials')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending_review'),
-      countNeedsReply(db).catch(() => 0),
-    ])
-    badges['/admin/classification'] = classification
-    badges['/admin/verification'] = verification.pros + verification.orgs
-    badges['/admin/credentials'] = credentials.count ?? 0
-    badges['/admin/messages'] = unreadMessages
+    const counts = await getQueueCounts()
+    badges['/admin/review'] = reviewTotal(counts)
+    badges['/admin/inbox'] = inboxTotal(counts)
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="border-b bg-white">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-2 md:px-6">
-          <Link href="/admin/verification" className="text-lg font-semibold text-[#404145]">
+          <Link href="/admin" className="text-lg font-semibold text-[#1a1a17]">
             Sanus Admin
           </Link>
           <AdminNav badges={badges} />
-          <div className="ml-auto flex items-center gap-3 text-xs text-[#62646a]">
+          <div className="ml-auto flex items-center gap-3 text-xs text-[#5f5d57]">
             <span>{adminEmail}</span>
-            <Link href="/dashboard" className="hover:text-[#1dbf73]">
+            <Link href="/dashboard" className="hover:text-[#2f3cf5]">
               Back to app
             </Link>
             <AdminSignOutButton />

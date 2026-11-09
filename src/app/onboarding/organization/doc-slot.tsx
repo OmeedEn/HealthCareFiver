@@ -89,25 +89,25 @@ export function DocSlot({
         type="button"
         disabled={busy}
         onClick={() => inputRef.current?.click()}
-        className={`flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-white px-6 py-10 text-center transition hover:border-[#1dbf73] hover:bg-[#f0faf5] focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 focus-visible:outline-none disabled:opacity-70 ${
-          error ? 'border-red-300' : 'border-[#d5d6d9]'
+        className={`flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed bg-white px-6 py-10 text-center transition hover:border-[#2f3cf5] hover:bg-[#f4f5fe] focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 focus-visible:outline-none disabled:opacity-70 ${
+          error ? 'border-red-300' : 'border-[#cbc6ba]'
         }`}
       >
-        <span className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1] text-[#1dbf73]">
+        <span className="flex size-12 items-center justify-center rounded-full bg-[#eceefe] text-[#2f3cf5]">
           {busy ? <Loader2 className="size-6 animate-spin" /> : <Upload className="size-6" />}
         </span>
         <span>
-          <span className="block text-base font-semibold text-[#404145]">
+          <span className="block text-base font-semibold text-[#1a1a17]">
             {busy ? 'Uploading…' : docs.length ? 'Upload another file' : 'Choose a file to upload'}
           </span>
-          <span className="mt-1 block text-sm text-[#62646a]">PDF, JPG, PNG, GIF or WebP, up to 10 MB</span>
+          <span className="mt-1 block text-sm text-[#5f5d57]">PDF, JPG, PNG, GIF or WebP, up to 10 MB</span>
         </span>
       </button>
       <button
         type="button"
         disabled={busy}
         onClick={() => cameraRef.current?.click()}
-        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#d5d6d9] bg-white text-sm font-semibold text-[#404145] transition hover:border-[#1dbf73] focus-visible:ring-3 focus-visible:ring-[#1dbf73]/30 focus-visible:outline-none disabled:opacity-70 sm:hidden"
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#cbc6ba] bg-white text-sm font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] focus-visible:ring-3 focus-visible:ring-[#2f3cf5]/30 focus-visible:outline-none disabled:opacity-70 sm:hidden"
       >
         <Camera className="size-4" aria-hidden />
         Take a photo
@@ -134,13 +134,13 @@ export function DocSlot({
           {docs.map((d) => (
             <li
               key={d.id}
-              className="flex items-center justify-between gap-2 rounded-xl border border-[#bcebd5] bg-[#f0faf5] px-4 py-3 text-sm text-[#404145]"
+              className="flex items-center justify-between gap-2 rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] px-4 py-3 text-sm text-[#1a1a17]"
             >
               <span className="flex min-w-0 items-center gap-2">
-                <FileText className="size-4 shrink-0 text-[#1dbf73]" />
+                <FileText className="size-4 shrink-0 text-[#2f3cf5]" />
                 <span className="truncate font-medium">{d.filename}</span>
               </span>
-              <button type="button" onClick={() => remove(d.id)} className="text-[#95979d] hover:text-red-600" aria-label={`Remove ${d.filename}`}>
+              <button type="button" onClick={() => remove(d.id)} className="text-[#706d65] hover:text-red-600" aria-label={`Remove ${d.filename}`}>
                 <Trash2 className="size-4" />
               </button>
             </li>

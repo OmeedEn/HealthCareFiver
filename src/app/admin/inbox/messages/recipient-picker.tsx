@@ -39,17 +39,17 @@ export function RecipientPicker({ recipients, now }: { recipients: Recipient[]; 
 
   return (
     <>
-      <Button className="bg-[#1dbf73] text-white hover:bg-[#19a463]" onClick={() => setOpen(true)}>
+      <Button className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]" onClick={() => setOpen(true)}>
         <MessageSquarePlusIcon className="size-4" data-icon="inline-start" />
         New message
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="font-sans">
           <DialogHeader>
-            <DialogTitle className="text-[#404145]">Message a user</DialogTitle>
+            <DialogTitle className="text-[#1a1a17]">Message a user</DialogTitle>
           </DialogHeader>
           <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#6b7280]" />
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#5f5d57]" />
             <Input
               autoFocus
               placeholder="Search by name, email or role"
@@ -60,27 +60,27 @@ export function RecipientPicker({ recipients, now }: { recipients: Recipient[]; 
           </div>
           <ul className="max-h-80 overflow-y-auto">
             {matches.length === 0 ? (
-              <li className="py-6 text-center text-sm text-[#62646a]">No matching users</li>
+              <li className="py-6 text-center text-sm text-[#5f5d57]">No matching users</li>
             ) : (
               matches.map((r) => (
                 <li key={r.id}>
                   <button
                     type="button"
                     onClick={() => router.push(`/admin/messages/${r.id}`)}
-                    className="flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left hover:bg-[#f7f7f7]"
+                    className="flex w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left hover:bg-[#f6f4ef]"
                   >
                     <span className="flex min-w-0 items-center gap-2">
                       <PresenceDot lastSeenAt={r.lastSeenAt} now={now} />
                       <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-[#404145]">
+                      <span className="block truncate text-sm font-medium text-[#1a1a17]">
                         {r.name !== '—' ? r.name : r.email ?? r.id}
                       </span>
-                      {r.email && <span className="block truncate text-xs text-[#62646a]">{r.email}</span>}
+                      {r.email && <span className="block truncate text-xs text-[#5f5d57]">{r.email}</span>}
                       </span>
                     </span>
                     <span className="flex shrink-0 flex-col items-end">
-                      {r.role && <span className="text-xs text-[#9ca3af]">{r.role}</span>}
-                      <span className={r.online ? 'text-[11px] font-medium text-[#0f8f56]' : 'text-[11px] text-[#9ca3af]'}>
+                      {r.role && <span className="text-xs text-[#706d65]">{r.role}</span>}
+                      <span className={r.online ? 'text-[11px] font-medium text-[#2330c8]' : 'text-[11px] text-[#706d65]'}>
                         {lastSeenLabel(r.lastSeenAt, now)}
                       </span>
                     </span>

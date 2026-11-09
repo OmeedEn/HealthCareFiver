@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 export function AdminDemoNotice() {
   return (
     <Card>
-      <CardContent className="py-10 text-center text-sm text-[#62646a]">
+      <CardContent className="py-10 text-center text-sm text-[#5f5d57]">
         This page reads live data from Supabase. Set the Supabase env vars to use it.
       </CardContent>
     </Card>

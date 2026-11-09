@@ -3,9 +3,9 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { ORG_BANNER, isOrgStatus } from '@/lib/org/review'
 
 const TONE = {
-  info: { card: 'border-[#f5deb3] bg-[#fdf6e3]', title: 'text-[#b8860b]', Icon: Clock },
-  warning: { card: 'border-[#f5c6cb] bg-[#fdecea]', title: 'text-[#c0392b]', Icon: AlertCircle },
-  danger: { card: 'border-[#f5c6cb] bg-[#fdecea]', title: 'text-[#c0392b]', Icon: AlertCircle },
+  info: { card: 'border-[#ecd3a3] bg-[#fbf0dc]', title: 'text-[#8a5a00]', Icon: Clock },
+  warning: { card: 'border-[#f4c7c2] bg-[#fdecea]', title: 'text-[#b42318]', Icon: AlertCircle },
+  danger: { card: 'border-[#f4c7c2] bg-[#fdecea]', title: 'text-[#b42318]', Icon: AlertCircle },
 } as const
 
 /** Top-of-dashboard banner for organizations that aren't approved yet. */
@@ -30,7 +30,7 @@ export function OrgReviewBanner({
           {config.title}
         </CardTitle>
         {shownNotes && (
-          <CardDescription className="whitespace-pre-line font-medium text-[#404145]">
+          <CardDescription className="whitespace-pre-line font-medium text-[#1a1a17]">
             {shownNotes}
           </CardDescription>
         )}

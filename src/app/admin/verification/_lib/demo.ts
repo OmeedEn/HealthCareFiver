@@ -1,4 +1,4 @@
-import type { QueueRow } from '../queue-client'
+import type { QueueRow } from '@/app/admin/review/professionals/queue-client'
 import type { ApplicantData } from './shared'
 
 /** Sample data so the admin verification console renders in demo mode. */

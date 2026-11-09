@@ -60,7 +60,7 @@ export function StaffingForm({
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 rounded-lg border border-[#bcebd5] bg-[#e8faf1] p-3 text-xs text-[#0f8f56]">
+      <div className="flex gap-2 rounded-lg border border-[#c9cdfb] bg-[#eceefe] p-3 text-xs text-[#2330c8]">
         <Info className="mt-0.5 size-4 shrink-0" />
         <p>{NOT_EMPLOYER_NOTICE}</p>
       </div>
@@ -69,9 +69,9 @@ export function StaffingForm({
       <IconChoices legend="Type" options={STAFFING_POST_TYPES} icons={STAFFING_POST_TYPE_ICONS} value={v.post_type} onChange={(x) => set('post_type', x)} error={errors.post_type} columns={4} />
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-semibold text-[#404145]">Professionals needed</legend>
+        <legend className="text-sm font-semibold text-[#1a1a17]">Professionals needed</legend>
         {v.needs.map((n, i) => (
-          <div key={i} className="flex items-start gap-3 rounded-xl border border-[#e4e5e7] bg-white p-3">
+          <div key={i} className="flex items-start gap-3 rounded-xl border border-[#e3dfd6] bg-white p-3">
             <div className="min-w-0 flex-1">
               <IconChoices
                 legend={`Professional type ${i + 1}`}
@@ -95,13 +95,13 @@ export function StaffingForm({
               />
             </div>
             {v.needs.length > 1 && (
-              <button type="button" onClick={() => set('needs', v.needs.filter((_, j) => j !== i))} className="mt-1 text-[#95979d] hover:text-red-600" aria-label="Remove">
+              <button type="button" onClick={() => set('needs', v.needs.filter((_, j) => j !== i))} className="mt-1 text-[#706d65] hover:text-red-600" aria-label="Remove">
                 <X className="size-4" />
               </button>
             )}
           </div>
         ))}
-        <button type="button" onClick={() => set('needs', [...v.needs, { type: '', count: '1' }])} className="inline-flex items-center gap-1 text-sm font-semibold text-[#1dbf73]">
+        <button type="button" onClick={() => set('needs', [...v.needs, { type: '', count: '1' }])} className="inline-flex items-center gap-1 text-sm font-semibold text-[#2f3cf5]">
           <Plus className="size-4" /> Add another type
         </button>
         <FieldError msg={errors.needs} />
@@ -147,8 +147,8 @@ export function StaffingForm({
       <TextAreaField id="sp-desc" label="Description" value={v.description} onChange={(x) => set('description', x)} error={errors.description} rows={4} />
 
       <fieldset className="space-y-2">
-        <legend className="text-sm font-semibold text-[#404145]">
-          Screening questions <span className="font-normal text-[#95979d]">(optional, up to {MAX_SCREENING_QUESTIONS})</span>
+        <legend className="text-sm font-semibold text-[#1a1a17]">
+          Screening questions <span className="font-normal text-[#706d65]">(optional, up to {MAX_SCREENING_QUESTIONS})</span>
         </legend>
         {v.screening_questions.map((q, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -159,13 +159,13 @@ export function StaffingForm({
               onChange={(e) => set('screening_questions', v.screening_questions.map((x, j) => (j === i ? e.target.value : x)))}
               className="h-10 flex-1 rounded-lg border border-input bg-white px-3 text-sm"
             />
-            <button type="button" onClick={() => set('screening_questions', v.screening_questions.filter((_, j) => j !== i))} className="text-[#95979d] hover:text-red-600" aria-label="Remove question">
+            <button type="button" onClick={() => set('screening_questions', v.screening_questions.filter((_, j) => j !== i))} className="text-[#706d65] hover:text-red-600" aria-label="Remove question">
               <X className="size-4" />
             </button>
           </div>
         ))}
         {v.screening_questions.length < MAX_SCREENING_QUESTIONS && (
-          <button type="button" onClick={() => set('screening_questions', [...v.screening_questions, ''])} className="inline-flex items-center gap-1 text-sm font-semibold text-[#1dbf73]">
+          <button type="button" onClick={() => set('screening_questions', [...v.screening_questions, ''])} className="inline-flex items-center gap-1 text-sm font-semibold text-[#2f3cf5]">
             <Plus className="size-4" /> Add a question
           </button>
         )}

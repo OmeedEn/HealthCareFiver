@@ -36,14 +36,14 @@ function StatCard({
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[#62646a]">{title}</CardTitle>
-        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#1dbf73]/10 to-[#1dbf73]/20">
-          <Icon className="size-4 text-[#1dbf73]" />
+        <CardTitle className="text-sm font-medium text-[#5f5d57]">{title}</CardTitle>
+        <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#2f3cf5]/10 to-[#2f3cf5]/20">
+          <Icon className="size-4 text-[#2f3cf5]" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[#404145]">{value}</div>
-        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
+        <div className="text-2xl font-bold text-[#1a1a17]">{value}</div>
+        <p className="mt-1 text-xs text-[#5f5d57]">{description}</p>
       </CardContent>
     </Card>
   )
@@ -118,12 +118,12 @@ export default async function ContractorCredentialsPage() {
   }[] = [
     {
       title: 'Verified',
-      icon: <ShieldCheck className="size-4 text-[#1dbf73]" />,
+      icon: <ShieldCheck className="size-4 text-[#2f3cf5]" />,
       items: verified,
     },
     {
       title: 'Pending Review',
-      icon: <Clock className="size-4 text-[#62646a]" />,
+      icon: <Clock className="size-4 text-[#5f5d57]" />,
       items: pending,
     },
     {
@@ -144,8 +144,8 @@ export default async function ContractorCredentialsPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">My Credentials</h1>
-          <p className="mt-1 text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">My Credentials</h1>
+          <p className="mt-1 text-[#5f5d57]">
             Manage your professional licenses, certifications, and required documentation.
           </p>
         </div>
@@ -159,7 +159,7 @@ export default async function ContractorCredentialsPage() {
             Upload malpractice certificate
           </Button>
           <Button
-            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
             render={<Link href="/contractor/credentials/upload" />}
           >
             <Plus className="size-4" data-icon="inline-start" />
@@ -203,13 +203,13 @@ export default async function ContractorCredentialsPage() {
         <Card
           className={
             missingRequired.length > 0
-              ? 'border-[#bcebd5] bg-[#e8faf1]'
+              ? 'border-[#c9cdfb] bg-[#eceefe]'
               : undefined
           }
         >
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[#404145]">
-              <ListChecks className="size-5 text-[#1dbf73]" />
+            <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+              <ListChecks className="size-5 text-[#2f3cf5]" />
               Required Credentials
             </CardTitle>
           </CardHeader>
@@ -220,17 +220,17 @@ export default async function ContractorCredentialsPage() {
                 return (
                   <li
                     key={req.id}
-                    className="flex items-center gap-2 text-sm text-[#111827]"
+                    className="flex items-center gap-2 text-sm text-[#1a1a17]"
                   >
                     {exists ? (
-                      <ShieldCheck className="size-4 shrink-0 text-[#1dbf73]" />
+                      <ShieldCheck className="size-4 shrink-0 text-[#2f3cf5]" />
                     ) : (
-                      <AlertTriangle className="size-4 shrink-0 text-[#62646a]" />
+                      <AlertTriangle className="size-4 shrink-0 text-[#5f5d57]" />
                     )}
-                    <span className={exists ? '' : 'text-[#62646a]'}>{req.name}</span>
+                    <span className={exists ? '' : 'text-[#5f5d57]'}>{req.name}</span>
                     {exists ? (
                       <Badge
-                        className="ml-auto bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]"
+                        className="ml-auto bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]"
                       >
                         Submitted
                       </Badge>
@@ -244,12 +244,12 @@ export default async function ContractorCredentialsPage() {
               })}
             </ul>
             {missingRequired.length > 0 && (
-              <p className="mt-3 text-xs text-[#0f8f56]">
+              <p className="mt-3 text-xs text-[#2330c8]">
                 You have {missingRequired.length} missing required{' '}
                 {missingRequired.length === 1 ? 'credential' : 'credentials'}.{' '}
                 <Link
                   href="/contractor/credentials/upload"
-                  className="text-[#1dbf73] hover:underline"
+                  className="text-[#2f3cf5] hover:underline"
                 >
                   Upload now
                 </Link>
@@ -264,7 +264,7 @@ export default async function ContractorCredentialsPage() {
         (group) =>
           group.items.length > 0 && (
             <div key={group.title} className="space-y-3">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#404145]">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-[#1a1a17]">
                 {group.icon}
                 {group.title}
                 <Badge variant="secondary">{group.items.length}</Badge>
@@ -281,17 +281,17 @@ export default async function ContractorCredentialsPage() {
       {credentials.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-              <ShieldCheck className="size-6 text-[#1dbf73]" />
+            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+              <ShieldCheck className="size-6 text-[#2f3cf5]" />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-[#404145]">
+            <h3 className="mt-4 text-base font-semibold text-[#1a1a17]">
               No credentials yet
             </h3>
-            <p className="mt-1 text-sm text-[#62646a]">
+            <p className="mt-1 text-sm text-[#5f5d57]">
               Upload your first credential to start getting matched with jobs.
             </p>
             <Button
-              className="mt-4 bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="mt-4 bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
               render={<Link href="/contractor/credentials/upload" />}
             >
               <Plus className="size-4" data-icon="inline-start" />

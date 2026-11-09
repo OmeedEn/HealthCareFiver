@@ -58,12 +58,25 @@ function formatWhen(iso: string): string {
   })
 }
 
+/** Non-numeric price hint for browse cards. */
+function browsePriceHint(l: PublicListing): string {
+  if (l.kind === 'event' && l.is_free) return 'Free'
+  if (l.kind === 'consulting' && l.custom_quote) return 'Custom quote'
+  return 'See pricing'
+}
+
 export function ListingCard({
   listing,
   footer,
+  hidePrice = false,
 }: {
   listing: PublicListing
   footer?: React.ReactNode
+  /**
+   * Browse contexts (search results, carousels) pass true: dollar figures
+   * are only shown once a client opens the profile or listing.
+   */
+  hidePrice?: boolean
 }) {
   const l = listing
   const kindLine =
@@ -74,21 +87,23 @@ export function ListingCard({
         : eventTypeLabel(l.event_type)
 
   return (
-    <article className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
-      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#6b7280]">
-        <span className="rounded-md bg-[#f3f4f6] px-2 py-0.5 text-[#374151]">
+    <article className="rounded-2xl border border-[#e3dfd6] bg-white p-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#5f5d57]">
+        <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-[#3a3934]">
           {KIND_LABELS[l.kind]}
         </span>
         {kindLine && <span>{kindLine}</span>}
       </div>
-      <h3 className="mt-2 text-base font-semibold text-[#111827]">{l.title}</h3>
+      <h3 className="mt-2 text-base font-semibold text-[#1a1a17]">{l.title}</h3>
       {l.description && (
-        <p className="mt-1.5 whitespace-pre-line text-sm text-[#374151]">
+        <p className="mt-1.5 whitespace-pre-line text-sm text-[#3a3934]">
           {l.description}
         </p>
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#6b7280]">
-        <span className="font-semibold text-[#1dbf73]">{priceLine(l)}</span>
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-[#5f5d57]">
+        <span className="font-semibold text-[#2f3cf5]">
+          {hidePrice ? browsePriceHint(l) : priceLine(l)}
+        </span>
         {l.kind === 'service' && l.duration_minutes && (
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3.5" aria-hidden="true" />

@@ -79,17 +79,17 @@ export default async function ClientMatchesPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#404145] sm:text-[2rem] sm:leading-tight">
+        <h1 className="text-2xl font-bold tracking-tight text-[#1a1a17] sm:text-[2rem] sm:leading-tight">
           {CLIENT_RESULTS_TITLE}
         </h1>
         {summary.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {summary.map((s) => (
-              <span key={s} className="rounded-full border border-[#e4e5e7] bg-white px-2.5 py-0.5 text-xs text-[#62646a]">
+              <span key={s} className="rounded-full border border-[#e3dfd6] bg-white px-2.5 py-0.5 text-xs text-[#5f5d57]">
                 {s}
               </span>
             ))}
-            <Link href="/settings#preferences" className="ml-1 text-xs font-semibold text-[#1dbf73] hover:underline">
+            <Link href="/settings#preferences" className="ml-1 text-xs font-semibold text-[#2f3cf5] hover:underline">
               Edit
             </Link>
           </div>
@@ -107,14 +107,14 @@ export default async function ClientMatchesPage() {
       {!enough && (
         <section
           aria-labelledby="fallback-title"
-          className="rounded-xl border border-[#e4e5e7] bg-white p-5 sm:p-6"
+          className="rounded-xl border border-[#e3dfd6] bg-white p-5 sm:p-6"
         >
-          <h2 id="fallback-title" className="text-base font-semibold text-[#404145]">
+          <h2 id="fallback-title" className="text-base font-semibold text-[#1a1a17]">
             {matches.length === 0
               ? 'We don’t have a match for you yet'
               : 'We only found a few matches so far'}
           </h2>
-          <p className="mt-1 text-sm text-[#62646a]">
+          <p className="mt-1 text-sm text-[#5f5d57]">
             Sanus is still growing. Tell us you&apos;d like help and our team will look for someone who fits
             what you&apos;re looking for.
           </p>
@@ -127,12 +127,12 @@ export default async function ClientMatchesPage() {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         <Link
           href="/find-care"
-          className="inline-flex items-center gap-1.5 font-semibold text-[#1dbf73] hover:underline"
+          className="inline-flex items-center gap-1.5 font-semibold text-[#2f3cf5] hover:underline"
         >
           <Search className="size-4" aria-hidden />
           Browse all professionals
         </Link>
-        <Link href="/dashboard" className="font-semibold text-[#62646a] hover:text-[#404145]">
+        <Link href="/dashboard" className="font-semibold text-[#5f5d57] hover:text-[#1a1a17]">
           Go to dashboard
         </Link>
       </div>

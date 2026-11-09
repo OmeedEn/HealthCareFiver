@@ -101,16 +101,16 @@ function NotApproved({ status }: { status: string | null }) {
   const copy = (status && NOT_APPROVED_COPY[status]) || DEFAULT_NOT_APPROVED
   return (
     <Shell exit={false}>
-      <div className="rounded-2xl border border-[#e4e5e7] bg-white p-8 text-center shadow-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#e8faf1]">
-          <Clock className="h-7 w-7 text-[#1dbf73]" />
+      <div className="rounded-2xl border border-[#e3dfd6] bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#eceefe]">
+          <Clock className="h-7 w-7 text-[#2f3cf5]" />
         </div>
-        <h1 className="mt-4 text-2xl font-black tracking-tight text-[#404145]">{copy.title}</h1>
-        <p className="mt-2 text-sm text-[#62646a]">{copy.body}</p>
+        <h1 className="mt-4 text-2xl font-black tracking-tight text-[#1a1a17]">{copy.title}</h1>
+        <p className="mt-2 text-sm text-[#5f5d57]">{copy.body}</p>
         <div className="mt-6 flex flex-col gap-3">
           {status === 'more_info_requested' && (
             <Button
-              className="h-11 w-full bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+              className="h-11 w-full bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
               render={<Link href="/contractor/credentials/upload" />}
             >
               Upload documents

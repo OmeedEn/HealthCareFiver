@@ -70,15 +70,15 @@ export function ClassifyActions({ userId, name }: { userId: string; name: string
         disabled={pending}
       />
       {picked ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-[#e4e5e7] bg-[#f9fafb] p-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-[#e3dfd6] bg-[#f6f4ef] p-2 text-sm">
           {detailOptions && (
-            <label className="flex w-full flex-wrap items-center gap-2 text-[#404145]">
+            <label className="flex w-full flex-wrap items-center gap-2 text-[#1a1a17]">
               <span>{picked === 'INDEPENDENT' ? 'Kind of professional' : 'Organization type'}</span>
               <select
                 value={detail}
                 onChange={(e) => setDetail(e.target.value)}
                 disabled={pending}
-                className="h-8 rounded-md border border-[#e4e5e7] bg-white px-2 text-sm"
+                className="h-8 rounded-md border border-[#e3dfd6] bg-white px-2 text-sm"
               >
                 <option value="">Let them choose</option>
                 {detailOptions.map((o) => (
@@ -89,14 +89,14 @@ export function ClassifyActions({ userId, name }: { userId: string; name: string
               </select>
             </label>
           )}
-          <span className="text-[#404145]">
+          <span className="text-[#1a1a17]">
             {picked === 'REJECTED' ? `Reject ${name}? They stay a client and get a short email.` : `${pickedLabel} and email ${name} the Finish setup link?`}
           </span>
           <Button
             size="sm"
             disabled={pending}
             variant={picked === 'REJECTED' ? 'destructive' : 'default'}
-            className={picked === 'REJECTED' ? '' : 'bg-[#1dbf73] text-white hover:bg-[#19a463]'}
+            className={picked === 'REJECTED' ? '' : 'bg-[#2f3cf5] text-white hover:bg-[#2330c8]'}
             onClick={confirm}
           >
             {pending ? 'Saving…' : 'Confirm'}

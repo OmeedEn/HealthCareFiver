@@ -103,10 +103,10 @@ export function accountScreens({
             {googleLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : <GoogleIcon />}
             Continue with Google
           </Button>
-          <div className="flex items-center gap-3 text-xs text-[#95979d]">
-            <div className="h-px flex-1 bg-[#e4e5e7]" />
+          <div className="flex items-center gap-3 text-xs text-[#706d65]">
+            <div className="h-px flex-1 bg-[#e3dfd6]" />
             or continue with email
-            <div className="h-px flex-1 bg-[#e4e5e7]" />
+            <div className="h-px flex-1 bg-[#e3dfd6]" />
           </div>
           <TextField
             id="email"
@@ -121,9 +121,9 @@ export function accountScreens({
             maxLength={254}
             error={errors.email}
           />
-          <p className="text-center text-sm text-[#62646a]">
+          <p className="text-center text-sm text-[#5f5d57]">
             Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-[#1dbf73] hover:underline">
+            <Link href="/login" className="font-semibold text-[#2f3cf5] hover:underline">
               Sign in
             </Link>
           </p>

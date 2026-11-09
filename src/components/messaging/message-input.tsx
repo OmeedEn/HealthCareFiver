@@ -57,7 +57,7 @@ function PendingPreview({ file, onRemove }: { file: File; onRemove: () => void }
   const url = useObjectUrl(file)
 
   return (
-    <div className="flex items-center gap-3 border-t bg-[#f7f7f7] px-4 py-2">
+    <div className="flex items-center gap-3 border-t bg-[#f6f4ef] px-4 py-2">
       <div className="min-w-0 flex-1">
         {type === 'image' && url ? (
           // eslint-disable-next-line @next/next/no-img-element -- local blob preview
@@ -67,7 +67,7 @@ function PendingPreview({ file, onRemove }: { file: File; onRemove: () => void }
         ) : type === 'audio' && url ? (
           <audio src={url} controls className="w-64 max-w-full" />
         ) : (
-          <span className="flex items-center gap-2 text-sm text-[#404145]">
+          <span className="flex items-center gap-2 text-sm text-[#1a1a17]">
             <FileTextIcon className="size-4" />
             <span className="truncate">{file.name}</span>
           </span>
@@ -118,7 +118,7 @@ function VideoRecorderDialog({
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="font-sans sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-[#404145]">Record a video</DialogTitle>
+          <DialogTitle className="text-[#1a1a17]">Record a video</DialogTitle>
         </DialogHeader>
         {rec.error ? (
           <p className="text-sm text-red-600">{rec.error}</p>
@@ -155,7 +155,7 @@ function VideoRecorderDialog({
                 Record again
               </Button>
               <Button
-                className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                 onClick={() => {
                   onDone(result)
                   onClose()
@@ -171,7 +171,7 @@ function VideoRecorderDialog({
             </Button>
           ) : (
             <Button
-              className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+              className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
               disabled={!rec.stream}
               onClick={() => rec.start()}
             >
@@ -308,12 +308,12 @@ export function MessageInput({
           </div>
         )}
         {voice.requesting ? (
-          <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#62646a]">
+          <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#5f5d57]">
             <Loader2Icon className="size-4 animate-spin" />
             Allow microphone access in the prompt near your address bar.
           </div>
         ) : voice.recording ? (
-          <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#404145]">
+          <div className="flex min-h-10 flex-1 items-center gap-2 rounded-md border px-3 text-sm text-[#1a1a17]">
             <CircleIcon className="size-2.5 animate-pulse fill-red-500 text-red-500" />
             Recording {formatDuration(voice.seconds)}
             <Button variant="ghost" size="xs" className="ml-auto" onClick={voice.cancel}>

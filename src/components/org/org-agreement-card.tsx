@@ -23,9 +23,9 @@ export function OrgAgreementCard() {
   }
 
   return (
-    <Card className="border-[#bcebd5] bg-[#f3fcf7]">
+    <Card className="border-[#c9cdfb] bg-[#f4f5fe]">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base text-[#0f8f56]">
+        <CardTitle className="flex items-center gap-2 text-base text-[#2330c8]">
           <FileSignature className="size-5" />
           One more step before you publish
         </CardTitle>
@@ -34,22 +34,22 @@ export function OrgAgreementCard() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <label className="flex items-start gap-3 text-sm text-[#404145]">
+        <label className="flex items-start gap-3 text-sm text-[#1a1a17]">
           <input
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
-            className="mt-0.5 size-4 shrink-0 accent-[#1dbf73]"
+            className="mt-0.5 size-4 shrink-0 accent-[#2f3cf5]"
           />
           <span>
             I agree to the{' '}
-            <Link href={ORG_AGREEMENT_PATH} target="_blank" className="font-semibold text-[#0f8f56] underline">
+            <Link href={ORG_AGREEMENT_PATH} target="_blank" className="font-semibold text-[#2330c8] underline">
               Organization Agreement
             </Link>{' '}
             on behalf of my organization.
           </span>
         </label>
-        <Button type="button" onClick={accept} disabled={!checked || saving} className="bg-[#1dbf73] text-white hover:bg-[#19a463]">
+        <Button type="button" onClick={accept} disabled={!checked || saving} className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]">
           {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
           Accept agreement
         </Button>

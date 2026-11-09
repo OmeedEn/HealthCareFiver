@@ -32,8 +32,8 @@ export default function DashboardError({
 
   return (
     <div className="mx-auto max-w-md py-20 text-center">
-      <h2 className="text-lg font-semibold text-[#404145]">Something went wrong</h2>
-      <p className="mt-2 text-sm text-[#62646a]">
+      <h2 className="text-lg font-semibold text-[#1a1a17]">Something went wrong</h2>
+      <p className="mt-2 text-sm text-[#5f5d57]">
         We&apos;ve been notified automatically. Try again, or use &ldquo;Report a bug&rdquo; to tell us more.
       </p>
       <Button className="mt-6" onClick={() => unstable_retry()}>

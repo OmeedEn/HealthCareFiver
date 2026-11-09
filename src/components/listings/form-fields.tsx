@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 export const PRIMARY_BTN =
-  'h-11 bg-[#1dbf73] text-sm font-semibold text-white hover:bg-[#19a463]'
+  'h-11 bg-[#2f3cf5] text-sm font-semibold text-white hover:bg-[#2330c8]'
 
 export function FieldError({ id, msg }: { id?: string; msg?: string }) {
   if (!msg) return null
@@ -54,9 +54,9 @@ export function TextField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
-        {optional && <span className="ml-1 font-normal text-[#95979d]">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-[#706d65]">(optional)</span>}
       </Label>
       <Input
         id={id}
@@ -73,7 +73,7 @@ export function TextField({
         aria-describedby={error ? `${id}-err` : undefined}
         className="h-11 bg-white"
       />
-      {hint && !error && <p className="text-xs text-[#62646a]">{hint}</p>}
+      {hint && !error && <p className="text-xs text-[#5f5d57]">{hint}</p>}
       <FieldError id={`${id}-err`} msg={error} />
     </div>
   )
@@ -104,9 +104,9 @@ export function TextAreaField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
-        {optional && <span className="ml-1 font-normal text-[#95979d]">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-[#706d65]">(optional)</span>}
       </Label>
       <Textarea
         id={id}
@@ -124,7 +124,7 @@ export function TextAreaField({
         {counter && maxLength && (
           <p
             className={`ml-auto shrink-0 text-xs ${
-              value.length >= maxLength ? 'text-red-600' : 'text-[#95979d]'
+              value.length >= maxLength ? 'text-red-600' : 'text-[#706d65]'
             }`}
             aria-live="polite"
           >
@@ -155,7 +155,7 @@ export function SelectField({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-[#404145]">
+      <Label htmlFor={id} className="text-sm font-semibold text-[#1a1a17]">
         {label}
       </Label>
       <select
@@ -163,7 +163,7 @@ export function SelectField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={error ? true : undefined}
-        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#404145] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+        className="h-11 w-full rounded-lg border border-input bg-white px-2.5 text-sm text-[#1a1a17] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
       >
         <option value="" disabled>
           {placeholder}
@@ -191,13 +191,13 @@ export function Toggle({
   label: string
 }) {
   return (
-    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#404145]">
+    <label htmlFor={id} className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#1a1a17]">
       <input
         id={id}
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="size-4 rounded border-[#c5c6c9] accent-[#1dbf73]"
+        className="size-4 rounded border-[#cbc6ba] accent-[#2f3cf5]"
       />
       {label}
     </label>

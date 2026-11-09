@@ -23,6 +23,7 @@ import { effectiveBranch, isProfessionalCategory, type CredentialBasis } from '@
 import { PROFESSIONS_BY_BRANCH, PROFESSION_PLACEHOLDER } from '@/lib/onboarding/professions'
 import { normalizeWebsiteUrl, professionColumns } from '@/lib/onboarding/questions/professional'
 import { LanguagesInput } from '@/components/contractor/languages-input'
+import { PhotoManager } from './photo-manager'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -31,6 +32,9 @@ import {
   Languages,
   BriefcaseMedical,
   CircleDollarSign,
+  CalendarRange,
+  ChevronRight,
+  Images,
   MapPin,
   Check,
   Eye,
@@ -92,8 +96,6 @@ interface FormData {
   bio: string
   specialties: string
   years_of_experience: string
-  hourly_rate_min: string
-  hourly_rate_max: string
   npi_number: string
   state_license_number: string
   license_state: string
@@ -118,8 +120,6 @@ const initialFormData: FormData = {
   bio: '',
   specialties: '',
   years_of_experience: '',
-  hourly_rate_min: '',
-  hourly_rate_max: '',
   npi_number: '',
   state_license_number: '',
   license_state: '',
@@ -173,8 +173,6 @@ function rowToForm(d: ProfileRow): FormData {
     // Consultants' profession is the first specialty; don't show it twice.
     specialties: (category !== 'other' && branch === 'consultant' ? specialties.slice(1) : specialties).join(', '),
     years_of_experience: d.years_of_experience != null ? String(d.years_of_experience) : '',
-    hourly_rate_min: d.hourly_rate_min != null ? String(d.hourly_rate_min) : '',
-    hourly_rate_max: d.hourly_rate_max != null ? String(d.hourly_rate_max) : '',
     npi_number: text(d.npi_number),
     state_license_number: text(d.state_license_number),
     license_state: text(d.license_state),
@@ -196,8 +194,6 @@ function calculateCompletion(data: FormData): number {
     data.bio,
     data.specialties,
     data.years_of_experience,
-    data.hourly_rate_min,
-    data.hourly_rate_max,
     data.npi_number,
     data.state_license_number,
     data.license_state,
@@ -218,6 +214,8 @@ export default function ContractorProfileEditPage() {
   const [telehealthStates, setTelehealthStates] = useState<string[]>([])
   // profiles.avatar_url — written immediately by <HeadshotUpload>
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  // For the "Preview public profile" link (/pros/[id]).
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -226,6 +224,7 @@ export default function ContractorProfileEditPage() {
       if (isDemoMode()) {
         setFormData(rowToForm(DEMO_CONTRACTOR as unknown as ProfileRow))
         setLanguages(['English', 'Spanish'])
+        setUserId(DEMO_CONTRACTOR.id)
         setLoading(false)
         return
       }
@@ -239,6 +238,7 @@ export default function ContractorProfileEditPage() {
         router.push('/login')
         return
       }
+      setUserId(user.id)
 
       const { data } = await supabase
         .from('contractor_profiles')
@@ -336,7 +336,10 @@ export default function ContractorProfileEditPage() {
         last_name: formData.last_name || null,
         professional_category: category || null,
         other_profession: isOther ? formData.other_profession.trim() || null : null,
-        credential_basis: isOther ? formData.credential_basis || null : null,
+        // Kept for 'other' and 'allied' (allied pros can answer "no
+        // certification" = 'none'); wiping it would re-require a cert.
+        credential_basis:
+          isOther || category === 'allied' ? formData.credential_basis || null : null,
         ...professionCols,
         certifying_organization: branch === 'allied' ? formData.certifying_organization.trim() || null : undefined,
         website_url: websiteUrl,
@@ -346,12 +349,6 @@ export default function ContractorProfileEditPage() {
         specialties: specialtiesArray.length > 0 ? specialtiesArray : null,
         years_of_experience: formData.years_of_experience
           ? parseInt(formData.years_of_experience, 10)
-          : null,
-        hourly_rate_min: formData.hourly_rate_min
-          ? parseFloat(formData.hourly_rate_min)
-          : null,
-        hourly_rate_max: formData.hourly_rate_max
-          ? parseFloat(formData.hourly_rate_max)
           : null,
         npi_number: formData.npi_number || null,
         state_license_number: formData.state_license_number || null,
@@ -390,7 +387,7 @@ export default function ContractorProfileEditPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="size-6 animate-spin text-[#62646a]" />
+        <Loader2 className="size-6 animate-spin text-[#5f5d57]" />
       </div>
     )
   }
@@ -398,30 +395,31 @@ export default function ContractorProfileEditPage() {
   const completion = calculateCompletion(formData)
   const branch = effectiveBranch(formData.professional_category, formData.credential_basis)
   const fullName = `${formData.first_name} ${formData.last_name}`.trim()
+  const publicHref = userId ? `/pros/${userId}` : '/contractor/profile'
 
   return (
     <div className="mx-auto w-full max-w-7xl">
       <Link
-        href="/contractor/profile"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#62646a] hover:text-[#404145]"
+        href="/dashboard"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
-        Back to profile
+        Back to dashboard
       </Link>
 
       <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#404145]">Edit profile</h1>
-          <p className="mt-1.5 text-base text-[#62646a]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#1a1a17]">Edit profile</h1>
+          <p className="mt-1.5 text-base text-[#5f5d57]">
             Sections marked “On your profile” are what clients see, in the same order.
           </p>
         </div>
         <Link
-          href="/contractor/profile"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0f8f56] hover:underline"
+          href={publicHref}
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#2f3cf5] bg-white px-4 text-sm font-semibold text-[#2330c8] transition hover:bg-[#f4f5fe]"
         >
           <Eye className="size-4" aria-hidden="true" />
-          Preview your profile
+          Preview public profile
         </Link>
       </div>
 
@@ -429,7 +427,7 @@ export default function ContractorProfileEditPage() {
         <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
           {/* Summary + section nav */}
           <aside className="space-y-4 lg:sticky lg:top-0 lg:self-start">
-            <div className="rounded-2xl border border-[#e4e5e7] bg-white p-6">
+            <div className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
               <div className="flex items-center gap-4 lg:flex-col lg:text-center">
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -439,15 +437,15 @@ export default function ContractorProfileEditPage() {
                     className="size-16 shrink-0 rounded-full object-cover lg:size-24"
                   />
                 ) : (
-                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#e8faf1] text-xl font-bold text-[#1dbf73] lg:size-24 lg:text-3xl">
+                  <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-xl font-bold text-[#2f3cf5] lg:size-24 lg:text-3xl">
                     {getInitials(formData.first_name, formData.last_name)}
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="truncate text-lg font-bold text-[#404145]">
+                  <p className="truncate text-lg font-bold text-[#1a1a17]">
                     {fullName || 'Your name'}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 text-sm text-[#62646a]">
+                  <p className="mt-0.5 line-clamp-2 text-sm text-[#5f5d57]">
                     {formData.headline || 'Add a headline'}
                   </p>
                 </div>
@@ -455,12 +453,12 @@ export default function ContractorProfileEditPage() {
 
               <div className="mt-6">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-[#404145]">Profile strength</span>
-                  <span className="font-bold text-[#1dbf73]">{completion}%</span>
+                  <span className="font-semibold text-[#1a1a17]">Profile strength</span>
+                  <span className="font-bold text-[#2f3cf5]">{completion}%</span>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e4e5e7]">
+                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]">
                   <div
-                    className="h-full rounded-full bg-[#1dbf73] transition-all"
+                    className="h-full rounded-full bg-[#2f3cf5] transition-all"
                     style={{ width: `${completion}%` }}
                   />
                 </div>
@@ -469,13 +467,13 @@ export default function ContractorProfileEditPage() {
               <div
                 className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
                   formData.is_available
-                    ? 'bg-[#e8faf1] text-[#0f8f56]'
-                    : 'bg-[#f1f1f2] text-[#62646a]'
+                    ? 'bg-[#eceefe] text-[#2330c8]'
+                    : 'bg-[#eeebe4] text-[#5f5d57]'
                 }`}
               >
                 <span
                   className={`size-2 rounded-full ${
-                    formData.is_available ? 'bg-[#1dbf73]' : 'bg-[#95979d]'
+                    formData.is_available ? 'bg-[#2f3cf5]' : 'bg-[#706d65]'
                   }`}
                 />
                 {formData.is_available ? 'Available for work' : 'Not available'}
@@ -484,15 +482,15 @@ export default function ContractorProfileEditPage() {
 
             <nav
               aria-label="Profile sections"
-              className="hidden rounded-2xl border border-[#e4e5e7] bg-white p-2 lg:block"
+              className="hidden rounded-2xl border border-[#e3dfd6] bg-white p-2 lg:block"
             >
               {SECTIONS.map(({ id, title, icon: Icon }) => (
                 <a
                   key={id}
                   href={`#${id}`}
-                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#62646a] transition hover:bg-[#f0faf5] hover:text-[#404145]"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-[#5f5d57] transition hover:bg-[#f4f5fe] hover:text-[#1a1a17]"
                 >
-                  <Icon className="size-4 text-[#1dbf73]" />
+                  <Icon className="size-4 text-[#2f3cf5]" />
                   {title}
                 </a>
               ))}
@@ -655,8 +653,8 @@ export default function ContractorProfileEditPage() {
                         }
                         className={`h-9 min-w-12 rounded-lg border px-2.5 text-sm font-semibold transition ${
                           on
-                            ? 'border-[#1dbf73] bg-[#1dbf73] text-white'
-                            : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#1dbf73]'
+                            ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white'
+                            : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#2f3cf5]'
                         }`}
                       >
                         {s.value}
@@ -713,6 +711,39 @@ export default function ContractorProfileEditPage() {
             </Section>
 
             <Section
+              id="photos"
+              icon={Images}
+              title="Photos"
+              description="A gallery on your profile. Saved as soon as you upload."
+              visibility="public"
+            >
+              <PhotoManager />
+            </Section>
+
+            <Section
+              id="rates"
+              icon={CircleDollarSign}
+              title="Rates & availability"
+              description="Edited on their own pages. Your rates are the only prices clients see."
+              visibility="public"
+            >
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <LinkCard
+                  href="/contractor/rates"
+                  icon={CircleDollarSign}
+                  title="Rates"
+                  description="Per session, hour, day, package, or contact for pricing."
+                />
+                <LinkCard
+                  href="/contractor/availability"
+                  icon={CalendarRange}
+                  title="Availability"
+                  description="Your weekly hours and days off."
+                />
+              </div>
+            </Section>
+
+            <Section
               id="credentials"
               icon={Lock}
               title="License & credentials"
@@ -751,22 +782,14 @@ export default function ContractorProfileEditPage() {
             </Section>
 
             <Section
-              id="rate"
-              icon={CircleDollarSign}
-              title="Rates & availability"
-              description="Used for matching. Clients see prices on your listings."
-              visibility="private"
+              id="preferences"
+              icon={MapPin}
+              title="Search & travel"
+              description="Used for matching and shown on your profile."
+              visibility="public"
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                <div>
-                  <FieldLabel htmlFor="hourly_rate_min">Minimum hourly rate</FieldLabel>
-                  <MoneyInput id="hourly_rate_min" value={formData.hourly_rate_min} onChange={handleChange} />
-                </div>
-                <div>
-                  <FieldLabel htmlFor="hourly_rate_max">Maximum hourly rate</FieldLabel>
-                  <MoneyInput id="hourly_rate_max" value={formData.hourly_rate_max} onChange={handleChange} />
-                </div>
-                <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Currently available for work" description="Show up in searches." />
+                <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Accepting new clients" description="Show up in searches." />
                 <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Get matched with work outside your city." />
                 {formData.willing_to_travel && (
                   <div className="md:col-span-2">
@@ -780,10 +803,10 @@ export default function ContractorProfileEditPage() {
         </div>
 
         {/* Sticky save bar: negative margins/offsets cancel the dashboard main's p-4 md:p-6 so it sits flush. */}
-        <div className="sticky -bottom-4 z-10 -mx-4 mt-8 md:-bottom-6 border-t border-[#e4e5e7] bg-white/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6">
+        <div className="sticky -bottom-4 z-10 -mx-4 mt-8 md:-bottom-6 border-t border-[#e3dfd6] bg-white/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6">
           <div className="mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="hidden text-sm text-[#62646a] sm:block">
-              Profile <span className="font-semibold text-[#404145]">{completion}%</span> complete
+            <p className="hidden text-sm text-[#5f5d57] sm:block">
+              Profile <span className="font-semibold text-[#1a1a17]">{completion}%</span> complete
             </p>
             <div className="flex gap-3">
               <Button
@@ -797,7 +820,7 @@ export default function ContractorProfileEditPage() {
               <Button
                 type="submit"
                 disabled={saving}
-                className="h-11 flex-1 bg-[#1dbf73] px-8 text-sm font-semibold text-white hover:bg-[#19a463] sm:flex-none"
+                className="h-11 flex-1 bg-[#2f3cf5] px-8 text-sm font-semibold text-white hover:bg-[#2330c8] sm:flex-none"
               >
                 {saving ? (
                   <>
@@ -832,8 +855,10 @@ const SECTIONS: { id: string; title: string; icon: LucideIcon }[] = [
   { id: 'location', title: 'Where you work', icon: MapPin },
   { id: 'experience', title: 'Experience & languages', icon: Languages },
   { id: 'about', title: 'About', icon: FileText },
+  { id: 'photos', title: 'Photos', icon: Images },
+  { id: 'rates', title: 'Rates & availability', icon: CircleDollarSign },
   { id: 'credentials', title: 'License & credentials', icon: Lock },
-  { id: 'rate', title: 'Rates & availability', icon: CircleDollarSign },
+  { id: 'preferences', title: 'Search & travel', icon: MapPin },
 ]
 
 function Section({
@@ -855,21 +880,21 @@ function Section({
     <section
       id={id}
       aria-labelledby={`${id}-title`}
-      className="scroll-mt-6 rounded-2xl border border-[#e4e5e7] bg-white"
+      className="scroll-mt-6 rounded-2xl border border-[#e3dfd6] bg-white"
     >
-      <div className="flex items-start gap-4 border-b border-[#efeff0] px-6 py-5 md:px-8">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+      <div className="flex items-start gap-4 border-b border-[#eeebe4] px-6 py-5 md:px-8">
+        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5]">
           <Icon className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id={`${id}-title`} className="text-lg font-bold text-[#404145]">
+          <h2 id={`${id}-title`} className="text-lg font-bold text-[#1a1a17]">
             {title}
           </h2>
-          <p className="mt-0.5 text-sm text-[#62646a]">{description}</p>
+          <p className="mt-0.5 text-sm text-[#5f5d57]">{description}</p>
         </div>
         <span
           className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-            visibility === 'public' ? 'bg-[#e8faf1] text-[#0f8f56]' : 'bg-[#f1f1f2] text-[#62646a]'
+            visibility === 'public' ? 'bg-[#eceefe] text-[#2330c8]' : 'bg-[#eeebe4] text-[#5f5d57]'
           }`}
         >
           {visibility === 'public' ? <Eye className="size-3.5" aria-hidden="true" /> : <Lock className="size-3.5" aria-hidden="true" />}
@@ -891,7 +916,7 @@ function FieldLabel({
   children: React.ReactNode
 }) {
   return (
-    <Label htmlFor={htmlFor} className="text-sm font-semibold text-[#404145]">
+    <Label htmlFor={htmlFor} className="text-sm font-semibold text-[#1a1a17]">
       {children}
       {required && <span className="text-red-600">*</span>}
     </Label>
@@ -899,38 +924,34 @@ function FieldLabel({
 }
 
 function Hint({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1.5 text-xs text-[#62646a]">{children}</p>
+  return <p className="mt-1.5 text-xs text-[#5f5d57]">{children}</p>
 }
 
-function MoneyInput({
-  id,
-  value,
-  onChange,
+function LinkCard({
+  href,
+  icon: Icon,
+  title,
+  description,
 }: {
-  id: string
-  value: string
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  href: string
+  icon: LucideIcon
+  title: string
+  description: string
 }) {
   return (
-    <div className="relative mt-2">
-      <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-[15px] text-[#62646a]">
-        $
+    <Link
+      href={href}
+      className="group flex items-center gap-4 rounded-xl border border-[#e3dfd6] bg-white p-4 transition hover:border-[#2f3cf5] hover:bg-[#f4f5fe]"
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5]">
+        <Icon className="size-5" />
       </span>
-      <Input
-        id={id}
-        name={id}
-        type="number"
-        min="0"
-        step="0.01"
-        value={value}
-        onChange={onChange}
-        placeholder="0.00"
-        className="h-11 pr-12 pl-8 text-base md:text-[15px]"
-      />
-      <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-sm text-[#95979d]">
-        /hr
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-[#1a1a17]">Edit {title.toLowerCase()}</span>
+        <span className="mt-0.5 block text-xs text-[#5f5d57]">{description}</span>
       </span>
-    </div>
+      <ChevronRight className="size-5 shrink-0 text-[#706d65] transition group-hover:translate-x-0.5 group-hover:text-[#2f3cf5]" />
+    </Link>
   )
 }
 
@@ -955,15 +976,15 @@ function ToggleTile({
   return (
     <label
       htmlFor={id}
-      className={`relative flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-[#1dbf73]/30 ${
+      className={`relative flex cursor-pointer items-center justify-between gap-4 rounded-xl border p-4 transition has-focus-visible:ring-3 has-focus-visible:ring-[#2f3cf5]/30 ${
         checked
-          ? 'border-[#1dbf73] bg-[#f0faf5]'
-          : 'border-[#e4e5e7] bg-white hover:border-[#bcebd5]'
+          ? 'border-[#2f3cf5] bg-[#f4f5fe]'
+          : 'border-[#e3dfd6] bg-white hover:border-[#c9cdfb]'
       }`}
     >
       <span>
-        <span className="block text-sm font-semibold text-[#404145]">{title}</span>
-        <span className="mt-0.5 block text-xs text-[#62646a]">{description}</span>
+        <span className="block text-sm font-semibold text-[#1a1a17]">{title}</span>
+        <span className="mt-0.5 block text-xs text-[#5f5d57]">{description}</span>
       </span>
       <input
         type="checkbox"
@@ -976,7 +997,7 @@ function ToggleTile({
       <span
         aria-hidden="true"
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
-          checked ? 'bg-[#1dbf73]' : 'bg-[#d5d6d9]'
+          checked ? 'bg-[#2f3cf5]' : 'bg-[#cbc6ba]'
         }`}
       >
         <span
@@ -984,7 +1005,7 @@ function ToggleTile({
             checked ? 'translate-x-5.5' : 'translate-x-0.5'
           }`}
         >
-          {checked && <Check className="size-3 text-[#1dbf73]" />}
+          {checked && <Check className="size-3 text-[#2f3cf5]" />}
         </span>
       </span>
     </label>

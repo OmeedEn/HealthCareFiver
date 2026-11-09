@@ -20,7 +20,7 @@ const sections: LegalSection[] = [
           (the &ldquo;Platform&rdquo;), operated by [Sanus legal entity name]
           (&ldquo;Sanus,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;). By
           creating an account or using the Platform you agree to these Terms
-          and to our <Link href="/privacy" className="text-[#0f8f56] underline">Privacy Policy</Link>.
+          and to our <Link href="/privacy" className="text-[#2330c8] underline">Privacy Policy</Link>.
           If you do not agree, do not use the Platform.
         </p>
         <p>
@@ -184,7 +184,7 @@ const sections: LegalSection[] = [
         information (&ldquo;PHI&rdquo;). How Sanus collects, uses, and
         safeguards health information — including when Sanus acts as a
         business associate under HIPAA — is described in our{' '}
-        <Link href="/privacy" className="text-[#0f8f56] underline">
+        <Link href="/privacy" className="text-[#2330c8] underline">
           Privacy Policy
         </Link>
         . Professionals who are HIPAA covered entities remain responsible for

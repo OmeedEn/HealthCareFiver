@@ -46,10 +46,10 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 // Brand-green pill override for shortlisted; accepted/offered also use brand green.
 function statusBadgeClass(status: string): string | undefined {
   if (status === 'shortlisted') {
-    return 'border-transparent bg-[#e8faf1] text-[#0f8f56] hover:bg-[#e8faf1]'
+    return 'border-transparent bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]'
   }
   if (status === 'accepted' || status === 'offered') {
-    return 'border-transparent bg-[#1dbf73] text-white hover:bg-[#19a463]'
+    return 'border-transparent bg-[#2f3cf5] text-white hover:bg-[#2330c8]'
   }
   return undefined
 }
@@ -159,17 +159,17 @@ function ApplicantsView({
     <div className="mx-auto max-w-4xl space-y-6 font-sans">
       <Link
         href={`/facility/jobs/${jobId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-[#62646a] hover:text-[#404145]"
+        className="inline-flex items-center gap-1.5 text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
         <ArrowLeft className="size-4" />
         Back to job
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">
           Applicants for {jobTitle}
         </h1>
-        <p className="text-[#62646a]">
+        <p className="text-[#5f5d57]">
           {applicants.length} applicant
           {applicants.length !== 1 ? 's' : ''} so far
         </p>
@@ -178,14 +178,14 @@ function ApplicantsView({
       {applicants.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-              <Users className="size-6 text-[#1dbf73]" />
+            <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+              <Users className="size-6 text-[#2f3cf5]" />
             </div>
             <div className="space-y-1">
-              <p className="text-base font-semibold text-[#404145]">
+              <p className="text-base font-semibold text-[#1a1a17]">
                 No applicants yet
               </p>
-              <p className="text-sm text-[#6b7280]">
+              <p className="text-sm text-[#5f5d57]">
                 As contractors apply to this job, you&apos;ll see them here.
               </p>
             </div>
@@ -214,12 +214,12 @@ function ApplicantsView({
                         {profile ? (
                           <Link
                             href={`/facility/contractors/${profile.id}`}
-                            className="font-medium text-[#404145] hover:text-[#1dbf73] hover:underline"
+                            className="font-medium text-[#1a1a17] hover:text-[#2f3cf5] hover:underline"
                           >
                             {name}
                           </Link>
                         ) : (
-                          <span className="font-medium text-[#404145]">
+                          <span className="font-medium text-[#1a1a17]">
                             {name}
                           </span>
                         )}
@@ -232,7 +232,7 @@ function ApplicantsView({
                           {STATUS_LABELS[applicant.status] ?? applicant.status}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#6b7280]">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#5f5d57]">
                         {profile?.contractor_type && (
                           <span>
                             {CONTRACTOR_TYPE_LABELS[
@@ -256,10 +256,10 @@ function ApplicantsView({
                         {location && <span>{location}</span>}
                       </div>
                     </div>
-                    <div className="text-right text-xs text-[#6b7280]">
+                    <div className="text-right text-xs text-[#5f5d57]">
                       <p>Applied {formatRelativeTime(applicant.created_at)}</p>
                       {applicant.proposed_rate != null && (
-                        <p className="mt-0.5 font-medium text-[#404145]">
+                        <p className="mt-0.5 font-medium text-[#1a1a17]">
                           Proposed: {formatCurrency(applicant.proposed_rate)}/hr
                         </p>
                       )}
@@ -272,25 +272,25 @@ function ApplicantsView({
                   </div>
 
                   {applicant.availability && (
-                    <p className="text-sm text-[#404145]">
+                    <p className="text-sm text-[#1a1a17]">
                       <span className="font-medium">Availability:</span> {applicant.availability}
                     </p>
                   )}
 
                   {(applicant.screening_answers ?? []).length > 0 && (
-                    <dl className="space-y-2 rounded-md border border-[#e4e5e7] p-3 text-sm">
+                    <dl className="space-y-2 rounded-md border border-[#e3dfd6] p-3 text-sm">
                       {(applicant.screening_answers ?? []).map((qa, qi) => (
                         <div key={qi}>
-                          <dt className="font-medium text-[#404145]">{qa.question}</dt>
-                          <dd className="whitespace-pre-line text-[#62646a]">{qa.answer}</dd>
+                          <dt className="font-medium text-[#1a1a17]">{qa.question}</dt>
+                          <dd className="whitespace-pre-line text-[#5f5d57]">{qa.answer}</dd>
                         </div>
                       ))}
                     </dl>
                   )}
 
                   {applicant.cover_letter && (
-                    <div className="rounded-md bg-[#e8faf1]/60 p-3 text-sm text-[#62646a]">
-                      <p className="mb-1 text-xs font-medium text-[#0f8f56]">
+                    <div className="rounded-md bg-[#eceefe]/60 p-3 text-sm text-[#5f5d57]">
+                      <p className="mb-1 text-xs font-medium text-[#2330c8]">
                         Note
                       </p>
                       <p className="line-clamp-3">{applicant.cover_letter}</p>

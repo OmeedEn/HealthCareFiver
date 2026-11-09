@@ -36,18 +36,18 @@ interface FacilityJob {
 
 // Brand-aligned status pill classes (Tailwind only, no inline styles).
 const STATUS_PILL: Record<string, string> = {
-  open: 'border-[#bcebd5] bg-[#e8faf1] text-[#0f8f56]',
-  in_progress: 'border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]',
-  completed: 'border-[#e5e7eb] bg-[#f3f4f6] text-[#404145]',
-  draft: 'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]',
-  filled: 'border-[#e5e7eb] bg-[#f3f4f6] text-[#404145]',
-  cancelled: 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]',
+  open: 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]',
+  in_progress: 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]',
+  completed: 'border-[#e3dfd6] bg-[#eeebe4] text-[#1a1a17]',
+  draft: 'border-[#e3dfd6] bg-[#f6f4ef] text-[#5f5d57]',
+  filled: 'border-[#e3dfd6] bg-[#eeebe4] text-[#1a1a17]',
+  cancelled: 'border-[#f4c7c2] bg-[#fdecea] text-[#b42318]',
 }
 
 const URGENCY_PILL: Record<string, string> = {
-  high: 'border-[#fde68a] bg-[#fffbeb] text-[#92400e]',
-  critical: 'border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]',
-  low: 'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]',
+  high: 'border-[#ecd3a3] bg-[#fbf0dc] text-[#8a5a00]',
+  critical: 'border-[#f4c7c2] bg-[#fdecea] text-[#b42318]',
+  low: 'border-[#e3dfd6] bg-[#f6f4ef] text-[#5f5d57]',
 }
 
 function loadDemoJobs(): FacilityJob[] {
@@ -110,14 +110,14 @@ export default async function FacilityJobsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">Manage Jobs</h1>
-          <p className="text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">Manage Jobs</h1>
+          <p className="text-[#5f5d57]">
             View and manage your job postings
           </p>
         </div>
         {STAFFING_POSTS_ENABLED && (
           <Button
-            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
             render={<Link href="/facility/jobs/new" />}
           >
             <PlusIcon className="size-4" />
@@ -147,13 +147,13 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
       <Card>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="flex size-12 items-center justify-center rounded-full bg-[#e8faf1]">
-              <BriefcaseIcon className="size-6 text-[#1dbf73]" />
+            <div className="flex size-12 items-center justify-center rounded-full bg-[#eceefe]">
+              <BriefcaseIcon className="size-6 text-[#2f3cf5]" />
             </div>
-            <h3 className="mt-4 text-base font-semibold text-[#404145]">
+            <h3 className="mt-4 text-base font-semibold text-[#1a1a17]">
               No {label} jobs yet
             </h3>
-            <p className="mt-1 text-sm text-[#62646a]">
+            <p className="mt-1 text-sm text-[#5f5d57]">
               {status !== 'all'
                 ? 'Jobs with this status will appear here.'
                 : STAFFING_POSTS_ENABLED
@@ -162,7 +162,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
             </p>
             {status === 'all' && STAFFING_POSTS_ENABLED && (
               <Button
-                className="mt-4 bg-[#1dbf73] text-white hover:bg-[#19a463]"
+                className="mt-4 bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
                 render={<Link href="/facility/jobs/new" />}
               >
                 <PlusIcon className="size-4" />
@@ -180,11 +180,11 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
       {filtered.map((job) => {
         const statusClass =
           STATUS_PILL[job.status] ??
-          'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]'
+          'border-[#e3dfd6] bg-[#f6f4ef] text-[#5f5d57]'
         const urgencyClass =
           (job.urgency === 'high' || job.urgency === 'critical')
             ? URGENCY_PILL[job.urgency] ??
-              'border-[#e5e7eb] bg-[#f9fafb] text-[#62646a]'
+              'border-[#e3dfd6] bg-[#f6f4ef] text-[#5f5d57]'
             : null
 
         return (
@@ -193,7 +193,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
               <div className="flex items-start justify-between gap-2">
                 <Link
                   href={`/facility/jobs/${job.id}`}
-                  className="line-clamp-2 text-base font-semibold text-[#404145] hover:text-[#1dbf73] hover:underline"
+                  className="line-clamp-2 text-base font-semibold text-[#1a1a17] hover:text-[#2f3cf5] hover:underline"
                 >
                   {job.title}
                 </Link>
@@ -215,31 +215,31 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#6b7280]">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#5f5d57]">
                 {job.contractor_type && (
-                  <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[#404145]">
+                  <span className="rounded-full bg-[#eeebe4] px-2 py-0.5 text-[#1a1a17]">
                     {CONTRACTOR_TYPE_LABELS[job.contractor_type] ??
                       job.contractor_type}
                   </span>
                 )}
                 {job.job_type && (
-                  <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-[#404145]">
+                  <span className="rounded-full bg-[#eeebe4] px-2 py-0.5 text-[#1a1a17]">
                     {JOB_TYPE_LABELS[job.job_type] ?? job.job_type}
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#62646a]">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#5f5d57]">
                 <span className="inline-flex items-center gap-1">
-                  <UsersIcon className="size-3.5 text-[#1dbf73]" />
-                  <span className="font-medium text-[#404145]">
+                  <UsersIcon className="size-3.5 text-[#2f3cf5]" />
+                  <span className="font-medium text-[#1a1a17]">
                     {job.total_applicants ?? 0}
                   </span>
                   applicants
                 </span>
                 {job.positions_available != null && (
                   <span>
-                    <span className="font-medium text-[#404145]">
+                    <span className="font-medium text-[#1a1a17]">
                       {job.positions_filled ?? 0}/{job.positions_available}
                     </span>{' '}
                     filled
@@ -252,11 +252,11 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                 </span>
               </div>
 
-              <div className="mt-auto flex items-center justify-between gap-2 border-t border-[#e5e7eb] pt-3">
+              <div className="mt-auto flex items-center justify-between gap-2 border-t border-[#e3dfd6] pt-3">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[#62646a] hover:bg-[#e8faf1] hover:text-[#0f8f56]"
+                  className="text-[#5f5d57] hover:bg-[#eceefe] hover:text-[#2330c8]"
                   render={<Link href={`/facility/jobs/${job.id}`} />}
                 >
                   <EyeIcon className="size-4" />
@@ -266,7 +266,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-[#62646a] hover:bg-[#e8faf1] hover:text-[#0f8f56]"
+                    className="text-[#5f5d57] hover:bg-[#eceefe] hover:text-[#2330c8]"
                     render={
                       <Link href={`/facility/jobs/${job.id}/applicants`} />
                     }
@@ -279,7 +279,7 @@ function renderJobsForStatus(status: string, filtered: FacilityJob[]) {
                     variant="ghost"
                     size="icon-sm"
                     aria-label="Edit job"
-                    className="text-[#62646a] hover:bg-[#e8faf1] hover:text-[#0f8f56]"
+                    className="text-[#5f5d57] hover:bg-[#eceefe] hover:text-[#2330c8]"
                     render={
                       <Link href={`/facility/jobs/new?edit=${job.id}`} />
                     }

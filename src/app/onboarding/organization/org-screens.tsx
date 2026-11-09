@@ -180,10 +180,10 @@ export function websiteScreen({ v, set, save }: OrgScreenCtx): Screen {
             set('has_no_website', next)
             if (next) set('website', '')
           }}
-          className={`flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left text-base font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1dbf73] ${
+          className={`flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left text-base font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5] ${
             v.has_no_website
-              ? 'border-[#1dbf73] bg-[#e8faf1] text-[#0f8f56]'
-              : 'border-[#e4e5e7] bg-white text-[#404145] hover:border-[#bcebd5]'
+              ? 'border-[#2f3cf5] bg-[#eceefe] text-[#2330c8]'
+              : 'border-[#e3dfd6] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
           }`}
         >
           <Globe className="size-5 shrink-0" aria-hidden />

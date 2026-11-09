@@ -8,15 +8,15 @@ export function Shell({ children, exit = true }: { children: React.ReactNode; ex
     <div className="min-h-screen bg-white px-4 py-6 sm:py-10">
       <div className="mx-auto flex w-full max-w-xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1dbf73] text-sm font-bold text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2f3cf5] text-sm font-bold text-white">
             S
           </div>
-          <span className="text-xl font-bold tracking-tight text-[#111827]">
-            Sanus<span className="text-[#1dbf73]">.</span>
+          <span className="text-xl font-bold tracking-tight text-[#1a1a17]">
+            Sanus<span className="text-[#2f3cf5]">.</span>
           </span>
         </Link>
         {exit && (
-          <Link href="/dashboard" className="text-sm font-semibold text-[#62646a] hover:text-[#404145] hover:underline">
+          <Link href="/dashboard" className="text-sm font-semibold text-[#5f5d57] hover:text-[#1a1a17] hover:underline">
             Save and exit
           </Link>
         )}
@@ -51,8 +51,8 @@ export function AgreementBody({
       )}
       <ul className="space-y-2.5">
         {summary.map((item) => (
-          <li key={item} className="flex items-start gap-2.5 text-sm text-[#404145]">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#1dbf73]" />
+          <li key={item} className="flex items-start gap-2.5 text-sm text-[#1a1a17]">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
             <span>{item}</span>
           </li>
         ))}
@@ -60,12 +60,12 @@ export function AgreementBody({
       <Link
         href={path}
         target="_blank"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#0f8f56] hover:underline"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-[#2330c8] hover:underline"
       >
         Read the full agreement
         <ExternalLink className="size-3.5" />
       </Link>
-      <div className="rounded-xl border border-[#e4e5e7] bg-[#fafafa] p-4">
+      <div className="rounded-xl border border-[#e3dfd6] bg-[#f6f4ef] p-4">
         <CheckRow id="go-live-agree" checked={agreed} onChange={onAgree} label={label} />
       </div>
     </>
@@ -76,8 +76,8 @@ export function AgreementBody({
 export function PayoutsBody({ returnedUnfinished, note }: { returnedUnfinished: boolean; note: string }) {
   return (
     <>
-      <p className="flex items-start gap-2 rounded-lg bg-[#fafafa] p-3 text-sm text-[#62646a]">
-        <Lock className="mt-0.5 size-4 shrink-0 text-[#1dbf73]" />
+      <p className="flex items-start gap-2 rounded-lg bg-[#f6f4ef] p-3 text-sm text-[#5f5d57]">
+        <Lock className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
         <span>Bank info, date of birth, and SSN digits are collected and handled by Stripe. Sanus never sees them.</span>
       </p>
       {returnedUnfinished && (
@@ -86,7 +86,7 @@ export function PayoutsBody({ returnedUnfinished, note }: { returnedUnfinished: 
           below. Otherwise check back shortly.
         </p>
       )}
-      <p className="text-xs text-[#95979d]">{note}</p>
+      <p className="text-xs text-[#706d65]">{note}</p>
     </>
   )
 }
@@ -96,13 +96,13 @@ export function DoneRow({ done, label, detail }: { done: boolean; label: string;
   return (
     <li className="flex items-start gap-3 py-3">
       {done ? (
-        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#1dbf73]" />
+        <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#2f3cf5]" />
       ) : (
-        <Circle className="mt-0.5 size-5 shrink-0 text-[#c5c6c9]" />
+        <Circle className="mt-0.5 size-5 shrink-0 text-[#cbc6ba]" />
       )}
       <div className="text-sm">
-        <p className="font-semibold text-[#404145]">{label}</p>
-        {detail && <p className="mt-0.5 text-[#62646a]">{detail}</p>}
+        <p className="font-semibold text-[#1a1a17]">{label}</p>
+        {detail && <p className="mt-0.5 text-[#5f5d57]">{detail}</p>}
       </div>
     </li>
   )

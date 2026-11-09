@@ -47,8 +47,8 @@ function FieldGrid({ data }: { data: Record<string, unknown> }) {
     <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
       {entries.map(([key, value]) => (
         <div key={key} className="min-w-0">
-          <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">{key.replaceAll('_', ' ')}</dt>
-          <dd className="break-words text-sm text-[#404145]">{formatValue(key, value)}</dd>
+          <dt className="text-xs uppercase tracking-wide text-[#706d65]">{key.replaceAll('_', ' ')}</dt>
+          <dd className="break-words text-sm text-[#1a1a17]">{formatValue(key, value)}</dd>
         </div>
       ))}
     </dl>
@@ -59,7 +59,7 @@ function Section({ title, children, action }: { title: string; children: React.R
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base text-[#404145]">{title}</CardTitle>
+        <CardTitle className="text-base text-[#1a1a17]">{title}</CardTitle>
         {action}
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -134,14 +134,14 @@ export default async function AdminUserDetailPage({
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/users" className="inline-flex items-center gap-1 text-sm text-[#62646a] hover:text-[#1dbf73]">
-        <ArrowLeft className="size-4" /> All users
+      <Link href="/admin/people" className="inline-flex items-center gap-1 text-sm text-[#5f5d57] hover:text-[#2f3cf5]">
+        <ArrowLeft className="size-4" /> All people
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#404145]">{name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#62646a]">
+          <h1 className="text-2xl font-bold text-[#1a1a17]">{name}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f5d57]">
             <Badge variant="outline">{role}</Badge>
             {signupPath && (
               <Badge variant="outline">Door: {isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : signupPath}</Badge>
@@ -159,7 +159,7 @@ export default async function AdminUserDetailPage({
           {c && (
             <Link
               href={`/admin/verification/${id}`}
-              className="inline-flex items-center gap-1.5 rounded-md bg-[#0f4c3a] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#0c3d2f]"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#1a1a17] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#121210]"
             >
               <ShieldCheck className="size-4" /> Open professional review
             </Link>
@@ -167,7 +167,7 @@ export default async function AdminUserDetailPage({
           {facility.data && (
             <Link
               href={`/admin/organizations/${id}`}
-              className="inline-flex items-center gap-1.5 rounded-md bg-[#0f4c3a] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#0c3d2f]"
+              className="inline-flex items-center gap-1.5 rounded-md bg-[#1a1a17] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#121210]"
             >
               <ShieldCheck className="size-4" /> Open organization review
             </Link>
@@ -187,37 +187,37 @@ export default async function AdminUserDetailPage({
         <Section title="Signup category">
           <dl className="mb-4 grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Signup path</dt>
-              <dd className="text-sm text-[#404145]">
+              <dt className="text-xs uppercase tracking-wide text-[#706d65]">Signup path</dt>
+              <dd className="text-sm text-[#1a1a17]">
                 {signupPath ? `${isSignupPath(signupPath) ? SIGNUP_PATH_SHORT_LABELS[signupPath] : signupPath} (${signupPath})` : '—'}
               </dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Account type</dt>
-              <dd className="text-sm text-[#404145]">{accountType?.replaceAll('_', ' ').toLowerCase()} · role {role}</dd>
+              <dt className="text-xs uppercase tracking-wide text-[#706d65]">Account type</dt>
+              <dd className="text-sm text-[#1a1a17]">{accountType?.replaceAll('_', ' ').toLowerCase()} · role {role}</dd>
             </div>
             <div>
-              <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">Classification</dt>
-              <dd className="text-sm text-[#404145]">{classificationStatus?.replace('_', ' ') ?? '—'}</dd>
+              <dt className="text-xs uppercase tracking-wide text-[#706d65]">Classification</dt>
+              <dd className="text-sm text-[#1a1a17]">{classificationStatus?.replace('_', ' ') ?? '—'}</dd>
             </div>
             {classification.data && (
               <div className="sm:col-span-2 lg:col-span-4">
-                <dt className="text-xs uppercase tracking-wide text-[#9ca3af]">
+                <dt className="text-xs uppercase tracking-wide text-[#706d65]">
                   &ldquo;What do you do?&rdquo;{' '}
                   {classification.data.decision ? `· decided ${classification.data.decision.toLowerCase()}` : '· '}
                   {!classification.data.decision && (
-                    <Link href="/admin/classification" className="normal-case text-[#1dbf73] hover:underline">waiting in the queue</Link>
+                    <Link href="/admin/review/signups" className="normal-case text-[#2f3cf5] hover:underline">waiting in the queue</Link>
                   )}
                 </dt>
-                <dd className="whitespace-pre-wrap break-words text-sm text-[#404145]">{classification.data.what_you_do}</dd>
+                <dd className="whitespace-pre-wrap break-words text-sm text-[#1a1a17]">{classification.data.what_you_do}</dd>
                 {classification.data.decision_note && (
-                  <dd className="mt-1 text-xs text-[#62646a]">Note: {classification.data.decision_note}</dd>
+                  <dd className="mt-1 text-xs text-[#5f5d57]">Note: {classification.data.decision_note}</dd>
                 )}
               </div>
             )}
           </dl>
           {role === 'admin' ? (
-            <p className="text-sm text-[#6b7280]">Admin accounts can&apos;t be reassigned.</p>
+            <p className="text-sm text-[#5f5d57]">Admin accounts can&apos;t be reassigned.</p>
           ) : (
             <CategoryControl userId={id} currentPath={signupPath} />
           )}
@@ -269,7 +269,7 @@ export default async function AdminUserDetailPage({
           <div className="space-y-4">
             {memberships.data!.map((m, i) => (
               <div key={i}>
-                <p className="mb-2 text-sm text-[#62646a]">
+                <p className="mb-2 text-sm text-[#5f5d57]">
                   {m.membership_type} · joined {formatDateTime(m.joined_at)}
                 </p>
                 {m.organizations && <FieldGrid data={m.organizations as unknown as Record<string, unknown>} />}
@@ -280,27 +280,27 @@ export default async function AdminUserDetailPage({
       )}
 
       <Section title="Signup form data (auth metadata)">
-        {Object.keys(meta).length ? <FieldGrid data={meta} /> : <p className="text-sm text-[#6b7280]">None.</p>}
+        {Object.keys(meta).length ? <FieldGrid data={meta} /> : <p className="text-sm text-[#5f5d57]">None.</p>}
       </Section>
 
       {c && (
         <Section title={`Credentials & documents (${credentials.data?.length ?? 0})`}>
           {(credentials.data ?? []).length === 0 ? (
-            <p className="text-sm text-[#6b7280]">No credentials uploaded yet.</p>
+            <p className="text-sm text-[#5f5d57]">No credentials uploaded yet.</p>
           ) : (
-            <ul className="divide-y divide-[#f1f3f5]">
+            <ul className="divide-y divide-[#eeebe4]">
               {credentials.data!.map((cred) => (
                 <li key={cred.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
                   <div>
-                    <p className="font-medium text-[#404145]">{cred.name} <span className="font-normal text-[#62646a]">({cred.credential_type})</span></p>
-                    <p className="text-xs text-[#62646a]">
+                    <p className="font-medium text-[#1a1a17]">{cred.name} <span className="font-normal text-[#5f5d57]">({cred.credential_type})</span></p>
+                    <p className="text-xs text-[#5f5d57]">
                       #{cred.license_number ?? '—'} · {cred.issuing_authority ?? '—'} · expires {cred.expiration_date ?? '—'}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="outline">{cred.status}</Badge>
                     {cred.document_url && (
-                      <a href={credentialDocumentHref(cred.id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#1dbf73] hover:underline">
+                      <a href={credentialDocumentHref(cred.id)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-[#2f3cf5] hover:underline">
                         View document <ExternalLink className="size-3" />
                       </a>
                     )}
@@ -310,8 +310,8 @@ export default async function AdminUserDetailPage({
             </ul>
           )}
           {(checks.data ?? []).length > 0 && (
-            <div className="mt-4 border-t border-[#f1f3f5] pt-4">
-              <p className="mb-2 text-xs uppercase tracking-wide text-[#9ca3af]">Automated checks</p>
+            <div className="mt-4 border-t border-[#eeebe4] pt-4">
+              <p className="mb-2 text-xs uppercase tracking-wide text-[#706d65]">Automated checks</p>
               <ul className="space-y-1 text-sm">
                 {checks.data!.map((ch) => (
                   <li key={ch.check_type}>
@@ -337,15 +337,15 @@ export default async function AdminUserDetailPage({
 
       <Section title="Bug reports from this user">
         {(bugs.data ?? []).length === 0 ? (
-          <p className="text-sm text-[#6b7280]">None.</p>
+          <p className="text-sm text-[#5f5d57]">None.</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {bugs.data!.map((b) => (
               <li key={b.id} className="flex items-center gap-2">
                 <SeverityBadge severity={b.severity} />
                 <BugStatusBadge status={b.status} />
-                <Link href={`/admin/bugs?id=${b.id}`} className="text-[#404145] hover:underline">{b.title}</Link>
-                <span className="text-xs text-[#6b7280]">{formatRelativeTime(b.created_at)}</span>
+                <Link href={`/admin/inbox/bugs?tab=all&id=${b.id}`} className="text-[#1a1a17] hover:underline">{b.title}</Link>
+                <span className="text-xs text-[#5f5d57]">{formatRelativeTime(b.created_at)}</span>
               </li>
             ))}
           </ul>
@@ -359,21 +359,21 @@ export default async function AdminUserDetailPage({
             required
             maxLength={2000}
             placeholder="Add an internal note (e.g. called provider, license confirmed on BRN site)…"
-            className="h-9 flex-1 rounded-md border border-[#e4e5e7] px-3 text-sm outline-none focus:border-[#1dbf73]"
+            className="h-9 flex-1 rounded-md border border-[#e3dfd6] px-3 text-sm outline-none focus:border-[#2f3cf5]"
           />
-          <button className="h-9 rounded-md bg-[#1dbf73] px-3 text-sm font-medium text-white hover:bg-[#19a463]">Add note</button>
+          <button className="h-9 rounded-md bg-[#2f3cf5] px-3 text-sm font-medium text-white hover:bg-[#2330c8]">Add note</button>
         </form>
         {(adminLog.data ?? []).length === 0 ? (
-          <p className="text-sm text-[#6b7280]">No admin actions yet.</p>
+          <p className="text-sm text-[#5f5d57]">No admin actions yet.</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {adminLog.data!.map((row) => (
-              <li key={row.id} className="border-l-2 border-[#1dbf73]/40 pl-3">
-                <p className="text-[#404145]">
+              <li key={row.id} className="border-l-2 border-[#2f3cf5]/40 pl-3">
+                <p className="text-[#1a1a17]">
                   <span className="font-medium">{row.action.replaceAll('_', ' ')}</span>
                   {row.notes ? ` — ${row.notes}` : ''}
                 </p>
-                <p className="text-xs text-[#6b7280]">
+                <p className="text-xs text-[#5f5d57]">
                   {adminEmails.get(row.admin_id) ?? 'admin'} · {formatDateTime(row.created_at)}
                 </p>
               </li>
@@ -384,13 +384,13 @@ export default async function AdminUserDetailPage({
 
       <Section title="User activity log">
         {(auditLog.data ?? []).length === 0 ? (
-          <p className="text-sm text-[#6b7280]">No recorded activity.</p>
+          <p className="text-sm text-[#5f5d57]">No recorded activity.</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {auditLog.data!.map((row) => (
               <li key={row.id} className="flex justify-between gap-4">
                 <span>{row.action.replaceAll('_', ' ')}{row.resource_type !== 'system' ? ` · ${row.resource_type}` : ''}</span>
-                <span className="text-xs text-[#6b7280]">{row.ip ?? ''} {formatDateTime(row.created_at)}</span>
+                <span className="text-xs text-[#5f5d57]">{row.ip ?? ''} {formatDateTime(row.created_at)}</span>
               </li>
             ))}
           </ul>

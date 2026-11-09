@@ -202,27 +202,27 @@ export function ClientPreferences() {
                   role="checkbox"
                   aria-checked={selected}
                   onClick={() => toggle(item.key)}
-                  className={`flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73]/50 ${
+                  className={`flex items-start gap-3 rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f3cf5]/50 ${
                     selected
-                      ? 'border-[#1dbf73] bg-[#e8faf1]'
-                      : 'border-[#e4e5e7] hover:border-[#c5c6c9]'
+                      ? 'border-[#2f3cf5] bg-[#eceefe]'
+                      : 'border-[#e3dfd6] hover:border-[#cbc6ba]'
                   }`}
                 >
                   <span
                     className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border ${
                       selected
-                        ? 'border-[#1dbf73] bg-[#1dbf73] text-white'
-                        : 'border-[#c5c6c9]'
+                        ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white'
+                        : 'border-[#cbc6ba]'
                     }`}
                     aria-hidden="true"
                   >
                     {selected && <Check className="size-3" />}
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-medium text-[#404145]">
+                    <span className="block text-sm font-medium text-[#1a1a17]">
                       {item.label}
                     </span>
-                    <span className="block text-xs text-[#62646a]">
+                    <span className="block text-xs text-[#5f5d57]">
                       {item.sub}
                     </span>
                   </span>
@@ -303,7 +303,7 @@ export function ClientPreferences() {
           <Button
             onClick={handleSave}
             disabled={saving || interests.length === 0}
-            className="bg-[#1dbf73] text-white hover:bg-[#19a463]"
+            className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
           >
             {saving && (
               <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />

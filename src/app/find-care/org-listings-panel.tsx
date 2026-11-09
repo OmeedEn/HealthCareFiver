@@ -39,7 +39,7 @@ export function OrgListingsPanel({
   return (
     <div className="mt-6">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9ca3af]" />
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#706d65]" />
         <label htmlFor="org-listing-search" className="sr-only">
           Search services and events
         </label>
@@ -49,7 +49,7 @@ export function OrgListingsPanel({
                     placeholder={onlyKind === 'event' ? 'Search events or organizations...' : 'Search services, events, or organizations...'}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="h-12 w-full rounded-xl border border-[#e5e7eb] bg-white pl-12 pr-4 text-base text-[#111827] placeholder-[#9ca3af] shadow-sm outline-none transition focus:border-[#1dbf73] focus:ring-2 focus:ring-[#1dbf73]/20"
+          className="h-12 w-full rounded-xl border border-[#e3dfd6] bg-white pl-12 pr-4 text-base text-[#1a1a17] placeholder-[#706d65] shadow-sm outline-none transition focus:border-[#2f3cf5] focus:ring-2 focus:ring-[#2f3cf5]/20"
         />
       </div>
 
@@ -60,10 +60,10 @@ export function OrgListingsPanel({
             type="button"
             onClick={() => setKind(k.value)}
             aria-pressed={kind === k.value}
-            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1dbf73] focus-visible:ring-offset-2 ${
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2f3cf5] focus-visible:ring-offset-2 ${
               kind === k.value
-                ? 'bg-[#0f4c3a] text-white'
-                : 'border border-[#e5e7eb] bg-white text-[#374151] hover:border-[#1dbf73] hover:text-[#1dbf73]'
+                ? 'bg-[#1a1a17] text-white'
+                : 'border border-[#e3dfd6] bg-white text-[#3a3934] hover:border-[#2f3cf5] hover:text-[#2f3cf5]'
             }`}
           >
             {'icon' in k && <k.icon className="size-4" aria-hidden="true" />}
@@ -72,29 +72,29 @@ export function OrgListingsPanel({
         ))}
       </div>
 
-      <p className="mt-6 text-sm text-[#6b7280]">
-        <span className="font-semibold text-[#111827]">{shown.length}</span> listing{shown.length === 1 ? '' : 's'}
+      <p className="mt-6 text-sm text-[#5f5d57]">
+        <span className="font-semibold text-[#1a1a17]">{shown.length}</span> listing{shown.length === 1 ? '' : 's'}
       </p>
 
       {listings.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-[#d1d5db] bg-white px-6 py-14 text-center">
-          <h3 className="text-lg font-semibold text-[#111827]">
+        <div className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
+          <h3 className="text-lg font-semibold text-[#1a1a17]">
             {onlyKind === 'event' ? 'No upcoming events yet' : 'Services and events are coming soon'}
           </h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-[#6b7280]">
+          <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
             Verified organizations are setting up their services and events. Check back soon.
           </p>
         </div>
       ) : shown.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-[#d1d5db] bg-white px-6 py-14 text-center">
-          <h3 className="text-lg font-semibold text-[#111827]">Nothing matches</h3>
+        <div className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
+          <h3 className="text-lg font-semibold text-[#1a1a17]">Nothing matches</h3>
           <button
             type="button"
             onClick={() => {
               setQuery('')
               setKind('all')
             }}
-            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#1dbf73] px-5 text-sm font-semibold text-white transition hover:bg-[#19a463]"
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
           >
             Clear search
           </button>
@@ -102,7 +102,7 @@ export function OrgListingsPanel({
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((l) => (
-            <OrgListingCard key={l.id} listing={l} showOrg footer={<OrgListingCta listing={l} signedIn={signedIn} />} />
+            <OrgListingCard key={l.id} listing={l} showOrg hidePrice footer={<OrgListingCta listing={l} signedIn={signedIn} />} />
           ))}
         </div>
       )}

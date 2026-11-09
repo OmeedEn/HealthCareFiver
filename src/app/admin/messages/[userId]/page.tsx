@@ -74,37 +74,37 @@ export default async function AdminUserMessagesPage({
 
   return (
     <div className="flex h-[calc(100vh-9rem)] flex-col gap-3 font-sans">
-      <div className="flex flex-wrap items-center gap-3 border-b border-[#e4e5e7] pb-3">
+      <div className="flex flex-wrap items-center gap-3 border-b border-[#e3dfd6] pb-3">
         <Link
-          href="/admin/messages"
-          className="inline-flex items-center gap-1 text-sm text-[#62646a] hover:text-[#1dbf73]"
+          href="/admin/inbox/messages"
+          className="inline-flex items-center gap-1 text-sm text-[#5f5d57] hover:text-[#2f3cf5]"
         >
           <ArrowLeftIcon className="size-4" /> All messages
         </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h1 className="truncate text-lg font-semibold text-[#404145]">{name}</h1>
+            <h1 className="truncate text-lg font-semibold text-[#1a1a17]">{name}</h1>
             {profile.role && <Badge variant="outline">{profile.role as string}</Badge>}
             <LiveStatus userId={userId} initialLastSeen={presence[userId] ?? null} />
           </div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             {profile.email && (
-              <a href={`mailto:${profile.email}`} className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline">
+              <a href={`mailto:${profile.email}`} className="inline-flex items-center gap-1 text-[#2330c8] hover:underline">
                 <MailIcon className="size-3" /> {profile.email as string}
               </a>
             )}
             {profile.phone && (
-              <a href={`tel:${profile.phone}`} className="inline-flex items-center gap-1 text-[#0f8f56] hover:underline">
+              <a href={`tel:${profile.phone}`} className="inline-flex items-center gap-1 text-[#2330c8] hover:underline">
                 <PhoneIcon className="size-3" /> {profile.phone as string}
               </a>
             )}
-            <Link href={`/admin/users/${userId}`} className="inline-flex items-center gap-1 text-[#62646a] hover:text-[#1dbf73] hover:underline">
+            <Link href={`/admin/users/${userId}`} className="inline-flex items-center gap-1 text-[#5f5d57] hover:text-[#2f3cf5] hover:underline">
               <UserIcon className="size-3" /> Full profile
             </Link>
           </div>
         </div>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#e4e5e7] bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#e3dfd6] bg-white">
         <AdminSupportThread
           userId={userId}
           adminId={admin.id}

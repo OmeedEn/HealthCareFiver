@@ -107,7 +107,7 @@ export function OrgOnboardingWizard({
       return res
     },
     render: ({ errors }) => (
-      <div className="space-y-4 rounded-xl border border-[#e4e5e7] bg-white p-5">
+      <div className="space-y-4 rounded-xl border border-[#e3dfd6] bg-white p-5">
         <CheckRow
           id="attest_authorized"
           checked={attest.authorized}
@@ -161,7 +161,7 @@ export function OrgOnboardingWizard({
   if (!intro) return flow
   return (
     <>
-      <div className="mb-6 flex flex-col gap-2 rounded-xl border border-[#bcebd5] bg-[#e8faf1] px-4 py-3 text-sm text-[#0f8f56] sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-2 rounded-xl border border-[#c9cdfb] bg-[#eceefe] px-4 py-3 text-sm text-[#2330c8] sm:flex-row sm:items-center sm:justify-between">
         <p>{intro}</p>
         <Link href={next ?? '/dashboard'} className="shrink-0 font-semibold underline-offset-4 hover:underline">
           Not now

@@ -1,57 +1,26 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatRelativeTime } from '@/lib/utils/format'
+import { Badge } from '@/components/ui/badge'
+import { formatDateTime, formatRelativeTime } from '@/lib/utils/format'
+import { cn } from '@/lib/utils'
 import { isDemoMode } from '@/lib/demo/data'
 import { requireAdmin } from '@/lib/admin/guard'
-import { countCreatedWithinDays, listAdminUsers, recentActivity } from '@/lib/admin/data'
+import { countCreatedWithinDays, listAdminUsers } from '@/lib/admin/data'
+import { getQueueCounts, inboxTotal, reviewTotal } from '@/lib/admin/queue-counts'
+import { INBOX_TABS, REVIEW_TABS } from '@/lib/admin/sections'
+import { countLiveListings, loadOldestPending } from '@/lib/admin/overview'
 import { AdminDemoNotice } from '@/components/admin/demo-notice'
-import {
-  EmailConfirmedBadge,
-  SeverityBadge,
-  VerificationBadge,
-} from '@/components/admin/status-badges'
-import {
-  Users,
-  UserPlus,
-  LogIn,
-  MailCheck,
-  ShieldCheck,
-  Bug,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { EmailConfirmedBadge, VerificationBadge } from '@/components/admin/status-badges'
+import { CheckCircle2, XCircle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-function StatCard({
-  title,
-  value,
-  description,
-  icon: Icon,
-  href,
-}: {
-  title: string
-  value: number
-  description: string
-  icon: LucideIcon
-  href?: string
-}) {
-  const body = (
-    <Card className="h-full transition-colors hover:border-[#1dbf73]/50">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-[#62646a]">{title}</CardTitle>
-        <div className="flex size-9 items-center justify-center rounded-lg bg-[#1dbf73]/10">
-          <Icon className="size-4 text-[#1dbf73]" />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-[#404145]">{value}</div>
-        <p className="mt-1 text-xs text-[#62646a]">{description}</p>
-      </CardContent>
-    </Card>
-  )
-  return href ? <Link href={href}>{body}</Link> : body
+const ROLE_LABEL: Record<string, string> = {
+  contractor: 'professional',
+  facility: 'organization',
+  staffing_agency: 'staffing agency',
+  client: 'client',
+  admin: 'admin',
 }
 
 /** Which integrations have real credentials vs. running on built-in mocks. */
@@ -69,70 +38,149 @@ function integrationStatus() {
   ]
 }
 
+function Stat({ label, value, sub, href }: { label: string; value: number; sub?: string; href: string }) {
+  return (
+    <Link href={href} className="block rounded-lg border border-[#e3dfd6] bg-white p-4 transition-colors hover:border-[#2f3cf5]/60">
+      <p className="text-xs font-medium text-[#5f5d57]">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-[#1a1a17]">{value}</p>
+      {sub && <p className="mt-0.5 text-xs text-[#5f5d57]">{sub}</p>}
+    </Link>
+  )
+}
+
+function QueueTile({ label, count, href }: { label: string; count: number; href: string }) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors',
+        count > 0
+          ? 'border-[#2f3cf5]/40 bg-[#eceefe] text-[#2330c8] hover:border-[#2f3cf5]'
+          : 'border-[#e3dfd6] bg-white text-[#706d65] hover:border-[#2f3cf5]/60'
+      )}
+    >
+      <span className={count > 0 ? 'font-medium' : ''}>{label}</span>
+      <span className="text-lg font-bold">{count}</span>
+    </Link>
+  )
+}
+
 export default async function AdminOverviewPage() {
   if (isDemoMode()) return <AdminDemoNotice />
 
   const { db } = await requireAdmin()
   const users = await listAdminUsers(db)
-  const [activity, openBugs, { count: pendingCreds }] = await Promise.all([
-    recentActivity(db, users, 12),
-    db
-      .from('bug_reports')
-      .select('id, title, severity, created_at')
-      .in('status', ['open', 'in_progress'])
-      .order('created_at', { ascending: false })
-      .limit(5),
-    db
-      .from('credentials')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending_review'),
-  ])
+  const byId = new Map(users.map((u) => [u.id, u]))
+  const nameOf = (id: string) => {
+    const u = byId.get(id)
+    return u ? (u.name !== '—' ? u.name : (u.email ?? id.slice(0, 8))) : id.slice(0, 8)
+  }
 
-  const newThisWeek = countCreatedWithinDays(users, 7)
-  const everSignedIn = users.filter((u) => u.lastSignInAt).length
-  const confirmed = users.filter((u) => u.emailConfirmedAt).length
-  const awaitingVerification = users.filter(
-    (u) => u.verificationStatus === 'pending_review' || u.verificationStatus === 'more_info_requested'
-  ).length
-  const openBugCount = openBugs.data?.length ?? 0
+  const [counts, pending, liveListings] = await Promise.all([
+    getQueueCounts(),
+    loadOldestPending(db, nameOf, 15),
+    countLiveListings(db).catch(() => 0),
+  ])
+  const waiting = reviewTotal(counts) + inboxTotal(counts)
+
+  const nonAdmins = users.filter((u) => u.role !== 'admin')
+  const pros = nonAdmins.filter((u) => u.role === 'contractor')
+  const orgs = nonAdmins.filter((u) => u.role === 'facility' || u.role === 'staffing_agency')
+  const clients = nonAdmins.filter((u) => u.role === 'client')
+  const approvedPros = pros.filter((u) => u.verificationStatus === 'approved').length
+  const approvedOrgs = orgs.filter((u) => u.verificationStatus === 'approved').length
+  const newThisWeek = countCreatedWithinDays(nonAdmins, 7)
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">Overview</h1>
-        <p className="mt-1 text-sm text-[#62646a]">
-          Live from Supabase: who signed up, who&apos;s logged in, and what needs attention.
+        <h1 className="text-2xl font-bold text-[#1a1a17]">Overview</h1>
+        <p className="mt-1 text-sm text-[#5f5d57]">
+          {waiting === 0 ? 'Nothing is waiting on you right now.' : `${waiting} item${waiting === 1 ? '' : 's'} waiting on an admin.`}
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatCard title="Total accounts" value={users.length} description="All auth users" icon={Users} href="/admin/users" />
-        <StatCard title="New this week" value={newThisWeek} description="Created in the last 7 days" icon={UserPlus} href="/admin/users" />
-        <StatCard title="Have logged in" value={everSignedIn} description={`${users.length - everSignedIn} never signed in`} icon={LogIn} href="/admin/users?filter=never_signed_in" />
-        <StatCard title="Email confirmed" value={confirmed} description={`${users.length - confirmed} unconfirmed`} icon={MailCheck} href="/admin/users?filter=unconfirmed" />
-        <StatCard title="Awaiting verification" value={awaitingVerification} description={`${pendingCreds ?? 0} credential docs pending`} icon={ShieldCheck} href="/admin/users?filter=needs_review" />
-        <StatCard title="Open bugs" value={openBugCount} description="Open or in progress" icon={Bug} href="/admin/bugs" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <Stat label="Accounts" value={nonAdmins.length} sub={`${newThisWeek} new this week`} href="/admin/people" />
+        <Stat label="Professionals" value={pros.length} sub={`${approvedPros} approved`} href="/admin/people?role=contractor" />
+        <Stat label="Organizations" value={orgs.length} sub={`${approvedOrgs} approved`} href="/admin/people?role=facility" />
+        <Stat label="Clients" value={clients.length} href="/admin/people?role=client" />
+        <Stat label="Live listings" value={liveListings} sub="Pro + org, published" href="/admin/review/listings" />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base text-[#1a1a17]">Needs your attention</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#706d65]">Review</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {REVIEW_TABS.map((t) => (
+                <QueueTile key={t.href} label={t.label} count={counts[t.key]} href={t.href} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-[#706d65]">Inbox</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {INBOX_TABS.map((t) => (
+                <QueueTile key={t.href} label={t.label} count={counts[t.key]} href={t.href} />
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base text-[#404145]">Newest accounts</CardTitle>
-            <Link href="/admin/users" className="text-xs text-[#1dbf73] hover:underline">View all</Link>
+          <CardHeader>
+            <CardTitle className="text-base text-[#1a1a17]">Waiting longest</CardTitle>
           </CardHeader>
           <CardContent>
-            {users.length === 0 ? (
-              <p className="text-sm text-[#6b7280]">No accounts yet.</p>
+            {pending.length === 0 ? (
+              <p className="text-sm text-[#5f5d57]">All clear.</p>
             ) : (
-              <ul className="divide-y divide-[#f1f3f5]">
-                {users.slice(0, 8).map((u) => (
+              <ul className="divide-y divide-[#eeebe4]">
+                {pending.map((p) => (
+                  <li key={p.key}>
+                    <Link href={p.href} className="flex items-center justify-between gap-3 py-2.5 hover:text-[#2f3cf5]">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Badge variant="outline" className="shrink-0">{p.kind}</Badge>
+                        <span className="truncate text-sm text-[#1a1a17]">{p.title}</span>
+                      </span>
+                      <span className="shrink-0 text-xs text-[#5f5d57]" title={formatDateTime(p.at)}>
+                        {formatRelativeTime(p.at)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base text-[#1a1a17]">Recent signups</CardTitle>
+            <Link href="/admin/people" className="text-xs text-[#2f3cf5] hover:underline">
+              Everyone
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {nonAdmins.length === 0 ? (
+              <p className="text-sm text-[#5f5d57]">No accounts yet.</p>
+            ) : (
+              <ul className="divide-y divide-[#eeebe4]">
+                {nonAdmins.slice(0, 10).map((u) => (
                   <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">
-                      <Link href={`/admin/users/${u.id}`} className="font-medium text-[#404145] hover:underline">
+                      <Link href={`/admin/users/${u.id}`} className="font-medium text-[#1a1a17] hover:underline">
                         {u.name}
                       </Link>
-                      <p className="truncate text-xs text-[#62646a]">
-                        {u.email} · {u.role ?? 'no role'} · joined {formatRelativeTime(u.createdAt)}
+                      <p className="truncate text-xs text-[#5f5d57]">
+                        {u.email} · {u.role ? (ROLE_LABEL[u.role] ?? u.role) : 'no profile'} · joined{' '}
+                        {formatRelativeTime(u.createdAt)}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -145,73 +193,28 @@ export default async function AdminOverviewPage() {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base text-[#404145]">Status updates</CardTitle>
-            <Link href="/admin/activity" className="text-xs text-[#1dbf73] hover:underline">Full feed</Link>
-          </CardHeader>
-          <CardContent>
-            {activity.length === 0 ? (
-              <p className="text-sm text-[#6b7280]">No activity yet.</p>
-            ) : (
-              <ul className="space-y-2.5">
-                {activity.map((a) => (
-                  <li key={a.id} className="flex items-start justify-between gap-4 text-sm">
-                    <span className="text-[#404145]">{a.text}</span>
-                    <span className="shrink-0 text-xs text-[#6b7280]">{formatRelativeTime(a.at)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base text-[#404145]">Open bugs</CardTitle>
-            <Link href="/admin/bugs" className="text-xs text-[#1dbf73] hover:underline">Triage</Link>
-          </CardHeader>
-          <CardContent>
-            {openBugCount === 0 ? (
-              <p className="text-sm text-[#6b7280]">No open bug reports.</p>
-            ) : (
-              <ul className="space-y-2.5">
-                {openBugs.data!.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <SeverityBadge severity={b.severity} />
-                      <span className="truncate text-[#404145]">{b.title}</span>
-                    </span>
-                    <span className="shrink-0 text-xs text-[#6b7280]">{formatRelativeTime(b.created_at)}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base text-[#404145]">System status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {integrationStatus().map((i) => (
-                <li key={i.name} className="flex items-center gap-2 text-sm text-[#404145]">
-                  {i.live ? (
-                    <CheckCircle2 className="size-4 text-[#1dbf73]" />
-                  ) : (
-                    <XCircle className="size-4 text-[#9ca3af]" />
-                  )}
-                  {i.name}
-                  <span className="text-xs text-[#6b7280]">{i.live ? 'live' : 'mock / off'}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base text-[#1a1a17]">Integrations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {integrationStatus().map((i) => (
+              <li key={i.name} className="flex items-center gap-2 text-sm text-[#1a1a17]">
+                {i.live ? (
+                  <CheckCircle2 className="size-4 text-[#2f3cf5]" />
+                ) : (
+                  <XCircle className="size-4 text-[#706d65]" />
+                )}
+                {i.name}
+                <span className="text-xs text-[#5f5d57]">{i.live ? 'live' : 'mock / off'}</span>
+              </li>
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   )
 }

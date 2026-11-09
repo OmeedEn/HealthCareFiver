@@ -6,6 +6,7 @@ import {
   ExploreSection,
   FeaturedExpertise,
   HeroSection,
+  SpecialtyMarquee,
   StatsBar,
 } from '@/components/marketing/sections'
 
@@ -13,6 +14,7 @@ export default function LandingPage() {
   return (
     <>
       <HeroSection />
+      <SpecialtyMarquee />
       <StatsBar />
       <FeaturedExpertise />
       <CategoriesSection />

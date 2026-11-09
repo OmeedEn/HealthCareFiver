@@ -144,7 +144,7 @@ export function useOrganizationSignup(source: OrgSignupPath): SignupPathFlow {
     sub: 'Free to join.',
     account,
     setAccount: (patch) => setAccount((a) => ({ ...a, ...patch })),
-    emailLabel: 'Work email',
+    emailLabel: 'Email',
     emailPlaceholder: 'you@yourorganization.com',
     emailHint: freeEmail ? 'Tip: an address at your organization’s domain helps us verify you faster.' : aq.helper,
     onGoogle: () => void continueWithGoogle(),

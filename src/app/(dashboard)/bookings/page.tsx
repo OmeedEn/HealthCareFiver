@@ -34,20 +34,20 @@ export default async function MyBookingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#404145]">My bookings</h1>
-        <p className="text-sm text-[#62646a]">
+        <h1 className="text-2xl font-bold text-[#1a1a17]">My bookings</h1>
+        <p className="text-sm text-[#5f5d57]">
           Services you’ve requested and events you’ve registered for. Everything, including messages, stays on Sanus.
         </p>
       </div>
 
       {bookings.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#d5d6d9] bg-white py-14 text-center">
-          <CalendarCheck className="size-10 text-[#c5c6c9]" aria-hidden="true" />
-          <p className="font-semibold text-[#404145]">No bookings yet</p>
-          <p className="max-w-sm text-sm text-[#62646a]">Find a service or event and request it. It will show up here.</p>
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cbc6ba] bg-white py-14 text-center">
+          <CalendarCheck className="size-10 text-[#cbc6ba]" aria-hidden="true" />
+          <p className="font-semibold text-[#1a1a17]">No bookings yet</p>
+          <p className="max-w-sm text-sm text-[#5f5d57]">Find a service or event and request it. It will show up here.</p>
           <div className="flex gap-4 text-sm font-semibold">
-            <Link href="/find-care?tab=listings" className="text-[#1dbf73] hover:underline">Services &amp; events</Link>
-            <Link href="/events" className="text-[#1dbf73] hover:underline">Events &amp; training</Link>
+            <Link href="/find-care?tab=listings" className="text-[#2f3cf5] hover:underline">Services &amp; events</Link>
+            <Link href="/events" className="text-[#2f3cf5] hover:underline">Events &amp; training</Link>
           </div>
         </div>
       ) : (

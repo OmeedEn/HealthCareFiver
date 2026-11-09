@@ -19,12 +19,12 @@ export function MfaSignOut() {
   return (
     <>
       <Separator className="my-6" />
-      <p className="text-center text-sm text-[#62646a]">
+      <p className="text-center text-sm text-[#5f5d57]">
         Not you?{' '}
         <button
           type="button"
           onClick={handleSignOut}
-          className="font-bold text-[#1dbf73] hover:underline"
+          className="font-bold text-[#2f3cf5] hover:underline"
         >
           Sign out
         </button>

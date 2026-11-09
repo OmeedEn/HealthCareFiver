@@ -3,10 +3,10 @@ import { CalendarDays, ChevronRight, Megaphone, Users } from 'lucide-react'
 import { money, statusLabel, statusTone, when, type BookingRow } from '@/lib/bookings/types'
 
 const TONES = {
-  green: 'bg-[#e8faf1] text-[#0f8f56]',
-  amber: 'bg-[#fdf6e3] text-[#8a6d0b]',
+  green: 'bg-[#eceefe] text-[#2330c8]',
+  amber: 'bg-[#fbf0dc] text-[#8a5a00]',
   red: 'bg-[#fdecea] text-[#b42318]',
-  gray: 'bg-[#f1f1f2] text-[#62646a]',
+  gray: 'bg-[#eeebe4] text-[#5f5d57]',
 } as const
 
 export function BookingStatusBadge({ booking, side }: { booking: BookingRow; side: 'customer' | 'org' }) {
@@ -35,26 +35,26 @@ export function BookingListItem({
     <li>
       <Link
         href={`/bookings/${b.id}`}
-        className="flex items-center gap-4 rounded-xl border border-[#e4e5e7] bg-white p-4 transition hover:border-[#1dbf73] hover:bg-[#fafefb]"
+        className="flex items-center gap-4 rounded-xl border border-[#e3dfd6] bg-white p-4 transition hover:border-[#2f3cf5] hover:bg-[#f4f5fe]"
       >
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#e8faf1] text-[#1dbf73]">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#eceefe] text-[#2f3cf5]">
           <Icon className="size-5" aria-hidden="true" />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold text-[#404145]">{s.title}</span>
-          <span className="mt-0.5 block truncate text-sm text-[#62646a]">
+          <span className="block truncate font-semibold text-[#1a1a17]">{s.title}</span>
+          <span className="mt-0.5 block truncate text-sm text-[#5f5d57]">
             {[counterpart, time ?? (b.kind === 'service' ? 'Flexible time' : 'Date to be announced'), money(b.price_cents)]
               .filter(Boolean)
               .join(' · ')}
           </span>
           {b.kind === 'event' && b.quantity > 1 && (
-            <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-[#62646a]">
+            <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-[#5f5d57]">
               <Users className="size-3" aria-hidden="true" /> {b.quantity} spots
             </span>
           )}
         </span>
         <BookingStatusBadge booking={b} side={side} />
-        <ChevronRight className="size-4 shrink-0 text-[#95979d]" aria-hidden="true" />
+        <ChevronRight className="size-4 shrink-0 text-[#706d65]" aria-hidden="true" />
       </Link>
     </li>
   )
@@ -64,8 +64,8 @@ export function BookingGroup({ title, children, count }: { title: string; count:
   if (count === 0) return null
   return (
     <section>
-      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[#62646a]">
-        {title} <span className="text-[#95979d]">({count})</span>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[#5f5d57]">
+        {title} <span className="text-[#706d65]">({count})</span>
       </h2>
       <ul className="space-y-2">{children}</ul>
     </section>

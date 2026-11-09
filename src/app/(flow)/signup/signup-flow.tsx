@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Briefcase, Building2, CircleHelp, HandHeart, HeartHandshake, Search, Stethoscope } from 'lucide-react'
 import { QuestionFlow, SINGLE_STEP, type Screen } from '@/components/onboarding/question-flow'
@@ -13,7 +13,11 @@ import {
 } from '@/components/auth/signup-tracking'
 import type { SignupPathFlow } from '@/components/auth/signup-account'
 import type { OrgSignupPath } from '@/lib/onboarding/signup-path'
-import { usePreAccountAnswers } from '@/lib/onboarding/pre-account'
+import {
+  clearAllPreAccountAnswers,
+  consumeResumeOnLoad,
+  usePreAccountAnswers,
+} from '@/lib/onboarding/pre-account'
 import {
   DOOR_OF_CHOICE,
   type SignupChoice,
@@ -32,6 +36,13 @@ import { useUnsureSignup } from './unsure/flow'
 // in this tab's sessionStorage like every other pre-account answer. The old
 // door URLs (/signup/offer, /signup/professional, …) redirect here with
 // ?start=, which preselects the answer and opens the right screen.
+//
+// Every visit starts fresh (screen 1, no answers): stored answers are only
+// picked up when this page was reloaded or reached with Back / Forward
+// (consumeResumeOnLoad). "Start over" clears them on demand. The Google
+// returns don't come back here (they land on /onboarding/*), and the Not
+// sure path's /onboarding/unsure reads its draft there, so this reset
+// doesn't touch them.
 
 type Door = SignupDoorAnswer
 type Choice = SignupChoice
@@ -113,6 +124,33 @@ const ICONS: ChoiceIcons = {
 const UNKNOWN_PATH_WEIGHT = 8
 
 export function SignupFlow({ start }: { start: SignupStart | null }) {
+  // null until the stored answers are kept or cleared (needs the browser).
+  const [run, setRun] = useState<number | null>(null)
+  // Decided once per mount (Strict Mode runs effects twice; keep the first answer).
+  const resume = useRef<boolean | null>(null)
+
+  useEffect(() => {
+    if (resume.current === null) resume.current = consumeResumeOnLoad()
+    if (!resume.current) clearAllPreAccountAnswers()
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRun((r) => r ?? 0)
+  }, [])
+
+  if (run === null) return <div className="min-h-[60vh]" aria-busy="true" />
+  return (
+    <SignupFlowRun
+      // A new run remounts every path's answers from (now empty) storage.
+      key={run}
+      start={run === 0 ? start : null}
+      onStartOver={() => {
+        clearAllPreAccountAnswers()
+        setRun((r) => (r ?? 0) + 1)
+      }}
+    />
+  )
+}
+
+function SignupFlowRun({ start, onStartOver }: { start: SignupStart | null; onStartOver: () => void }) {
   // A ?start= deep link wins over answers stored in this tab.
   const [route, setRoute, { hydrated: routeHydrated }] = usePreAccountAnswers<Route>(
     'route',
@@ -189,9 +227,9 @@ export function SignupFlow({ start }: { start: SignupStart | null }) {
           }}
           columns={1}
         />
-        <p className="text-center text-sm text-[#62646a]">
+        <p className="text-center text-sm text-[#5f5d57]">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-[#1dbf73] hover:underline">
+          <Link href="/login" className="font-semibold text-[#2f3cf5] hover:underline">
             Sign in
           </Link>
         </p>
@@ -233,16 +271,29 @@ export function SignupFlow({ start }: { start: SignupStart | null }) {
   const initialIndex = path ? routing.length + path.resumeIndex : route.door ? 1 : 0
 
   return (
-    <QuestionFlow
-      screens={screens}
-      initialIndex={initialIndex}
-      stepWeights={SINGLE_STEP}
-      chrome="minimal"
-      // Per-question analytics under the path's own flow name, as before.
-      flowId={path?.flowId}
-      // The account screen's save already moved on (check email, onboarding,
-      // matches or dashboard).
-      onFinish={() => {}}
-    />
+    <>
+      <QuestionFlow
+        screens={screens}
+        initialIndex={initialIndex}
+        stepWeights={SINGLE_STEP}
+        chrome="minimal"
+        // Per-question analytics under the path's own flow name, as before.
+        flowId={path?.flowId}
+        // The account screen's save already moved on (check email, onboarding,
+        // matches or dashboard).
+        onFinish={() => {}}
+      />
+      {route.door && (
+        <div className="mx-auto mt-8 w-full max-w-xl text-center">
+          <button
+            type="button"
+            onClick={onStartOver}
+            className="rounded text-xs font-medium text-[#706d65] underline-offset-4 transition hover:text-[#5f5d57] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]"
+          >
+            Start over
+          </button>
+        </div>
+      )}
+    </>
   )
 }

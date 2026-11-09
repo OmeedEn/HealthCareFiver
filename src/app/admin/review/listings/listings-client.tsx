@@ -323,7 +323,7 @@ export function ListingsClient({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Listings review</h1>
+          <h2 className="text-lg font-semibold">Listings review</h2>
           <p className="text-sm text-muted-foreground">
             Every listing is reviewed before it goes live.
           </p>
@@ -351,7 +351,7 @@ export function ListingsClient({
             className={cn(
               'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
               status === s
-                ? 'border-[#1dbf73] bg-[#1dbf73]/10 text-[#108a50]'
+                ? 'border-[#2f3cf5] bg-[#2f3cf5]/10 text-[#2330c8]'
                 : 'border-border text-muted-foreground hover:bg-muted'
             )}
           >

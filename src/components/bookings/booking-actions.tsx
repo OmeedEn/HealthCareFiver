@@ -9,7 +9,7 @@ import { isoToLocalInput, localInputToIso } from '@/app/onboarding/organization/
 import { customerBookingAction, payForBooking, respondToBooking, sendBookingMessage, type BookingActionResult } from '@/lib/bookings/actions'
 import { money, needsPayment, type BookingRow } from '@/lib/bookings/types'
 
-const GREEN = 'h-11 bg-[#1dbf73] px-5 text-sm font-semibold text-white hover:bg-[#19a463]'
+const GREEN = 'h-11 bg-[#2f3cf5] px-5 text-sm font-semibold text-white hover:bg-[#2330c8]'
 
 function useRun() {
   const [busy, setBusy] = useState<string | null>(null)
@@ -66,13 +66,13 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
             {(b.status === 'accepted' || b.status === 'paid') && (
               <Button type="button" variant="outline" className="h-11" onClick={() => setMode('cancel')}>Cancel booking</Button>
             )}
-            {b.status === 'quoted' && <p className="self-center text-sm text-[#62646a]">Waiting for the customer to accept your quote.</p>}
+            {b.status === 'quoted' && <p className="self-center text-sm text-[#5f5d57]">Waiting for the customer to accept your quote.</p>}
           </div>
         )}
 
         {mode && (
           <form
-            className="space-y-4 rounded-xl border border-[#e4e5e7] bg-[#fafafa] p-5"
+            className="space-y-4 rounded-xl border border-[#e3dfd6] bg-[#f6f4ef] p-5"
             onSubmit={(e) => {
               e.preventDefault()
               const copy = {
@@ -106,7 +106,7 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
               </div>
             )}
             {mode === 'cancel' && b.payment_status === 'paid' && (
-              <p className="text-sm text-[#62646a]">
+              <p className="text-sm text-[#5f5d57]">
                 The customer paid {money(b.amount_paid_cents)}. Cancelling refunds them in full, and there’s no payout for this booking.
               </p>
             )}
@@ -119,7 +119,7 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
               rows={3}
             />
             <div className="flex flex-wrap gap-3">
-              <Button type="submit" disabled={!!busy} className={mode === 'decline' || mode === 'cancel' ? 'h-11 bg-[#404145] px-5 text-white hover:bg-[#2b2c2f]' : GREEN}>
+              <Button type="submit" disabled={!!busy} className={mode === 'decline' || mode === 'cancel' ? 'h-11 bg-[#1a1a17] px-5 text-white hover:bg-[#1a1a17]' : GREEN}>
                 {busy && <Loader2 className="mr-2 size-4 animate-spin" />}
                 {{ accept: 'Accept booking', quote: 'Send quote', decline: 'Decline request', cancel: 'Cancel booking' }[mode]}
               </Button>
@@ -184,7 +184,7 @@ export function CustomerBookingActions({
           <>
             <Button
               type="button"
-              className="h-11 bg-[#404145] px-5 text-white hover:bg-[#2b2c2f]"
+              className="h-11 bg-[#1a1a17] px-5 text-white hover:bg-[#1a1a17]"
               disabled={!!busy}
               onClick={() => run('cancel', () => customerBookingAction(b.id, 'cancel'), 'Cancelled.')}
             >
@@ -199,7 +199,7 @@ export function CustomerBookingActions({
           </Button>
         )}
       </div>
-      {confirmCancel && cancelNote && <p className="text-sm font-medium text-[#404145]">{cancelNote}</p>}
+      {confirmCancel && cancelNote && <p className="text-sm font-medium text-[#1a1a17]">{cancelNote}</p>}
     </div>
   )
 }
@@ -220,7 +220,7 @@ export function BookingMessageForm({ bookingId }: { bookingId: string }) {
       <div className="flex-1">
         <TextAreaField id="booking-message" label="Message" value={body} onChange={setBody} maxLength={4000} rows={2} placeholder="Write a message…" />
       </div>
-      <Button type="submit" disabled={!!busy || !body.trim()} className="mb-6 h-11 bg-[#1dbf73] px-4 text-white hover:bg-[#19a463]" aria-label="Send message">
+      <Button type="submit" disabled={!!busy || !body.trim()} className="mb-6 h-11 bg-[#2f3cf5] px-4 text-white hover:bg-[#2330c8]" aria-label="Send message">
         {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
       </Button>
     </form>

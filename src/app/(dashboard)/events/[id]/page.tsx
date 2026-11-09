@@ -95,7 +95,7 @@ export default async function EventDetailPage({
       {/* Back link */}
       <Link
         href="/events"
-        className="inline-flex items-center gap-1 text-sm text-[#6b7280] transition-colors hover:text-[#1dbf73]"
+        className="inline-flex items-center gap-1 text-sm text-[#5f5d57] transition-colors hover:text-[#2f3cf5]"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Events
@@ -117,10 +117,10 @@ export default async function EventDetailPage({
         {/* Main content */}
         <div className="space-y-6 lg:col-span-2">
           <div>
-            <h1 className="font-heading text-2xl font-bold text-[#111827]">
+            <h1 className="font-heading text-2xl font-bold text-[#1a1a17]">
               {event.title}
             </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-[#6b7280]">
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-[#5f5d57]">
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4" />
                 {formatDate(event.date)}
@@ -141,12 +141,12 @@ export default async function EventDetailPage({
           {/* Description */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg text-[#111827]">
+              <CardTitle className="font-heading text-lg text-[#1a1a17]">
                 About This Event
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="leading-relaxed text-[#374151]">
+              <p className="leading-relaxed text-[#3a3934]">
                 {event.description}
               </p>
             </CardContent>
@@ -155,7 +155,7 @@ export default async function EventDetailPage({
           {/* What You'll Learn */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg text-[#111827]">
+              <CardTitle className="font-heading text-lg text-[#1a1a17]">
                 What You Will Learn
               </CardTitle>
             </CardHeader>
@@ -163,8 +163,8 @@ export default async function EventDetailPage({
               <ul className="space-y-3">
                 {event.learningObjectives.map((objective) => (
                   <li key={objective} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#1dbf73]" />
-                    <span className="text-sm text-[#374151]">{objective}</span>
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#2f3cf5]" />
+                    <span className="text-sm text-[#3a3934]">{objective}</span>
                   </li>
                 ))}
               </ul>
@@ -174,7 +174,7 @@ export default async function EventDetailPage({
           {/* Curriculum / Agenda */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-lg text-[#111827]">
+              <CardTitle className="font-heading text-lg text-[#1a1a17]">
                 {event.type === 'certification' ? 'Curriculum' : 'Agenda'}
               </CardTitle>
             </CardHeader>
@@ -183,12 +183,12 @@ export default async function EventDetailPage({
                 {event.agenda.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-start gap-4 rounded-lg border border-[#e4e5e7] p-3"
+                    className="flex items-start gap-4 rounded-lg border border-[#e3dfd6] p-3"
                   >
-                    <span className="shrink-0 text-sm font-medium text-[#1dbf73]">
+                    <span className="shrink-0 text-sm font-medium text-[#2f3cf5]">
                       {item.time}
                     </span>
-                    <span className="text-sm text-[#374151]">
+                    <span className="text-sm text-[#3a3934]">
                       {item.topic}
                     </span>
                   </div>
@@ -201,7 +201,7 @@ export default async function EventDetailPage({
           {event.prerequisites.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="font-heading text-lg text-[#111827]">
+                <CardTitle className="font-heading text-lg text-[#1a1a17]">
                   Prerequisites
                 </CardTitle>
               </CardHeader>
@@ -210,9 +210,9 @@ export default async function EventDetailPage({
                   {event.prerequisites.map((prereq) => (
                     <li
                       key={prereq}
-                      className="flex items-start gap-2 text-sm text-[#374151]"
+                      className="flex items-start gap-2 text-sm text-[#3a3934]"
                     >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#6b7280]" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#5f5d57]" />
                       {prereq}
                     </li>
                   ))}
@@ -225,21 +225,21 @@ export default async function EventDetailPage({
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Registration card */}
-          <Card className="sticky top-6 border-[#e4e5e7]">
+          <Card className="sticky top-6 border-[#e3dfd6]">
             <CardContent className="space-y-4 pt-6">
               <div className="text-center">
                 {event.price === 0 ? (
                   <div>
-                    <p className="text-2xl font-bold text-[#1dbf73]">Free</p>
-                    <p className="text-sm text-[#6b7280]">for all members</p>
+                    <p className="text-2xl font-bold text-[#2f3cf5]">Free</p>
+                    <p className="text-sm text-[#5f5d57]">for all members</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-2xl font-bold text-[#111827]">
+                    <p className="text-2xl font-bold text-[#1a1a17]">
                       ${event.memberPrice}
                     </p>
                     {event.memberPrice < event.price && (
-                      <p className="text-sm text-[#6b7280]">
+                      <p className="text-sm text-[#5f5d57]">
                         <span className="line-through">${event.price}</span>{' '}
                         non-member price
                       </p>
@@ -250,22 +250,22 @@ export default async function EventDetailPage({
 
               <EventDetailRegisterButton title={event.title} />
 
-              <div className="space-y-2 text-sm text-[#6b7280]">
+              <div className="space-y-2 text-sm text-[#5f5d57]">
                 <div className="flex items-center justify-between">
                   <span>Format</span>
-                  <span className="font-medium text-[#374151]">
+                  <span className="font-medium text-[#3a3934]">
                     {config?.label ?? event.type}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Duration</span>
-                  <span className="font-medium text-[#374151]">
+                  <span className="font-medium text-[#3a3934]">
                     {event.duration}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Registered</span>
-                  <span className="font-medium text-[#374151]">
+                  <span className="font-medium text-[#3a3934]">
                     {event.registered} attendees
                   </span>
                 </div>
@@ -276,20 +276,20 @@ export default async function EventDetailPage({
           {/* Instructor card */}
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading text-base text-[#111827]">
+              <CardTitle className="font-heading text-base text-[#1a1a17]">
                 Instructor
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1dbf73]/10">
-                  <GraduationCap className="h-5 w-5 text-[#1dbf73]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2f3cf5]/10">
+                  <GraduationCap className="h-5 w-5 text-[#2f3cf5]" />
                 </div>
-                <p className="font-medium text-[#111827]">
+                <p className="font-medium text-[#1a1a17]">
                   {event.instructor}
                 </p>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-[#6b7280]">
+              <p className="mt-3 text-sm leading-relaxed text-[#5f5d57]">
                 {event.instructorBio}
               </p>
             </CardContent>

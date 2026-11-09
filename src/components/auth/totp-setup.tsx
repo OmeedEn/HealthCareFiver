@@ -120,9 +120,9 @@ export function AuthenticatorAppLinks() {
       {AUTHENTICATOR_APPS.map((app) => (
         <li
           key={app.name}
-          className="rounded-md border border-[#e4e5e7] bg-white px-3 py-2"
+          className="rounded-md border border-[#e3dfd6] bg-white px-3 py-2"
         >
-          <p className="text-xs font-semibold text-[#404145]">{app.name}</p>
+          <p className="text-xs font-semibold text-[#1a1a17]">{app.name}</p>
           <p className="mt-0.5 flex flex-wrap gap-x-3 text-xs">
             {app.links.map((link) => (
               <a
@@ -130,7 +130,7 @@ export function AuthenticatorAppLinks() {
                 href={link.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-0.5 font-semibold text-[#1dbf73] hover:underline"
+                className="inline-flex items-center gap-0.5 font-semibold text-[#2f3cf5] hover:underline"
               >
                 {link.label}
                 <ExternalLink className="size-3" aria-hidden="true" />
@@ -166,13 +166,13 @@ export function SecretKey({ secret }: { secret: string }) {
 
   return (
     <div className="mt-2">
-      <p className="text-xs text-[#62646a]">
+      <p className="text-xs text-[#5f5d57]">
         Setup key (choose “Enter a setup key” in your app, time-based):
       </p>
       <div className="mt-1 flex items-stretch gap-2">
         <code
           aria-label="Setup key"
-          className="flex-1 select-all break-all rounded-md border border-[#e4e5e7] bg-[#f5f5f5] px-3 py-2 font-mono text-sm tracking-wider text-[#404145]"
+          className="flex-1 select-all break-all rounded-md border border-[#e3dfd6] bg-[#f6f4ef] px-3 py-2 font-mono text-sm tracking-wider text-[#1a1a17]"
         >
           {formatted}
         </code>
@@ -183,7 +183,7 @@ export function SecretKey({ secret }: { secret: string }) {
           className="h-auto shrink-0 px-3 text-xs font-semibold"
         >
           {copied ? (
-            <Check className="mr-1 size-3.5 text-[#1dbf73]" aria-hidden="true" />
+            <Check className="mr-1 size-3.5 text-[#2f3cf5]" aria-hidden="true" />
           ) : (
             <Copy className="mr-1 size-3.5" aria-hidden="true" />
           )}
@@ -366,7 +366,7 @@ export function TotpEnrollment({
   }
 
   const stepNumber =
-    'flex size-6 shrink-0 items-center justify-center rounded-full bg-[#e8faf1] text-xs font-bold text-[#0f8f56]'
+    'flex size-6 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-xs font-bold text-[#2330c8]'
 
   return (
     <ol className="space-y-6">
@@ -374,10 +374,10 @@ export function TotpEnrollment({
       <li className="flex gap-3">
         <span className={stepNumber}>1</span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#404145]">
+          <p className="text-sm font-semibold text-[#1a1a17]">
             Get a free authenticator app
           </p>
-          <p className="mt-0.5 text-xs text-[#62646a]">
+          <p className="mt-0.5 text-xs text-[#5f5d57]">
             An authenticator app shows a new 6-digit code every 30 seconds.
             Already have one? Skip to step 2. Any of these work:
           </p>
@@ -389,7 +389,7 @@ export function TotpEnrollment({
       <li className="flex gap-3">
         <span className={stepNumber}>2</span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[#404145]">
+          <p className="text-sm font-semibold text-[#1a1a17]">
             Add Sanus to the app
           </p>
 
@@ -408,32 +408,32 @@ export function TotpEnrollment({
               </button>
             </div>
           ) : !enrollment ? (
-            <div className="mt-3 flex items-center gap-2 text-xs text-[#62646a]">
-              <Loader2 className="size-4 animate-spin text-[#95979d]" />
+            <div className="mt-3 flex items-center gap-2 text-xs text-[#5f5d57]">
+              <Loader2 className="size-4 animate-spin text-[#706d65]" />
               Preparing your setup key…
             </div>
           ) : (
             <>
               {/* Phones: one tap opens the authenticator app directly. */}
               <div className="sm:hidden">
-                <p className="mt-0.5 text-xs text-[#62646a]">
+                <p className="mt-0.5 text-xs text-[#5f5d57]">
                   Tap the button to add Sanus to your authenticator app on
                   this phone, then come back here.
                 </p>
                 <a
                   href={enrollment.uri}
-                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+                  className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
                 >
                   <Smartphone className="size-4" aria-hidden="true" />
                   Open in authenticator app
                 </a>
-                <p className="mt-2 text-xs text-[#95979d]">
+                <p className="mt-2 text-xs text-[#706d65]">
                   Nothing happened? Install an app from step 1 first, or copy
                   the setup key below into it.
                 </p>
                 <SecretKey secret={enrollment.secret} />
-                <details className="mt-2 text-xs text-[#62646a]">
-                  <summary className="cursor-pointer font-semibold text-[#1dbf73]">
+                <details className="mt-2 text-xs text-[#5f5d57]">
+                  <summary className="cursor-pointer font-semibold text-[#2f3cf5]">
                     Using a different device? Show QR code
                   </summary>
                   <QrCode src={enrollment.qrCode} />
@@ -442,20 +442,20 @@ export function TotpEnrollment({
 
               {/* Larger screens: scan the QR with a phone. */}
               <div className="hidden sm:block">
-                <p className="mt-0.5 text-xs text-[#62646a]">
+                <p className="mt-0.5 text-xs text-[#5f5d57]">
                   In the app, tap <strong>+</strong> (or “Add account”) and
                   scan this QR code with your phone’s camera.
                 </p>
                 <QrCode src={enrollment.qrCode} />
-                <details className="mt-2 text-xs text-[#62646a]">
-                  <summary className="cursor-pointer font-semibold text-[#1dbf73]">
+                <details className="mt-2 text-xs text-[#5f5d57]">
+                  <summary className="cursor-pointer font-semibold text-[#2f3cf5]">
                     Can’t scan? Enter a setup key or open the app on this
                     device
                   </summary>
                   <SecretKey secret={enrollment.secret} />
                   <a
                     href={enrollment.uri}
-                    className="mt-2 inline-flex items-center gap-1 font-semibold text-[#1dbf73] hover:underline"
+                    className="mt-2 inline-flex items-center gap-1 font-semibold text-[#2f3cf5] hover:underline"
                   >
                     <Smartphone className="size-3.5" aria-hidden="true" />
                     Open in authenticator app on this device
@@ -479,7 +479,7 @@ export function TotpEnrollment({
         >
           <Label
             htmlFor={`totp-code-${kind}`}
-            className="text-sm font-semibold text-[#404145]"
+            className="text-sm font-semibold text-[#1a1a17]"
           >
             Enter the 6-digit code the app shows for Sanus
           </Label>
@@ -509,7 +509,7 @@ export function TotpEnrollment({
             <Button
               type="submit"
               disabled={!enrollment || verifying || code.length !== 6}
-              className="h-11 flex-1 bg-[#1dbf73] text-sm font-bold text-white hover:bg-[#19a463]"
+              className="h-11 flex-1 bg-[#2f3cf5] text-sm font-bold text-white hover:bg-[#2330c8]"
             >
               {verifying && <Loader2 className="mr-2 size-4 animate-spin" />}
               Verify and continue
@@ -523,7 +523,7 @@ export function TotpEnrollment({
 
 function QrCode({ src }: { src: string }) {
   return (
-    <div className="mt-3 flex size-48 items-center justify-center rounded-lg border border-[#e4e5e7] bg-white p-2">
+    <div className="mt-3 flex size-48 items-center justify-center rounded-lg border border-[#e3dfd6] bg-white p-2">
       {/* qr_code is an SVG data URI generated by Supabase */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt="Authenticator QR code" className="size-full" />
