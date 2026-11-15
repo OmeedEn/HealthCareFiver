@@ -424,6 +424,44 @@ export async function getPublicProfile(
   }
 }
 
+/**
+ * What a viewer gets for a profile link:
+ *  - 'public' / 'owner': the profile (same rule as discovery — getLiveProviders)
+ *  - 'unpublished': the professional exists but isn't published on Sanus
+ *    (pending review, agreement not accepted, on hold, inactive, or a hidden
+ *    sample account). Callers show a gate, never "not found", and reveal no
+ *    profile details or the specific reason.
+ *  - 'missing': stale or malformed id.
+ * Without a service-role key the read is RLS-bound, so an unpublished
+ * profile can only be reported as 'missing'.
+ */
+export type ProfileAccess =
+  | { kind: 'public' | 'owner'; result: PublicProfileResult }
+  | { kind: 'unpublished' }
+  | { kind: 'missing' }
+
+export async function resolveProfileAccess(
+  id: string,
+  viewerId: string | null,
+  opts: { details?: boolean } = {}
+): Promise<ProfileAccess> {
+  if (!UUID_RE.test(id)) return { kind: 'missing' }
+  const result = await getPublicProfile(id, viewerId, opts)
+  if (result) return { kind: result.isPublic ? 'public' : 'owner', result }
+  try {
+    const supabase = await getReadClient()
+    const { data, error } = await supabase
+      .from('contractor_profiles')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle()
+    if (!error && data) return { kind: 'unpublished' }
+  } catch (err) {
+    console.error('[pros] profile existence check failed', err instanceof Error ? err.message : 'unknown')
+  }
+  return { kind: 'missing' }
+}
+
 const DEMO_RATES: ProfessionalRate[] = [
   {
     id: 'demo-rate-1',

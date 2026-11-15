@@ -39,7 +39,7 @@ export function OrgListingsPanel({
   return (
     <div className="mt-6">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#706d65]" />
+        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#706d65]" aria-hidden="true" />
         <label htmlFor="org-listing-search" className="sr-only">
           Search services and events
         </label>
@@ -53,7 +53,7 @@ export function OrgListingsPanel({
         />
       </div>
 
-      <div className={onlyKind ? 'hidden' : 'mt-4 flex flex-wrap gap-2'}>
+      <div role="group" aria-label="Filter by type" className={onlyKind ? 'hidden' : 'mt-4 flex flex-wrap gap-2'}>
         {KINDS.map((k) => (
           <button
             key={k.value}
@@ -72,22 +72,26 @@ export function OrgListingsPanel({
         ))}
       </div>
 
-      <p className="mt-6 text-sm text-[#5f5d57]">
+      <p className="mt-6 text-sm text-[#5f5d57]" role="status" aria-live="polite" aria-atomic="true">
         <span className="font-semibold text-[#1a1a17]">{shown.length}</span> listing{shown.length === 1 ? '' : 's'}
+        {shown.length !== listings.length && listings.length > 0 ? ` match (of ${listings.length})` : ''}
       </p>
 
       {listings.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
+        <section role="status" className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
           <h3 className="text-lg font-semibold text-[#1a1a17]">
-            {onlyKind === 'event' ? 'No upcoming events yet' : 'Services and events are coming soon'}
+            {onlyKind === 'event' ? 'No events are published on Sanus yet' : 'No services or events are published on Sanus yet'}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
-            Verified organizations are setting up their services and events. Check back soon.
+            Listings appear here only after Sanus approves the organization and the listing is published. Check back soon.
           </p>
-        </div>
+        </section>
       ) : shown.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
-          <h3 className="text-lg font-semibold text-[#1a1a17]">Nothing matches</h3>
+        <section role="status" className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
+          <h3 className="text-lg font-semibold text-[#1a1a17]">No listings match your search</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
+            {listings.length} listing{listings.length === 1 ? ' is' : 's are'} published, but none match. Try different words or reset the filters.
+          </p>
           <button
             type="button"
             onClick={() => {
@@ -96,9 +100,9 @@ export function OrgListingsPanel({
             }}
             className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
           >
-            Clear search
+            Reset filters
           </button>
-        </div>
+        </section>
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((l) => (

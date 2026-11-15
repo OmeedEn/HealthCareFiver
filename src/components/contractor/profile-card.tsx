@@ -32,16 +32,20 @@ export interface ContractorProfileData {
 interface ProfileCardProps {
   contractor: ContractorProfileData
   href?: string
+  /** At least one active saved rate; false → "Contact for pricing". */
+  hasPublicRates?: boolean
 }
 
-export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
+export function ContractorProfileCard({ contractor, href, hasPublicRates = false }: ProfileCardProps) {
+  const name = `${contractor.first_name} ${contractor.last_name}`
+  const reviewCount = contractor.total_reviews ?? 0
   const content = (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader>
         <div className="flex items-start gap-3">
           <Avatar size="lg">
             {contractor.avatar_url && (
-              <AvatarImage src={contractor.avatar_url} alt={`${contractor.first_name} ${contractor.last_name}`} />
+              <AvatarImage src={contractor.avatar_url} alt="" />
             )}
             <AvatarFallback>
               {getInitials(contractor.first_name, contractor.last_name)}
@@ -49,11 +53,9 @@ export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold truncate">
-                {contractor.first_name} {contractor.last_name}
-              </h3>
+              <h3 className="font-semibold truncate">{name}</h3>
               <Badge variant={contractor.is_available ? 'default' : 'secondary'}>
-                {contractor.is_available ? 'Available' : 'Unavailable'}
+                {contractor.is_available ? 'Accepting clients' : 'Not accepting clients'}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -67,27 +69,31 @@ export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          {contractor.average_rating != null && (
+          {/* Ratings come from visible reviews (trigger-maintained); none → "New on Sanus". */}
+          {contractor.average_rating != null && reviewCount > 0 ? (
             <span className="flex items-center gap-1">
-              <Star className="size-3.5 fill-yellow-400 text-yellow-400" />
+              <Star className="size-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
+              <span className="sr-only">Rated </span>
               {contractor.average_rating.toFixed(1)}
-              {contractor.total_reviews != null && (
-                <span className="text-xs">({contractor.total_reviews})</span>
-              )}
+              <span className="sr-only"> out of 5 from</span>
+              <span className="text-xs">
+                ({reviewCount} review{reviewCount === 1 ? '' : 's'})
+              </span>
             </span>
+          ) : (
+            <span>New on Sanus</span>
           )}
           {(contractor.city || contractor.state) && (
             <span className="flex items-center gap-1">
-              <MapPin className="size-3.5" />
+              <MapPin className="size-3.5" aria-hidden="true" />
+              <span className="sr-only">Based in </span>
               {[contractor.city, contractor.state].filter(Boolean).join(', ')}
             </span>
           )}
-          {href && (
-            <span className="flex items-center gap-1 text-[#2330c8]">
-              <Tag className="size-3.5" aria-hidden="true" />
-              Rates on profile
-            </span>
-          )}
+          <span className={`flex items-center gap-1 ${hasPublicRates ? 'text-[#2330c8]' : ''}`}>
+            <Tag className="size-3.5" aria-hidden="true" />
+            {hasPublicRates ? 'Rates on profile' : 'Contact for pricing'}
+          </span>
         </div>
         {contractor.specialties && contractor.specialties.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
@@ -107,7 +113,7 @@ export function ContractorProfileCard({ contractor, href }: ProfileCardProps) {
 
   if (href) {
     return (
-      <Link href={href} className="block">
+      <Link href={href} className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2f3cf5]">
         {content}
       </Link>
     )

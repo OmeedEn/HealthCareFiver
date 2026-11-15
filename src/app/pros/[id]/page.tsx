@@ -28,11 +28,12 @@ import {
 import { isDemoMode } from '@/lib/demo/data'
 import {
   getDemoPublicProfile,
-  getPublicProfile,
+  resolveProfileAccess,
   type AvailabilitySummary,
-  type PublicProfileResult,
+  type ProfileAccess,
   type PublicReview,
 } from '@/lib/find-care/profile'
+import { ProfileGate } from '@/components/contractor/profile-gate'
 import {
   KIND_LABELS,
   engagementLabel,
@@ -63,16 +64,23 @@ const viewer = cache(async (): Promise<{ id: string; role: string } | null> => {
 const ORG_ROLES = new Set(['facility', 'staffing_agency'])
 
 // Deduped between generateMetadata and the page within one request.
-const load = cache(async (id: string): Promise<PublicProfileResult | null> => {
-  if (isDemoMode()) return getDemoPublicProfile(id)
-  return getPublicProfile(id, (await viewer())?.id ?? null)
+const load = cache(async (id: string): Promise<ProfileAccess> => {
+  if (isDemoMode()) {
+    const demo = getDemoPublicProfile(id)
+    return demo ? { kind: 'public', result: demo } : { kind: 'missing' }
+  }
+  return resolveProfileAccess(id, (await viewer())?.id ?? null)
 })
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await connection()
   const { id } = await params
-  const data = await load(id)
-  if (!data) return { title: 'Profile not found — Sanus' }
+  const access = await load(id)
+  if (access.kind === 'missing') return { title: 'Profile not found — Sanus' }
+  if (access.kind === 'unpublished') {
+    return { title: 'Profile not published — Sanus', robots: { index: false, follow: false } }
+  }
+  const data = access.result
   const name = `${data.profile.first_name} ${data.profile.last_name}`.trim()
   return {
     title: `${name} — Sanus`,
@@ -92,8 +100,19 @@ export default async function ProProfilePage({ params }: Props) {
   // Visibility depends on live verification state — render per request.
   await connection()
   const { id } = await params
-  const data = await load(id)
-  if (!data) notFound()
+  const access = await load(id)
+  if (access.kind === 'missing') notFound()
+  if (access.kind === 'unpublished') {
+    return (
+      <div className="min-h-screen bg-[#f6f4ef]">
+        <SiteHeader />
+        <main className="px-4 py-16">
+          <ProfileGate kind="unpublished" backHref="/find-care" backLabel="Find published professionals" />
+        </main>
+      </div>
+    )
+  }
+  const data = access.result
 
   const {
     profile: p,
@@ -389,20 +408,20 @@ export default async function ProProfilePage({ params }: Props) {
               {ctaBlock}
             </div>
 
-            {rates && (rates.length > 0 || isOwner) && (
-              <Card title="Rates" icon={CircleDollarSign} compact>
-                {rates.length === 0 ? (
-                  <Empty>
-                    Clients see your prices here.{' '}
-                    <Link href="/contractor/rates" className="font-semibold text-[#2330c8] underline">
-                      Add your rates
-                    </Link>
-                  </Empty>
-                ) : (
-                  <RatesList rates={rates} />
-                )}
-              </Card>
-            )}
+            <Card title="Rates" icon={CircleDollarSign} compact>
+              {rates && rates.length > 0 ? (
+                <RatesList rates={rates} />
+              ) : isOwner ? (
+                <Empty>
+                  No saved rates — clients see “Contact for pricing”.{' '}
+                  <Link href="/contractor/rates" className="font-semibold text-[#2330c8] underline">
+                    Add your rates
+                  </Link>
+                </Empty>
+              ) : (
+                <p className="text-sm font-medium text-[#5f5d57]">Contact for pricing</p>
+              )}
+            </Card>
 
             <Card title="Availability" icon={CalendarRange} compact>
               <AvailabilityBlock availability={availability} isOwner={isOwner} />
