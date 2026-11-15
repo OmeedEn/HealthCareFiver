@@ -76,7 +76,7 @@ export function AdminSupportThread({
         }
         emptyText="No messages yet. Write the first one below. They'll get an email and an in-app notification."
       />
-      <MessageInput onSend={handleSend} allowAttachments placeholder="Message as the Sanus team..." />
+      <MessageInput onSend={handleSend} allowAttachments placeholder="Message as the Sanus team..." safetyNotice="general" />
     </>
   )
 }

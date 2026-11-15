@@ -5,6 +5,7 @@ import { CircleCheck, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextAreaField } from '@/app/onboarding/professional/ui'
 import { CLIENT_NOTE_MAX } from '@/lib/onboarding/client-interests'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { requestCareHelp } from './actions'
 
 /**
@@ -42,8 +43,10 @@ export function RequestHelpForm({ alreadyRequested }: { alreadyRequested: boolea
         })
       }}
     >
+      <NoPhiNotice id="care-request-note-phi" />
       <TextAreaField
         id="care-request-note"
+        describedBy="care-request-note-phi"
         label="Anything else we should know?"
         optional
         value={note}
@@ -54,7 +57,6 @@ export function RequestHelpForm({ alreadyRequested }: { alreadyRequested: boolea
         placeholder="e.g. evenings work best, Spanish-speaking"
         error={error}
       />
-      <p className="text-xs text-[#5f5d57]">Please don&apos;t include medical details.</p>
       <Button
         type="submit"
         disabled={pending}
