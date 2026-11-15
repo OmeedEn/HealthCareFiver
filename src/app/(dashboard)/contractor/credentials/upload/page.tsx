@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { CREDENTIAL_TYPE_LABELS } from '@/lib/utils/constants'
+import { CREDENTIAL_TYPE_LABELS, OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES } from '@/lib/utils/constants'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -69,18 +69,6 @@ const TYPE_HINTS: Record<string, { name: string; authority: string }> = {
     name: 'Professional liability / malpractice policy',
     authority: 'e.g., NSO, Proliability',
   },
-  immunization: {
-    name: 'Immunization record (Hep B, MMR, Tdap, Flu)',
-    authority: 'Issuing physician or clinic',
-  },
-  tb_test: {
-    name: 'TB test result (PPD or QuantiFERON)',
-    authority: 'Issuing clinic or lab',
-  },
-  fit_test: {
-    name: 'N95 respirator fit test',
-    authority: 'Employer / occupational health',
-  },
 }
 
 const MALPRACTICE = 'malpractice_insurance'
@@ -88,8 +76,14 @@ const MALPRACTICE_DEFAULT_NAME = 'Professional liability / malpractice certifica
 
 // CREDENTIAL_TYPE_LABELS predates malpractice uploads; add it here so the
 // dashboard's "Upload malpractice certificate" link can preselect it.
+// Occupational-health records (drug screen, immunizations, TB, fit test) are
+// not collected by default.
 const TYPE_OPTIONS: Record<string, string> = {
-  ...CREDENTIAL_TYPE_LABELS,
+  ...Object.fromEntries(
+    Object.entries(CREDENTIAL_TYPE_LABELS).filter(
+      ([type]) => !OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES.has(type)
+    )
+  ),
   [MALPRACTICE]: 'Malpractice / professional liability insurance',
 }
 
@@ -695,12 +689,10 @@ function CredentialUploadForm() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-1.5 text-sm text-[#5f5d57]">
-                <li>State nursing or medical license</li>
-                <li>BLS / ACLS / PALS certifications</li>
-                <li>NPI number</li>
-                <li>Background check (within 12 months)</li>
-                <li>Immunization record</li>
-                <li>TB test (within 12 months)</li>
+                <li>State license (licensed professions)</li>
+                <li>Professional certifications (e.g., BLS, personal training, coaching)</li>
+                <li>NPI number (clinicians who have one)</li>
+                <li>Professional liability insurance</li>
               </ul>
             </CardContent>
           </Card>

@@ -43,8 +43,8 @@ function inboxCopy(role: string | null) {
     subtitle: role
       ? 'Your conversations with clients, organizations and the Sanus team'
       : 'Your conversations',
-    empty: 'Clients and organizations who message you will appear here. You can also apply to jobs.',
-    cta: { href: '/contractor/jobs', label: 'Browse jobs' },
+    empty: 'Clients and organizations who message you will appear here. Add a service or event so they can find you.',
+    cta: { href: '/contractor/listings', label: 'Your listings' },
   }
 }
 

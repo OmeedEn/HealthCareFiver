@@ -55,6 +55,19 @@ export const CREDENTIAL_TYPE_LABELS: Record<string, string> = {
   other: 'Other',
 }
 
+/**
+ * Occupational-health records from the staffing-era schema. Sanus doesn't
+ * collect them by default (no reviewed service needs them), so they're not
+ * offered for upload and not listed as required. Labels above stay so any
+ * existing rows still display.
+ */
+export const OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES: ReadonlySet<string> = new Set([
+  'drug_screen',
+  'immunization',
+  'tb_test',
+  'fit_test',
+])
+
 export const JOB_TYPE_LABELS: Record<string, string> = {
   per_diem: 'Per Diem',
   travel: 'Travel',
