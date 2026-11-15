@@ -56,7 +56,7 @@ export function formatRateUnit(r: Pick<ProfessionalRate, 'unit' | 'unit_label' |
     case 'session':
       return r.duration_minutes ? `/ ${r.duration_minutes}-min session` : '/ session'
     case 'custom':
-      return r.unit_label ? `/ ${r.unit_label.replace(/^(per|\/)\s*/i, '')}` : ''
+      return r.unit_label ? `/ ${r.unit_label.replace(/^(per|\/)\s*/i, '')}` : '· custom pricing'
     case 'package':
       return r.unit_label ? `· ${r.unit_label}` : '· package'
     default:

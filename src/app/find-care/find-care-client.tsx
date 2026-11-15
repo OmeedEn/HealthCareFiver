@@ -107,10 +107,15 @@ function avatarColor(id: string): string {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-0.5">
+    <div
+      className="flex items-center gap-0.5"
+      role="img"
+      aria-label={`Rated ${rating.toFixed(1)} out of 5`}
+    >
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
+          aria-hidden="true"
           className={`h-3.5 w-3.5 ${
             i < Math.floor(rating)
               ? 'fill-amber-400 text-amber-400'
@@ -173,7 +178,7 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
             {provider.total_reviews > 0 ? (
               <>
                 <StarRating rating={provider.average_rating} />
-                <span className="text-sm font-semibold text-[#1a1a17]">
+                <span className="text-sm font-semibold text-[#1a1a17]" aria-hidden="true">
                   {provider.average_rating.toFixed(1)}
                 </span>
                 <span className="text-sm text-[#5f5d57]">
@@ -196,23 +201,31 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
 
       {/* Details row */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-        <span className="flex items-center gap-1 font-medium text-[#2330c8]">
-          <Tag className="h-3.5 w-3.5" aria-hidden="true" />
-          Rates on profile
-        </span>
+        {provider.has_public_rates ? (
+          <span className="flex items-center gap-1 font-medium text-[#2330c8]">
+            <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+            Rates on profile
+          </span>
+        ) : (
+          <span className="flex items-center gap-1 text-[#5f5d57]">
+            <Tag className="h-3.5 w-3.5" aria-hidden="true" />
+            Contact for pricing
+          </span>
+        )}
         {location && (
           <span className="flex items-center gap-1 text-[#5f5d57]">
-            <MapPin className="h-3.5 w-3.5" />
+            <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="sr-only">Based in </span>
             {location}
           </span>
         )}
         {provider.is_available ? (
           <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-            Available
+            Accepting clients
           </span>
         ) : (
-          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-            Unavailable
+          <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+            Not accepting clients
           </span>
         )}
       </div>
@@ -235,6 +248,7 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
       <div className="mt-4">
         <Link
           href={`/pros/${provider.id}`}
+          aria-label={`View profile of ${provider.first_name} ${provider.last_name}`}
           className="inline-flex h-9 w-full items-center justify-center rounded-lg border border-[#2f3cf5] text-sm font-semibold text-[#2f3cf5] transition hover:bg-[#2f3cf5] hover:text-white"
         >
           View Profile
@@ -259,7 +273,9 @@ function FiltersPanel({
   specialtyOptions,
   stateOptions,
   showSessionType,
+  idPrefix,
 }: {
+  idPrefix: string
   sessionType: string
   setSessionType: (v: string) => void
   minRating: string
@@ -285,10 +301,17 @@ function FiltersPanel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#1a1a17]">
-          Filters{activeCount > 0 && ` (${activeCount})`}
+          Filters
+          {activeCount > 0 && (
+            <span>
+              {' '}({activeCount}
+              <span className="sr-only"> active</span>)
+            </span>
+          )}
         </h3>
         {activeCount > 0 && (
           <button
+            type="button"
             onClick={clearAll}
             className="text-xs font-medium text-[#2f3cf5] hover:text-[#2330c8]"
           >
@@ -299,10 +322,10 @@ function FiltersPanel({
 
       {/* Session Type (demo data only — real profiles don't record formats yet) */}
       {showSessionType && (
-      <div>
-        <h4 className="mb-3 text-sm font-semibold text-[#1a1a17]">
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold text-[#1a1a17]">
           Session Type
-        </h4>
+        </legend>
         <div className="space-y-2">
           {[
             { value: 'all', label: 'All Types' },
@@ -315,7 +338,7 @@ function FiltersPanel({
             >
               <input
                 type="radio"
-                name="sessionType"
+                name={`${idPrefix}-sessionType`}
                 checked={sessionType === opt.value}
                 onChange={() => setSessionType(opt.value)}
                 className="h-4 w-4 rounded-full border-[#cbc6ba] text-[#2f3cf5] accent-[#2f3cf5]"
@@ -324,14 +347,14 @@ function FiltersPanel({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
       )}
 
       {/* Minimum Rating */}
-      <div>
-        <h4 className="mb-3 text-sm font-semibold text-[#1a1a17]">
-          Minimum Rating
-        </h4>
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold text-[#1a1a17]">
+          Minimum rating
+        </legend>
         <div className="space-y-2">
           {[
             { value: 'any', label: 'Any rating' },
@@ -345,7 +368,8 @@ function FiltersPanel({
             >
               <input
                 type="radio"
-                name="minRating"
+                name={`${idPrefix}-minRating`}
+                aria-label={opt.stars ? `${opt.label}${opt.stars < 5 ? ' and up' : ''}` : opt.label}
                 checked={minRating === opt.value}
                 onChange={() => setMinRating(opt.value)}
                 className="h-4 w-4 rounded-full border-[#cbc6ba] text-[#2f3cf5] accent-[#2f3cf5]"
@@ -353,7 +377,7 @@ function FiltersPanel({
               <span className="flex items-center gap-1.5 text-sm text-[#3a3934]">
                 {opt.stars ? (
                   <>
-                    <span className="flex gap-0.5">
+                    <span className="flex gap-0.5" aria-hidden="true">
                       {Array.from({ length: opt.stars }).map((_, i) => (
                         <Star
                           key={i}
@@ -361,7 +385,7 @@ function FiltersPanel({
                         />
                       ))}
                     </span>
-                    <span>& up</span>
+                    {opt.stars < 5 && <span aria-hidden="true">& up</span>}
                   </>
                 ) : (
                   opt.label
@@ -370,15 +394,19 @@ function FiltersPanel({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       {/* Specialty */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-[#1a1a17]">
+        <label
+          htmlFor={`${idPrefix}-specialty`}
+          className="mb-3 block text-sm font-semibold text-[#1a1a17]"
+        >
           Specialty
-        </h4>
+        </label>
         <div className="relative">
           <select
+            id={`${idPrefix}-specialty`}
             value={specialty}
             onChange={(e) => setSpecialty(e.target.value)}
             className="h-9 w-full appearance-none rounded-lg border border-[#e3dfd6] bg-white px-3 pr-8 text-sm text-[#3a3934] outline-none focus:border-[#2f3cf5] focus:ring-2 focus:ring-[#2f3cf5]/20"
@@ -395,11 +423,15 @@ function FiltersPanel({
 
       {/* State */}
       <div>
-        <h4 className="mb-3 text-sm font-semibold text-[#1a1a17]">
+        <label
+          htmlFor={`${idPrefix}-state`}
+          className="mb-3 block text-sm font-semibold text-[#1a1a17]"
+        >
           Location / State
-        </h4>
+        </label>
         <div className="relative">
           <select
+            id={`${idPrefix}-state`}
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
             className="h-9 w-full appearance-none rounded-lg border border-[#e3dfd6] bg-white px-3 pr-8 text-sm text-[#3a3934] outline-none focus:border-[#2f3cf5] focus:ring-2 focus:ring-[#2f3cf5]/20"
@@ -461,6 +493,14 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
     setSearchQuery('')
     setActiveCategory('All')
   }
+
+  const hasActiveQuery =
+    searchQuery.trim() !== '' ||
+    activeCategory !== 'All' ||
+    sessionType !== 'all' ||
+    minRating !== 'any' ||
+    specialty !== 'All Specialties' ||
+    stateFilter !== 'All States'
 
   const activeFilterCount = [
     sessionType !== 'all',
@@ -606,7 +646,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
         {/* ── Search Bar + Filters Button ── */}
         <div className="mt-6 flex gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#706d65]" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#706d65]" aria-hidden="true" />
             <label htmlFor="find-care-search" className="sr-only">
               Search providers
             </label>
@@ -624,11 +664,12 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
             <SheetTrigger
               className="relative inline-flex h-12 items-center gap-2 rounded-xl border border-[#e3dfd6] bg-white px-4 text-sm font-medium text-[#3a3934] shadow-sm transition hover:bg-[#f6f4ef] lg:hidden"
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
               Filters
               {activeFilterCount > 0 && (
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2f3cf5] text-xs font-bold text-white">
                   {activeFilterCount}
+                  <span className="sr-only"> active</span>
                 </span>
               )}
             </SheetTrigger>
@@ -638,6 +679,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
               </SheetHeader>
               <div className="px-4 pb-8">
                 <FiltersPanel
+                  idPrefix="filters-mobile"
                   sessionType={sessionType}
                   setSessionType={setSessionType}
                   minRating={minRating}
@@ -656,7 +698,11 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
 
         {/* ── Category Pills ── */}
         <div className="mt-4 -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div
+            role="group"
+            aria-label="Filter by category"
+            className="flex gap-2 overflow-x-auto pb-2 scrollbar-none"
+          >
             {CATEGORY_FILTERS.map(({ label: cat }) => (
               <button
                 key={cat}
@@ -681,6 +727,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
           <aside className="hidden w-64 shrink-0 lg:block">
             <div className="sticky top-24 rounded-2xl border border-[#e3dfd6] bg-white p-5">
               <FiltersPanel
+                idPrefix="filters-desktop"
                 sessionType={sessionType}
                 setSessionType={setSessionType}
                 minRating={minRating}
@@ -698,15 +745,22 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
           {/* Results area */}
           <div className="flex-1 min-w-0">
             {/* Results header */}
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-[#5f5d57]">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-[#5f5d57]" role="status" aria-live="polite" aria-atomic="true">
                 <span className="font-semibold text-[#1a1a17]">
                   {filteredProviders.length}
                 </span>{' '}
-                provider{filteredProviders.length !== 1 ? 's' : ''} found
+                professional{filteredProviders.length !== 1 ? 's' : ''}
+                {hasActiveQuery && providers.length > 0
+                  ? ` match your filters (of ${providers.length} on Sanus)`
+                  : ' on Sanus'}
               </p>
               <div className="relative">
+                <label htmlFor="find-care-sort" className="sr-only">
+                  Sort professionals
+                </label>
                 <select
+                  id="find-care-sort"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="h-9 appearance-none rounded-lg border border-[#e3dfd6] bg-white pl-3 pr-8 text-sm text-[#3a3934] outline-none focus:border-[#2f3cf5] focus:ring-2 focus:ring-[#2f3cf5]/20"
@@ -717,69 +771,104 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f5d57]" />
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f5d57]" aria-hidden="true" />
               </div>
             </div>
+            {stateFilter === 'All States' && providers.length > 0 && (
+              <p className="mt-1 text-xs text-[#706d65]">
+                Showing professionals in every state. Clinical services are offered only where the
+                professional is licensed — check their profile for where they practice.
+              </p>
+            )}
 
             {/* Results grid or empty state */}
             {providers.length === 0 ? (
-              <div className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-16 text-center">
+              <section
+                role="status"
+                aria-labelledby="find-care-empty-title"
+                className="mt-10 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-16 text-center"
+              >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#eceefe]">
-                  <UserPlus className="h-7 w-7 text-[#2f3cf5]" />
+                  <UserPlus className="h-7 w-7 text-[#2f3cf5]" aria-hidden="true" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-[#1a1a17]">
-                  We&apos;re onboarding our first verified professionals
-                </h3>
+                <h2 id="find-care-empty-title" className="mt-4 text-lg font-semibold text-[#1a1a17]">
+                  No professionals are published on Sanus yet
+                </h2>
                 <p className="mt-2 max-w-md text-sm text-[#5f5d57]">
-                  We&apos;re onboarding our first verified professionals in
-                  your area — check back soon. Create a free account and
-                  we&apos;ll be ready when you are.
+                  We&apos;re reviewing our first professionals. Profiles appear here only after
+                  Sanus approves them and they publish.
+                  {signedIn
+                    ? ' Check back soon — your account is ready when they are.'
+                    : ' Create a free account and you’ll be ready when they are.'}
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  {orgListings.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => chooseTab('listings')}
+                      className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
+                    >
+                      Browse services &amp; events
+                    </button>
+                  )}
+                  {!signedIn && (
+                    <>
+                      <Link
+                        href="/signup/looking"
+                        className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
+                      >
+                        Create an account
+                      </Link>
+                      <Link
+                        href="/signup/professional"
+                        className="inline-flex h-10 items-center justify-center rounded-lg border border-[#e3dfd6] px-5 text-sm font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2f3cf5]"
+                      >
+                        I&apos;m a health professional
+                      </Link>
+                    </>
+                  )}
                   <Link
-                    href="/signup/looking"
-                    className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
-                  >
-                    Create an account
-                  </Link>
-                  <Link
-                    href="/signup/professional"
-                    className="inline-flex h-10 items-center justify-center rounded-lg border border-[#e3dfd6] px-5 text-sm font-semibold text-[#1a1a17] transition hover:border-[#2f3cf5] hover:text-[#2f3cf5]"
-                  >
-                    I&apos;m a health professional
-                  </Link>
-                  <Link
-                    href="/"
+                    href={embedded ? '/dashboard' : '/'}
                     className="inline-flex h-10 items-center justify-center rounded-lg px-5 text-sm font-semibold text-[#5f5d57] transition hover:text-[#1a1a17]"
                   >
-                    Keep browsing
+                    {embedded ? 'Back to dashboard' : 'Back to home'}
                   </Link>
                 </div>
-              </div>
+              </section>
             ) : filteredProviders.length > 0 ? (
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Professionals">
                 {filteredProviders.map((provider) => (
-                  <ProviderCard key={provider.id} provider={provider} />
+                  <li key={provider.id}>
+                    <ProviderCard provider={provider} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
-              <div className="mt-16 flex flex-col items-center justify-center py-16">
+              <section
+                role="status"
+                aria-labelledby="find-care-nomatch-title"
+                className="mt-16 flex flex-col items-center justify-center py-16 text-center"
+              >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#eeebe4]">
-                  <Search className="h-7 w-7 text-[#706d65]" />
+                  <Search className="h-7 w-7 text-[#706d65]" aria-hidden="true" />
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-[#1a1a17]">
-                  No providers found
-                </h3>
-                <p className="mt-1 text-sm text-[#5f5d57]">
-                  Try adjusting your filters or search terms
+                <h2 id="find-care-nomatch-title" className="mt-4 text-lg font-semibold text-[#1a1a17]">
+                  No professionals match these filters
+                </h2>
+                <p className="mt-1 max-w-md text-sm text-[#5f5d57]">
+                  {providers.length} professional{providers.length !== 1 ? 's are' : ' is'} published
+                  on Sanus, but none match your current search
+                  {stateFilter !== 'All States' ? ` in ${stateFilter}` : ''}. Try broadening or
+                  resetting your filters.
                 </p>
                 <button
+                  type="button"
                   onClick={clearAll}
                   className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
                 >
-                  Clear Filters
+                  Reset all filters
                 </button>
-              </div>
+              </section>
             )}
           </div>
         </div>
