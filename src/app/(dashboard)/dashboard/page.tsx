@@ -56,7 +56,7 @@ import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
 import { buildProfessionalChecklist, type CredentialLike } from '@/lib/onboarding/checklist-professional'
 import { hasCurrentMalpractice, type CredentialRow } from '@/lib/compliance/rules'
 import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
-import { ProfileCard, profileChecks, type ProfileCardData } from './profile-card'
+import { ProfileCard, type ProfileCardData } from './profile-card'
 
 type DashboardJob = {
   id: string
@@ -300,10 +300,6 @@ export default async function DashboardPage() {
         headline: DEMO_CONTRACTOR.headline,
         verified: true,
         publicHref: previewHref,
-        checks: profileChecks(
-          { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'] },
-          DEMO_CONTRACTOR.avatar_url
-        ),
       }
     }
 
@@ -514,7 +510,6 @@ export default async function DashboardPage() {
           headline: (row?.headline as string | null) ?? null,
           verified: verificationStatus === 'approved' || verificationStatus === 'insurance_pending',
           publicHref: previewHref,
-          checks: profileChecks(row, avatarUrl),
         }
       }
 
@@ -1015,7 +1010,7 @@ function ContractorDashboard({
 
   return (
     <div className="space-y-6">
-      {profileCard && <ProfileCard data={profileCard} />}
+      {profileCard && <ProfileCard data={profileCard} items={checklist} />}
       <VerificationBanner
         status={verificationStatus}
         notes={

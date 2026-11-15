@@ -40,6 +40,11 @@ export type PublicOrgListing = {
   startsAt: string | null
   capacity: number | null
   offersCeu: boolean | null
+  /**
+   * Separate Sanus review of the credit claim (org_listings.ceu_claim_status).
+   * Only 'approved' may be shown as offering credit (publicCeuLabel).
+   */
+  ceuClaimStatus: string | null
 }
 
 /** A listing plus the bits of its organization a card needs. */
@@ -52,6 +57,9 @@ const ORG_COLUMNS =
 
 const LISTING_COLUMNS =
   'id, facility_id, kind, title, description, audiences, format, locations, price_cents, contact_for_pricing, is_free, reach_via, event_type, starts_at, capacity, offers_ceu'
+
+/** Adds the credit-claim review column (20261114100100); queries fall back to LISTING_COLUMNS until it's applied. */
+const LISTING_COLUMNS_WITH_CLAIM = `${LISTING_COLUMNS}, ceu_claim_status`
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -94,6 +102,7 @@ function toListing(r: Row): PublicOrgListing {
     startsAt: str(r.starts_at),
     capacity: num(r.capacity),
     offersCeu: typeof r.offers_ceu === 'boolean' ? r.offers_ceu : null,
+    ceuClaimStatus: str(r.ceu_claim_status),
   }
 }
 
@@ -126,19 +135,17 @@ export async function getPublicOrgPage(id: string, viewerId: string | null): Pro
   // HIDE_DEMO_DATA: seeded demo orgs 404.
   if ((await getHiddenDemoIds()).has(id)) return null
   const supabase = await createClient()
+  const listingsFor = (columns: string) =>
+    supabase.from('org_listings').select(columns).eq('facility_id', id).eq('status', 'published')
   const [{ data: org }, { data: rows }] = await Promise.all([
     supabase.from('facility_profiles').select(`${ORG_COLUMNS}, verification_status`).eq('id', id).maybeSingle(),
-    supabase
-      .from('org_listings')
-      .select(LISTING_COLUMNS)
-      .eq('facility_id', id)
-      .eq('status', 'published'),
+    listingsFor(LISTING_COLUMNS_WITH_CLAIM).then(async (res) => (res.error ? await listingsFor(LISTING_COLUMNS) : res)),
   ])
   if (!org) return null
   const isOwner = viewerId === id
   const approved = (org as Row).verification_status === 'approved'
   if (!approved && !isOwner) return null
-  const listings = ((rows ?? []) as Row[]).map(toListing).filter((l) => isCurrent(l)).sort(byStart)
+  const listings = ((rows ?? []) as unknown as Row[]).map(toListing).filter((l) => isCurrent(l)).sort(byStart)
   return { org: toOrg(org as Row), listings, isOwner, approved }
 }
 
@@ -146,18 +153,23 @@ export async function getPublicOrgPage(id: string, viewerId: string | null): Pro
 export async function getPublicOrgListings(kind?: 'service' | 'event'): Promise<PublicOrgListingWithOrg[]> {
   try {
     const supabase = await createClient()
-    let q = supabase
-      .from('org_listings')
-      .select(`${LISTING_COLUMNS}, facility_profiles!inner(id, facility_name, city, state, verification_status)`)
-      .eq('status', 'published')
-      .eq('facility_profiles.verification_status', 'approved')
-      .order('created_at', { ascending: false })
-      .limit(200)
-    if (kind) q = q.eq('kind', kind)
-    const { data, error } = await q
+    const query = (columns: string) => {
+      let q = supabase
+        .from('org_listings')
+        .select(`${columns}, facility_profiles!inner(id, facility_name, city, state, verification_status)`)
+        .eq('status', 'published')
+        .eq('facility_profiles.verification_status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (kind) q = q.eq('kind', kind)
+      return q
+    }
+    let res = await query(LISTING_COLUMNS_WITH_CLAIM)
+    if (res.error) res = await query(LISTING_COLUMNS)
+    const { data, error } = res
     if (error || !data) return []
     const demoIds = await getHiddenDemoIds()
-    return (data as Row[])
+    return (data as unknown as Row[])
       .filter((r) => !demoIds.has(String(r.facility_id)))
       .map((r) => {
         const fp = (Array.isArray(r.facility_profiles) ? r.facility_profiles[0] : r.facility_profiles) as Row

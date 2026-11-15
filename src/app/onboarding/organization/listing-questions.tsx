@@ -19,7 +19,15 @@ import {
   REACH_VIA_ICONS,
   YES_NO_ICONS,
 } from '@/components/onboarding/choice-icons'
-import { checkFields, eventSchema, serviceSchema, type EventDraft, type ServiceDraft, type YesNo } from './shared'
+import {
+  EVENT_FINAL_KEYS,
+  checkFields,
+  eventSchema,
+  serviceSchema,
+  type EventDraft,
+  type ServiceDraft,
+  type YesNo,
+} from './shared'
 
 /**
  * Question screens for a service or event listing, shared by onboarding
@@ -264,14 +272,36 @@ export function eventScreens({ value, set, section, saveFields, finish, finishLa
       id: 'evt_audience',
       section,
       title: 'Who is it for?',
-      fields: ['audiences', 'offers_ceu'],
-      validate: () => eventCheck(['audiences', 'offers_ceu']),
+      fields: EVENT_FINAL_KEYS,
+      // Credit details are optional while drafting; submitting for review
+      // requires them when credit is claimed (listingIsComplete + DB guard).
+      validate: () =>
+        eventCheck(['audiences', 'offers_ceu', 'ceu_credit_type', 'ceu_credit_amount', 'ceu_accreditor', 'ceu_accreditor_id']),
       save: finish,
       continueLabel: finishLabel ?? 'Save event',
       render: ({ errors }) => (
         <>
           <IconMultiChoices legend="Audience" options={EVENT_AUDIENCES} icons={AUDIENCE_ICONS} value={value.audiences} onChange={(x) => set('audiences', x)} error={errors.audiences} />
-          <IconChoices legend="Offers CEU/CME credit?" options={YES_NO} icons={YES_NO_ICONS} value={value.offers_ceu} onChange={(x) => set('offers_ceu', x as YesNo)} error={errors.offers_ceu} columns={2} compact />
+          <IconChoices legend="Does attending earn accredited continuing-education credit (CE/CEU/CME)?" options={YES_NO} icons={YES_NO_ICONS} value={value.offers_ceu} onChange={(x) => set('offers_ceu', x as YesNo)} error={errors.offers_ceu} columns={2} compact />
+          {value.offers_ceu === 'no' && (
+            <p className="text-xs text-[#5f5d57]">
+              No credit will be shown on this listing. You can still call it a course or training.
+            </p>
+          )}
+          {value.offers_ceu === 'yes' && (
+            <div className="space-y-3 rounded-lg border border-[#e3dfd6] p-3">
+              <p className="text-xs text-[#5f5d57]">
+                Required before you submit for review. Sanus reviews credit claims separately: approving your
+                organization or this listing doesn&apos;t approve the credit, and no credit is shown until it&apos;s reviewed.
+              </p>
+              <TextField id="evt-ceu-type" label="Credit type" value={value.ceu_credit_type} onChange={(x) => set('ceu_credit_type', x)} error={errors.ceu_credit_type} placeholder="e.g. ANCC contact hours, AMA PRA Category 1" />
+              <div className="max-w-[220px]">
+                <TextField id="evt-ceu-amount" label="Credits or hours" value={value.ceu_credit_amount} onChange={(x) => set('ceu_credit_amount', x)} error={errors.ceu_credit_amount} inputMode="decimal" />
+              </div>
+              <TextField id="evt-ceu-accreditor" label="Accreditor or approved provider" value={value.ceu_accreditor} onChange={(x) => set('ceu_accreditor', x)} error={errors.ceu_accreditor} />
+              <TextField id="evt-ceu-id" label="Provider or approval number" value={value.ceu_accreditor_id} onChange={(x) => set('ceu_accreditor_id', x)} error={errors.ceu_accreditor_id} />
+            </div>
+          )}
         </>
       ),
     },

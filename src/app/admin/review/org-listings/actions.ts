@@ -4,6 +4,7 @@ import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin/guard'
 import { audit } from '@/lib/audit/log'
+import { ceuDetailsMissing } from '@/lib/listings/ce-credit'
 
 type Decision = 'publish' | 'request_changes' | 'unpublish'
 
@@ -18,12 +19,17 @@ export async function reviewOrgListing(id: string, decision: Decision, formData:
 
   const { data: listing, error: loadError } = await db
     .from('org_listings')
-    .select('id, facility_id, title, status')
+    .select('*')
     .eq('id', id)
     .single()
   if (loadError || !listing) throw new Error('Listing not found')
 
   if (decision === 'publish') {
+    // A credit claim can't go live without its details. Publishing does not
+    // approve the claim: that's reviewOrgListingCredit.
+    if (Object.keys(ceuDetailsMissing(listing.kind === 'event' ? listing.offers_ceu : null, listing)).length) {
+      throw new Error('This event claims CE credit but is missing credit type, amount, accreditor or provider number.')
+    }
     const { data: ok } = await db.rpc('org_can_publish', { p_org_id: listing.facility_id })
     if (!ok) throw new Error('This organization isn’t approved or hasn’t accepted the agreement.')
   }
@@ -55,5 +61,49 @@ export async function reviewOrgListing(id: string, decision: Decision, formData:
   })
   if (nErr) console.error('[admin/org-listings] notification failed', nErr)
 
+  refresh()
+}
+
+/**
+ * Separate review of an event's continuing-education credit claim.
+ * Organization approval and listing publication never approve credit; only
+ * this does, and only with every credit detail present.
+ */
+export async function reviewOrgListingCredit(id: string, decision: 'approve' | 'reject', formData: FormData) {
+  const { admin, db } = await requireAdmin()
+  if (!z.string().uuid().safeParse(id).success) throw new Error('Invalid listing')
+  if (decision !== 'approve' && decision !== 'reject') throw new Error('Invalid decision')
+  const notes = String(formData.get('notes') ?? '').trim().slice(0, 4000)
+
+  const { data: listing, error: loadError } = await db.from('org_listings').select('*').eq('id', id).single()
+  if (loadError || !listing) throw new Error('Listing not found')
+  if (listing.kind !== 'event' || listing.offers_ceu !== true) throw new Error('This listing doesn’t claim credit.')
+  if (decision === 'approve' && Object.keys(ceuDetailsMissing(true, listing)).length) {
+    throw new Error('Credit details are incomplete; request changes instead.')
+  }
+
+  const next = decision === 'approve' ? 'approved' : 'rejected'
+  const { error } = await db
+    .from('org_listings')
+    .update({ ceu_claim_status: next, ceu_claim_reviewed_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw new Error(`Failed to update credit claim: ${error.message}`)
+
+  await db.from('admin_audit_log').insert({
+    admin_id: admin.id,
+    action: `org_listing_credit_${decision}`,
+    entity_type: 'org_listings',
+    entity_id: id,
+    old_value: { ceu_claim_status: listing.ceu_claim_status ?? null },
+    new_value: { ceu_claim_status: next },
+    notes: notes || null,
+  })
+  await audit({
+    actorId: admin.id,
+    actorRole: 'admin',
+    action: `org_listing_credit_${decision}`,
+    targetTable: 'org_listings',
+    targetId: id,
+  })
   refresh()
 }

@@ -90,7 +90,7 @@ export const ENGAGEMENT_TYPES = [
 export const EVENT_TYPES = [
   { value: 'workshop', label: 'Workshop' },
   { value: 'webinar', label: 'Webinar' },
-  { value: 'ceu_course', label: 'CEU / CME course' },
+  { value: 'ceu_course', label: 'Continuing education course' },
   { value: 'certification_program', label: 'Certification program' },
   { value: 'class', label: 'Class or group session' },
   { value: 'conference', label: 'Conference or talk' },

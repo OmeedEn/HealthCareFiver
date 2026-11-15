@@ -202,24 +202,28 @@ const featuredEvents = [
     type: 'Webinar',
     detail: 'Teach a topic live to a virtual audience, free or paid.',
     format: 'Virtual',
+    q: 'webinar',
   },
   {
     title: 'Hands-on workshops',
     type: 'Workshop',
     detail: 'Run half- or full-day sessions for practices and teams.',
     format: 'Virtual or in person',
+    q: 'workshop',
   },
   {
-    title: 'CEU & CME courses',
-    type: 'CEU & CME',
-    detail: 'Publish self-paced or live continuing-education content.',
-    format: 'On-demand or live',
+    title: 'Continuing-education courses',
+    type: 'Continuing education',
+    detail: 'Teach live continuing-education sessions. Credit is listed only after Sanus reviews the accreditation.',
+    format: 'Virtual or in person',
+    q: 'ceu_course',
   },
   {
     title: 'Certification & prep cohorts',
     type: 'Certification',
     detail: 'Lead multi-week cohorts for board prep or certifications.',
     format: 'Virtual',
+    q: 'certification',
   },
 ]
 
@@ -715,16 +719,16 @@ export function EventsSection() {
       <div className={wrap}>
         <SectionHead
           title="Events, training & continuing education"
-          lede="Live webinars, in-person workshops, CEU and CME courses, and certification programs — created and taught by Sanus professionals. Here's what professionals can host."
+          lede="Live webinars, in-person workshops, continuing-education courses, and certification programs — created and taught by Sanus professionals. Here's what professionals can host."
         />
 
-        {/* Filter links into the signed-in events listing. */}
+        {/* Filter links into the signed-in events catalogue (/events reads ?type=). */}
         <nav aria-label="Event types" className="mt-10 flex flex-wrap gap-2">
           {[
             { label: 'All', q: '' },
             { label: 'Live webinars', q: 'webinar' },
             { label: 'Workshops', q: 'workshop' },
-            { label: 'CEU & CME', q: 'ceu' },
+            { label: 'Continuing education', q: 'ceu_course' },
             { label: 'Certifications', q: 'certification' },
             { label: 'In-person', q: 'in_person' },
             { label: 'Free', q: 'free' },
@@ -754,8 +758,8 @@ export function EventsSection() {
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{e.detail}</p>
               <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4 text-sm">
                 <span className="text-ink-muted">{e.format}</span>
-                <Link href="/for-professionals" className={textLink}>
-                  Learn more
+                <Link href={`/events?type=${e.q}`} className={textLink}>
+                  Browse {e.type.toLowerCase()} events
                 </Link>
               </div>
             </article>
@@ -763,11 +767,15 @@ export function EventsSection() {
         </div>
 
         <p className="mt-4 text-sm text-ink-muted">
-          Example formats. Sign in to browse upcoming events and register.
+          Example formats. Filtered event lists need a Sanus account; anyone can{' '}
+          <Link href="/find-care?tab=listings&kind=event" className="underline">
+            browse all upcoming events
+          </Link>
+          . Registering requires an account.
         </p>
 
         <div className="mt-10">
-          <Link href="/signup/offer" className={textLink}>
+          <Link href="/events-and-training/host" className={textLink}>
             Are you a health professional? Host your event on Sanus
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -916,7 +924,7 @@ export function BottomCta() {
             {[
               { href: '/signup/organization?source=HIRING', label: 'Hire for your organization' },
               { href: '/signup/offer', label: 'Offer your expertise' },
-              { href: '/events-and-training', label: 'Browse events' },
+              { href: '/find-care?tab=listings&kind=event', label: 'Browse events' },
             ].map((l) => (
               <Link
                 key={l.href}

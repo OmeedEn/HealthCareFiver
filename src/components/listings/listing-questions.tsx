@@ -45,7 +45,7 @@ import {
 const KIND_OPTIONS = [
   { value: 'service', label: 'Service', sub: 'Bookable sessions or visits' },
   { value: 'consulting', label: 'Consulting', sub: 'Advisory work and projects' },
-  { value: 'event', label: 'Event or class', sub: 'Workshops, classes, CEU courses' },
+  { value: 'event', label: 'Event or class', sub: 'Workshops, classes, courses' },
 ] as const
 const KIND_ICONS: ChoiceIcons = { service: Stethoscope, consulting: Briefcase, event: CalendarDays }
 const ENGAGEMENT_ICONS: ChoiceIcons = {

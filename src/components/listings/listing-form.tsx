@@ -47,7 +47,7 @@ type HandsOn = '' | 'yes' | 'no'
 const KINDS: { kind: OfferingKind; label: string; sub: string; icon: React.ElementType }[] = [
   { kind: 'service', label: 'Service', sub: 'Bookable sessions or visits', icon: Stethoscope },
   { kind: 'consulting', label: 'Consulting', sub: 'Advisory work and projects', icon: Briefcase },
-  { kind: 'event', label: 'Event or class', sub: 'Workshops, classes, CEU courses', icon: CalendarDays },
+  { kind: 'event', label: 'Event or class', sub: 'Workshops, classes, courses', icon: CalendarDays },
 ]
 
 export function ListingForm({
