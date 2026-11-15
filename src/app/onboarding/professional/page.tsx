@@ -10,6 +10,7 @@ import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { PRO_SIGNUP_COOKIE, parseProSignupCookie } from '@/lib/onboarding/professional-google'
 import { accountPathFor, hasFullName } from '@/lib/onboarding/account-paths'
 import { isSignupPath } from '@/lib/onboarding/signup-path'
+import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
 import { DEMO_CONTRACTOR, isDemoMode } from '@/lib/demo/data'
 import { getProgress, type OnboardingProgress } from '@/lib/onboarding/progress'
 import {
@@ -130,6 +131,12 @@ export default async function ProfessionalOnboardingPage() {
     // A door was recorded but the conversion never happened: finish it there.
     const pending = convertible && isSignupPath(signupPath) ? accountPathFor(signupPath, false) : null
     if (pending) redirect(pending)
+    // No door recorded, but this browser started an organization signup
+    // (the Google round trip's door cookie; it's only a hint — the account
+    // step re-checks the account). Unfinished organization onboarding goes
+    // back to the organization account step, never into professional consent.
+    const orgDoor = parseOrgSignupSource((await cookies()).get(ORG_SIGNUP_SOURCE_COOKIE)?.value)
+    if (convertible && !signupPath && orgDoor) redirect(accountPathFor(orgDoor, false) ?? '/onboarding/organization/account')
 
     accountStep = {
       needsName: gaps.name && (!hasFullName(prefill) || !gaps.terms),

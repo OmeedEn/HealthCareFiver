@@ -12,6 +12,7 @@ import { CLIENT_SIGNUP_COOKIE, parseClientSignupCookie } from '@/lib/onboarding/
 import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
 import { setSignupPathIfUnset } from '@/lib/onboarding/signup-path-server'
 import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
+import { RETURN_TO_COOKIE, safeNextPath } from '@/lib/auth/safe-next'
 
 /** `next`: where the flow goes once the account is set up. */
 export type ClientAccountResult = { ok: true; next: string } | { ok: false; error: string }
@@ -123,5 +124,9 @@ export async function finishClientAccount(input: ClientAccountInput): Promise<Cl
 
   await setSignupPathIfUnset(admin, user.id, 'CLIENT')
   cookieStore.delete(CLIENT_SIGNUP_COOKIE)
-  return { ok: true, next: answers.interests.length ? CLIENT_MATCHES_PATH : '/dashboard' }
+  // Where they were headed when they opened /signup?next=… (httpOnly cookie
+  // set by the proxy), else their matches / dashboard as before.
+  const returnTo = safeNextPath(cookieStore.get(RETURN_TO_COOKIE)?.value)
+  if (returnTo) cookieStore.delete(RETURN_TO_COOKIE)
+  return { ok: true, next: returnTo ?? (answers.interests.length ? CLIENT_MATCHES_PATH : '/dashboard') }
 }

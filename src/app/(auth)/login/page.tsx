@@ -12,17 +12,50 @@ import { toast } from 'sonner'
 import { Loader2, MailWarning } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { GoogleIcon } from '@/components/auth/signup-account'
+import { LOGIN_CONTINUE_PATH, safeNextPath, type AuthErrorCode } from '@/lib/auth/safe-next'
 
 // With no `?redirectTo=`, sign-in lands on /login/continue, which the proxy
-// resolves to the homepage (or the onboarding wizard / MFA / /admin as
-// needed). See landingUrl in src/proxy.ts.
-const DEFAULT_LANDING = '/login/continue'
+// resolves to a remembered destination or the homepage (or the onboarding
+// wizard / MFA / /admin as needed). See landingUrl in src/proxy.ts.
+const DEFAULT_LANDING = LOGIN_CONTINUE_PATH
 
-// Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
+// Only same-origin relative paths (src/lib/auth/safe-next.ts): no open
+// redirect via `?redirectTo=`.
 function safeRedirect(target: string | null): string {
-  if (!target) return DEFAULT_LANDING
-  if (!target.startsWith('/') || target.startsWith('//')) return DEFAULT_LANDING
-  return target
+  return safeNextPath(target) ?? DEFAULT_LANDING
+}
+
+/** Which /signup path to reopen after a failed Google sign-up, from where it was headed. */
+function signupRetryHref(redirectTo: string): string {
+  const [path, query = ''] = redirectTo.split('?')
+  if (path === '/onboarding/organization/account') {
+    const source = new URLSearchParams(query).get('source')
+    const start = source === 'COMPANY' ? 'company' : source === 'HIRING' ? 'hiring' : 'practice'
+    return `/signup?start=${start}`
+  }
+  if (path === '/onboarding/client/account') return '/signup?start=client'
+  if (path === '/onboarding/unsure') return '/signup?start=unsure'
+  if (path === '/onboarding/account') return '/signup?start=independent'
+  return '/signup'
+}
+
+const AUTH_ERROR_COPY: Record<AuthErrorCode, { title: string; body: string }> = {
+  oauth_cancelled: {
+    title: 'Google sign-in was cancelled',
+    body: 'Nothing was changed. You can try again whenever you’re ready.',
+  },
+  oauth_failed: {
+    title: 'We couldn’t finish signing you in',
+    body: 'The sign-in attempt didn’t complete. Start a fresh attempt below — your place is kept.',
+  },
+  link_expired: {
+    title: 'That link has expired',
+    body: 'Sign-in and confirmation links only work for a short time. Start a fresh attempt below — if your email isn’t confirmed yet, signing in with your password will offer a new confirmation email.',
+  },
+}
+
+function parseAuthError(raw: string | null): AuthErrorCode | null {
+  return raw === 'oauth_cancelled' || raw === 'oauth_failed' || raw === 'link_expired' ? raw : null
 }
 
 export default function LoginPage() {
@@ -58,6 +91,9 @@ function LoginForm() {
   const [resending, setResending] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const noGoogleAccount = searchParams.get('error') === 'no_google_account'
+  // A failed/cancelled/expired Google or email-link round trip (/callback).
+  const authError = parseAuthError(searchParams.get('error'))
+  const failedSignup = authError !== null && searchParams.get('from') === 'signup'
 
   // Existing Google accounts only: /callback undoes any account this creates.
   async function handleGoogle() {
@@ -174,6 +210,22 @@ function LoginForm() {
               Resend confirmation email
             </button>
           </div>
+        </div>
+      )}
+
+      {authError && (
+        <div role="alert" className="mt-6 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-4 text-sm text-[#1a1a17]">
+          <p className="font-semibold">{AUTH_ERROR_COPY[authError].title}</p>
+          <p className="mt-1 text-[#5f5d57]">{AUTH_ERROR_COPY[authError].body}</p>
+          {failedSignup && (
+            <p className="mt-2 text-[#5f5d57]">
+              Were you creating an account?{' '}
+              <Link href={signupRetryHref(redirectTo)} className="font-semibold text-[#2f3cf5] hover:underline">
+                Restart sign-up
+              </Link>
+              . Already have one? Sign in below.
+            </p>
+          )}
         </div>
       )}
 
