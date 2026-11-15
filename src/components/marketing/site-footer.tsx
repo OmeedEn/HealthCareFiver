@@ -74,7 +74,7 @@ export function SiteFooter() {
               links={[
                 { label: 'Why Sanus', href: '/for-professionals' },
                 { label: 'List your services', href: '/signup/offer' },
-                { label: 'Host an event', href: '/events-and-training' },
+                { label: 'Host an event', href: '/events-and-training/host' },
                 { label: 'Professional pricing', href: '/for-professionals#pricing' },
               ]}
             />

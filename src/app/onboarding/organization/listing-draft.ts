@@ -1,6 +1,7 @@
 import { EMPTY_EVENT } from './sections/event-form'
 import { EMPTY_SERVICE } from './sections/service-form'
 import { eventSchema, serviceSchema, toCents, type EventDraft, type ServiceDraft, type YesNo } from './shared'
+import { ceuDetailsMissing } from '@/lib/listings/ce-credit'
 
 /** An org_listings row, as selected by the dashboard. */
 export interface ListingRow {
@@ -20,6 +21,12 @@ export interface ListingRow {
   starts_at: string | null
   capacity: number | null
   offers_ceu: boolean | null
+  /** Added by 20261114100100; undefined until that migration is applied. */
+  ceu_credit_type?: string | null
+  ceu_credit_amount?: number | string | null
+  ceu_accreditor?: string | null
+  ceu_accreditor_id?: string | null
+  ceu_claim_status?: string | null
   review_notes: string | null
 }
 
@@ -75,6 +82,10 @@ export function rowToEvent(r: ListingRow): EventDraft {
     is_free: r.is_free,
     price: dollars(r.price_cents),
     offers_ceu: (r.offers_ceu == null ? '' : r.offers_ceu ? 'yes' : 'no') as YesNo,
+    ceu_credit_type: r.ceu_credit_type ?? '',
+    ceu_credit_amount: r.ceu_credit_amount == null ? '' : String(r.ceu_credit_amount),
+    ceu_accreditor: r.ceu_accreditor ?? '',
+    ceu_accreditor_id: r.ceu_accreditor_id ?? '',
     audiences: r.audiences ?? [],
   }
 }
@@ -89,7 +100,28 @@ export function listingIsComplete(r: ListingRow): boolean {
   if (r.kind === 'service') return serviceSchema.safeParse(rowToService(r)).success
   // Server-side: keep the stored ISO time rather than converting to local.
   const e = { ...rowToEvent(r), starts_at: r.starts_at ?? '', date_later: !r.starts_at }
-  return eventSchema.safeParse(e).success
+  return eventSchema.safeParse(e).success && Object.keys(eventCeuMissing(r)).length === 0
+}
+
+/** Credit details still missing on a listing that claims credit (empty otherwise). */
+export function eventCeuMissing(r: ListingRow): Record<string, string> {
+  return r.kind === 'event' ? ceuDetailsMissing(r.offers_ceu, r) : {}
+}
+
+/**
+ * org_listings credit columns for an event draft. Only sent when the event
+ * claims credit, so "No" keeps working before the credit-columns migration
+ * is applied; switching to "No" clears details only if they were stored.
+ */
+export function ceuColumns(d: Partial<EventDraft>): Record<string, unknown> {
+  if (d.offers_ceu !== 'yes') return {}
+  const t = (v: string | undefined) => (v ?? '').trim() || null
+  return {
+    ceu_credit_type: t(d.ceu_credit_type),
+    ceu_credit_amount: t(d.ceu_credit_amount) ? Number(d.ceu_credit_amount) : null,
+    ceu_accreditor: t(d.ceu_accreditor),
+    ceu_accreditor_id: t(d.ceu_accreditor_id),
+  }
 }
 
 /**
@@ -123,7 +155,10 @@ export function draftToColumns(
       row.is_free = !!d.is_free
       row.price_cents = d.is_free ? null : toCents(d.price ?? '')
     }
-    if (has('offers_ceu')) row.offers_ceu = d.offers_ceu ? d.offers_ceu === 'yes' : null
+    if (has('offers_ceu')) {
+      row.offers_ceu = d.offers_ceu ? d.offers_ceu === 'yes' : null
+      Object.assign(row, ceuColumns(d))
+    }
   }
   return row
 }

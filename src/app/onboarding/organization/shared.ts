@@ -243,8 +243,23 @@ export interface EventDraft {
   is_free: boolean
   price: string
   offers_ceu: YesNo
+  /** Only when offers_ceu = 'yes'; required before review (src/lib/listings/ce-credit). */
+  ceu_credit_type: string
+  ceu_credit_amount: string
+  ceu_accreditor: string
+  ceu_accreditor_id: string
   audiences: string[]
 }
+
+/** Keys saved by the event flow's last screen (audience + credit claim). */
+export const EVENT_FINAL_KEYS = [
+  'audiences',
+  'offers_ceu',
+  'ceu_credit_type',
+  'ceu_credit_amount',
+  'ceu_accreditor',
+  'ceu_accreditor_id',
+]
 
 export const eventSchema = z
   .object({
@@ -262,6 +277,16 @@ export const eventSchema = z
     is_free: z.boolean(),
     price: money.default(''),
     offers_ceu: z.enum(['yes', 'no'], 'Answer yes or no'),
+    // Optional while drafting; required before review when offers_ceu = 'yes'
+    // (ceuDetailsMissing in listingIsComplete and the DB guard).
+    ceu_credit_type: z.string().trim().max(120).default(''),
+    ceu_credit_amount: z
+      .string()
+      .trim()
+      .refine((v) => v === '' || /^\d{1,4}(\.\d{1,2})?$/.test(v), 'Enter a number like 1 or 1.5')
+      .default(''),
+    ceu_accreditor: z.string().trim().max(200).default(''),
+    ceu_accreditor_id: z.string().trim().max(120).default(''),
     audiences: z.array(z.enum(['public', 'professionals', 'staff'])).min(1, 'Pick the audience'),
   })
   .superRefine((d, ctx) => {

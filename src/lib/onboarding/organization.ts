@@ -155,7 +155,7 @@ export const ORG_INTENTS = [
   {
     key: 'host_events',
     label: 'Host an event or training',
-    sub: 'Webinars, workshops, CEU courses, health fairs, and more.',
+    sub: 'Webinars, workshops, courses, health fairs, and more.',
   },
   {
     key: 'find_professionals',
@@ -224,7 +224,7 @@ export const REACH_VIA = [
 export const ORG_EVENT_TYPES = [
   { value: 'webinar', label: 'Webinar' },
   { value: 'workshop', label: 'Workshop' },
-  { value: 'ceu_course', label: 'CEU/CME course' },
+  { value: 'ceu_course', label: 'Continuing education course' },
   { value: 'certification', label: 'Certification' },
   { value: 'conference', label: 'Conference' },
   { value: 'health_fair', label: 'Health fair' },

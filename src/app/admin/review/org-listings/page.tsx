@@ -16,7 +16,8 @@ import {
   SERVICE_AUDIENCES,
   labelFor,
 } from '@/lib/onboarding/organization'
-import { reviewOrgListing } from './actions'
+import { ceuDetailsMissing, ownerCeuLabel } from '@/lib/listings/ce-credit'
+import { reviewOrgListing, reviewOrgListingCredit } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,11 @@ interface Row {
   event_type: string | null
   starts_at: string | null
   offers_ceu: boolean | null
+  ceu_credit_type?: string | null
+  ceu_credit_amount?: number | string | null
+  ceu_accreditor?: string | null
+  ceu_accreditor_id?: string | null
+  ceu_claim_status?: string | null
   submitted_at: string | null
   facility_profiles: { facility_name: string; verification_status: string; org_agreement_accepted_at: string | null } | null
 }
@@ -104,10 +110,43 @@ export default async function AdminOrgListingsPage({ searchParams }: { searchPar
                   l.locations,
                   price,
                   l.kind === 'event' ? (l.starts_at ? formatDateTime(l.starts_at) : 'Date to be set') : null,
-                  l.kind === 'event' && l.offers_ceu ? 'CEU/CME credit' : null,
+                  ownerCeuLabel(l),
                   l.audiences.map((a) => labelFor(l.kind === 'service' ? SERVICE_AUDIENCES : EVENT_AUDIENCES, a)).join(', '),
                 ].filter(Boolean).join(' · ')}
               </p>
+              {l.kind === 'event' && l.offers_ceu === true && (
+                <div className="space-y-2 rounded-lg border border-[#e3dfd6] p-3">
+                  <p className="font-semibold text-[#1a1a17]">
+                    Credit claim · {l.ceu_claim_status ?? 'unreviewed'}
+                  </p>
+                  <p className="text-[#5f5d57]">
+                    Reviewed separately from the listing. Publishing does not approve credit; verify the accreditor and
+                    provider number first.
+                  </p>
+                  <dl className="grid gap-1 sm:grid-cols-2">
+                    <div><dt className="inline text-[#5f5d57]">Type: </dt><dd className="inline">{l.ceu_credit_type || '—'}</dd></div>
+                    <div><dt className="inline text-[#5f5d57]">Amount: </dt><dd className="inline">{l.ceu_credit_amount ?? '—'}</dd></div>
+                    <div><dt className="inline text-[#5f5d57]">Accreditor: </dt><dd className="inline">{l.ceu_accreditor || '—'}</dd></div>
+                    <div><dt className="inline text-[#5f5d57]">Identifier: </dt><dd className="inline">{l.ceu_accreditor_id || '—'}</dd></div>
+                  </dl>
+                  {Object.keys(ceuDetailsMissing(true, l)).length > 0 ? (
+                    <Badge variant="destructive">Credit details incomplete</Badge>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {l.ceu_claim_status !== 'approved' && (
+                        <form action={reviewOrgListingCredit.bind(null, l.id, 'approve')}>
+                          <Button type="submit" variant="outline">Approve credit claim</Button>
+                        </form>
+                      )}
+                      {l.ceu_claim_status !== 'rejected' && (
+                        <form action={reviewOrgListingCredit.bind(null, l.id, 'reject')}>
+                          <Button type="submit" variant="outline">Reject credit claim</Button>
+                        </form>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap items-start gap-3 border-t border-[#eeebe4] pt-3">
                 {filter === 'in_review' && (
                   <form action={reviewOrgListing.bind(null, l.id, 'publish')}>

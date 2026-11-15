@@ -55,6 +55,7 @@ export const DEMO_ORG_LISTINGS: PublicOrgListing[] = [
     startsAt: null,
     capacity: null,
     offersCeu: null,
+    ceuClaimStatus: null,
   },
   {
     id: 'b1b2c3d4-0000-4000-8000-000000000002',
@@ -73,6 +74,7 @@ export const DEMO_ORG_LISTINGS: PublicOrgListing[] = [
     startsAt: null,
     capacity: null,
     offersCeu: null,
+    ceuClaimStatus: null,
   },
   {
     id: 'b1b2c3d4-0000-4000-8000-000000000003',
@@ -91,6 +93,7 @@ export const DEMO_ORG_LISTINGS: PublicOrgListing[] = [
     startsAt: inDays(9),
     capacity: 16,
     offersCeu: true,
+    ceuClaimStatus: null,
   },
   {
     id: 'b1b2c3d4-0000-4000-8000-000000000004',
@@ -109,5 +112,6 @@ export const DEMO_ORG_LISTINGS: PublicOrgListing[] = [
     startsAt: inDays(4, 18),
     capacity: 200,
     offersCeu: true,
+    ceuClaimStatus: null,
   },
 ]

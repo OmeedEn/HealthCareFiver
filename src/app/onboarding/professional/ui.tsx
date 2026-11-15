@@ -10,7 +10,8 @@ export const PRIMARY_BTN =
   'h-11 bg-[#2f3cf5] text-sm font-semibold text-white hover:bg-[#2330c8]'
 
 export function Progress({ step }: { step: number }) {
-  const pct = (step / TOTAL_STEPS) * 100
+  // Steps finished before this one: being on the last step isn't 100%.
+  const pct = ((step - 1) / TOTAL_STEPS) * 100
   return (
     <div>
       <div className="flex items-center justify-between text-xs font-medium text-[#5f5d57]">

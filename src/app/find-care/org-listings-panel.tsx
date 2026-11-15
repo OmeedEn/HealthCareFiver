@@ -17,15 +17,18 @@ export function OrgListingsPanel({
   signedIn,
   initialQuery = '',
   onlyKind,
+  initialKind,
 }: {
   listings: PublicOrgListingWithOrg[]
   signedIn: boolean
   initialQuery?: string
   /** Lock to one kind and hide the kind filter (e.g. the Events page). */
   onlyKind?: 'service' | 'event'
+  /** Preselected kind filter that can still be changed (e.g. /find-care?tab=listings&kind=event). */
+  initialKind?: 'service' | 'event'
 }) {
   const [query, setQuery] = useState(initialQuery)
-  const [kind, setKind] = useState<(typeof KINDS)[number]['value']>(onlyKind ?? 'all')
+  const [kind, setKind] = useState<(typeof KINDS)[number]['value']>(onlyKind ?? initialKind ?? 'all')
 
   const shown = useMemo(() => {
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean)

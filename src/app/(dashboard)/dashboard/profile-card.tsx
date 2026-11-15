@@ -6,6 +6,8 @@ import {
   ExternalLink,
   Pencil,
 } from 'lucide-react'
+import type { ChecklistItem } from '@/lib/onboarding/checklist'
+import { computeReadiness, nextReadinessItem, presentMeasures } from '@/lib/readiness'
 
 export type ProfileCardData = {
   firstName: string
@@ -15,41 +17,21 @@ export type ProfileCardData = {
   verified: boolean
   /** /pros/[id] */
   publicHref: string
-  /** What's filled in, for the completeness meter. */
-  checks: { label: string; done: boolean; href: string }[]
-}
-
-type Row = Record<string, unknown> | null | undefined
-
-const filled = (v: unknown) =>
-  Array.isArray(v) ? v.length > 0 : typeof v === 'number' ? v > 0 : typeof v === 'string' ? v.trim() !== '' : v != null
-
-/** Completeness checklist from the contractor_profiles row + headshot. */
-export function profileChecks(row: Row, avatarUrl: string | null) {
-  const r = row ?? {}
-  return [
-    { label: 'Add a headshot', done: !!avatarUrl, href: '/contractor/profile/edit#basic' },
-    { label: 'Add your name', done: filled(r.first_name) && filled(r.last_name), href: '/contractor/profile/edit#basic' },
-    { label: 'Write a headline', done: filled(r.headline), href: '/contractor/profile/edit#basic' },
-    { label: 'Add your city', done: filled(r.city) && filled(r.state), href: '/contractor/profile/edit#location' },
-    { label: 'Add specialties', done: filled(r.specialties), href: '/contractor/profile/edit#experience' },
-    { label: 'Add languages', done: filled(r.languages), href: '/contractor/profile/edit#experience' },
-    { label: 'Add years of experience', done: filled(r.years_of_experience), href: '/contractor/profile/edit#experience' },
-    { label: 'Write your bio', done: filled(r.bio), href: '/contractor/profile/edit#about' },
-  ]
 }
 
 /**
- * Top of the professional dashboard: who you are on Sanus, how complete your
- * profile is, and the one obvious way to change it.
+ * Top of the professional dashboard: who you are on Sanus, where you stand
+ * on each named readiness measure (src/lib/readiness — the same numbers as
+ * the Finish your profile card and the profile editor), and the one obvious
+ * way to change it.
  */
-export function ProfileCard({ data }: { data: ProfileCardData }) {
+export function ProfileCard({ data, items }: { data: ProfileCardData; items: ChecklistItem[] | null }) {
   const name = `${data.firstName} ${data.lastName}`.trim() || 'Your name'
   const initials =
     `${data.firstName[0] ?? ''}${data.lastName[0] ?? ''}`.toUpperCase() || '?'
-  const done = data.checks.filter((c) => c.done).length
-  const pct = data.checks.length ? Math.round((done / data.checks.length) * 100) : 100
-  const next = data.checks.find((c) => !c.done)
+  const readiness = items ? computeReadiness(items) : null
+  const measures = readiness ? presentMeasures(readiness) : []
+  const next = readiness ? nextReadinessItem(readiness) : null
 
   return (
     <section
@@ -90,26 +72,43 @@ export function ProfileCard({ data }: { data: ProfileCardData }) {
             <p className="mt-0.5 line-clamp-1 text-sm text-[#5f5d57]">
               {data.headline || 'Add a headline so clients know what you do.'}
             </p>
-            <div className="mt-3 max-w-sm">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-[#1a1a17]">Profile {pct}% complete</span>
-                {next && (
-                  <Link href={next.href} className="font-semibold text-[#2330c8] hover:underline">
-                    Next: {next.label}
-                  </Link>
-                )}
+            {measures.length > 0 && (
+              <div className="mt-3 max-w-sm space-y-2">
+                {measures.map((m) => (
+                  <div key={m.id}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-[#1a1a17]">{m.label}</span>
+                      <span className="text-[#5f5d57]">
+                        {m.done} of {m.total} done
+                      </span>
+                    </div>
+                    <div
+                      className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
+                      role="progressbar"
+                      aria-valuenow={m.done}
+                      aria-valuemin={0}
+                      aria-valuemax={m.total}
+                      aria-label={`${m.label}: ${m.done} of ${m.total} done`}
+                    >
+                      <div className="h-full rounded-full bg-[#2f3cf5]" style={{ width: `${m.percent ?? 0}%` }} />
+                    </div>
+                  </div>
+                ))}
+                <p className="text-xs text-[#5f5d57]">
+                  {data.verified
+                    ? 'Approved by Sanus. Listings are still reviewed one by one.'
+                    : 'Not approved yet. Completing steps doesn’t approve or publish your profile.'}
+                  {next && (
+                    <>
+                      {' '}
+                      <Link href={next.href} className="font-semibold text-[#2330c8] hover:underline">
+                        Next: {next.label}
+                      </Link>
+                    </>
+                  )}
+                </p>
               </div>
-              <div
-                className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
-                role="progressbar"
-                aria-valuenow={pct}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-label="Profile completeness"
-              >
-                <div className="h-full rounded-full bg-[#2f3cf5]" style={{ width: `${pct}%` }} />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 

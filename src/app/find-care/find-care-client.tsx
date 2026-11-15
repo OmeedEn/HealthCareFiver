@@ -641,7 +641,14 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
         </div>
 
         {tab === 'listings' ? (
-          <OrgListingsPanel listings={orgListings} signedIn={signedIn} initialQuery={initialQuery} />
+          <OrgListingsPanel
+            listings={orgListings}
+            signedIn={signedIn}
+            initialQuery={initialQuery}
+            initialKind={
+              searchParams.get('kind') === 'event' ? 'event' : searchParams.get('kind') === 'service' ? 'service' : undefined
+            }
+          />
         ) : (
         <>
         {/* ── Search Bar + Filters Button ── */}

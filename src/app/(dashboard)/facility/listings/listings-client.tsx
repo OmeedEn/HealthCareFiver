@@ -17,7 +17,7 @@ import {
 } from '@/app/onboarding/organization/listing-draft'
 import { EMPTY_EVENT } from '@/app/onboarding/organization/sections/event-form'
 import { EMPTY_SERVICE } from '@/app/onboarding/organization/sections/service-form'
-import type { EventDraft, ServiceDraft } from '@/app/onboarding/organization/shared'
+import { EVENT_FINAL_KEYS, type EventDraft, type ServiceDraft } from '@/app/onboarding/organization/shared'
 import { deleteOrgListing, saveListingDraft, submitOrgListing, withdrawOrgListing } from './actions'
 
 /**
@@ -31,7 +31,7 @@ export function AddListing({ initial = null }: { initial?: 'service' | 'event' |
     <>
       <div className="grid gap-3 sm:grid-cols-2">
         <AddTile icon={Megaphone} title="Add a service" sub="Something individuals or businesses can book or ask about." onClick={() => setOpen('service')} />
-        <AddTile icon={CalendarDays} title="Add an event" sub="A webinar, workshop, CEU course, health fair, and more." onClick={() => setOpen('event')} />
+        <AddTile icon={CalendarDays} title="Add an event" sub="A webinar, workshop, course, health fair, and more." onClick={() => setOpen('event')} />
       </div>
       {open && <ListingFlowDialog kind={open} onClose={() => setOpen(null)} />}
     </>
@@ -126,7 +126,7 @@ function ListingFlowDialog({
   const built =
     kind === 'service'
       ? serviceScreens({ value: service, set: setS, section, saveFields: save, finish: () => save(['reach_via'])(), finishLabel: 'Save draft' })
-      : eventScreens({ value: event, set: setE, section, saveFields: save, finish: () => save(['audiences', 'offers_ceu'])(), finishLabel: 'Save draft' })
+      : eventScreens({ value: event, set: setE, section, saveFields: save, finish: () => save(EVENT_FINAL_KEYS)(), finishLabel: 'Save draft' })
   const screens: Screen[] = built.map((sc) => ({ ...sc, step: 1 }))
 
   // Continuing a draft: start at its first unanswered question.

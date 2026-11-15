@@ -14,6 +14,7 @@ import {
   labelFor,
 } from '@/lib/onboarding/organization'
 import { listingIsComplete, listingNeedsPayouts, type ListingRow } from '@/app/onboarding/organization/listing-draft'
+import { ownerCeuLabel } from '@/lib/listings/ce-credit'
 import { AddListing, ContinueListingButton, DeleteListingButton, ListingStatusButton } from './listings-client'
 import { OrgAgreementCard } from '@/components/org/org-agreement-card'
 import { isStripeConfigured } from '@/lib/stripe/connect'
@@ -112,7 +113,7 @@ export default async function FacilityListingsPage({
                         l.locations,
                         price(l),
                         l.kind === 'event' ? (l.starts_at ? formatDateTime(l.starts_at) : 'Date to be set') : null,
-                        l.kind === 'event' && l.offers_ceu ? 'CEU/CME credit' : null,
+                        ownerCeuLabel(l),
                         l.audiences
                           .map((a) => labelFor(l.kind === 'service' ? SERVICE_AUDIENCES : EVENT_AUDIENCES, a))
                           .join(', '),
