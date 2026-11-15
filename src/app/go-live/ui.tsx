@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { CheckCircle2, Circle, ExternalLink, Lock } from 'lucide-react'
 import { CheckRow } from '@/app/onboarding/professional/ui'
+import { SanusMark } from '@/components/brand/sanus-mark'
 
 /** Page frame for the go-live flow: logo, and a way out to the dashboard. */
 export function Shell({ children, exit = true }: { children: React.ReactNode; exit?: boolean }) {
@@ -8,9 +9,7 @@ export function Shell({ children, exit = true }: { children: React.ReactNode; ex
     <div className="min-h-screen bg-white px-4 py-6 sm:py-10">
       <div className="mx-auto flex w-full max-w-xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2f3cf5] text-sm font-bold text-white">
-            S
-          </div>
+          <SanusMark className="h-8 w-8" />
           <span className="text-xl font-bold tracking-tight text-[#1a1a17]">
             Sanus<span className="text-[#2f3cf5]">.</span>
           </span>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
+import { SanusMark } from '@/components/brand/sanus-mark'
 
 export type LegalSection = {
   id: string
@@ -28,9 +29,7 @@ export function LegalPage({
       <header className="border-b border-[#e3dfd6] bg-white">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2f3cf5] text-sm font-bold text-white">
-              S
-            </div>
+            <SanusMark className="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight text-[#1a1a17]">
               Sanus<span className="text-[#2f3cf5]">.</span>
             </span>

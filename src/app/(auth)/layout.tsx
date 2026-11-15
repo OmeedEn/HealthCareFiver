@@ -6,6 +6,7 @@ import {
   Users,
   HeartHandshake,
 } from 'lucide-react'
+import { SanusMark } from '@/components/brand/sanus-mark'
 
 export default function AuthLayout({
   children,
@@ -18,9 +19,7 @@ export default function AuthLayout({
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] flex-col justify-between bg-[#1a1a17] p-10 text-white">
         <div>
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#2f3cf5] text-lg font-black text-white shadow-lg shadow-[#2f3cf5]/30">
-              S
-            </div>
+            <SanusMark className="h-11 w-11 shadow-lg shadow-[#2f3cf5]/30 rounded-[11px]" />
             <span className="text-2xl font-black tracking-tight">
               Sanus<span className="text-[#b4bbff]">.</span>
             </span>
@@ -84,9 +83,7 @@ export default function AuthLayout({
         {/* Mobile header */}
         <div className="flex items-center justify-between border-b border-[#e3dfd6] px-6 py-4 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[#2f3cf5] text-base font-black text-white">
-              S
-            </div>
+            <SanusMark className="h-9 w-9" />
             <span className="text-xl font-black tracking-tight text-[#1a1a17]">
               Sanus<span className="text-[#2f3cf5]">.</span>
             </span>

@@ -1,5 +1,6 @@
 import { EmergencyNotice } from '@/components/emergency-notice'
 import Link from 'next/link'
+import { SanusMark } from '@/components/brand/sanus-mark'
 
 function FooterColumn({
   title,
@@ -35,9 +36,7 @@ export function SiteFooter() {
         <div className="grid gap-12 border-t-2 border-ink pt-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-4">
             <Link href="/" className="inline-flex items-center gap-2.5" aria-label="Sanus home">
-              <span className="flex size-8 items-center justify-center rounded-md bg-ink font-display text-sm font-bold text-paper">
-                S
-              </span>
+              <SanusMark className="size-8" tone="ink" />
               <span className="font-display text-xl font-bold tracking-tight">
                 Sanus<span className="text-brand">.</span>
               </span>
