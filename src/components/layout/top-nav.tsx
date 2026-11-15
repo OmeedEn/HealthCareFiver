@@ -11,13 +11,12 @@ import { MessagesLink } from './messages-link'
 import { UserAvatar, UserMenu, useSignOut } from './user-menu'
 import { PUBLIC_NAV, accountNavFor, activeHref, userMenuFor } from './nav-config'
 import { useSessionUser, type SessionUser } from './use-session-user'
+import { SanusMark } from '@/components/brand/sanus-mark'
 
 export function SanusLogo() {
   return (
     <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Sanus home">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#2f3cf5] text-base font-bold text-white">
-        S
-      </div>
+      <SanusMark className="h-9 w-9" />
       <span className="text-2xl font-bold tracking-tight text-[#1a1a17]">
         Sanus<span className="text-[#2f3cf5]">.</span>
       </span>
