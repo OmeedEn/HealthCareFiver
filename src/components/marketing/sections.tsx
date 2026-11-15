@@ -4,6 +4,7 @@
 // loud moments — oversized Archivo display type, condensed credential
 // numerals, an ink specialty ticker, and the ultramarine closing band.
 import Link from 'next/link'
+import { FEE_DISCLOSURE, PAYMENTS_NOT_OPEN, PRICING_HEADLINE } from '@/lib/fees'
 import type { ReactNode } from 'react'
 import {
   ArrowRight,
@@ -15,7 +16,6 @@ import {
   Lock,
   Plus,
   Search,
-  ShieldCheck,
   Star,
   UserCheck,
   Wallet,
@@ -202,34 +202,38 @@ const featuredEvents = [
     type: 'Webinar',
     detail: 'Teach a topic live to a virtual audience, free or paid.',
     format: 'Virtual',
+    q: 'webinar',
   },
   {
     title: 'Hands-on workshops',
     type: 'Workshop',
     detail: 'Run half- or full-day sessions for practices and teams.',
     format: 'Virtual or in person',
+    q: 'workshop',
   },
   {
-    title: 'CEU & CME courses',
-    type: 'CEU & CME',
-    detail: 'Publish self-paced or live continuing-education content.',
-    format: 'On-demand or live',
+    title: 'Continuing-education courses',
+    type: 'Continuing education',
+    detail: 'Teach live continuing-education sessions. Credit is listed only after Sanus reviews the accreditation.',
+    format: 'Virtual or in person',
+    q: 'ceu_course',
   },
   {
     title: 'Certification & prep cohorts',
     type: 'Certification',
     detail: 'Lead multi-week cohorts for board prep or certifications.',
     format: 'Virtual',
+    q: 'certification',
   },
 ]
 
-// Professionals: no subscription or plan tiers. Free to join; Sanus takes a
-// small service fee on each booking.
+// Professionals: no subscription or plan tiers. Free to join. No fee rate has
+// been approved, so pricing copy comes from @/lib/fees and names no rate.
 const professionalPricingPoints = [
   'Free account, credential review, and profile',
   'List services, consulting, and events',
-  'See the exact service fee before you publish',
-  'Payouts handled through Stripe',
+  'No Sanus service fee has been set',
+  'Payout setup through Stripe',
 ]
 
 const trustItems = [
@@ -246,25 +250,20 @@ const trustItems = [
     icon: FileCheck,
   },
   {
-    title: 'Background & identity checks',
-    description:
-      'Depending on profession, verification can include identity and background screening through trusted vendors.',
-    icon: ShieldCheck,
-  },
-  {
     title: 'Credential review',
     description: 'Certifications and professional credentials are reviewed at onboarding.',
     icon: ClipboardCheck,
   },
   {
-    title: 'HIPAA safeguards',
+    title: 'Keep health details out',
     description:
-      'Built with HIPAA safeguards — access controls, audit logging, and encryption in transit and at rest.',
+      'Don’t share medical records or other patient information in messages or requests. Sanus is not an emergency service.',
     icon: Lock,
   },
   {
-    title: 'Secure payments',
-    description: 'Payments are processed by Stripe. Sanus never stores your full card details.',
+    title: 'Payments',
+    description:
+      'Paid booking through Sanus isn’t open yet. Card payments, when they open, are handled by Stripe.',
     icon: Wallet,
   },
   {
@@ -301,9 +300,9 @@ const audienceValueProps = [
 
 const professionalGrowthPoints = [
   'Set your own rates and offer service packages',
-  'Keep the majority of every booking',
+  'Choose which requests you accept',
   'Sell services, consulting, AND events from one profile',
-  'Build a verified, reviewable reputation',
+  'Build a reputation from reviews of completed work',
   'Reach individuals, businesses, and healthcare organizations',
 ]
 
@@ -612,8 +611,8 @@ export function HowItWorksSection() {
       title: 'Find the right expert and book directly',
       steps: [
         'Search by specialty, service type, format, and price',
-        'Review profiles, packages, and verified reviews',
-        'Book directly and pay securely through Sanus',
+        'Review profiles, packages, and reviews from completed work',
+        'Request a booking directly through Sanus',
         'Get the expertise you need — virtually or in person',
       ],
     },
@@ -623,7 +622,7 @@ export function HowItWorksSection() {
       accent: true,
       steps: [
         'Search professionals by expertise, or post your project need',
-        'Review credentials, past work, and verified reviews',
+        'Review credentials, past work, and reviews from completed work',
         'Send a message, request a custom quote, or book directly',
         'Engage on your terms — project, retainer, or one-time consult',
       ],
@@ -662,7 +661,7 @@ export function OrganizationsSection() {
       <div className={wrap}>
         <SectionHead
           title="Built for healthcare organizations too"
-          lede="Hospitals, clinics, medical practices, nursing homes, telehealth companies, and wellness businesses engage verified professionals for consulting, project work, education, and specialized expertise. No agency fees. No markups."
+          lede="Hospitals, clinics, medical practices, nursing homes, telehealth companies, and wellness businesses engage reviewed professionals for consulting, project work, education, and specialized expertise. No agency fees. No markups."
         />
 
         <ul className="mt-14 border-t-2 border-ink">
@@ -696,7 +695,6 @@ export function OrganizationsSection() {
             'No agency fees',
             'Direct professional engagement',
             'Professionals reviewed before booking',
-            'Built with HIPAA safeguards',
           ].map((t) => (
             <li key={t} className="inline-flex items-center gap-2">
               <Check aria-hidden="true" className="size-4 text-success" strokeWidth={2.5} />
@@ -715,16 +713,16 @@ export function EventsSection() {
       <div className={wrap}>
         <SectionHead
           title="Events, training & continuing education"
-          lede="Live webinars, in-person workshops, CEU and CME courses, and certification programs — created and taught by Sanus professionals. Here's what professionals can host."
+          lede="Live webinars, in-person workshops, continuing-education courses, and certification programs — created and taught by Sanus professionals. Here's what professionals can host."
         />
 
-        {/* Filter links into the signed-in events listing. */}
+        {/* Filter links into the signed-in events catalogue (/events reads ?type=). */}
         <nav aria-label="Event types" className="mt-10 flex flex-wrap gap-2">
           {[
             { label: 'All', q: '' },
             { label: 'Live webinars', q: 'webinar' },
             { label: 'Workshops', q: 'workshop' },
-            { label: 'CEU & CME', q: 'ceu' },
+            { label: 'Continuing education', q: 'ceu_course' },
             { label: 'Certifications', q: 'certification' },
             { label: 'In-person', q: 'in_person' },
             { label: 'Free', q: 'free' },
@@ -754,8 +752,8 @@ export function EventsSection() {
               <p className="mt-2 text-sm leading-relaxed text-ink-muted">{e.detail}</p>
               <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4 text-sm">
                 <span className="text-ink-muted">{e.format}</span>
-                <Link href="/for-professionals" className={textLink}>
-                  Learn more
+                <Link href={`/events?type=${e.q}`} className={textLink}>
+                  Browse {e.type.toLowerCase()} events
                 </Link>
               </div>
             </article>
@@ -763,11 +761,15 @@ export function EventsSection() {
         </div>
 
         <p className="mt-4 text-sm text-ink-muted">
-          Example formats. Sign in to browse upcoming events and register.
+          Example formats. Filtered event lists need a Sanus account; anyone can{' '}
+          <Link href="/find-care?tab=listings&kind=event" className="underline">
+            browse all upcoming events
+          </Link>
+          . Registering requires an account.
         </p>
 
         <div className="mt-10">
-          <Link href="/signup/offer" className={textLink}>
+          <Link href="/events-and-training/host" className={textLink}>
             Are you a health professional? Host your event on Sanus
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -822,11 +824,7 @@ export function ProfessionalsSection() {
             </li>
             <li className="flex items-start gap-3">
               <Wallet aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-brand-on-ink" />
-              Payouts handled through Stripe
-            </li>
-            <li className="flex items-start gap-3">
-              <Lock aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-brand-on-ink" />
-              Built with HIPAA safeguards
+              Payout setup through Stripe
             </li>
           </ul>
         </div>
@@ -841,7 +839,7 @@ export function TrustSection() {
       <div className={wrap}>
         <SectionHead
           title="Trust & safety at every step"
-          lede="Professionals are reviewed and approved before they can be booked, and the platform is built with HIPAA safeguards."
+          lede="Professionals are reviewed and approved by the Sanus team before they can be booked."
         />
         <div className="mt-14 grid border-l border-t border-line sm:grid-cols-2 lg:grid-cols-4">
           {trustItems.map((card) => {
@@ -916,7 +914,7 @@ export function BottomCta() {
             {[
               { href: '/signup/organization?source=HIRING', label: 'Hire for your organization' },
               { href: '/signup/offer', label: 'Offer your expertise' },
-              { href: '/events-and-training', label: 'Browse events' },
+              { href: '/find-care?tab=listings&kind=event', label: 'Browse events' },
             ].map((l) => (
               <Link
                 key={l.href}
@@ -943,7 +941,7 @@ export function PricingSection({
       <div className={wrap}>
         <SectionHead
           title="Simple, transparent pricing"
-          lede="Free to join. A small service fee applies to each booking. No hidden fees."
+          lede={`${PRICING_HEADLINE} ${PAYMENTS_NOT_OPEN}`}
         />
 
         {show !== 'buyers' && (
@@ -954,9 +952,7 @@ export function PricingSection({
                 <p className="type-condensed text-[clamp(4rem,10vw,8.5rem)] text-ink">
                   Free to join
                 </p>
-                <p className="mt-4 text-lg text-ink-muted">
-                  A small service fee applies to each booking.
-                </p>
+                <p className="mt-4 text-lg text-ink-muted">{FEE_DISCLOSURE}</p>
                 <Link href="/signup/offer" className={`${btnPrimary} mt-8`}>
                   Get started
                 </Link>
@@ -983,7 +979,7 @@ export function PricingSection({
                 For individuals &amp; businesses
               </h3>
               <p className="mt-3 text-base text-ink-muted">
-                Free to browse. A small service fee applies to each booking.
+                Free to browse. {PAYMENTS_NOT_OPEN} {FEE_DISCLOSURE}
               </p>
               <Link href="/find-care" className={`${btnSecondary} mt-8 w-fit`}>
                 Find a professional
@@ -995,14 +991,15 @@ export function PricingSection({
                 For healthcare organizations
               </h3>
               <p className="mt-3 text-base text-ink-muted">
-                Custom enterprise plan — volume pricing, admin dashboard, team
-                accounts, and organization-level search.
+                Find and engage professionals as an organization. Organization
+                pricing hasn&apos;t been set; contact us to talk through what you
+                need.
               </p>
               <Link
                 href="/signup/organization?source=HIRING"
                 className={`${btnSecondary} mt-8 w-fit`}
               >
-                Contact us for organization pricing
+                Contact us
               </Link>
             </div>
           </div>
@@ -1125,12 +1122,12 @@ const exploreLinks = [
   },
   {
     title: 'For professionals',
-    body: 'Sell services, consulting, and events from one verified profile. Free to join.',
+    body: 'Sell services, consulting, and events from one reviewed profile. Free to join.',
     href: '/for-professionals',
   },
   {
     title: 'How it works',
-    body: 'How booking, review and approval, payments, and HIPAA safeguards work on Sanus.',
+    body: 'How booking, professional review and approval, and payments work on Sanus.',
     href: '/how-it-works',
   },
 ]

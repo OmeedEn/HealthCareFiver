@@ -74,7 +74,7 @@ export function professionalApprovalItems(
       id: PRO_Q.credentialUpload,
       group: 'needed_for_approval',
       label: branch ? UPLOAD_LABEL[branch] : 'Upload your license, certification, or resume',
-      hint: 'A photo or PDF. Private and encrypted.',
+      hint: 'A photo or PDF. Stored privately.',
       done: hasType(credentials, credTypes),
       href: `${FINISH_BASE}/credential_upload`,
     },

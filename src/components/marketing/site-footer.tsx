@@ -74,7 +74,7 @@ export function SiteFooter() {
               links={[
                 { label: 'Why Sanus', href: '/for-professionals' },
                 { label: 'List your services', href: '/signup/offer' },
-                { label: 'Host an event', href: '/events-and-training' },
+                { label: 'Host an event', href: '/events-and-training/host' },
                 { label: 'Professional pricing', href: '/for-professionals#pricing' },
               ]}
             />
@@ -83,7 +83,6 @@ export function SiteFooter() {
               title="Platform"
               links={[
                 { label: 'Trust & safety', href: '/how-it-works#trust' },
-                { label: 'HIPAA safeguards', href: '/how-it-works#trust' },
                 { label: 'About Sanus', href: '/' },
                 { label: 'Sign in', href: '/login' },
                 { label: 'Terms of Service', href: '/terms' },

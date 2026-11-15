@@ -91,7 +91,7 @@ export interface OrgBannerConfig {
 
 export const ORG_BANNER: Record<Exclude<OrgStatus, 'approved'>, OrgBannerConfig> = {
   pending_review: {
-    title: 'Your application is under review. We’ll email you within 24-48 hours.',
+    title: 'Your application is under review. We’ll email you when the review is complete.',
     body: 'In the meantime you can explore your dashboard, complete your organization profile, and save job posts as drafts. Publishing, messaging professionals, and reviewing applicants unlock once you’re approved.',
     tone: 'info',
     showNotes: false,

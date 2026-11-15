@@ -3,6 +3,14 @@ import { updateSession } from '@/lib/supabase/middleware'
 import { getSupabaseConfig } from '@/lib/supabase/config'
 import { mfaGate } from '@/lib/auth/mfa'
 import { ORG_LIGHT_COLUMNS, orgLightSetupDone, verifiesLater } from '@/lib/onboarding/org-verify-later'
+import { parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
+import {
+  LOGIN_CONTINUE_PATH,
+  RETURN_TO_COOKIE,
+  authErrorCode,
+  returnToCookieOptions,
+  safeNextPath,
+} from '@/lib/auth/safe-next'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 const PUBLIC_ROUTES = [
@@ -49,6 +57,11 @@ const CLIENT_ACCOUNT_PATH = '/onboarding/client/account'
 // pending classification) account and asks the step 2 questions
 // (src/app/onboarding/unsure).
 const UNSURE_ACCOUNT_PATH = '/onboarding/unsure'
+// Entry point for "organization" from an account that already exists (a
+// buyer or a professional, finished or not). It decides server-side where
+// they can go without touching their existing profile
+// (src/app/onboarding/organization/start). Open to every signed-in role.
+const ORG_START_PATH = '/onboarding/organization/start'
 
 const ORG_ROLES = ['facility', 'staffing_agency']
 
@@ -97,29 +110,70 @@ async function contractorNeedsOnboarding(
   return data.onboarding_completed_at === null
 }
 
-// Where the login page sends people after signing in (src/app/(auth)/login).
-const LOGIN_CONTINUE_PATH = '/login/continue'
+/**
+ * What a signed-in visitor of /signup* asked for, from the door they picked
+ * (`?start=`, or the old /signup/organization?source= URL). Only routing
+ * hints: the destination pages re-check the account server-side.
+ */
+function signupIntent(
+  request: NextRequest
+): { kind: 'org'; source: string | null } | { kind: 'client' } | null {
+  const { pathname, searchParams } = request.nextUrl
+  if (underPrefix(pathname, '/signup/organization')) {
+    return { kind: 'org', source: parseOrgSignupSource(searchParams.get('source')) }
+  }
+  if (underPrefix(pathname, '/signup/client')) return { kind: 'client' }
+  const start = searchParams.get('start')
+  if (start === 'practice' || start === 'company' || start === 'hiring') {
+    return { kind: 'org', source: start.toUpperCase() }
+  }
+  if (start === 'client') return { kind: 'client' }
+  return null
+}
+
+/** Copy refreshed Supabase session cookies onto a redirect so they aren't lost. */
+function redirectKeepingSession(url: URL, supabaseResponse: NextResponse): NextResponse {
+  const res = NextResponse.redirect(url)
+  for (const c of supabaseResponse.cookies.getAll()) res.cookies.set(c)
+  return res
+}
 
 /**
- * Where a signed-in user lands after logging in: the homepage, unless they
- * still owe MFA, haven't finished onboarding, or are an admin. /dashboard is
- * reached from the avatar menu → Account.
+ * Where a signed-in user lands after logging in: an explicit, validated
+ * destination (`next`) or one remembered in RETURN_TO_COOKIE when they
+ * opened /login or /signup; otherwise the homepage, unless they still owe
+ * MFA, haven't finished onboarding, or are an admin. /dashboard is reached
+ * from the avatar menu → Account. A pending professional may still be sent
+ * to a buyer page (e.g. /find-care): onboarding is only enforced on
+ * /dashboard, never on browsing.
  */
 async function landingUrl(
   request: NextRequest,
   supabase: SupabaseClient | null,
-  userId: string
-): Promise<URL> {
+  userId: string,
+  next: string | null = null
+): Promise<{ url: URL; consumedReturnTo: boolean }> {
   const url = request.nextUrl.clone()
   url.search = ''
   url.pathname = '/'
-  if (!supabase) return url
+  if (!supabase) return { url, consumedReturnTo: false }
 
   const gate = await mfaGate(supabase)
   if (gate !== 'ok') {
     url.pathname = gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify'
-    url.searchParams.set('redirectTo', LOGIN_CONTINUE_PATH)
-    return url
+    // MFA comes back here, so the remembered destination still applies.
+    url.searchParams.set('redirectTo', next ?? LOGIN_CONTINUE_PATH)
+    return { url, consumedReturnTo: false }
+  }
+
+  const remembered = safeNextPath(request.cookies.get(RETURN_TO_COOKIE)?.value)
+  const target = next ?? remembered
+  if (target && target !== LOGIN_CONTINUE_PATH) {
+    const dest = new URL(target, request.nextUrl.origin)
+    // Belt and braces: safeNextPath already guarantees a same-origin path.
+    if (dest.origin === request.nextUrl.origin) {
+      return { url: dest, consumedReturnTo: !!remembered }
+    }
   }
 
   const { data: profile } = await supabase
@@ -135,7 +189,7 @@ async function landingUrl(
   } else if (role === 'admin') {
     url.pathname = '/admin'
   }
-  return url
+  return { url, consumedReturnTo: false }
 }
 
 export async function proxy(request: NextRequest) {
@@ -149,40 +203,100 @@ export async function proxy(request: NextRequest) {
   }
 
   const { supabase, user, supabaseResponse } = await updateSession(request)
+  const redirect = (url: URL) => redirectKeepingSession(url, supabaseResponse)
+  const isAuthEntry = pathname === '/login' || underPrefix(pathname, '/signup')
+  // ?next= (signup links) or ?redirectTo= (login links), validated.
+  const requestedNext =
+    safeNextPath(request.nextUrl.searchParams.get('next')) ??
+    safeNextPath(request.nextUrl.searchParams.get('redirectTo'))
+
+  // If Supabase can't use the callback URL it falls back to the Site URL
+  // (the homepage) with the error in the query. Show the recoverable login
+  // state instead of a homepage that silently ignores the failure.
+  if (pathname === '/' && !user) {
+    const reason = authErrorCode(request.nextUrl.searchParams)
+    if (reason) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.search = ''
+      url.searchParams.set('error', reason)
+      return redirect(url)
+    }
+    // Same fallback on success: a PKCE code on the homepage still needs the
+    // /callback exchange, otherwise the person looks signed out.
+    const code = request.nextUrl.searchParams.get('code')
+    if (code) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/callback'
+      url.search = ''
+      url.searchParams.set('code', code)
+      return redirect(url)
+    }
+  }
 
   // Allow public routes without auth
   if (isPublic) {
     // Signed-in visitors of /login or /signup, and the post-login hop
-    // /login/continue, go to their landing page: the homepage — or straight
-    // to the wizard for an account that hasn't finished onboarding, /admin
-    // for admins. The homepage is public, so the MFA gate is applied here
-    // first (the wizards and /admin are protected and gated anyway).
+    // /login/continue, go to their landing page. A signup door that names a
+    // capability goes there instead of the homepage: "organization" to the
+    // organization entry (create/join), which never converts or edits their
+    // existing account; "myself or my family" to buyer browsing. Otherwise
+    // the validated ?next= / ?redirectTo= or remembered destination, else
+    // the homepage — or the wizard for an account that hasn't finished
+    // onboarding, /admin for admins. The homepage is public, so the MFA gate
+    // is applied here first (the wizards and /admin are protected and gated
+    // anyway).
     const isContinue = pathname === LOGIN_CONTINUE_PATH
-    if (user && (pathname === '/login' || pathname.startsWith('/signup') || isContinue)) {
-      return NextResponse.redirect(await landingUrl(request, supabase, user.id))
+    if (user && (isAuthEntry || isContinue)) {
+      const intent = underPrefix(pathname, '/signup') ? signupIntent(request) : null
+      const intentNext =
+        intent?.kind === 'org'
+          ? intent.source
+            ? `${ORG_START_PATH}?source=${intent.source}`
+            : ORG_START_PATH
+          : intent?.kind === 'client'
+            ? '/find-care'
+            : null
+      const { url, consumedReturnTo } = await landingUrl(
+        request,
+        supabase,
+        user.id,
+        intentNext ?? requestedNext
+      )
+      const res = redirect(url)
+      if (consumedReturnTo) res.cookies.delete(RETURN_TO_COOKIE)
+      return res
     }
     if (isContinue) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.search = ''
-      return NextResponse.redirect(url)
+      return redirect(url)
+    }
+    // Anonymous visitor of /signup with a destination: remember it in a
+    // short-lived httpOnly cookie so it survives the account questions, email
+    // confirmation and the Google round trip (read back by /callback,
+    // landingUrl, the signup API and the client account step). Path only,
+    // already validated. /login doesn't need it: its ?redirectTo= rides
+    // through the password sign-in and Google's /callback?next= directly.
+    if (underPrefix(pathname, '/signup') && requestedNext) {
+      supabaseResponse.cookies.set(
+        RETURN_TO_COOKIE,
+        requestedNext,
+        returnToCookieOptions(request.nextUrl.protocol === 'https:')
+      )
     }
     return supabaseResponse
   }
 
-  // Protected routes: redirect to /login if no user
-  if (!user) {
+  // Protected routes: redirect to /login if no user. Keep the query string
+  // (e.g. ?source=) so the destination is intact after signing in.
+  if (!user || !supabase) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  if (!supabase) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
+    url.search = ''
+    url.searchParams.set('redirectTo', pathname + request.nextUrl.search)
+    return redirect(url)
   }
 
   // MFA gate: every session must be AAL2 before reaching any app page.
@@ -194,8 +308,8 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = gate === 'enroll' ? '/mfa/enroll' : '/mfa/verify'
     url.search = ''
-    url.searchParams.set('redirectTo', pathname)
-    return NextResponse.redirect(url)
+    url.searchParams.set('redirectTo', pathname + request.nextUrl.search)
+    return redirect(url)
   }
 
   if (isMfaRoute) {
@@ -206,7 +320,7 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = target
       if (gate === 'ok') url.search = ''
-      return NextResponse.redirect(url)
+      return redirect(url)
     }
     return supabaseResponse
   }
@@ -224,7 +338,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/contractor') && role !== 'contractor') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   if (
@@ -234,21 +348,24 @@ export async function proxy(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   if (pathname.startsWith('/admin') && role !== 'admin') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   // Organization onboarding is for organizations, plus the account step a
   // brand-new (Google) professional account uses to become one. The client
   // account step is for clients and brand-new professionals. Everything else
   // under /onboarding is professional onboarding, contractors only.
+  // The organization entry (ORG_START_PATH) is open to every signed-in role:
+  // it only reads, and routes each account to what it can do.
   const orgOnboardingAllowed =
     ORG_ROLES.includes(role ?? '') ||
+    underPrefix(pathname, ORG_START_PATH) ||
     (role === 'contractor' && underPrefix(pathname, ORG_ACCOUNT_PATH))
   const clientAccountAllowed =
     (role === 'contractor' || role === 'client') &&
@@ -261,7 +378,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     url.search = ''
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   // Professional onboarding needs Terms consent first. Email signups give it
@@ -285,7 +402,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = PRO_ONBOARDING_PATH
     url.search = ''
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   // Organizations that haven't submitted steps 2–4 land in their wizard.
@@ -297,7 +414,7 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = ORG_ONBOARDING_PATH
     url.search = ''
-    return NextResponse.redirect(url)
+    return redirect(url)
   }
 
   return supabaseResponse

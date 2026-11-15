@@ -3,7 +3,7 @@ import 'server-only'
 import type Stripe from 'stripe'
 import { getStripe } from '@/lib/stripe/client'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { bookingFeeCents } from './fees'
+import { bookingFeeCents, bookingPaymentsEnabled } from './fees'
 import { BOOKING_COLUMNS, bookingStart, needsPayment, type BookingRow } from './types'
 
 /**
@@ -32,6 +32,8 @@ async function loadBooking(id: string): Promise<(BookingRow & { stripe_checkout_
  * session if there is one, so double clicks don't create two payments.
  */
 export async function createBookingCheckout(bookingId: string, customerId: string, appUrl: string): Promise<CheckoutResult> {
+  // Default-off: no checkout until Stripe AND an approved fee rate are set.
+  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Sanus aren’t open yet. We’ll let you know when you can pay.' }
   const b = await loadBooking(bookingId)
   if (!b || b.customer_id !== customerId) return { ok: false, error: 'We couldn’t find that booking.' }
   if (!needsPayment(b)) return { ok: false, error: 'This booking doesn’t need a payment right now. Refresh to see the latest.' }
@@ -112,7 +114,8 @@ export async function settleBookingCheckout(session: Stripe.Checkout.Session): P
     p_payment_intent_id: piId,
     p_charge_id: chargeId,
     p_amount_cents: amount,
-    p_fee_cents: bookingFeeCents(amount),
+    // No configured rate → record no fee rather than inventing one.
+    p_fee_cents: bookingFeeCents(amount) ?? 0,
   })
   if (error) throw error
   if (data === 'refund') {

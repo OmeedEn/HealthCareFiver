@@ -12,7 +12,23 @@
  */
 
 export const FEE_BEING_FINALIZED =
-  "Sanus service fee: being finalized — you'll see the exact amount here before your listing goes live."
+  "Sanus service fee: none set. If a fee is introduced, you'll see the exact amount here before it applies to your listing."
+
+/**
+ * Single source of truth for public pricing/payment copy. No fee rate, payer,
+ * or payment model has been approved, so this copy must not name one. Update
+ * here (and only here) once the owner/legal decision is made.
+ */
+export const PRICING_HEADLINE = 'Free to join.'
+
+export const PAYMENTS_NOT_OPEN =
+  'Paid booking through Sanus isn’t open yet.'
+
+export const FEE_DISCLOSURE =
+  'No Sanus service fee has been set. If one is introduced, you’ll see the exact amount and who pays it before you book or publish.'
+
+/** One-line summary for headers, emails, and API messages. */
+export const PRICING_SUMMARY = `${PRICING_HEADLINE} ${PAYMENTS_NOT_OPEN} ${FEE_DISCLOSURE}`
 
 export function getPlatformFeePercent(): number | null {
   const raw = process.env.PLATFORM_FEE_PERCENT

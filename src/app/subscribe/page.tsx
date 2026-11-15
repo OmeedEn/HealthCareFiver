@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { isDemoMode } from '@/lib/demo/data'
 
 // Legacy route. The paid "go live" plan was dropped: Sanus is free to join and
-// a small service fee applies to each booking. Going live now happens at
+// no service fee has been set. Going live now happens at
 // /go-live (contractor agreement + payouts). Kept so old links/emails work.
 export default async function SubscribePage() {
   if (isDemoMode()) {

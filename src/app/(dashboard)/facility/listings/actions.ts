@@ -10,6 +10,7 @@ import { isStripeConfigured } from '@/lib/stripe/connect'
 import { checkFields, eventSchema, serviceSchema } from '@/app/onboarding/organization/shared'
 import {
   draftToColumns,
+  eventCeuMissing,
   listingIsComplete,
   listingNeedsPayouts,
   type ListingRow,
@@ -126,6 +127,14 @@ async function setListingStatus(id: string, status: 'draft' | 'in_review') {
       .eq('facility_id', user.id)
       .maybeSingle()
     if (!row) return { ok: false, error: 'Listing not found.' }
+    // Claiming credit needs its evidence before review (also enforced in the DB).
+    if (Object.keys(eventCeuMissing(row as ListingRow)).length) {
+      return {
+        ok: false,
+        error:
+          'This event says it offers continuing-education credit. Add the credit type, amount, accreditor and provider number before submitting, or change the answer to No.',
+      }
+    }
     if (!listingIsComplete(row as ListingRow)) {
       return { ok: false, error: 'Finish this listing first: open it with “Continue” and answer the remaining questions.' }
     }
@@ -149,7 +158,9 @@ async function setListingStatus(id: string, status: 'draft' | 'in_review') {
       ok: false,
       error: error.hint === 'agreement_required'
         ? 'Accept the organization agreement first.'
-        : 'We couldn’t update that listing.',
+        : error.hint === 'ceu_details_required'
+          ? 'Add the credit type, amount, accreditor and provider number before submitting.'
+          : 'We couldn’t update that listing.',
     }
   }
   if (!data?.length) return { ok: false, error: 'Listing not found.' }

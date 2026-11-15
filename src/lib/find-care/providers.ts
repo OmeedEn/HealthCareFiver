@@ -64,6 +64,25 @@ export async function getComplianceById(
 }
 
 /**
+ * Ids (of `ids`) with at least one active saved rate. Only the boolean leaves
+ * the server — amounts are shown on the full profile. Empty set on error
+ * (table not migrated yet): cards then say "Contact for pricing".
+ */
+async function getIdsWithRates(
+  supabase: SupabaseClient,
+  ids: string[]
+): Promise<Set<string>> {
+  if (ids.length === 0) return new Set()
+  const { data, error } = await supabase
+    .from('professional_rates')
+    .select('contractor_id')
+    .eq('is_active', true)
+    .in('contractor_id', ids)
+  if (error || !data) return new Set()
+  return new Set((data as { contractor_id: string }[]).map((r) => r.contractor_id))
+}
+
+/**
  * Explicit allowlist of public-safe contractor_profiles columns. Anything
  * not listed here (npi_number, state_license_number, license_state,
  * zip_code, verification_* internals, etc.) is never fetched.
@@ -120,7 +139,8 @@ function asCategory(v: string | null): ProfessionalCategory | null {
 function mapRow(
   row: ContractorRow,
   avatarUrl: string | null,
-  insured = false
+  insured = false,
+  hasPublicRates = false
 ): PublicProvider {
   const category = asCategory(row.professional_category)
   const type = row.contractor_type ?? 'other'
@@ -152,9 +172,11 @@ function mapRow(
     state: row.state,
     average_rating: toNumber(row.average_rating) ?? 0,
     total_reviews: row.total_reviews ?? 0,
-    is_available: row.is_available ?? true,
+    // Only a saved "accepting clients" flag counts; unknown is not available.
+    is_available: row.is_available === true,
     session_types: [],
     insured,
+    has_public_rates: hasPublicRates,
   }
 }
 
@@ -170,6 +192,7 @@ export function getDemoProviders(): PublicProvider[] {
     avatar_url: null,
     // Fictional: a couple of demo providers show the Insured badge.
     insured: p.id === 'prov-1' || p.id === 'prov-3',
+    has_public_rates: true,
   }))
 }
 
@@ -190,6 +213,13 @@ export async function getReadClient(): Promise<SupabaseClient> {
   return (await createClient()) as unknown as SupabaseClient
 }
 
+/**
+ * THE discovery contract. Public /find-care, in-app /browse, matching and the
+ * organization directory (/facility/contractors) all list exactly these
+ * professionals, and the detail routes (/pros/[id], /facility/contractors/[id])
+ * resolve a profile only under the same rule (getPublicProfile), so every
+ * card's link opens. Do not add a second, looser directory query.
+ */
 export async function getLiveProviders(): Promise<PublicProvider[]> {
   try {
     const supabase = await getReadClient()
@@ -259,10 +289,11 @@ export async function getLiveProviders(): Promise<PublicProvider[]> {
 
     // 3. v3 compliance columns (hold + insured). Read separately so a
     //    database without them yet still lists providers.
-    const compliance = await getComplianceById(
-      supabase,
-      contractorRows.map((r) => r.id)
-    )
+    const ids = contractorRows.map((r) => r.id)
+    const [compliance, withRates] = await Promise.all([
+      getComplianceById(supabase, ids),
+      getIdsWithRates(supabase, ids),
+    ])
 
     return contractorRows
       .filter((row) => avatarById.has(row.id))
@@ -271,7 +302,8 @@ export async function getLiveProviders(): Promise<PublicProvider[]> {
         mapRow(
           row,
           avatarById.get(row.id) ?? null,
-          compliance.get(row.id)?.insured ?? false
+          compliance.get(row.id)?.insured ?? false,
+          withRates.has(row.id)
         )
       )
   } catch (err) {

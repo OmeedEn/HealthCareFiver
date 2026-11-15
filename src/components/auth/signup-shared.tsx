@@ -11,6 +11,8 @@ export interface SignupResponse {
   success?: boolean
   needsEmailConfirmation?: boolean
   error?: string
+  /** Validated same-origin path to continue to (buyers who opened /signup?next=). */
+  next?: string
 }
 
 /**

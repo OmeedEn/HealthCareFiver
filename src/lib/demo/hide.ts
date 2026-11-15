@@ -10,9 +10,17 @@ import { createAdminClient } from '@/lib/supabase/admin'
  */
 export const DEMO_EMAIL_DOMAIN = 'demo.sanus.example'
 
-/** HIDE_DEMO_DATA=true hides seeded demo pros/orgs from public pages. */
+/**
+ * Hide seeded demo pros/orgs from discovery and profile pages.
+ * HIDE_DEMO_DATA=true forces it on; on Vercel production it is on unless
+ * HIDE_DEMO_DATA=false is set explicitly, so seeded sample accounts (with
+ * seeded ratings) can never read as real production supply.
+ */
 export function hideDemoData(): boolean {
-  return process.env.HIDE_DEMO_DATA === 'true'
+  const flag = process.env.HIDE_DEMO_DATA
+  if (flag === 'true') return true
+  if (flag === 'false') return false
+  return process.env.VERCEL_ENV === 'production'
 }
 
 /**

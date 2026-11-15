@@ -118,7 +118,7 @@ export function useClientSignup(): SignupPathFlow {
       // Saved to the account now; drop the browser copy.
       clear()
       if (body.needsEmailConfirmation) setCheckEmail(email)
-      else router.replace(CLIENT_MATCHES_PATH)
+      else router.replace(body.next ?? CLIENT_MATCHES_PATH)
       return { ok: true }
     } catch {
       return { ok: false, error: 'Network error — please try again' }

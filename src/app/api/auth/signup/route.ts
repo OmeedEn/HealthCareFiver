@@ -13,6 +13,7 @@ import {
 import { writeClientSignupAnswers } from '@/lib/onboarding/client-answers'
 import { ORG_AGREEMENT_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { authCallbackUrl } from '@/lib/auth/redirect-url'
+import { RETURN_TO_COOKIE, safeNextPath } from '@/lib/auth/safe-next'
 import { CLIENT_MATCHES_PATH } from '@/lib/find-care/match-shared'
 import { normalizeUsPhone, PHONE_ERROR } from '@/lib/phone'
 import { ORG_SIGNUP_PATHS, type SignupPath } from '@/lib/onboarding/signup-path'
@@ -479,8 +480,20 @@ export async function POST(request: NextRequest) {
   // No session means Supabase is waiting on email confirmation (or, with
   // confirmations on, the address already exists and Supabase obfuscates
   // that — either way "check your email" is the right next screen).
-  return NextResponse.json({
+  // A buyer who opened /signup with ?next= (remembered by the proxy in an
+  // httpOnly cookie) goes back there once signed in. Professionals and
+  // organizations finish onboarding first, so their cookie is left for the
+  // post-login landing (src/proxy.ts landingUrl). With email confirmation
+  // pending, /callback reads it instead.
+  const returnTo =
+    body.role === 'client' && result.session
+      ? safeNextPath(request.cookies.get(RETURN_TO_COOKIE)?.value)
+      : null
+  const res = NextResponse.json({
     success: true,
     needsEmailConfirmation: !result.session,
+    ...(returnTo ? { next: returnTo } : {}),
   })
+  if (returnTo) res.cookies.delete(RETURN_TO_COOKIE)
+  return res
 }

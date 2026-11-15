@@ -4,10 +4,13 @@ import { refresh } from 'next/cache'
 import { headers } from 'next/headers'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { checkOrgListing } from '@/lib/eligibility/server'
+import { REASON_MESSAGES } from '@/lib/eligibility/rules'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { BOOKING_TERMS_VERSION } from '@/lib/legal'
-import { isStripeConfigured } from '@/lib/stripe/connect'
+import { bookingPaymentsEnabled } from './fees'
 import { orgVerifyHref, safeNextPath } from '@/lib/onboarding/org-verify-later'
 import { orgMustVerify } from '@/lib/onboarding/org-verify-later-server'
 import { createBookingCheckout, tryBookingRefund } from './payments'
@@ -38,6 +41,7 @@ const HINT_MESSAGES: Record<string, string> = {
   bad_length: 'Write a message (up to 4,000 characters).',
   rate_limited: 'You’re sending messages quickly. Wait a moment and try again.',
   org_verification_required: 'Verify your organization before booking. It takes about two minutes.',
+  org_coverage_unsupported: REASON_MESSAGES.org_coverage_unsupported,
 }
 
 function fail(error: { hint?: string | null; message?: string } | null): BookingActionResult {
@@ -112,6 +116,14 @@ export async function requestBooking(input: {
       error: 'Verify your organization before booking. It takes about two minutes.',
       verifyHref: orgVerifyHref('book'),
     }
+  }
+  // Shared eligibility rules: published listing, approved org with the
+  // agreement accepted, no unsupported high-risk service. The database
+  // enforces the same rules on insert.
+  const check = await checkOrgListing(createAdminClient(), parsed.data.listingId, 'book')
+  if (check.outcome !== 'eligible') {
+    const reason = check.reasons.find((r) => r === 'org_coverage_unsupported' || r === 'event_past')
+    return { ok: false, error: reason ? REASON_MESSAGES[reason] : HINT_MESSAGES.listing_unavailable }
   }
   const { data, error } = await supabase.rpc('request_org_booking', {
     p_listing_id: parsed.data.listingId,
@@ -189,7 +201,7 @@ export async function sendBookingMessage(bookingId: string, body: string): Promi
 /** Customer: open Stripe Checkout to pay for an accepted booking. */
 export async function payForBooking(bookingId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (!uuid.safeParse(bookingId).success) return { ok: false, error: 'Invalid request.' }
-  if (!isStripeConfigured()) return { ok: false, error: 'Payments open soon. We’ll let you know when you can pay.' }
+  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Sanus aren’t open yet. We’ll let you know when you can pay.' }
   const supabase = await session()
   if (!supabase) return SESSION_EXPIRED as { ok: false; error: string }
   const {

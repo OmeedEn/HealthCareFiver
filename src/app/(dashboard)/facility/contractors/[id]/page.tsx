@@ -1,133 +1,60 @@
-import { notFound, redirect } from 'next/navigation'
+import { redirect } from 'next/navigation'
+import { connection } from 'next/server'
 import { InquiryPanel, type LatestInquiry } from './inquiry-panel'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
-import { formatCurrency, getInitials } from '@/lib/utils/format'
+import { ProfileGate } from '@/components/contractor/profile-gate'
+import { getInitials } from '@/lib/utils/format'
 import { isOrgStatus, orgBlockedReason } from '@/lib/org/review'
 import { orgVerifyHref } from '@/lib/onboarding/org-verify-later'
+import { formatRateAmount, formatRateUnit } from '@/lib/rates/types'
 import {
-  ArrowLeft,
-  Star,
-  MapPin,
-  Clock,
-  CheckCircle2,
-} from 'lucide-react'
-import {
-  isDemoMode,
-  DEMO_PROVIDERS,
-  DEMO_CONTRACTOR,
-  DEMO_REVIEWS,
-} from '@/lib/demo/data'
+  getDemoPublicProfile,
+  resolveProfileAccess,
+  type PublicProfileResult,
+} from '@/lib/find-care/profile'
+import { ArrowLeft, Star, MapPin, Clock, BadgeCheck, ShieldCheck } from 'lucide-react'
+import { isDemoMode } from '@/lib/demo/data'
 
-interface ContractorView {
-  id: string
-  first_name: string
-  last_name: string
-  contractor_type: string
-  specialties: string[] | null
-  headline: string | null
-  bio: string | null
-  years_of_experience: number | null
-  hourly_rate_min: number | null
-  hourly_rate_max: number | null
-  city: string | null
-  state: string | null
-  willing_to_travel: boolean
-  travel_radius_miles: number | null
-  is_available: boolean
-  average_rating: number | null
-  total_reviews: number | null
-  total_jobs_completed: number | null
-  avatar_url: string | null
-}
+const BACK_HREF = '/facility/contractors'
 
-interface ReviewView {
-  id: string
-  rating: number
-  title: string | null
-  content: string | null
-}
-
+/**
+ * Organization view of a professional. Resolves the profile with the same
+ * rule as discovery (resolveProfileAccess → getPublicProfile, mirroring
+ * getLiveProviders), so any card from /facility/contractors opens here. A
+ * profile that exists but isn't published shows a gate, not "not found".
+ *
+ * Root cause of the old "Contractor not found": this page embedded
+ * profiles(avatar_url, email) with the signed-in client. profiles.email is
+ * not granted to `authenticated` (20261017000200_profiles_private_columns),
+ * so PostgREST rejected the whole query and `row` was null for every
+ * professional.
+ */
 export default async function ContractorDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
+  await connection()
   const { id } = await params
 
-  let contractor: ContractorView
-  let reviews: ReviewView[] = []
-  let verifiedCredentials = 0
+  let data: PublicProfileResult
   // Messaging and invites unlock once the viewing org is approved.
   let contactBlockedReason: string | null = null
   let contactVerifyHref: string | null = null
   let acceptsInquiries = true
   let latestInquiry: LatestInquiry | null = null
+  const demo = isDemoMode()
 
-  if (isDemoMode()) {
-    const provider = DEMO_PROVIDERS.find((p) => p.id === id)
-
-    if (provider) {
-      contractor = {
-        id: provider.id,
-        first_name: provider.first_name,
-        last_name: provider.last_name,
-        contractor_type: provider.contractor_type,
-        specialties: provider.specialties ?? null,
-        headline: provider.headline ?? null,
-        bio: null,
-        years_of_experience: provider.years_of_experience ?? null,
-        hourly_rate_min: provider.hourly_rate_min ?? null,
-        hourly_rate_max: provider.hourly_rate_max ?? null,
-        city: provider.city ?? null,
-        state: provider.state ?? null,
-        willing_to_travel: false,
-        travel_radius_miles: null,
-        is_available: provider.is_available,
-        average_rating: provider.average_rating ?? null,
-        total_reviews: provider.total_reviews ?? null,
-        total_jobs_completed: null,
-        avatar_url: null,
-      }
-    } else if (id === 'demo-contractor-1') {
-      contractor = {
-        id: DEMO_CONTRACTOR.id,
-        first_name: DEMO_CONTRACTOR.first_name,
-        last_name: DEMO_CONTRACTOR.last_name,
-        contractor_type: DEMO_CONTRACTOR.contractor_type,
-        specialties: DEMO_CONTRACTOR.specialties,
-        headline: DEMO_CONTRACTOR.headline,
-        bio: DEMO_CONTRACTOR.bio,
-        years_of_experience: DEMO_CONTRACTOR.years_of_experience,
-        hourly_rate_min: DEMO_CONTRACTOR.hourly_rate_min,
-        hourly_rate_max: DEMO_CONTRACTOR.hourly_rate_max,
-        city: DEMO_CONTRACTOR.city,
-        state: DEMO_CONTRACTOR.state,
-        willing_to_travel: DEMO_CONTRACTOR.willing_to_travel,
-        travel_radius_miles: DEMO_CONTRACTOR.travel_radius_miles,
-        is_available: DEMO_CONTRACTOR.is_available,
-        average_rating: DEMO_CONTRACTOR.average_rating,
-        total_reviews: DEMO_CONTRACTOR.total_reviews,
-        total_jobs_completed: DEMO_CONTRACTOR.total_jobs_completed,
-        avatar_url: DEMO_CONTRACTOR.avatar_url,
-      }
-    } else {
-      notFound()
+  if (demo) {
+    const result = getDemoPublicProfile(id)
+    if (!result) {
+      return <ProfileGate kind="missing" backHref={BACK_HREF} backLabel="Back to search" />
     }
-
-    reviews = DEMO_REVIEWS.filter((r) => r.reviewee_id === id).map((r) => ({
-      id: r.id,
-      rating: r.rating,
-      title: r.title,
-      content: r.content,
-    }))
-    // Approximate "verified credentials" for demo display
-    verifiedCredentials = id === 'demo-contractor-1' ? 4 : 3
+    data = result
   } else {
     const { createClient } = await import('@/lib/supabase/server')
     const supabase = await createClient()
@@ -135,231 +62,170 @@ export default async function ContractorDetailPage({
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user) redirect('/login')
+    if (!user) redirect(`/login?redirectTo=${encodeURIComponent(`${BACK_HREF}/${id}`)}`)
 
-    const { data: viewerOrg } = await supabase
-      .from('facility_profiles')
-      .select('verification_status, onboarding_submitted_at')
-      .eq('id', user.id)
-      .maybeSingle()
+    const access = await resolveProfileAccess(id, user.id)
+    if (access.kind === 'missing' || access.kind === 'unpublished') {
+      return <ProfileGate kind={access.kind} backHref={BACK_HREF} backLabel="Back to search" />
+    }
+    data = access.result
+
+    const [{ data: viewerOrg }, { data: lastInq }, { data: prefs }] = await Promise.all([
+      supabase
+        .from('facility_profiles')
+        .select('verification_status, onboarding_submitted_at')
+        .eq('id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('org_inquiries')
+        .select('kind, status, created_at, conversation_id')
+        .eq('facility_id', user.id)
+        .eq('contractor_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('contractor_profiles')
+        .select('accepts_inquiries')
+        .eq('id', id)
+        .maybeSingle(),
+    ])
     contactBlockedReason = orgBlockedReason(
       isOrgStatus(viewerOrg?.verification_status) ? viewerOrg.verification_status : null
     )
-    // Hiring orgs verify later: contacting professionals is a moment we ask.
+    // Organizations verify later: contacting professionals is a moment we ask.
     if (viewerOrg && !viewerOrg.onboarding_submitted_at) {
       contactBlockedReason = 'Contacting professionals unlocks once your organization is verified and approved.'
-      contactVerifyHref = orgVerifyHref('contact', `/facility/contractors/${id}`)
+      contactVerifyHref = orgVerifyHref('contact', `${BACK_HREF}/${id}`)
     }
-
-    const { data: lastInq } = await supabase
-      .from('org_inquiries')
-      .select('kind, status, created_at, conversation_id')
-      .eq('facility_id', user.id)
-      .eq('contractor_id', id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
     latestInquiry = (lastInq as LatestInquiry | null) ?? null
-
-    const { data: row } = await supabase
-      .from('contractor_profiles')
-      .select('*, profiles!contractor_profiles_id_fkey!inner(avatar_url, email)')
-      .eq('id', id)
-      .single()
-
-    if (!row) {
-      return (
-        <div className="space-y-3 py-12 text-center">
-          <p className="text-sm text-[#5f5d57]">Contractor not found.</p>
-          <Link href="/facility/contractors">
-            <Button variant="link" className="text-[#2f3cf5]">
-              Back to search
-            </Button>
-          </Link>
-        </div>
-      )
-    }
-
-    const profile = row.profiles as {
-      avatar_url: string | null
-      email: string
-    }
-    acceptsInquiries = row.accepts_inquiries !== false
-    contractor = {
-      id: row.id,
-      first_name: row.first_name,
-      last_name: row.last_name,
-      contractor_type: row.contractor_type,
-      specialties: row.specialties,
-      headline: row.headline,
-      bio: row.bio,
-      years_of_experience: row.years_of_experience,
-      hourly_rate_min: row.hourly_rate_min,
-      hourly_rate_max: row.hourly_rate_max,
-      city: row.city,
-      state: row.state,
-      willing_to_travel: row.willing_to_travel,
-      travel_radius_miles: row.travel_radius_miles,
-      is_available: row.is_available,
-      average_rating: row.average_rating,
-      total_reviews: row.total_reviews,
-      total_jobs_completed: row.total_jobs_completed,
-      avatar_url: profile?.avatar_url ?? null,
-    }
-
-    const { count } = await supabase
-      .from('credentials')
-      .select('*', { count: 'exact', head: true })
-      .eq('contractor_id', id)
-      .eq('status', 'verified')
-    verifiedCredentials = count ?? 0
-
-    const { data: reviewRows } = await supabase
-      .from('reviews')
-      .select('*, reviewer:reviewer_id(id, role, email)')
-      .eq('reviewee_id', id)
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-      .limit(5)
-    reviews = (reviewRows ?? []).map((r) => ({
-      id: r.id as string,
-      rating: r.rating as number,
-      title: (r.title as string | null) ?? null,
-      content: (r.content as string | null) ?? null,
-    }))
+    acceptsInquiries = prefs?.accepts_inquiries !== false
   }
 
-  const typeLabel =
-    CONTRACTOR_TYPE_LABELS[contractor.contractor_type] ??
-    contractor.contractor_type
-  const locationStr = [contractor.city, contractor.state]
-    .filter(Boolean)
-    .join(', ')
+  const { profile: p, reviews, rates, availability } = data
+  const name = `${p.first_name} ${p.last_name}`.trim()
+  const roleLabel = p.otherProfession ?? p.categoryLabel ?? p.credential
+  const locationStr = [p.city, p.state].filter(Boolean).join(', ')
+  const activeRates = (rates ?? []).filter((r) => r.is_active)
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <Link
-        href="/facility/contractors"
+        href={BACK_HREF}
         className="inline-flex items-center text-sm text-[#5f5d57] hover:text-[#1a1a17]"
       >
-        <ArrowLeft className="mr-1 h-4 w-4" />
+        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden="true" />
         Back to search
       </Link>
 
-      {/* Hero card */}
+      {demo && (
+        <p className="inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+          Demo mode — this profile is fictional sample data and can&apos;t be booked.
+        </p>
+      )}
+
       <Card>
         <CardContent>
           <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div className="flex flex-col gap-4 md:flex-row md:items-start">
               <Avatar size="lg" className="size-24">
-                {contractor.avatar_url && (
-                  <AvatarImage
-                    src={contractor.avatar_url}
-                    alt={`${contractor.first_name} ${contractor.last_name}`}
-                  />
-                )}
+                {p.avatar_url && <AvatarImage src={p.avatar_url} alt="" />}
                 <AvatarFallback className="bg-[#eceefe] text-2xl font-semibold text-[#2330c8]">
-                  {getInitials(contractor.first_name, contractor.last_name)}
+                  {getInitials(p.first_name, p.last_name)}
                 </AvatarFallback>
               </Avatar>
 
               <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold text-[#1a1a17]">
-                    {contractor.first_name} {contractor.last_name}
-                  </h1>
-                  <Badge
-                    variant="outline"
-                    className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]"
-                  >
-                    {typeLabel}
-                  </Badge>
+                  <h1 className="text-2xl font-bold text-[#1a1a17]">{name}</h1>
+                  {roleLabel && (
+                    <Badge variant="outline" className="border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]">
+                      {roleLabel}
+                    </Badge>
+                  )}
                 </div>
 
-                {contractor.headline && (
-                  <p className="text-sm text-[#1a1a17]">{contractor.headline}</p>
-                )}
+                {p.headline && <p className="text-sm text-[#1a1a17]">{p.headline}</p>}
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                  {contractor.average_rating != null &&
-                    contractor.average_rating > 0 && (
-                      <div className="flex items-center gap-1.5">
-                        <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" />
-                        <span className="font-medium text-[#1a1a17]">
-                          {contractor.average_rating.toFixed(1)}
-                        </span>
-                        {contractor.total_reviews != null && (
-                          <span className="text-[#5f5d57]">
-                            ({contractor.total_reviews}{' '}
-                            {contractor.total_reviews === 1
-                              ? 'review'
-                              : 'reviews'}
-                            )
-                          </span>
-                        )}
-                      </div>
-                    )}
+                  {p.total_reviews > 0 ? (
+                    <div className="flex items-center gap-1.5">
+                      <Star className="size-4 fill-[#fbbf24] text-[#fbbf24]" aria-hidden="true" />
+                      <span className="sr-only">Rated</span>
+                      <span className="font-medium text-[#1a1a17]">{p.average_rating.toFixed(1)}</span>
+                      <span className="text-[#5f5d57]">
+                        <span className="sr-only">out of 5 from</span>({p.total_reviews}{' '}
+                        {p.total_reviews === 1 ? 'review' : 'reviews'})
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-[#5f5d57]">New on Sanus — no reviews yet</span>
+                  )}
                   {locationStr && (
                     <div className="flex items-center gap-1 text-[#5f5d57]">
-                      <MapPin className="size-4" />
+                      <MapPin className="size-4" aria-hidden="true" />
                       {locationStr}
                     </div>
                   )}
-                  {contractor.years_of_experience != null && (
+                  {p.yearsOfExperience != null && (
                     <div className="flex items-center gap-1 text-[#5f5d57]">
-                      <Clock className="size-4" />
-                      {contractor.years_of_experience} years experience
+                      <Clock className="size-4" aria-hidden="true" />
+                      {p.yearsOfExperience} years experience
                     </div>
                   )}
-                  <div className="flex items-center gap-1 text-[#2330c8]">
-                    <CheckCircle2 className="size-4" />
-                    {verifiedCredentials} verified credentials
-                  </div>
+                  {p.verified && (
+                    <div className="flex items-center gap-1 text-[#2330c8]">
+                      <BadgeCheck className="size-4" aria-hidden="true" />
+                      Approved by Sanus
+                    </div>
+                  )}
+                  {p.insured && (
+                    <div className="flex items-center gap-1 text-[#2330c8]">
+                      <ShieldCheck className="size-4" aria-hidden="true" />
+                      Insured
+                    </div>
+                  )}
                 </div>
+                <Link
+                  href={`/pros/${p.id}`}
+                  className="inline-block text-sm font-medium text-[#2f3cf5] hover:text-[#2330c8]"
+                >
+                  View full public profile
+                </Link>
               </div>
             </div>
 
-            <InquiryPanel
-              contractorId={contractor.id}
-              firstName={contractor.first_name}
-              blockedReason={contactBlockedReason}
-              verifyHref={contactVerifyHref}
-              acceptsInquiries={acceptsInquiries}
-              latest={latestInquiry}
-            />
+            {!demo && (
+              <InquiryPanel
+                contractorId={p.id}
+                firstName={p.first_name}
+                blockedReason={contactBlockedReason}
+                verifyHref={contactVerifyHref}
+                acceptsInquiries={acceptsInquiries}
+                latest={latestInquiry}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Main grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        {/* Main Content */}
         <div className="space-y-6 md:col-span-2">
-          {/* Bio */}
           <Card>
             <CardContent className="space-y-3">
               <h2 className="text-lg font-semibold text-[#1a1a17]">About</h2>
-              {contractor.bio ? (
-                <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
-                  {contractor.bio}
-                </p>
-              ) : (
-                <p className="text-sm text-[#5f5d57]">
-                  No bio provided.
-                </p>
-              )}
+              <p className="text-sm whitespace-pre-wrap text-[#5f5d57]">
+                {p.bio || 'No bio provided.'}
+              </p>
             </CardContent>
           </Card>
 
-          {/* Specialties */}
-          {contractor.specialties && contractor.specialties.length > 0 && (
+          {p.specialties.length > 0 && (
             <Card>
               <CardContent className="space-y-3">
-                <h2 className="text-lg font-semibold text-[#1a1a17]">
-                  Specialties
-                </h2>
+                <h2 className="text-lg font-semibold text-[#1a1a17]">Specialties</h2>
                 <div className="flex flex-wrap gap-2">
-                  {contractor.specialties.map((s) => (
+                  {p.specialties.map((s) => (
                     <Badge key={s} variant="outline">
                       {s}
                     </Badge>
@@ -369,19 +235,19 @@ export default async function ContractorDetailPage({
             </Card>
           )}
 
-          {/* Reviews */}
           <Card>
             <CardContent className="space-y-3">
               <h2 className="text-lg font-semibold text-[#1a1a17]">Reviews</h2>
               {reviews.length > 0 ? (
-                <div className="space-y-4">
+                <ul className="space-y-4">
                   {reviews.map((review, idx) => (
-                    <div key={review.id}>
-                      <div className="mb-1 flex items-center gap-2">
-                        <div className="flex">
+                    <li key={review.id}>
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <div className="flex" role="img" aria-label={`${review.rating} out of 5 stars`}>
                           {Array.from({ length: 5 }).map((_, i) => (
                             <Star
                               key={i}
+                              aria-hidden="true"
                               className={
                                 i < review.rating
                                   ? 'size-4 fill-[#fbbf24] text-[#fbbf24]'
@@ -391,22 +257,17 @@ export default async function ContractorDetailPage({
                           ))}
                         </div>
                         {review.title && (
-                          <span className="font-medium text-[#1a1a17]">
-                            {review.title}
-                          </span>
+                          <span className="font-medium text-[#1a1a17]">{review.title}</span>
                         )}
+                        <span className="text-xs text-[#706d65]">— {review.reviewer}</span>
                       </div>
                       {review.content && (
-                        <p className="text-sm text-[#5f5d57]">
-                          {review.content}
-                        </p>
+                        <p className="text-sm text-[#5f5d57]">{review.content}</p>
                       )}
-                      {idx < reviews.length - 1 && (
-                        <Separator className="mt-4" />
-                      )}
-                    </div>
+                      {idx < reviews.length - 1 && <Separator className="mt-4" />}
+                    </li>
                   ))}
-                </div>
+                </ul>
               ) : (
                 <p className="text-sm text-[#5f5d57]">No reviews yet.</p>
               )}
@@ -414,74 +275,61 @@ export default async function ContractorDetailPage({
           </Card>
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-6">
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#1a1a17]">Rate</h2>
-              {contractor.hourly_rate_min != null ||
-              contractor.hourly_rate_max != null ? (
-                <p className="text-2xl font-bold text-[#1a1a17]">
-                  {contractor.hourly_rate_min != null &&
-                    formatCurrency(contractor.hourly_rate_min)}
-                  {contractor.hourly_rate_max != null &&
-                    ` - ${formatCurrency(contractor.hourly_rate_max)}`}
-                  <span className="text-sm font-normal text-[#5f5d57]">
-                    /hr
-                  </span>
-                </p>
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Rates</h2>
+              {activeRates.length > 0 ? (
+                <ul className="divide-y divide-[#eeebe4]">
+                  {activeRates.map((r) => {
+                    const unit = formatRateUnit(r)
+                    const priced = !r.on_request && r.amount_cents != null
+                    return (
+                      <li key={r.id} className="py-2.5 first:pt-0 last:pb-0">
+                        <p className="text-sm font-medium text-[#1a1a17]">{r.label}</p>
+                        <p>
+                          <span
+                            className={
+                              priced ? 'font-semibold text-[#1a1a17]' : 'text-sm text-[#5f5d57]'
+                            }
+                          >
+                            {formatRateAmount(r)}
+                          </span>
+                          {unit && <span className="ml-1 text-xs text-[#5f5d57]">{unit}</span>}
+                        </p>
+                        {r.description && (
+                          <p className="mt-0.5 text-xs text-[#5f5d57]">{r.description}</p>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
               ) : (
-                <p className="text-sm text-[#5f5d57]">Rate not specified</p>
+                <p className="text-sm font-medium text-[#5f5d57]">Contact for pricing</p>
               )}
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#1a1a17]">
-                Availability
-              </h2>
-              <Badge
-                variant="outline"
-                className={
-                  contractor.is_available
-                    ? 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]'
-                    : ''
-                }
-              >
-                {contractor.is_available ? 'Available' : 'Not Available'}
-              </Badge>
-              {contractor.willing_to_travel && (
+              <h2 className="text-lg font-semibold text-[#1a1a17]">Availability</h2>
+              {availability.accepting == null ? (
+                <p className="text-sm text-[#5f5d57]">Not specified</p>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className={availability.accepting ? 'border-[#c9cdfb] bg-[#eceefe] text-[#2330c8]' : ''}
+                >
+                  {availability.accepting ? 'Accepting clients' : 'Not accepting clients'}
+                </Badge>
+              )}
+              {availability.willingToTravel && (
                 <p className="text-sm text-[#5f5d57]">
                   Willing to travel
-                  {contractor.travel_radius_miles != null &&
-                    ` (${contractor.travel_radius_miles} mi radius)`}
+                  {availability.travelRadiusMiles != null &&
+                    ` (${availability.travelRadiusMiles} mi radius)`}
                 </p>
               )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="space-y-3">
-              <h2 className="text-lg font-semibold text-[#1a1a17]">Stats</h2>
-              <div className="space-y-2 text-sm">
-                {contractor.total_jobs_completed != null && (
-                  <div className="flex justify-between">
-                    <span className="text-[#5f5d57]">Jobs Completed</span>
-                    <span className="font-medium text-[#1a1a17]">
-                      {contractor.total_jobs_completed}
-                    </span>
-                  </div>
-                )}
-                {contractor.years_of_experience != null && (
-                  <div className="flex justify-between">
-                    <span className="text-[#5f5d57]">Experience</span>
-                    <span className="font-medium text-[#1a1a17]">
-                      {contractor.years_of_experience} years
-                    </span>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>

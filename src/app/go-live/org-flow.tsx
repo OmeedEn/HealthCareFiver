@@ -17,7 +17,7 @@ import {
 } from '@/app/onboarding/organization/listing-draft'
 import { EMPTY_EVENT } from '@/app/onboarding/organization/sections/event-form'
 import { EMPTY_SERVICE } from '@/app/onboarding/organization/sections/service-form'
-import type { EventDraft, ServiceDraft } from '@/app/onboarding/organization/shared'
+import { EVENT_FINAL_KEYS, type EventDraft, type ServiceDraft } from '@/app/onboarding/organization/shared'
 import { saveListingDraft } from '@/app/(dashboard)/facility/listings/actions'
 import { acceptOrgAgreement, skipGoLiveScreen } from './actions'
 import { AgreementBody, DoneRow, PayoutsBody } from './ui'
@@ -25,15 +25,15 @@ import type { GoLiveStep } from './pro-flow'
 
 const AGREEMENT_SUMMARY = [
   'Sanus is a marketplace that connects you with professionals. It isn’t the employer or a staffing agency; you arrange pay, hiring, and compliance directly.',
-  'Keep your organization’s information accurate. Sanus verifies it and runs exclusion screenings.',
+  'Keep your organization’s information accurate. Sanus reviews it, including an exclusion-list check.',
   'Every listing, event, and post is reviewed before it goes live. Listings must be truthful.',
-  'Paid services and events need payouts through Stripe Connect. A small service fee applies to each paid booking.',
+  'Paid services and events need payout setup through Stripe Connect. No Sanus service fee has been set; the agreement’s fee terms are still pending.',
   'Don’t post protected health information in listings, posts, or messages.',
 ]
 
 const KIND_OPTIONS = [
   { value: 'service', label: 'A service', sub: 'Something individuals or businesses can book or ask about.' },
-  { value: 'event', label: 'An event', sub: 'A webinar, workshop, CEU course, health fair, and more.' },
+  { value: 'event', label: 'An event', sub: 'A webinar, workshop, course, health fair, and more.' },
 ] as const
 const KIND_ICONS = { service: Megaphone, event: CalendarDays }
 
@@ -127,7 +127,7 @@ function useOrgListing(row: ListingRow | null) {
           set: (k, v) => setEvent((d) => ({ ...d, [k]: v })),
           section,
           saveFields: save,
-          finish: () => save(['audiences', 'offers_ceu'])(),
+          finish: () => save(EVENT_FINAL_KEYS)(),
           finishLabel: 'Save listing',
         })
   const screens: Screen[] = [kindScreen, ...built.map((s) => ({ ...s, step: 1 }))]
@@ -180,7 +180,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
       id: 'go_live_payouts',
       step: 1,
       title: 'Set up payouts',
-      sub: 'Get paid for bookings of your services and events, straight to your bank. A short, secure setup on Stripe, then you’re back here.',
+      sub: 'Get paid for bookings of your services and events, straight to your bank. A short setup on Stripe, then you’re back here.',
       continueLabel: plan.hasConnectAccount ? 'Continue Stripe setup' : 'Set up payouts with Stripe',
       save: async () => ({ ok: false, error: await startStripeConnect('go-live') }),
       skippable: true,

@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { TwoFactorSettings } from '@/components/settings/two-factor-settings'
 import { toast } from 'sonner'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { ClientPreferences } from '@/components/settings/client-preferences'
 import {
   Loader2,
@@ -58,42 +59,52 @@ const defaultPreferences: NotificationPreferences = {
   email_review_received: true,
 }
 
-const preferenceRows: {
+type PreferenceRow = {
   key: keyof NotificationPreferences
   title: string
   description: string
   icon: React.ElementType
-}[] = [
-  {
-    key: 'email_new_message',
-    title: 'New messages',
-    description: 'A facility or contractor sends you a direct message.',
-    icon: MessageSquare,
-  },
+}
+
+// Only marketplace notifications are listed. Application, contract and review
+// emails belong to the separate staffing-posts feature (off until its legal
+// review), so those rows are hidden unless it's switched on. Their saved
+// values are kept either way.
+const STAFFING_PREFERENCE_ROWS: PreferenceRow[] = [
   {
     key: 'email_application_update',
-    title: 'Application updates',
-    description: 'Your application status changes (shortlisted, offered, etc.).',
+    title: 'Staffing post updates',
+    description: 'A staffing post you applied to changes status.',
     icon: Briefcase,
   },
   {
     key: 'email_contract_update',
-    title: 'Contract updates',
-    description: 'A contract you signed has a status or terms change.',
+    title: 'Staffing contract updates',
+    description: 'A staffing contract you signed has a status or terms change.',
     icon: FileText,
-  },
-  {
-    key: 'email_payment_update',
-    title: 'Payment updates',
-    description: 'A payment is processed, released, or disputed.',
-    icon: DollarSign,
   },
   {
     key: 'email_review_received',
     title: 'New reviews',
-    description: 'A facility leaves you a review after a contract.',
+    description: 'Someone leaves you a review after a staffing contract.',
     icon: Star,
   },
+]
+
+const preferenceRows: PreferenceRow[] = [
+  {
+    key: 'email_new_message',
+    title: 'New messages',
+    description: 'Someone sends you a message on Sanus.',
+    icon: MessageSquare,
+  },
+  {
+    key: 'email_payment_update',
+    title: 'Payment updates',
+    description: 'A payment for a booking is processed, refunded, or disputed.',
+    icon: DollarSign,
+  },
+  ...(STAFFING_POSTS_ENABLED ? STAFFING_PREFERENCE_ROWS : []),
 ]
 
 function initialsFromEmail(email: string): string {
@@ -345,7 +356,7 @@ export default function SettingsPage() {
 
   async function handleAccountDelete() {
     const confirmed = window.confirm(
-      'This permanently deletes your Sanus account and all related data. This cannot be undone. Continue?',
+      'This deletes your Sanus account. Some records may be kept where we need them, for example records involving other people or for legal, tax, or safety reasons. This cannot be undone. Continue?',
     )
     if (!confirmed) return
 
@@ -530,8 +541,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <p className="text-xs text-[#5f5d57]">
-                    Used for shift reminders and time-sensitive alerts only —
-                    never shared with facilities.
+                    Used for time-sensitive account alerts.
                   </p>
                 </div>
 
@@ -737,8 +747,9 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="mt-3 text-xs text-[#5f5d57]">
-                  Full session management is coming soon. Until then, you can
-                  sign out from any session by signing out and back in.
+                  Session management isn&apos;t available yet. If you think
+                  someone else has access to your account, change your
+                  password and sign out.
                 </p>
               </CardContent>
             </Card>
@@ -758,9 +769,11 @@ export default function SettingsPage() {
                       Delete account
                     </p>
                     <p className="text-sm text-red-700/80">
-                      Permanently deletes your account and all data we hold
-                      about you, including contracts, payments history,
-                      messages, and reviews. This cannot be undone.
+                      Deletes your account and signs you out. Some records may
+                      be kept where we need them, for example records involving
+                      other people (such as bookings, payments, messages, or
+                      reviews) or records we must keep for legal, tax, or
+                      safety reasons. This cannot be undone.
                     </p>
                   </div>
                   <Button

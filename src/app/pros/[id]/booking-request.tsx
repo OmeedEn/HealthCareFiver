@@ -8,6 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { requestProBooking, type StartConversationState } from './actions'
 
 export const PRIMARY_CTA =
@@ -55,6 +56,7 @@ export function BookingRequestButton({
             won&apos;t be charged anything yet.
           </DialogDescription>
           <form action={action} className="space-y-4">
+            <NoPhiNotice id="pro-booking-phi" />
             <label className="block text-sm font-medium text-[#3a3934]">
               What do you need?
               {services.length > 0 ? (
@@ -100,7 +102,8 @@ export function BookingRequestButton({
                 rows={4}
                 maxLength={2000}
                 className={FIELD}
-                placeholder="A little about what you're looking for. Please don't share medical records here."
+                aria-describedby="pro-booking-phi"
+                placeholder="A little about what you're looking for."
               />
             </label>
             {state.error && (

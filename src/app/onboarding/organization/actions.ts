@@ -34,6 +34,7 @@ import {
   type OrgFieldInput,
   type OrgFieldKey,
 } from './shared'
+import { ceuColumns } from './listing-draft'
 
 export type ActionResult = { ok: true } | { ok: false; error: string; fields?: Record<string, string> }
 
@@ -338,6 +339,7 @@ export async function saveListing(kind: 'service' | 'event', input: unknown): Pr
       locations: d.locations || null, capacity: d.capacity ? Number(d.capacity) : null,
       is_free: d.is_free, price_cents: d.is_free ? null : toCents(d.price),
       offers_ceu: d.offers_ceu === 'yes', audiences: d.audiences,
+      ...ceuColumns(d),
     }
   }
   const claims = findBlockedClaims(row.title as string, row.description as string)

@@ -7,7 +7,7 @@ import { isDemoMode } from '@/lib/demo/data'
 import { currentUser } from '@/lib/auth/roles'
 import { getBookingDetail } from '@/lib/bookings/data'
 import { freeCancelUntil, money, needsPayment, when, type BookingRow } from '@/lib/bookings/types'
-import { bookingFeeCents, bookingFeePercent } from '@/lib/bookings/fees'
+import { bookingFeeCents, bookingFeePercent, bookingPaymentsEnabled } from '@/lib/bookings/fees'
 import { getStripe } from '@/lib/stripe/client'
 import { isStripeConfigured } from '@/lib/stripe/connect'
 import { settleBookingCheckout } from '@/lib/bookings/payments'
@@ -93,7 +93,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
         (side === 'org' ? (
           <OrgBookingActions booking={b} />
         ) : (
-          <CustomerBookingActions booking={b} cancelNote={cancelNote} paymentsOpen={isStripeConfigured()} />
+          <CustomerBookingActions booking={b} cancelNote={cancelNote} paymentsOpen={bookingPaymentsEnabled()} />
         ))}
 
       <section className="rounded-2xl border border-[#e3dfd6] bg-white p-6">
@@ -145,13 +145,13 @@ function NextStep({ booking: b, side }: { booking: BookingRow; side: 'customer' 
           requested: 'The organization will accept, send a quote, or decline. We’ll notify you.',
           quoted: 'Review the quote. If it works for you, accept it, then pay to confirm.',
           accepted: unpaid
-            ? isStripeConfigured()
-              ? 'Accepted. Pay on Sanus to confirm your spot. Sanus holds your payment until after your booking.'
-              : 'Accepted. Payments on Sanus open soon; we’ll notify you when you can pay to confirm.'
+            ? bookingPaymentsEnabled()
+              ? 'Accepted. Pay on Sanus to confirm your spot. The organization is paid after your booking.'
+              : 'Accepted. Payments on Sanus aren’t open yet; we’ll notify you when you can pay to confirm.'
             : free
               ? 'You’re booked. There’s nothing to pay.'
               : 'You’re booked.',
-          paid: 'You’re booked and paid. Sanus holds your payment and pays the organization after your booking.',
+          paid: 'You’re booked and paid. The organization is paid after your booking.',
           completed: 'This booking is complete.',
           declined: 'This request was declined. You can find other services and events in Find care.',
           cancelled: 'This booking was cancelled.',
@@ -202,6 +202,7 @@ function customerCancelNote(b: BookingRow): string | null {
 function MoneyPanel({ booking: b, side }: { booking: BookingRow; side: 'customer' | 'org' }) {
   const lines: [string, string][] = []
   const paid = b.amount_paid_cents
+  // null while no fee rate is configured (fees are default-off).
   const fee = b.fee_cents ?? (b.price_cents ? bookingFeeCents(b.price_cents) : 0)
   const until = freeCancelUntil(b)
 
@@ -218,7 +219,13 @@ function MoneyPanel({ booking: b, side }: { booking: BookingRow; side: 'customer
     if ((b.price_cents ?? 0) > 0 && ['accepted', 'paid', 'completed'].includes(b.status) && b.payout_status !== 'cancelled') {
       const pct = b.fee_cents != null && paid ? Math.round((b.fee_cents / paid) * 1000) / 10 : bookingFeePercent()
       const total = paid ?? b.price_cents!
-      lines.push(['Your payout', `${money(total - fee)} (${money(total)} minus the ${pct}% Sanus fee)`])
+      if (fee != null && pct != null) {
+        lines.push(['Your payout', `${money(total - fee)} (${money(total)} minus the ${pct}% Sanus fee)`])
+      } else if (paid == null) {
+        lines.push(['Payment', 'Payments on Sanus aren’t open yet'])
+      } else {
+        lines.push(['Your payout', money(total)])
+      }
     }
     if (b.payout_status === 'scheduled') lines.push(['Payout date', b.payout_due_at ? `Around ${day(b.payout_due_at)}` : 'After the booking'])
     if (b.payout_status === 'on_hold') lines.push(['Payout', 'On hold: the customer disputed the payment. We’ll be in touch.'])

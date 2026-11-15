@@ -10,7 +10,8 @@ export const PRIMARY_BTN =
   'h-11 bg-[#2f3cf5] text-sm font-semibold text-white hover:bg-[#2330c8]'
 
 export function Progress({ step }: { step: number }) {
-  const pct = (step / TOTAL_STEPS) * 100
+  // Steps finished before this one: being on the last step isn't 100%.
+  const pct = ((step - 1) / TOTAL_STEPS) * 100
   return (
     <div>
       <div className="flex items-center justify-between text-xs font-medium text-[#5f5d57]">
@@ -123,6 +124,7 @@ export function TextAreaField({
   maxLength,
   counter,
   rows = 3,
+  describedBy,
 }: {
   id: string
   label: string
@@ -134,6 +136,8 @@ export function TextAreaField({
   maxLength?: number
   counter?: boolean
   rows?: number
+  /** Extra aria-describedby ids, e.g. a NoPhiNotice above the field. */
+  describedBy?: string
 }) {
   return (
     <div className="space-y-1.5">
@@ -149,7 +153,7 @@ export function TextAreaField({
         maxLength={maxLength}
         rows={rows}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-err` : undefined}
+        aria-describedby={[describedBy, error ? `${id}-err` : null].filter(Boolean).join(' ') || undefined}
         className="bg-white"
       />
       <div className="flex items-start justify-between gap-3">

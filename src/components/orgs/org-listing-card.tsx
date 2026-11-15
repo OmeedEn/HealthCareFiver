@@ -9,6 +9,7 @@ import {
   labelFor,
 } from '@/lib/onboarding/organization'
 import type { PublicOrgListing, PublicOrgListingWithOrg } from '@/lib/orgs/public'
+import { publicCeuLabel } from '@/lib/listings/ce-credit'
 import { RequestBookingButton } from '@/components/bookings/request-booking-button'
 
 function formatWhen(iso: string): string {
@@ -68,10 +69,11 @@ export function OrgListingCard({
     <article id={`listing-${l.id}`} className="flex scroll-mt-24 flex-col rounded-2xl border border-[#e3dfd6] bg-white p-5">
       <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#5f5d57]">
         <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-[#3a3934]">{kindLine}</span>
-        {l.kind === 'event' && l.offersCeu && (
+        {/* Only a credit claim Sanus reviewed separately; never for "No" or an unreviewed claim. */}
+        {publicCeuLabel(l) && (
           <span className="inline-flex items-center gap-1 rounded-md bg-[#eceefe] px-2 py-0.5 text-[#2330c8]">
             <Award className="size-3" aria-hidden="true" />
-            CEU/CME credit
+            {publicCeuLabel(l)}
           </span>
         )}
       </div>

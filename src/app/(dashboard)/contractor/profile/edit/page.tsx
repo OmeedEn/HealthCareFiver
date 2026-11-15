@@ -24,6 +24,9 @@ import { PROFESSIONS_BY_BRANCH, PROFESSION_PLACEHOLDER } from '@/lib/onboarding/
 import { normalizeWebsiteUrl, professionColumns } from '@/lib/onboarding/questions/professional'
 import { LanguagesInput } from '@/components/contractor/languages-input'
 import { PhotoManager } from './photo-manager'
+import { buildProfessionalChecklist, type ProfessionalChecklistInput } from '@/lib/onboarding/checklist-professional'
+import { loadProfessionalChecklistInput } from '@/lib/readiness/professional'
+import { computeReadiness, presentMeasures } from '@/lib/readiness'
 import { toast } from 'sonner'
 import {
   Loader2,
@@ -185,24 +188,41 @@ function rowToForm(d: ProfileRow): FormData {
   }
 }
 
-function calculateCompletion(data: FormData): number {
-  const fields = [
-    data.first_name,
-    data.last_name,
-    data.professional_category === 'other' ? data.other_profession : data.profession,
-    data.headline,
-    data.bio,
-    data.specialties,
-    data.years_of_experience,
-    data.npi_number,
-    data.state_license_number,
-    data.license_state,
-    data.city,
-    data.state,
-    data.zip_code,
-  ]
-  const filled = fields.filter((f) => f !== '' && f !== null && f !== undefined).length
-  return Math.round((filled / fields.length) * 100)
+/**
+ * Readiness for the editor: the same checklist and measures as the dashboard
+ * (src/lib/readiness), with the unsaved form values laid over the stored
+ * profile so the numbers move as the person types.
+ */
+function editorChecklist(
+  input: ProfessionalChecklistInput,
+  data: FormData,
+  extras: { languages: string[]; telehealthStates: string[]; avatarUrl: string | null }
+) {
+  const category = data.professional_category
+  const branch = isProfessionalCategory(category)
+    ? effectiveBranch(category, data.credential_basis)
+    : input.branch
+  const specialties = data.specialties
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  if (branch === 'consultant' && data.profession.trim()) specialties.unshift(data.profession.trim())
+  const years = data.years_of_experience ? parseInt(data.years_of_experience, 10) : null
+  return buildProfessionalChecklist({
+    ...input,
+    branch,
+    profile: {
+      ...input.profile,
+      bio: data.bio,
+      specialties,
+      years_of_experience: Number.isFinite(years) ? years : null,
+      npi_number: data.npi_number,
+      website_url: data.website_url,
+      languages: extras.languages,
+      telehealth_states: extras.telehealthStates,
+    },
+    avatarUrl: extras.avatarUrl,
+  })
 }
 
 export default function ContractorProfileEditPage() {
@@ -218,6 +238,8 @@ export default function ContractorProfileEditPage() {
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  // Stored state for the readiness measures (null in demo mode or on error).
+  const [checklistInput, setChecklistInput] = useState<ProfessionalChecklistInput | null>(null)
 
   useEffect(() => {
     async function loadProfile() {
@@ -253,6 +275,7 @@ export default function ContractorProfileEditPage() {
         const linked = Array.isArray(data.profiles) ? data.profiles[0] : data.profiles
         setAvatarUrl(linked?.avatar_url ?? null)
       }
+      setChecklistInput(await loadProfessionalChecklistInput(supabase, user.id).catch(() => null))
 
       setLoading(false)
     }
@@ -329,7 +352,11 @@ export default function ContractorProfileEditPage() {
       // only licensed clinical professions have one.
       if (isProfessionalCategory(category) && branch !== 'clinical') professionCols.contractor_type = 'other'
 
-      const profileCompletion = calculateCompletion(formData)
+      // Legacy column: now the "Optional profile improvements" measure.
+      const profileCompletion = checklistInput
+        ? computeReadiness(editorChecklist(checklistInput, formData, { languages, telehealthStates, avatarUrl }))
+            .optional_profile.percent ?? undefined
+        : undefined
 
       const updatePayload = {
         first_name: formData.first_name || null,
@@ -392,7 +419,10 @@ export default function ContractorProfileEditPage() {
     )
   }
 
-  const completion = calculateCompletion(formData)
+  const readiness = checklistInput
+    ? computeReadiness(editorChecklist(checklistInput, formData, { languages, telehealthStates, avatarUrl }))
+    : null
+  const measures = readiness ? presentMeasures(readiness) : []
   const branch = effectiveBranch(formData.professional_category, formData.credential_basis)
   const fullName = `${formData.first_name} ${formData.last_name}`.trim()
   const publicHref = userId ? `/pros/${userId}` : '/contractor/profile'
@@ -451,18 +481,38 @@ export default function ContractorProfileEditPage() {
                 </div>
               </div>
 
-              <div className="mt-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-semibold text-[#1a1a17]">Profile strength</span>
-                  <span className="font-bold text-[#2f3cf5]">{completion}%</span>
+              {measures.length > 0 && (
+                <div className="mt-6 space-y-3">
+                  {measures.map((m) => (
+                    <div key={m.id}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-semibold text-[#1a1a17]">{m.label}</span>
+                        <span className="font-bold text-[#2f3cf5]">
+                          {m.done} of {m.total}
+                        </span>
+                      </div>
+                      <div
+                        className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={m.total}
+                        aria-valuenow={m.done}
+                        aria-label={`${m.label}: ${m.done} of ${m.total} done`}
+                      >
+                        <div
+                          className="h-full rounded-full bg-[#2f3cf5] transition-all"
+                          style={{ width: `${m.percent ?? 0}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-xs text-[#5f5d57]">
+                    Completing these doesn&apos;t approve or publish your profile. Sanus reviews every
+                    professional and listing. Unsaved changes count here but aren&apos;t saved until you
+                    press Save.
+                  </p>
                 </div>
-                <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]">
-                  <div
-                    className="h-full rounded-full bg-[#2f3cf5] transition-all"
-                    style={{ width: `${completion}%` }}
-                  />
-                </div>
-              </div>
+              )}
 
               <div
                 className={`mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
@@ -790,7 +840,7 @@ export default function ContractorProfileEditPage() {
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Accepting new clients" description="Show up in searches." />
-                <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Get matched with work outside your city." />
+                <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Serve clients outside your city, e.g. home visits or on-site events." />
                 {formData.willing_to_travel && (
                   <div className="md:col-span-2">
                     <FieldLabel htmlFor="travel_radius_miles">Travel radius (miles)</FieldLabel>
@@ -806,7 +856,17 @@ export default function ContractorProfileEditPage() {
         <div className="sticky -bottom-4 z-10 -mx-4 mt-8 md:-bottom-6 border-t border-[#e3dfd6] bg-white/95 px-4 py-4 backdrop-blur md:-mx-6 md:px-6">
           <div className="mx-auto flex w-full max-w-7xl flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="hidden text-sm text-[#5f5d57] sm:block">
-              Profile <span className="font-semibold text-[#1a1a17]">{completion}%</span> complete
+              {readiness && readiness.required_for_review.total > 0 ? (
+                <>
+                  Required for review:{' '}
+                  <span className="font-semibold text-[#1a1a17]">
+                    {readiness.required_for_review.done} of {readiness.required_for_review.total}
+                  </span>{' '}
+                  done
+                </>
+              ) : (
+                'Changes save when you press Save.'
+              )}
             </p>
             <div className="flex gap-3">
               <Button

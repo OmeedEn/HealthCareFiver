@@ -3,10 +3,10 @@ import { Check, ChevronRight, Lock } from 'lucide-react'
 import {
   CHECKLIST_GROUPS,
   GROUP_ORDER,
-  checklistPercent,
   type ChecklistItem,
   type GroupLabels,
 } from '@/lib/onboarding/checklist'
+import { computeReadiness, measureForGroup } from '@/lib/readiness'
 
 const TAG_TONE = {
   red: 'bg-[#fdecea] text-[#b42318]',
@@ -14,9 +14,12 @@ const TAG_TONE = {
 } as const
 
 /**
- * The "Finish your profile" card pinned to the top of the dashboard: a
- * weighted progress bar and the open items by group. Finished items collapse
- * into a count so the card stays short. Renders nothing once everything's done.
+ * The "Finish your profile" card pinned to the top of the dashboard: one
+ * named measure per group (src/lib/readiness — Required for review, Required
+ * to publish, Optional profile improvements), each with its own count and
+ * bar, and the open items. Optional items never move a required measure.
+ * Finished items collapse into a count so the card stays short. Renders
+ * nothing once everything's done.
  */
 export function FinishProfileCard({
   items,
@@ -28,26 +31,18 @@ export function FinishProfileCard({
   groupLabels?: GroupLabels
 }) {
   if (!items.length || items.every((i) => i.done)) return null
-  const pct = checklistPercent(items)
+  const readiness = computeReadiness(items)
 
   return (
     <section aria-labelledby="finish-profile-title" className="rounded-xl border border-[#e3dfd6] bg-white p-5 sm:p-6">
-      <div className="flex items-center justify-between gap-4">
-        <h2 id="finish-profile-title" className="text-base font-semibold text-[#1a1a17]">
-          {title}
-        </h2>
-        <span className="text-sm font-semibold text-[#2f3cf5]">{pct}%</span>
-      </div>
-      <div
-        className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={pct}
-        aria-label={`${title}: ${pct}% complete`}
-      >
-        <div className="h-full rounded-full bg-[#2f3cf5] transition-all" style={{ width: `${pct}%` }} />
-      </div>
+      <h2 id="finish-profile-title" className="text-base font-semibold text-[#1a1a17]">
+        {title}
+      </h2>
+      {!groupLabels && (
+        <p className="mt-1 text-xs text-[#5f5d57]">
+          Finishing these steps doesn&apos;t approve or publish your profile. Sanus reviews every account and listing.
+        </p>
+      )}
 
       <div className="mt-5 space-y-5">
         {GROUP_ORDER.map((g) => {
@@ -56,18 +51,36 @@ export function FinishProfileCard({
           const open = inGroup.filter((i) => !i.done)
           const doneCount = inGroup.length - open.length
           const cfg = CHECKLIST_GROUPS[g]
+          const measure = readiness[measureForGroup(g)]
+          const label = groupLabels?.[g] ?? cfg.label
           return (
             <div key={g}>
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-[#5f5d57]">
-                  {groupLabels?.[g] ?? cfg.label}
-                </h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-[#5f5d57]">{label}</h3>
                 {cfg.tag && open.length > 0 && (
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TAG_TONE[cfg.tag.tone]}`}>
                     {cfg.tag.text}
                   </span>
                 )}
+                <span className="ml-auto text-xs font-semibold text-[#2f3cf5]">
+                  {measure.done} of {measure.total}
+                </span>
               </div>
+              <div
+                className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={measure.total}
+                aria-valuenow={measure.done}
+                aria-label={`${label}: ${measure.done} of ${measure.total} done`}
+              >
+                <div
+                  className="h-full rounded-full bg-[#2f3cf5] transition-all"
+                  style={{ width: `${measure.percent ?? 0}%` }}
+                />
+              </div>
+              {/* Role-specific headings (clients) carry their own meaning. */}
+              {!groupLabels?.[g] && <p className="mt-1 text-xs text-[#706d65]">{measure.note}</p>}
               <ul className="mt-2 divide-y divide-[#eeebe4]">
                 {open.map((item) => (
                   <li key={item.id}>

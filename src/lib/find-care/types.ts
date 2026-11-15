@@ -36,6 +36,11 @@ export type PublicProvider = {
   session_types: string[]
   /** Admin reviewed a current malpractice certificate (insured_verified_at). */
   insured: boolean
+  /**
+   * The professional has at least one active saved rate (professional_rates).
+   * Amounts stay on the full profile; cards say "Contact for pricing" when false.
+   */
+  has_public_rates: boolean
 }
 
 export const PROFESSIONAL_CATEGORY_LABELS: Record<ProfessionalCategory, string> =

@@ -88,7 +88,7 @@ const NOT_APPROVED_COPY: Record<string, { title: string; body: string }> = {
   },
   pending_review: {
     title: 'Your application is in review',
-    body: 'We review every application within 24-48 hours. You’ll get an email when you’re approved. Then come back here to finish going live.',
+    body: 'Our team reviews every application. You’ll get an email when the review is complete. Then come back here to finish going live.',
   },
 }
 

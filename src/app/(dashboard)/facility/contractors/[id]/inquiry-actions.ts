@@ -4,6 +4,8 @@ import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { loadProviderFacts } from '@/lib/eligibility/server'
+import { isProviderEligible } from '@/lib/eligibility/rules'
 import { INQUIRY_ERRORS, INQUIRY_KIND_LABEL, inquirySummary } from '@/lib/org/inquiries'
 
 const schema = z.object({
@@ -26,6 +28,13 @@ export async function sendOrgInquiry(input: unknown): Promise<{ ok: true } | { o
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return { ok: false, error: 'Your session expired. Please sign in again.' }
+
+  // Only eligible (live) professionals can be contacted; the database
+  // enforces the same rule on insert.
+  const provider = await loadProviderFacts(createAdminClient(), d.contractorId)
+  if (!provider || !isProviderEligible(provider, new Date())) {
+    return { ok: false, error: 'This professional isn’t available for inquiries right now.' }
+  }
 
   const { error } = await supabase.from('org_inquiries').insert({
     facility_id: user.id,

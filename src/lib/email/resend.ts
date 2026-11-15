@@ -195,7 +195,7 @@ export async function sendProviderApprovalEmail(
       </ol>
       ${insuranceBlock}
       ${ctaButton(goLiveUrl, 'Finish going live')}
-      <p style="color:#5f5d57;font-size:13px;">Free to join. A small service fee applies to each booking.</p>
+      <p style="color:#5f5d57;font-size:13px;">Free to join. No Sanus service fee has been set.</p>
     `),
   })
 }
@@ -408,7 +408,7 @@ export async function sendOrgApprovalEmail(
       <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Sanus.</h1>
       <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
       <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
-      <p>You can now message professionals and review applicants. A few quick steps to finish going live: accept the Organization Agreement, set up payouts, and add your first service or event.</p>
+      <p>You can now message professionals and send them inquiries. A few quick steps to finish going live: accept the Organization Agreement, set up payouts, and add your first service or event.</p>
       ${ctaButton(goLiveUrl, 'Finish going live')}
     `),
   })
@@ -447,7 +447,7 @@ export async function sendOrgReviewActionEmail(
       subject: 'Your Sanus organization account is suspended',
       html: layout(`
         ${hi}
-        <p><strong>${orgName}</strong> has been suspended on Sanus. Your posts are hidden, and you can&#39;t message professionals or review applicants for now.</p>
+        <p><strong>${orgName}</strong> has been suspended on Sanus. Your services and events are hidden, and you can&#39;t message professionals or send inquiries for now.</p>
         ${quote('#cbc6ba')}
         <p>Reply to this email to resolve it.</p>
       `),

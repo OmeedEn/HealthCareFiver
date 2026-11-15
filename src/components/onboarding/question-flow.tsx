@@ -116,9 +116,15 @@ export function QuestionFlow({
   const inStep = screens.filter((s) => stepOf(s) === step)
   const w = (s: Screen) => s.weight ?? 1
   const stepTotal = inStep.reduce((n, s) => n + w(s), 0)
-  const position = inStep.slice(0, inStep.indexOf(screen)).reduce((n, s) => n + w(s), 0) + 1
+  // Questions behind this one. The bar shows what's been answered, not the
+  // screen being looked at, so an unanswered screen (including the last
+  // required one, e.g. locations) never reads 100%. Floored for the same reason.
+  const answeredInStep = inStep.slice(0, inStep.indexOf(screen)).reduce((n, s) => n + w(s), 0)
+  const position = answeredInStep + 1
   const before = stepOrder.filter((s) => s < step).reduce((n, s) => n + stepWeights[s], 0)
-  const pct = Math.round((before + stepWeights[step] * (position / stepTotal)) * 100)
+  const pct = Math.min(99, Math.floor((before + stepWeights[step] * (answeredInStep / stepTotal)) * 100))
+  // A single question (e.g. one Finish your profile item) has no meaningful bar.
+  const showBar = screens.length > 1
   const [multiline, setMultiline] = useState(false)
 
   const elapsed = () => Math.max(0, Date.now() - shownAt.current)
@@ -223,16 +229,20 @@ export function QuestionFlow({
           ) : (
             <span className="size-9 shrink-0" />
           )}
-          <div
-            className="h-1 flex-1 overflow-hidden rounded-full bg-[#e3dfd6]"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={pct}
-            aria-label="Progress"
-          >
-            <div className="h-full rounded-full bg-[#2f3cf5] transition-all duration-300" style={{ width: `${pct}%` }} />
-          </div>
+          {showBar ? (
+            <div
+              className="h-1 flex-1 overflow-hidden rounded-full bg-[#e3dfd6]"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={pct}
+              aria-label={`Questions answered: ${pct}%`}
+            >
+              <div className="h-full rounded-full bg-[#2f3cf5] transition-all duration-300" style={{ width: `${pct}%` }} />
+            </div>
+          ) : (
+            <span className="flex-1" />
+          )}
           <span className="w-9 shrink-0" aria-hidden />
         </div>
       ) : (
@@ -249,9 +259,10 @@ export function QuestionFlow({
                   <Check className="size-3" /> Saved
                 </span>
               ) : null}
-              <span>{pct}%</span>
+              {showBar && <span>{pct}% answered</span>}
             </span>
           </div>
+          {showBar && (
           <div
             className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e3dfd6]"
             role="progressbar"
@@ -262,6 +273,7 @@ export function QuestionFlow({
           >
             <div className="h-full rounded-full bg-[#2f3cf5] transition-all duration-300" style={{ width: `${pct}%` }} />
           </div>
+          )}
           <p className="mt-2 text-xs text-[#706d65]">
             {stepOrder.length > 1 && `Step ${stepOrder.indexOf(step) + 1} of ${stepOrder.length} · `}
             Question {position} of {stepTotal}

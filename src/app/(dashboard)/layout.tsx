@@ -10,6 +10,31 @@ import { isDemoMode, DEMO_CONTRACTOR, DEMO_FACILITY } from '@/lib/demo/data'
 
 type DashboardRole = 'contractor' | 'facility' | 'admin' | 'client'
 
+/**
+ * Which hat this session is wearing, derived server-side from profiles.role
+ * (and the organization row). One account holds one context today; a
+ * switcher needs the capability model in docs/auth-context-map.md.
+ */
+function activeContextLabel(role: string, orgName: string | null): string {
+  if (role === 'facility' || role === 'staffing_agency') {
+    return orgName ? `Organization: ${orgName}` : 'Organization account'
+  }
+  if (role === 'client') return 'Buying for myself'
+  if (role === 'admin') return 'Sanus admin'
+  return 'Offering expertise'
+}
+
+function ActiveContext({ role, orgName }: { role: string; orgName: string | null }) {
+  return (
+    <div className="border-b border-[#e3dfd6] bg-white">
+      <p className="mx-auto max-w-7xl px-4 py-1.5 text-xs text-[#5f5d57] sm:px-6">
+        Acting as{' '}
+        <span className="font-semibold text-[#1a1a17]">{activeContextLabel(role, orgName)}</span>
+      </p>
+    </div>
+  )
+}
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -23,6 +48,8 @@ export default async function DashboardLayout({
   // Approved professionals who haven't accepted the contractor agreement yet
   // see a "go live" banner. Joining is free; the dashboard is never paywalled.
   let showGoLiveBanner = false
+  // Organization accounts: the organization's name for the context strip.
+  let orgName: string | null = null
 
   if (isDemoMode()) {
     // The DemoRoleSwitcher writes a `demo_role` cookie; the layout reads it
@@ -40,6 +67,7 @@ export default async function DashboardLayout({
 
     if (role === 'facility') {
       displayName = DEMO_FACILITY.facility_name
+      orgName = DEMO_FACILITY.facility_name
       userEmail = DEMO_FACILITY.email
       userId = DEMO_FACILITY.id
     } else if (role === 'admin') {
@@ -86,6 +114,15 @@ export default async function DashboardLayout({
         !contractor?.contractor_agreement_accepted_at
     }
 
+    if (role === 'facility' || (role as string) === 'staffing_agency') {
+      const { data: org } = await supabase
+        .from('facility_profiles')
+        .select('facility_name')
+        .eq('id', user.id)
+        .maybeSingle()
+      orgName = (org?.facility_name as string | undefined)?.trim() || null
+    }
+
     displayName =
       profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`
@@ -120,6 +157,7 @@ export default async function DashboardLayout({
       </a>
       <TopNav user={navUser} inApp />
       <AccountTabs role={navRole} />
+      <ActiveContext role={role} orgName={orgName} />
       {showGoLiveBanner && (
         <div
           role="status"

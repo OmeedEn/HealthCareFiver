@@ -14,6 +14,7 @@ import {
   ListChecks,
 } from 'lucide-react'
 import { isDemoMode, DEMO_CREDENTIALS, DEMO_REQUIRED_CREDENTIALS } from '@/lib/demo/data'
+import { OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES } from '@/lib/utils/constants'
 
 interface RequiredCredential {
   id: string
@@ -94,6 +95,13 @@ export default async function ContractorCredentialsPage() {
       requiredCredentials = (reqData ?? []) as unknown as RequiredCredential[]
     }
   }
+
+  // required_credentials is staffing-era seed data (per contractor_type) that
+  // marks drug screens, immunizations and TB tests mandatory for RN/LPN/CNA.
+  // Sanus doesn't collect occupational-health records by default.
+  requiredCredentials = requiredCredentials.filter(
+    (r) => !OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES.has(r.credential_type)
+  )
 
   // Group credentials by status
   const verified = credentials.filter((c) => c.status === 'verified')
@@ -288,7 +296,7 @@ export default async function ContractorCredentialsPage() {
               No credentials yet
             </h3>
             <p className="mt-1 text-sm text-[#5f5d57]">
-              Upload your first credential to start getting matched with jobs.
+              Upload a license, certification, or other document for our team to review.
             </p>
             <Button
               className="mt-4 bg-[#2f3cf5] text-white hover:bg-[#2330c8]"

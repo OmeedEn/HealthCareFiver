@@ -118,7 +118,7 @@ export const ATTEST_AUTHORIZED_LABEL =
   "I'm authorized to represent this organization, and the information I provided is accurate."
 export const ATTEST_CHECKS_LABEL =
   'I authorize Sanus to verify this information and run exclusion screenings.'
-export const REVIEW_NOTE = 'We review every application within 24-48 hours.'
+export const REVIEW_NOTE = 'Our team reviews every application and will email you when it’s done.'
 
 /**
  * Uploads. The registration screen stores 'business_registration' (or
@@ -155,7 +155,7 @@ export const ORG_INTENTS = [
   {
     key: 'host_events',
     label: 'Host an event or training',
-    sub: 'Webinars, workshops, CEU courses, health fairs, and more.',
+    sub: 'Webinars, workshops, courses, health fairs, and more.',
   },
   {
     key: 'find_professionals',
@@ -224,7 +224,7 @@ export const REACH_VIA = [
 export const ORG_EVENT_TYPES = [
   { value: 'webinar', label: 'Webinar' },
   { value: 'workshop', label: 'Workshop' },
-  { value: 'ceu_course', label: 'CEU/CME course' },
+  { value: 'ceu_course', label: 'Continuing education course' },
   { value: 'certification', label: 'Certification' },
   { value: 'conference', label: 'Conference' },
   { value: 'health_fair', label: 'Health fair' },

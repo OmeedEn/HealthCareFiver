@@ -15,8 +15,8 @@ import { AgreementBody, DoneRow, PayoutsBody } from './ui'
 const AGREEMENT_SUMMARY = [
   'You’re an independent professional, not a Sanus employee. You set your prices and choose your bookings.',
   'You’re responsible for your license or certification, scope of practice, and insurance.',
-  'Sanus charges a small service fee on each booking. You see the exact amount before you publish.',
-  'Client payments and your payouts run through Stripe Connect.',
+  'No Sanus service fee has been set; the agreement’s fee terms are still pending. You’ll see the exact amount of any fee before it applies.',
+  'Payouts are set up through Stripe Connect. Paid booking through Sanus isn’t open yet.',
   'Protect client health information and follow HIPAA where it applies.',
 ]
 
@@ -98,7 +98,7 @@ export function ProGoLiveFlow(props: ProGoLiveProps) {
       id: 'go_live_payouts',
       step: 1,
       title: 'Set up payouts',
-      sub: 'Get paid for bookings, straight to your bank. You’ll finish a short, secure setup on Stripe and come right back here.',
+      sub: 'Get paid for bookings, straight to your bank. You’ll finish a short setup on Stripe and come right back here.',
       continueLabel: plan.hasConnectAccount ? 'Continue Stripe setup' : 'Set up payouts with Stripe',
       save: async () => ({ ok: false, error: await startStripeConnect('go-live') }),
       skippable: true,

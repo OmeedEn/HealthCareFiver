@@ -1,5 +1,4 @@
 import { cookies } from 'next/headers'
-import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 import { redirect } from 'next/navigation'
 import {
   Card,
@@ -21,7 +20,6 @@ import {
   MessageSquare,
   DollarSign,
   MapPin,
-  Star,
   CheckCircle2,
   TrendingUp,
   Search,
@@ -32,13 +30,9 @@ import {
   isDemoMode,
   DEMO_CONTRACTOR,
   DEMO_FACILITY,
-  DEMO_JOBS,
   DEMO_NOTIFICATIONS,
-  DEMO_CONTRACTS,
-  DEMO_PAYMENTS,
-  DEMO_PROVIDERS,
 } from '@/lib/demo/data'
-import { CONTRACTOR_TYPE_LABELS, JOB_TYPE_LABELS } from '@/lib/utils/constants'
+import { CONTRACTOR_TYPE_LABELS } from '@/lib/utils/constants'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { loadClientProfile } from '@/lib/onboarding/client-profile'
 import { buildClientChecklist, CLIENT_GROUP_LABELS } from '@/lib/onboarding/checklist-client'
@@ -56,21 +50,7 @@ import { isNewAccount } from '@/lib/onboarding/contractor-checklist'
 import { buildProfessionalChecklist, type CredentialLike } from '@/lib/onboarding/checklist-professional'
 import { hasCurrentMalpractice, type CredentialRow } from '@/lib/compliance/rules'
 import { effectiveBranch, isProfessionalCategory } from '@/lib/onboarding/professional-branch'
-import { ProfileCard, profileChecks, type ProfileCardData } from './profile-card'
-
-type DashboardJob = {
-  id: string
-  title: string
-  city: string | null
-  state: string | null
-  pay_rate_min: number | null
-  pay_rate_max: number | null
-  job_type: string | null
-  shift_type: string | null
-  urgency: string | null
-  published_at: string | null
-  facility_name: string | null
-}
+import { ProfileCard, type ProfileCardData } from './profile-card'
 
 type DashboardNotification = {
   id: string
@@ -81,58 +61,31 @@ type DashboardNotification = {
   created_at: string
 }
 
-type FacilityJobRow = {
-  id: string
-  title: string
-  status: string
-  city: string | null
-  state: string | null
-  total_applicants: number | null
-  positions_available: number | null
-  positions_filled: number | null
-  published_at: string | null
-}
-
-type FacilityApplicantRow = {
-  id: string
-  first_name: string
-  last_name: string
-  credential: string | null
-  city: string | null
-  state: string | null
-  hourly_rate_min: number | null
-  hourly_rate_max: number | null
-  average_rating: number | null
-  job_title: string | null
-}
-
-type FacilityContractRow = {
-  id: string
-  title: string
-  status: string
-  contractor_name: string
-  start_date: string | null
-  end_date: string | null
-  rate_amount: number | null
-}
-
-type FacilityKpis = {
-  activeJobs: number
-  totalApplicants: number
-  activeContracts: number
-  spendThisMonth: number
-}
-
-/** Real counts for the contractor stat row (demo mode uses mocked values). */
+/** Real counts for the professional stat row. */
 type ContractorStats = {
-  applications: number
-  activeContracts: number
+  listings: number
+  published: number
+  openInquiries: number
   credentials: number
 }
 
-/** First-run setup state for a facility. */
+/**
+ * Organization dashboard counts. Organizations can both offer services/events
+ * (requests they receive) and book professionals (bookings they buy), so the
+ * two directions are counted separately.
+ */
+type OrgSummary = {
+  listings: { total: number; published: number; inReview: number }
+  /** Incoming requests/registrations still waiting on the organization. */
+  requestsToAnswer: number
+  /** Incoming requests/registrations booked and not yet closed. */
+  requestsBooked: number
+  /** Outgoing bookings the organization made that are still open. */
+  bookingsOpen: number
+}
+
+/** First-run setup state for an organization. */
 type FacilitySetup = {
-  hasPostedJob: boolean
   /**
    * Finished the onboarding their door asks for: submitted for review, or
    * (Hiring orgs, which verify later) type, name and city/state on file.
@@ -143,7 +96,6 @@ type FacilitySetup = {
 export default async function DashboardPage() {
   let role: 'contractor' | 'facility' | 'admin' | 'client' = 'contractor'
   let firstName = 'there'
-  let jobs: DashboardJob[] = []
   let activity: DashboardNotification[] = []
   let specialties: string[] = []
   let contractorType: string | null = null
@@ -165,16 +117,8 @@ export default async function DashboardPage() {
   // Finish your profile items (null for Not sure accounts under review).
   let clientChecklist: FinishItem[] | null = null
 
-  // Facility-specific data
-  let facilityKpis: FacilityKpis = {
-    activeJobs: 0,
-    totalApplicants: 0,
-    activeContracts: 0,
-    spendThisMonth: 0,
-  }
-  let facilityJobs: FacilityJobRow[] = []
-  let facilityApplicants: FacilityApplicantRow[] = []
-  let facilityContracts: FacilityContractRow[] = []
+  // Organization-specific data
+  let orgSummary: OrgSummary | null = null
   let facilitySetup: FacilitySetup | null = null
   let orgStatus: string | null = null
   let orgNotes: string | null = null
@@ -195,67 +139,8 @@ export default async function DashboardPage() {
 
     if (role === 'facility') {
       firstName = DEMO_FACILITY.facility_name
-      const ownJobs = DEMO_JOBS.filter(
-        (j) => j.facility_id === DEMO_FACILITY.id,
-      )
-      const sourceJobs = ownJobs.length > 0 ? ownJobs : DEMO_JOBS
-      const ownContracts = DEMO_CONTRACTS.filter(
-        (c) => c.facility_id === DEMO_FACILITY.id,
-      )
-      const contracts = ownContracts.length > 0 ? ownContracts : DEMO_CONTRACTS
-
-      facilityKpis = {
-        activeJobs: sourceJobs.filter((j) => j.status === 'open').length,
-        totalApplicants: sourceJobs.reduce(
-          (s, j) => s + (j.total_applicants ?? 0),
-          0,
-        ),
-        activeContracts: contracts.filter((c) => c.status === 'active').length,
-        spendThisMonth: DEMO_PAYMENTS.reduce(
-          (s, p) => s + (Number(p.gross_amount) || 0),
-          0,
-        ),
-      }
-
-      facilityJobs = sourceJobs.slice(0, 4).map((j) => ({
-        id: j.id,
-        title: j.title,
-        status: j.status,
-        city: j.city,
-        state: j.state,
-        total_applicants: j.total_applicants,
-        positions_available: j.positions_available,
-        positions_filled: j.positions_filled,
-        published_at: j.published_at,
-      }))
-
-      // Pair providers with jobs to fabricate a recent-applicants feed —
-      // realistic enough for the demo without inventing whole job_applications
-      // fixtures.
-      facilityApplicants = DEMO_PROVIDERS.slice(0, 5).map((p, i) => ({
-        id: p.id,
-        first_name: p.first_name,
-        last_name: p.last_name,
-        credential: p.credential ?? null,
-        city: p.city ?? null,
-        state: p.state ?? null,
-        hourly_rate_min: p.hourly_rate_min ?? null,
-        hourly_rate_max: p.hourly_rate_max ?? null,
-        average_rating: p.average_rating ?? null,
-        job_title: sourceJobs[i % sourceJobs.length]?.title ?? null,
-      }))
-
-      facilityContracts = contracts.slice(0, 3).map((c) => ({
-        id: c.id,
-        title: c.title,
-        status: c.status,
-        contractor_name:
-          `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`.trim(),
-        start_date: c.start_date,
-        end_date: c.end_date,
-        rate_amount: c.agreed_rate ?? null,
-      }))
-
+      // No mocked jobs, applicants or spend: the organization demo shows the
+      // real empty-state next actions.
       activity = [...DEMO_NOTIFICATIONS]
         .sort(
           (a, b) =>
@@ -300,28 +185,11 @@ export default async function DashboardPage() {
         headline: DEMO_CONTRACTOR.headline,
         verified: true,
         publicHref: previewHref,
-        checks: profileChecks(
-          { ...DEMO_CONTRACTOR, languages: ['English', 'Spanish'] },
-          DEMO_CONTRACTOR.avatar_url
-        ),
       }
     }
 
     // Contractor-only demo data — only compute if we're in contractor view.
     if (role === 'contractor') {
-      jobs = DEMO_JOBS.slice(0, 3).map((j) => ({
-        id: j.id,
-        title: j.title,
-        city: j.city,
-        state: j.state,
-        pay_rate_min: j.pay_rate_min,
-        pay_rate_max: j.pay_rate_max,
-        job_type: j.job_type,
-        shift_type: j.shift_type,
-        urgency: j.urgency,
-        published_at: j.published_at,
-        facility_name: j.facility?.facility_name ?? null,
-      }))
       activity = [...DEMO_NOTIFICATIONS]
         .sort(
           (a, b) =>
@@ -407,8 +275,7 @@ export default async function DashboardPage() {
       const [
         { data: contractorRow },
         { count: credentialCount },
-        { count: applicationCount },
-        { count: activeContractCount },
+        { count: openInquiryCount },
         { data: agreementRow, error: agreementError },
       ] = await Promise.all([
         supabase
@@ -422,15 +289,12 @@ export default async function DashboardPage() {
           .from('credentials')
           .select('id', { count: 'exact', head: true })
           .eq('contractor_id', user.id),
+        // Inquiries from organizations still waiting on a reply.
         supabase
-          .from('job_applications')
-          .select('id', { count: 'exact', head: true })
-          .eq('contractor_id', user.id),
-        supabase
-          .from('contracts')
+          .from('org_inquiries')
           .select('id', { count: 'exact', head: true })
           .eq('contractor_id', user.id)
-          .eq('status', 'active'),
+          .eq('status', 'sent'),
         // Separate query so a missing column (migration not yet applied)
         // can't break the main contractor_profiles select above.
         supabase
@@ -450,11 +314,6 @@ export default async function DashboardPage() {
       contractorType =
         (contractorRow?.contractor_type as string | null | undefined) ?? null
 
-      contractorStats = {
-        applications: applicationCount ?? 0,
-        activeContracts: activeContractCount ?? 0,
-        credentials: credentialCount ?? 0,
-      }
       // Provider-area extras (v3). Each query degrades to "unknown" on error
       // (e.g. columns not migrated yet) instead of breaking the dashboard.
       const [
@@ -494,6 +353,12 @@ export default async function DashboardPage() {
         ? null
         : ((listingRows ?? []) as { status: string; requires_malpractice?: boolean | null }[])
       const listingStatuses = listingList ? listingList.map((r) => r.status) : null
+      contractorStats = {
+        listings: listingStatuses?.length ?? 0,
+        published: listingStatuses?.filter((x) => x === 'published').length ?? 0,
+        openInquiries: openInquiryCount ?? 0,
+        credentials: credentialCount ?? 0,
+      }
       compliance = {
         insuranceDueAt: complianceError
           ? null
@@ -514,7 +379,6 @@ export default async function DashboardPage() {
           headline: (row?.headline as string | null) ?? null,
           verified: verificationStatus === 'approved' || verificationStatus === 'insurance_pending',
           publicHref: previewHref,
-          checks: profileChecks(row, avatarUrl),
         }
       }
 
@@ -568,49 +432,6 @@ export default async function DashboardPage() {
         answered: Array.isArray(progressRow?.answered) ? (progressRow.answered as string[]) : [],
       })
 
-      const { data: jobsData } = await supabase
-        .from('jobs')
-        .select(
-          'id, title, city, state, pay_rate_min:hourly_rate_min, pay_rate_max:hourly_rate_max, job_type, shift_type, urgency, published_at, facility_profiles(facility_name)'
-        )
-        .eq('status', 'open')
-        .order('published_at', { ascending: false, nullsFirst: false })
-        .limit(3)
-
-      jobs = ((jobsData ?? []) as unknown as Array<{
-        id: string
-        title: string
-        city: string | null
-        state: string | null
-        pay_rate_min: number | null
-        pay_rate_max: number | null
-        job_type: string | null
-        shift_type: string | null
-        urgency: string | null
-        published_at: string | null
-        facility_profiles:
-          | { facility_name: string | null }
-          | { facility_name: string | null }[]
-          | null
-      }>).map((j) => {
-        const fp = Array.isArray(j.facility_profiles)
-          ? j.facility_profiles[0]
-          : j.facility_profiles
-        return {
-          id: j.id,
-          title: j.title,
-          city: j.city,
-          state: j.state,
-          pay_rate_min: j.pay_rate_min,
-          pay_rate_max: j.pay_rate_max,
-          job_type: j.job_type,
-          shift_type: j.shift_type,
-          urgency: j.urgency,
-          published_at: j.published_at,
-          facility_name: fp?.facility_name ?? null,
-        }
-      })
-
       const { data: notifData } = await supabase
         .from('notifications')
         .select('id, type, title, body, is_read, created_at')
@@ -625,11 +446,10 @@ export default async function DashboardPage() {
       orgUserId = user.id
       const [
         { data: facilityRow },
-        { data: recentJobs },
-        { data: openJobs },
-        { count: activeContractCount },
         { data: notifData },
-        { count: listingCount },
+        { data: listingRows },
+        { data: incomingRows },
+        { data: outgoingRows },
       ] = await Promise.all([
         // Own row via RPC: phone and review notes aren't readable directly.
         supabase
@@ -637,47 +457,39 @@ export default async function DashboardPage() {
           .select(`verification_status, verification_notes, org_agreement_accepted_at, onboarding_submitted_at, ${ORG_LIGHT_COLUMNS}`)
           .maybeSingle(),
         supabase
-          .from('jobs')
-          .select(
-            'id, title, status, city, state, total_applicants, positions_available, positions_filled, published_at'
-          )
-          .eq('facility_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(4),
-        supabase
-          .from('jobs')
-          .select('total_applicants')
-          .eq('facility_id', user.id)
-          .eq('status', 'open'),
-        supabase
-          .from('contracts')
-          .select('id', { count: 'exact', head: true })
-          .eq('facility_id', user.id)
-          .eq('status', 'active'),
-        supabase
           .from('notifications')
           .select('id, type, title, body, is_read, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(5),
+        supabase.from('org_listings').select('status').eq('facility_id', user.id),
+        // Requests and registrations for this organization's own listings.
         supabase
-          .from('org_listings')
-          .select('id', { count: 'exact', head: true })
-          .eq('facility_id', user.id),
+          .from('org_bookings')
+          .select('status')
+          .eq('org_id', user.id)
+          .in('status', ['requested', 'quoted', 'accepted', 'paid']),
+        // Bookings this organization made as a buyer.
+        supabase
+          .from('org_bookings')
+          .select('status')
+          .eq('customer_id', user.id)
+          .in('status', ['requested', 'quoted', 'accepted', 'paid']),
       ])
 
-      facilityJobs = (recentJobs ?? []) as FacilityJobRow[]
-      const open = (openJobs ?? []) as { total_applicants: number | null }[]
-      facilityKpis = {
-        activeJobs: open.length,
-        totalApplicants: open.reduce(
-          (sum, j) => sum + (j.total_applicants ?? 0),
-          0,
-        ),
-        activeContracts: activeContractCount ?? 0,
-        spendThisMonth: 0,
-      }
       activity = (notifData ?? []) as DashboardNotification[]
+      const listingStatuses = ((listingRows ?? []) as { status: string }[]).map((r) => r.status)
+      const incoming = ((incomingRows ?? []) as { status: string }[]).map((r) => r.status)
+      orgSummary = {
+        listings: {
+          total: listingStatuses.length,
+          published: listingStatuses.filter((x) => x === 'published').length,
+          inReview: listingStatuses.filter((x) => x === 'in_review').length,
+        },
+        requestsToAnswer: incoming.filter((x) => x === 'requested').length,
+        requestsBooked: incoming.filter((x) => x === 'accepted' || x === 'paid').length,
+        bookingsOpen: (outgoingRows ?? []).length,
+      }
       const orgSubmitted = !!facilityRow?.onboarding_submitted_at
       // Not submitted yet (a Hiring org verifying later): nothing is under
       // review, so no review banner.
@@ -685,8 +497,6 @@ export default async function DashboardPage() {
       orgNotes = (facilityRow?.verification_notes as string | null) ?? null
       orgNeedsAgreement = orgStatus === 'approved' && !facilityRow?.org_agreement_accepted_at
       facilitySetup = {
-        // While job posting is switched off, a first service or event counts.
-        hasPostedJob: STAFFING_POSTS_ENABLED ? facilityJobs.length > 0 : (listingCount ?? 0) > 0,
         onboardingDone:
           orgSubmitted ||
           (verifiesLater(profileData?.signup_path as string | null | undefined) &&
@@ -717,7 +527,7 @@ export default async function DashboardPage() {
             {greeting}, {firstName}!
           </h1>
           <p className="text-[#5f5d57]">
-            Here&apos;s an overview of your {role === 'facility' ? 'facility' : role === 'admin' ? 'admin' : 'professional'} dashboard.
+            Here&apos;s an overview of your {role === 'facility' ? 'organization' : role === 'admin' ? 'admin' : 'professional'} dashboard.
           </p>
         </div>
       )}
@@ -728,7 +538,6 @@ export default async function DashboardPage() {
           hasListings={hasListings}
           stats={contractorStats}
           isDemo={isDemoMode()}
-          jobs={jobs}
           activity={activity}
           specialties={specialties}
           contractorType={contractorType}
@@ -746,15 +555,7 @@ export default async function DashboardPage() {
         </div>
       )}
       {role === 'facility' && (
-        <FacilityDashboard
-          kpis={facilityKpis}
-          jobs={facilityJobs}
-          applicants={facilityApplicants}
-          contracts={facilityContracts}
-          activity={activity}
-          setup={facilitySetup}
-          isDemo={isDemoMode()}
-        />
+        <OrganizationDashboard summary={orgSummary} activity={activity} />
       )}
       {role === 'admin' && <AdminDashboard />}
       {role === 'client' && (
@@ -782,13 +583,13 @@ const VERIFICATION_BANNER: Record<
 > = {
   not_submitted: {
     title: 'Get verified to go live',
-    body: 'Upload your license or certification and a government ID. Our team reviews within 24–48 hours.',
+    body: 'Upload your license or certification and a government ID. Our team will review them and email you.',
     cta: { label: 'Upload documents', href: '/contractor/credentials/upload' },
     className: 'border-[#c9cdfb] bg-[#eceefe]',
     iconClassName: 'text-[#2330c8]',
   },
   pending_review: {
-    title: "Your application is under review. We'll email you within 24-48 hours.",
+    title: "Your application is under review. We'll email you when the review is complete.",
     className: 'border-[#ecd3a3] bg-[#fbf0dc]',
     iconClassName: 'text-[#8a5a00]',
   },
@@ -979,7 +780,6 @@ function ContractorDashboard({
   hasListings,
   stats,
   isDemo,
-  jobs,
   activity,
   specialties,
   contractorType,
@@ -993,7 +793,6 @@ function ContractorDashboard({
   hasListings: boolean
   stats: ContractorStats | null
   isDemo: boolean
-  jobs: DashboardJob[]
   activity: DashboardNotification[]
   specialties: string[]
   contractorType: string | null
@@ -1011,11 +810,11 @@ function ContractorDashboard({
   const showRealStats =
     !isDemo &&
     stats != null &&
-    stats.applications + stats.activeContracts + stats.credentials > 0
+    stats.listings + stats.openInquiries + stats.credentials > 0
 
   return (
     <div className="space-y-6">
-      {profileCard && <ProfileCard data={profileCard} />}
+      {profileCard && <ProfileCard data={profileCard} items={checklist} />}
       <VerificationBanner
         status={verificationStatus}
         notes={
@@ -1028,47 +827,19 @@ function ContractorDashboard({
       {checklist && <FinishProfileCard items={checklist} />}
       {!hasListings && <FirstRunOfferCards />}
 
-      {isDemo && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Job Matches"
-            value="24"
-            description="New matches this week"
-            icon={Briefcase}
-          />
-          <StatCard
-            title="Credentials"
-            value="5"
-            description="Active credentials"
-            icon={ShieldCheck}
-          />
-          <StatCard
-            title="Active Contracts"
-            value="1"
-            description="Currently working"
-            icon={FileText}
-          />
-          <StatCard
-            title="Earnings"
-            value="$1,697.40"
-            description="This month"
-            icon={CreditCard}
-          />
-        </div>
-      )}
       {showRealStats && stats && (
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
-            title="Applications"
-            value={String(stats.applications)}
-            description="Jobs you've applied to"
+            title="Listings"
+            value={String(stats.listings)}
+            description={`${stats.published} published`}
             icon={Briefcase}
           />
           <StatCard
-            title="Active Contracts"
-            value={String(stats.activeContracts)}
-            description="Currently working"
-            icon={FileText}
+            title="Open inquiries"
+            value={String(stats.openInquiries)}
+            description="Waiting on your reply"
+            icon={MessageSquare}
           />
           <StatCard
             title="Credentials"
@@ -1081,78 +852,7 @@ function ContractorDashboard({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                Recommended for you
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/contractor/jobs"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  Browse all jobs &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {jobs.length === 0 ? (
-                <p className="text-sm text-[#5f5d57]">
-                  No open jobs right now. Check back soon.
-                </p>
-              ) : (
-                <div className="grid gap-4 lg:grid-cols-3">
-                  {jobs.map((job) => (
-                    <RecommendedJobCard key={job.id} job={job} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                Recommended credentials
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/contractor/credentials/upload"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  Add credential &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {SUGGESTED_CREDENTIALS.map((cred) => (
-                  <div
-                    key={cred.name}
-                    className="flex items-center gap-3 rounded-md border border-[#e3dfd6] px-3 py-2.5"
-                  >
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
-                      <ShieldCheck className="size-4 text-[#2f3cf5]" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#1a1a17]">
-                        {cred.name}
-                      </p>
-                      <p className="text-xs text-[#5f5d57]">
-                        {cred.description}
-                      </p>
-                    </div>
-                    <Link
-                      href="/contractor/credentials/upload"
-                      className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                    >
-                      Add &rarr;
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ProfessionalNextSteps hasListings={hasListings} />
         </div>
 
         <div className="space-y-6">
@@ -1283,20 +983,94 @@ function FirstRunOfferCards() {
   )
 }
 
-const SUGGESTED_CREDENTIALS: { name: string; description: string }[] = [
+/**
+ * Next actions for any professional (clinician, trainer, coach, consultant,
+ * educator): the same marketplace steps, never occupation-specific job or
+ * credential recommendations.
+ */
+const PROFESSIONAL_NEXT_STEPS = [
   {
-    name: 'ACLS Certification',
-    description: 'Required for many acute care and ICU contracts.',
+    label: 'Create a service',
+    sub: 'Sessions, visits, packages, or consulting',
+    href: '/contractor/listings/new?kind=service',
+    icon: Briefcase,
   },
   {
-    name: 'PALS Certification',
-    description: 'Expands eligibility for pediatric assignments.',
+    label: 'Host an event or class',
+    sub: 'Workshops, webinars, or courses',
+    href: '/contractor/listings/new?kind=event',
+    icon: CalendarDays,
   },
   {
-    name: 'Background Check',
-    description: 'Speeds up onboarding with new facilities.',
+    label: 'Set your availability',
+    sub: 'When clients can book you',
+    href: '/contractor/availability',
+    icon: CalendarDays,
   },
-]
+  {
+    label: 'Set your rates',
+    sub: 'What you charge and per what',
+    href: '/contractor/rates',
+    icon: DollarSign,
+  },
+  {
+    label: 'Complete review items',
+    sub: 'Documents our team needs to review your profile',
+    href: '/contractor/credentials',
+    icon: ShieldCheck,
+  },
+  {
+    label: 'Answer inquiries',
+    sub: 'Requests from clients and organizations',
+    href: '/contractor/inquiries',
+    icon: MessageSquare,
+  },
+] as const
+
+function ProfessionalNextSteps({ hasListings }: { hasListings: boolean }) {
+  // Without listings, the first-run cards above already cover creating one.
+  const steps = hasListings
+    ? PROFESSIONAL_NEXT_STEPS
+    : PROFESSIONAL_NEXT_STEPS.filter((s) => !s.href.startsWith('/contractor/listings/new'))
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[#1a1a17]">Next steps</CardTitle>
+        <CardAction>
+          <Link
+            href="/contractor/listings"
+            className="text-sm font-medium text-[#2f3cf5] hover:underline"
+          >
+            Your listings &rarr;
+          </Link>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {steps.map((step) => {
+            const Icon = step.icon
+            return (
+              <li key={step.href}>
+                <Link
+                  href={step.href}
+                  className="flex items-start gap-3 rounded-md border border-[#e3dfd6] px-3 py-2.5 hover:border-[#c9cdfb] hover:bg-[#f4f5fe]"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                    <Icon className="size-4 text-[#2f3cf5]" aria-hidden />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-[#1a1a17]">{step.label}</span>
+                    <span className="block text-xs text-[#5f5d57]">{step.sub}</span>
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  )
+}
 
 function getNotificationIcon(type: string) {
   switch (type) {
@@ -1344,427 +1118,153 @@ function formatRelativeTime(iso: string): string {
   })
 }
 
-function RecommendedJobCard({ job }: { job: DashboardJob }) {
-  const location = [job.city, job.state].filter(Boolean).join(', ')
-  const payRange =
-    job.pay_rate_min != null && job.pay_rate_max != null
-      ? `$${job.pay_rate_min}–$${job.pay_rate_max}/hr`
-      : job.pay_rate_min != null
-        ? `From $${job.pay_rate_min}/hr`
-        : null
-  const jobTypeLabel = job.job_type
-    ? JOB_TYPE_LABELS[job.job_type] ?? job.job_type
-    : null
-
-  return (
-    <div className="flex h-full flex-col gap-3 rounded-lg border border-[#e3dfd6] p-4">
-      <div className="space-y-1">
-        <p className="line-clamp-2 font-semibold text-[#1a1a17]">{job.title}</p>
-        <p className="text-sm text-[#5f5d57]">
-          {job.facility_name ? job.facility_name : 'Healthcare facility'}
-          {location ? ` • ${location}` : ''}
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {payRange && (
-          <span className="text-sm font-medium text-[#2330c8]">
-            {payRange}
-          </span>
-        )}
-        {jobTypeLabel && (
-          <Badge variant="outline" className="text-[#1a1a17]">
-            {jobTypeLabel}
-          </Badge>
-        )}
-      </div>
-      {location && (
-        <div className="flex items-center gap-1 text-xs text-[#5f5d57]">
-          <MapPin className="size-3" />
-          <span>{location}</span>
-        </div>
-      )}
-      <div className="mt-auto pt-1">
-        <Link
-          href={`/contractor/jobs/${job.id}`}
-          className="text-sm font-medium text-[#2f3cf5] hover:underline"
-        >
-          View &rarr;
-        </Link>
-      </div>
-    </div>
-  )
-}
-
-function FacilityDashboard({
-  kpis,
-  jobs,
-  applicants,
-  contracts,
+/**
+ * Organization dashboard: leads with offering services/events and finding
+ * professionals, then keeps incoming requests ("Requests we receive") and
+ * outgoing purchases ("Bookings we buy") apart. Staffing posts, applicants
+ * and contracts are a separate, flag-gated product and don't appear here.
+ */
+function OrganizationDashboard({
+  summary,
   activity,
-  setup,
-  isDemo,
 }: {
-  kpis: FacilityKpis
-  jobs: FacilityJobRow[]
-  applicants: FacilityApplicantRow[]
-  contracts: FacilityContractRow[]
+  summary: OrgSummary | null
   activity: DashboardNotification[]
-  setup: FacilitySetup | null
-  isDemo: boolean
 }) {
-  const moneyFmt = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  })
-  // Demo mode has no real setup state; fall back to "has jobs" there.
-  const hasPostedJob = setup ? setup.hasPostedJob : jobs.length > 0
-  // Hide the stat row for a brand-new facility rather than show zeros.
-  const showRealStats =
-    !isDemo && (hasPostedJob || kpis.activeContracts > 0)
-
+  const listings = summary?.listings
+  const incomingTotal = summary ? summary.requestsToAnswer + summary.requestsBooked : 0
   return (
     <div className="space-y-6">
-      {isDemo && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Active jobs"
-            value={String(kpis.activeJobs)}
-            description="Currently posted"
-            icon={Briefcase}
-          />
-          <StatCard
-            title="Total applicants"
-            value={String(kpis.totalApplicants)}
-            description="Across all open jobs"
-            icon={ClipboardList}
-          />
-          <StatCard
-            title="Active contracts"
-            value={String(kpis.activeContracts)}
-            description="Currently in progress"
-            icon={FileText}
-          />
-          <StatCard
-            title="Spend"
-            value={moneyFmt.format(kpis.spendThisMonth)}
-            description="This month"
-            icon={CreditCard}
-          />
-        </div>
-      )}
-      {showRealStats && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            title="Active jobs"
-            value={String(kpis.activeJobs)}
-            description="Currently posted"
-            icon={Briefcase}
-          />
-          <StatCard
-            title="Total applicants"
-            value={String(kpis.totalApplicants)}
-            description="Across all open jobs"
-            icon={ClipboardList}
-          />
-          <StatCard
-            title="Active contracts"
-            value={String(kpis.activeContracts)}
-            description="Currently in progress"
-            icon={FileText}
-          />
-        </div>
-      )}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+              <CalendarDays className="size-4 text-[#2f3cf5]" />
+              Offer services &amp; events
+            </CardTitle>
+            <CardDescription>
+              {listings && listings.total > 0
+                ? `${listings.total} listing${listings.total === 1 ? '' : 's'} · ${listings.published} published${
+                    listings.inReview > 0 ? ` · ${listings.inReview} in review` : ''
+                  }`
+                : 'List consulting, programs, classes, or events for clients and other organizations.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-4 text-sm font-semibold">
+            <Link href="/facility/listings?new=service" className="text-[#2f3cf5] hover:underline">
+              Add a service &rarr;
+            </Link>
+            <Link href="/facility/listings?new=event" className="text-[#2f3cf5] hover:underline">
+              Add an event &rarr;
+            </Link>
+            <Link href="/facility/listings" className="text-[#2f3cf5] hover:underline">
+              Manage services &amp; events &rarr;
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+              <Search className="size-4 text-[#2f3cf5]" />
+              Find professionals
+            </CardTitle>
+            <CardDescription>
+              Browse clinicians, coaches, consultants, and educators to book for your organization.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-4 text-sm font-semibold">
+            <Link href="/facility/contractors" className="text-[#2f3cf5] hover:underline">
+              Find professionals &rarr;
+            </Link>
+            <Link href="/facility/profile#looking-for" className="text-[#2f3cf5] hover:underline">
+              Describe what you&apos;re looking for &rarr;
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          {/* Your open jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                {isDemo ? 'Your open jobs' : 'Your recent jobs'}
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/facility/jobs"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  Manage all &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {jobs.length === 0 ? (
-                <p className="text-sm text-[#5f5d57]">
-                  No jobs posted yet.
-                  {STAFFING_POSTS_ENABLED && (
-                    <>
-                      {' '}
-                      <Link
-                        href="/facility/jobs/new"
-                        className="font-medium text-[#2f3cf5] hover:underline"
-                      >
-                        Post your first job
-                      </Link>
-                      .
-                    </>
-                  )}
-                </p>
-              ) : (
-                <ul className="divide-y divide-[#eeebe4]">
-                  {jobs.map((job) => {
-                    const location = [job.city, job.state]
-                      .filter(Boolean)
-                      .join(', ')
-                    return (
-                      <li key={job.id} className="py-3 first:pt-0 last:pb-0">
-                        <Link
-                          href={`/facility/jobs/${job.id}`}
-                          className="group flex items-start justify-between gap-4"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-[#1a1a17] group-hover:text-[#2330c8]">
-                              {job.title}
-                            </p>
-                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5f5d57]">
-                              {location && (
-                                <span className="inline-flex items-center gap-1">
-                                  <MapPin className="size-3" />
-                                  {location}
-                                </span>
-                              )}
-                              {job.positions_available != null && (
-                                <span>
-                                  {job.positions_filled ?? 0}/
-                                  {job.positions_available} filled
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 flex-col items-end gap-1">
-                            <Badge className="bg-[#eceefe] text-[#2330c8] hover:bg-[#eceefe]">
-                              {job.total_applicants ?? 0} applicants
-                            </Badge>
-                            <span className="text-xs text-[#5f5d57]">
-                              {job.status.replace('_', ' ')}
-                            </span>
-                          </div>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent applicants */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                Recent applicants
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/facility/contractors"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  Browse contractors &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {applicants.length === 0 ? (
-                <p className="text-sm text-[#5f5d57]">
-                  Applicants will appear here once your jobs receive
-                  applications.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {applicants.map((a) => {
-                    const initials = `${a.first_name?.[0] ?? ''}${
-                      a.last_name?.[0] ?? ''
-                    }`
-                      .toUpperCase()
-                      .slice(0, 2)
-                    const location = [a.city, a.state]
-                      .filter(Boolean)
-                      .join(', ')
-                    const payRange =
-                      a.hourly_rate_min != null && a.hourly_rate_max != null
-                        ? `$${a.hourly_rate_min}–$${a.hourly_rate_max}/hr`
-                        : null
-                    return (
-                      <li key={a.id}>
-                        <Link
-                          href={`/facility/contractors/${a.id}`}
-                          className="flex items-start gap-3 rounded-lg p-2 -mx-2 hover:bg-[#f6f4ef]"
-                        >
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#eceefe] text-sm font-semibold text-[#2330c8]">
-                            {initials || '?'}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline gap-2">
-                              <p className="truncate text-sm font-semibold text-[#1a1a17]">
-                                {a.first_name} {a.last_name}
-                              </p>
-                              {a.credential && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] font-medium text-[#1a1a17]"
-                                >
-                                  {a.credential}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="line-clamp-1 text-xs text-[#5f5d57]">
-                              {a.job_title && `Applied to ${a.job_title}`}
-                              {a.job_title && location && ' · '}
-                              {location}
-                            </p>
-                            <div className="mt-1 flex items-center gap-2 text-xs">
-                              {a.average_rating != null && (
-                                <span className="inline-flex items-center gap-1 text-[#1a1a17]">
-                                  <Star className="size-3 fill-[#fbbf24] text-[#fbbf24]" />
-                                  {a.average_rating.toFixed(1)}
-                                </span>
-                              )}
-                              {payRange && (
-                                <span className="text-[#2330c8]">
-                                  {payRange}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          {/* Active contracts */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                Active contracts
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/facility/contracts"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  View all &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {contracts.length === 0 ? (
-                <p className="text-sm text-[#5f5d57]">
-                  No active contracts.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {contracts.map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        href={`/facility/contracts/${c.id}`}
-                        className="block rounded-md p-2 -mx-2 hover:bg-[#f6f4ef]"
-                      >
-                        <div className="flex items-center gap-2">
-                          <CheckCircle2 className="size-4 shrink-0 text-[#2f3cf5]" />
-                          <p className="line-clamp-1 text-sm font-medium text-[#1a1a17]">
-                            {c.title}
-                          </p>
-                        </div>
-                        <p className="mt-1 ml-6 line-clamp-1 text-xs text-[#5f5d57]">
-                          {c.contractor_name}
-                          {c.rate_amount != null && ` · $${c.rate_amount}/hr`}
-                        </p>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[#1a1a17]">
-                Recent activity
-              </CardTitle>
-              <CardAction>
-                <Link
-                  href="/notifications"
-                  className="text-sm font-medium text-[#2f3cf5] hover:underline"
-                >
-                  View all &rarr;
-                </Link>
-              </CardAction>
-            </CardHeader>
-            <CardContent>
-              {activity.length === 0 ? (
-                <p className="text-sm text-[#5f5d57]">
-                  No recent activity yet.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {activity.map((item) => {
-                    const Icon = getNotificationIcon(item.type)
-                    return (
-                      <li key={item.id} className="flex items-start gap-3">
-                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
-                          <Icon className="size-4 text-[#2f3cf5]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-[#1a1a17]">
-                            {item.title}
-                          </p>
-                          <p className="line-clamp-1 text-sm text-[#5f5d57]">
-                            {item.body}
-                          </p>
-                          <p className="text-xs text-[#5f5d57]">
-                            {formatRelativeTime(item.created_at)}
-                          </p>
-                        </div>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Tips */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
-                <TrendingUp className="size-4 text-[#2f3cf5]" />
-                Boost your hires
+                <ClipboardList className="size-4 text-[#2f3cf5]" />
+                Requests we receive
               </CardTitle>
+              <CardDescription>
+                Booking requests and registrations for your services and events.
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-[#5f5d57]">
-                {[
-                  'Detailed job descriptions get 3× more qualified applicants.',
-                  'List required credentials upfront to save review time.',
-                  'Respond to applicants within 24 hours.',
-                ].map((tip) => (
-                  <li key={tip} className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-[#1a1a17]">
+                {summary && incomingTotal > 0
+                  ? `${summary.requestsToAnswer} need${summary.requestsToAnswer === 1 ? 's' : ''} your response · ${summary.requestsBooked} booked`
+                  : 'None yet.'}
+              </p>
+              <Link href="/facility/bookings" className="text-sm font-semibold text-[#2f3cf5] hover:underline">
+                Open requests &rarr;
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-[#1a1a17]">
+                <CheckCircle2 className="size-4 text-[#2f3cf5]" />
+                Bookings we buy
+              </CardTitle>
+              <CardDescription>
+                Services and events your organization has requested or booked.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-[#1a1a17]">
+                {summary && summary.bookingsOpen > 0 ? `${summary.bookingsOpen} open` : 'None yet.'}
+              </p>
+              <Link href="/bookings" className="text-sm font-semibold text-[#2f3cf5] hover:underline">
+                Open bookings &rarr;
+              </Link>
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#1a1a17]">Recent activity</CardTitle>
+            <CardAction>
+              <Link
+                href="/notifications"
+                className="text-sm font-medium text-[#2f3cf5] hover:underline"
+              >
+                View all &rarr;
+              </Link>
+            </CardAction>
+          </CardHeader>
+          <CardContent>
+            {activity.length === 0 ? (
+              <p className="text-sm text-[#5f5d57]">No recent activity yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {activity.map((item) => {
+                  const Icon = getNotificationIcon(item.type)
+                  return (
+                    <li key={item.id} className="flex items-start gap-3">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#eceefe]">
+                        <Icon className="size-4 text-[#2f3cf5]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[#1a1a17]">{item.title}</p>
+                        <p className="line-clamp-1 text-sm text-[#5f5d57]">{item.body}</p>
+                        <p className="text-xs text-[#5f5d57]">{formatRelativeTime(item.created_at)}</p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
@@ -1807,8 +1307,8 @@ function ClassificationBanner({
       <div className="text-sm text-[#1a1a17]">
         <p className="font-semibold">
           Thanks, {firstName}. We&apos;re reviewing your answers and will place
-          you in the right category within 24-48 hours. We may ask for a few
-          more details.
+          you in the right category, and we&apos;ll email you when that&apos;s
+          done. We may ask for a few more details.
         </p>
         <p className="mt-1">
           Until then you can browse, save, and book as a client. Messaging
@@ -1992,9 +1492,9 @@ function AdminDashboard() {
         icon={Users}
       />
       <StatCard
-        title="Active Jobs"
+        title="Live listings"
         value="--"
-        description="Currently posted"
+        description="Published services and events"
         icon={Briefcase}
       />
       <StatCard

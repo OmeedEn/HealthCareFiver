@@ -233,14 +233,29 @@ function RateDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* Live preview */}
-          <div className="rounded-xl border border-[#c9cdfb] bg-[#f4f5fe] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-[#2330c8]">Preview</p>
-            <p className="mt-1 text-sm font-medium text-[#1a1a17]">
-              {v.label.trim() || meta.placeholder}
+          {/* Live preview — dashed + "not saved" so it never reads as a saved rate */}
+          <div
+            className="rounded-xl border border-dashed border-[#c9cdfb] bg-[#f4f5fe] p-4"
+            aria-label="Preview of this rate, not saved yet"
+          >
+            <p className="text-xs font-medium uppercase tracking-wide text-[#2330c8]">
+              Preview · {editing ? 'unsaved changes' : 'not saved yet'}
             </p>
+            {v.label.trim() ? (
+              <p className="mt-1 text-sm font-medium text-[#1a1a17]">{v.label.trim()}</p>
+            ) : (
+              <p className="mt-1 text-sm italic text-[#706d65]">
+                Name your rate (e.g. {meta.placeholder})
+              </p>
+            )}
             <div className="mt-0.5">
-              <RateLine rate={preview} />
+              {!preview.on_request && preview.amount_cents == null ? (
+                <span className="text-sm italic text-[#706d65]">
+                  No price entered — enter an amount, or choose “Contact for pricing”
+                </span>
+              ) : (
+                <RateLine rate={preview} />
+              )}
             </div>
             {v.description.trim() && (
               <p className="mt-1 line-clamp-2 text-sm text-[#5f5d57]">{v.description.trim()}</p>
@@ -610,8 +625,8 @@ export function RatesEditor({
       <div className="flex items-start gap-3 rounded-xl border border-[#e3dfd6] bg-white px-4 py-3">
         <EyeOff className="mt-0.5 size-4 shrink-0 text-[#5f5d57]" aria-hidden="true" />
         <p className="text-sm text-[#5f5d57]">
-          Your prices are private on search results. Clients only see them after they open your full
-          profile — search cards just say “Rates on profile”.
+          Amounts show on your full profile, not on search cards. Cards say “Rates on profile” when you
+          have at least one visible rate, and “Contact for pricing” when you don’t.
         </p>
       </div>
 
@@ -656,6 +671,7 @@ export function RatesEditor({
           <h2 className="mt-3 text-base font-semibold text-[#1a1a17]">No rates yet</h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-[#5f5d57]">
             Add as many as you like — a per-session price, a day rate, a monthly plan, or a package.
+            Until you save one, clients see “Contact for pricing”.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             {TEMPLATES.map((t) => {

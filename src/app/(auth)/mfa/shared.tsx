@@ -2,13 +2,12 @@
 
 import { signOutAndRedirect } from '@/lib/auth/sign-out'
 import { Separator } from '@/components/ui/separator'
+import { safeNextPath } from '@/lib/auth/safe-next'
 
-// Only allow internal-path redirects to avoid an open redirect via `?redirectTo=`
+// Only same-origin relative paths (src/lib/auth/safe-next.ts; /mfa and other
+// auth pages are refused) to avoid an open redirect via `?redirectTo=`.
 export function safeRedirect(target: string | null): string {
-  if (!target) return '/dashboard'
-  if (!target.startsWith('/') || target.startsWith('//')) return '/dashboard'
-  if (target.startsWith('/mfa')) return '/dashboard'
-  return target
+  return safeNextPath(target) ?? '/dashboard'
 }
 
 export function MfaSignOut() {
