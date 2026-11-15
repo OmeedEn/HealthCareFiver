@@ -54,6 +54,9 @@ export default function AvailabilityPage() {
   )
   const [loading, setLoading] = useState(!isDemo)
   const [saving, setSaving] = useState(false)
+  const [selectedDays, setSelectedDays] = useState<number[]>([])
+  const [newStart, setNewStart] = useState('08:00')
+  const [newEnd, setNewEnd] = useState('17:00')
 
   useEffect(() => {
     if (isDemo) return
@@ -85,21 +88,57 @@ export default function AvailabilityPage() {
     }
   }, [isDemo])
 
-  async function addSlot() {
+  function toggleDay(day: number) {
+    setSelectedDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+    )
+  }
+
+  async function addSlots() {
+    if (selectedDays.length === 0) {
+      toast.error('Pick at least one day')
+      return
+    }
+    if (!newStart || !newEnd || newStart >= newEnd) {
+      toast.error('End time must be after start time')
+      return
+    }
+
+    // Skip days that already have this exact window
+    const days = selectedDays.filter(
+      (d) =>
+        !slots.some(
+          (s) =>
+            s.is_recurring &&
+            !s.is_blocked &&
+            s.day_of_week === d &&
+            (s.start_time ?? '').slice(0, 5) === newStart &&
+            (s.end_time ?? '').slice(0, 5) === newEnd
+        )
+    )
+    if (days.length === 0) {
+      toast.info('Those days already have this time slot')
+      return
+    }
+
+    const label = `${days.length} day${days.length === 1 ? '' : 's'}`
+
     if (isDemo) {
-      const newSlot: AvailabilitySlot = {
-        id: `demo-${Date.now()}`,
-        day_of_week: 1,
+      const now = Date.now()
+      const newSlots: AvailabilitySlot[] = days.map((d, i) => ({
+        id: `demo-${now}-${i}`,
+        day_of_week: d,
         start_date: null,
         end_date: null,
-        start_time: '08:00',
-        end_time: '17:00',
+        start_time: newStart,
+        end_time: newEnd,
         is_recurring: true,
         is_blocked: false,
         notes: null,
-      }
-      setSlots([...slots, newSlot])
-      toast.success('Availability slot added')
+      }))
+      setSlots((prev) => [...prev, ...newSlots])
+      setSelectedDays([])
+      toast.success(`Availability added to ${label}`)
       return
     }
 
@@ -112,22 +151,24 @@ export default function AvailabilityPage() {
     setSaving(true)
     const { data, error } = await supabase
       .from('contractor_availability')
-      .insert({
-        contractor_id: user.id,
-        day_of_week: 1,
-        start_time: '08:00',
-        end_time: '17:00',
-        is_recurring: true,
-        is_blocked: false,
-      })
+      .insert(
+        days.map((d) => ({
+          contractor_id: user.id,
+          day_of_week: d,
+          start_time: newStart,
+          end_time: newEnd,
+          is_recurring: true,
+          is_blocked: false,
+        }))
+      )
       .select()
-      .single()
 
     if (error) {
-      toast.error('Failed to add availability slot')
+      toast.error('Failed to add availability')
     } else if (data) {
-      setSlots([...slots, data as AvailabilitySlot])
-      toast.success('Availability slot added')
+      setSlots((prev) => [...prev, ...(data as AvailabilitySlot[])])
+      setSelectedDays([])
+      toast.success(`Availability added to ${label}`)
     }
     setSaving(false)
   }
@@ -239,7 +280,13 @@ export default function AvailabilityPage() {
     )
   }
 
-  const recurringSlots = slots.filter((s) => s.is_recurring && !s.is_blocked)
+  const recurringSlots = slots
+    .filter((s) => s.is_recurring && !s.is_blocked)
+    .sort(
+      (a, b) =>
+        (a.day_of_week ?? 0) - (b.day_of_week ?? 0) ||
+        (a.start_time ?? '').localeCompare(b.start_time ?? '')
+    )
   const blockedSlots = slots.filter((s) => s.is_blocked)
 
   // Group recurring slots by day for the weekly grid summary
@@ -266,14 +313,6 @@ export default function AvailabilityPage() {
             Set your rates <ArrowRight className="size-3.5" aria-hidden="true" />
           </Link>
         </div>
-        <Button
-          onClick={addSlot}
-          disabled={saving}
-          className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
-        >
-          <Plus className="size-4 mr-2" />
-          Add slot
-        </Button>
       </div>
 
       {/* Weekly schedule overview grid */}
@@ -288,6 +327,100 @@ export default function AvailabilityPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Add availability to one or more days */}
+          <div className="space-y-3 rounded-lg border border-[#eeebe4] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-[#1a1a17]">
+                Add availability
+              </h2>
+              <div className="flex gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDays([1, 2, 3, 4, 5])}
+                  className="font-medium text-[#2f3cf5] hover:text-[#2330c8]"
+                >
+                  Weekdays
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDays([0, 6])}
+                  className="font-medium text-[#2f3cf5] hover:text-[#2330c8]"
+                >
+                  Weekends
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDays([0, 1, 2, 3, 4, 5, 6])}
+                  className="font-medium text-[#2f3cf5] hover:text-[#2330c8]"
+                >
+                  Every day
+                </button>
+                {selectedDays.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDays([])}
+                    className="font-medium text-[#5f5d57] hover:text-[#1a1a17]"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Days">
+              {DAYS_OF_WEEK.map((day, i) => {
+                const active = selectedDays.includes(i)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(i)}
+                    aria-pressed={active}
+                    className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      active
+                        ? 'border-[#2f3cf5] bg-[#2f3cf5] text-white'
+                        : 'border-[#eeebe4] bg-white text-[#1a1a17] hover:border-[#c9cdfb]'
+                    }`}
+                  >
+                    {day.slice(0, 3)}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Label htmlFor="new-start" className="sr-only">Start</Label>
+              <Input
+                id="new-start"
+                type="time"
+                value={newStart}
+                onChange={(e) => setNewStart(e.target.value)}
+                className="w-32"
+              />
+              <span className="text-sm text-[#5f5d57]">to</span>
+              <Label htmlFor="new-end" className="sr-only">End</Label>
+              <Input
+                id="new-end"
+                type="time"
+                value={newEnd}
+                onChange={(e) => setNewEnd(e.target.value)}
+                className="w-32"
+              />
+              <Button
+                onClick={addSlots}
+                disabled={saving || selectedDays.length === 0}
+                className="bg-[#2f3cf5] text-white hover:bg-[#2330c8]"
+              >
+                {saving ? (
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                ) : (
+                  <Plus className="size-4 mr-2" />
+                )}
+                {selectedDays.length > 1
+                  ? `Add to ${selectedDays.length} days`
+                  : 'Add'}
+              </Button>
+            </div>
+          </div>
+
           {/* 7-day overview */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
             {DAYS_OF_WEEK.map((day, i) => {
@@ -335,7 +468,7 @@ export default function AvailabilityPage() {
                 No recurring availability
               </h3>
               <p className="mt-1 text-sm text-[#5f5d57]">
-                Click &quot;Add slot&quot; above to set hours for a day.
+                Pick one or more days above and add your hours.
               </p>
             </div>
           ) : (
