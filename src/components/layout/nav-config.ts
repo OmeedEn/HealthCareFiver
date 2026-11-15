@@ -79,7 +79,7 @@ const CONTRACTOR_ACCOUNT_NAV: NavGroup[] = [
       { label: 'Inquiries', href: '/contractor/inquiries', icon: Inbox },
       // Spec staffing posts stay off until the legal review.
       ...(STAFFING_POSTS_ENABLED
-        ? [{ label: 'Jobs', href: '/contractor/jobs', icon: Briefcase }]
+        ? [{ label: 'Staffing posts', href: '/contractor/jobs', icon: Briefcase }]
         : []),
       { label: 'Rates', href: '/contractor/rates', icon: BadgeDollarSign },
       { label: 'Availability', href: '/contractor/availability', icon: CalendarClock },
@@ -89,35 +89,48 @@ const CONTRACTOR_ACCOUNT_NAV: NavGroup[] = [
     label: 'Business',
     items: [
       { label: 'Credentials', href: '/contractor/credentials', icon: ShieldCheck },
-      { label: 'Contracts', href: '/contractor/contracts', icon: FileText },
+      // Contracts are the staffing-post model (jobs → applications →
+      // timesheets); hidden with staffing posts.
+      ...(STAFFING_POSTS_ENABLED
+        ? [{ label: 'Contracts', href: '/contractor/contracts', icon: FileText }]
+        : []),
       { label: 'Payments', href: '/contractor/payments', icon: CreditCard },
     ],
   },
   YOU_GROUP,
 ]
 
+// Organizations both offer (services, events) and buy (book professionals),
+// so incoming and outgoing bookings get separate, explicit labels. Staffing
+// posts (jobs, urgent needs, their contracts and payments) are a separate
+// product that stays hidden until STAFFING_POSTS_ENABLED.
 const FACILITY_ACCOUNT_NAV: NavGroup[] = [
   {
     label: 'Your organization',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-      { label: 'My Jobs', href: '/facility/jobs', icon: Briefcase },
-      { label: 'Services & Events', href: '/facility/listings', icon: Megaphone },
-      { label: 'Bookings', href: '/facility/bookings', icon: CalendarCheck },
+      { label: 'Services & events', href: '/facility/listings', icon: Megaphone },
+      { label: 'Requests we receive', href: '/facility/bookings', icon: Inbox },
+      { label: 'Find professionals', href: '/facility/contractors', icon: Search },
+      { label: 'Bookings we buy', href: '/bookings', icon: CalendarCheck },
       ...(STAFFING_POSTS_ENABLED
         ? [
-            { label: 'Post a Job', href: '/facility/jobs/new', icon: PlusCircle },
-            { label: 'Post an Urgent Need', href: '/facility/needs/new', icon: Siren },
+            { label: 'Staffing posts', href: '/facility/jobs', icon: Briefcase },
+            { label: 'New staffing post', href: '/facility/jobs/new', icon: PlusCircle },
+            { label: 'Post an urgent need', href: '/facility/needs/new', icon: Siren },
           ]
         : []),
-      { label: 'Find Contractors', href: '/facility/contractors', icon: Search },
     ],
   },
   {
     label: 'Business',
     items: [
-      { label: 'Contracts', href: '/facility/contracts', icon: FileText },
-      { label: 'Payments', href: '/facility/payments', icon: CreditCard },
+      ...(STAFFING_POSTS_ENABLED
+        ? [
+            { label: 'Staffing contracts', href: '/facility/contracts', icon: FileText },
+            { label: 'Staffing payments', href: '/facility/payments', icon: CreditCard },
+          ]
+        : []),
       { label: 'Payouts', href: '/facility/payouts', icon: Landmark },
     ],
   },
@@ -197,12 +210,13 @@ export function userMenuFor(role: NavRole, userId?: string | null): MenuLink[][]
   const mine: MenuLink[] = [
     { label: 'Account', href: accountHomeFor(role), icon: LayoutDashboard },
   ]
-  if (role !== 'admin') {
-    mine.push({
-      label: 'My bookings',
-      href: role === 'facility' ? '/facility/bookings' : '/bookings',
-      icon: CalendarCheck,
-    })
+  if (role === 'facility') {
+    // Outgoing (what the organization books) vs incoming (requests and
+    // registrations for its own services and events).
+    mine.push({ label: 'Bookings we buy', href: '/bookings', icon: CalendarCheck })
+    mine.push({ label: 'Requests we receive', href: '/facility/bookings', icon: Inbox })
+  } else if (role !== 'admin') {
+    mine.push({ label: 'My bookings', href: '/bookings', icon: CalendarCheck })
   }
   mine.push({ label: 'Messages', href: '/messages', icon: MessageSquare })
 

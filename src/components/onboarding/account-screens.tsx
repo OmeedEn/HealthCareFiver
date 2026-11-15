@@ -77,7 +77,7 @@ const PATH_OPTIONS: { value: SignupPath; label: string; sub: string }[] = [
   { value: 'INDEPENDENT', label: 'I offer care on my own', sub: 'Solo practitioner, freelancer, consultant, coach, or educator.' },
   { value: 'PRACTICE', label: 'I run a practice, clinic, or facility', sub: 'We have a location and a team.' },
   { value: 'COMPANY', label: 'I run a company or firm', sub: 'Consulting, training, billing, health tech, or recruiting.' },
-  { value: 'HIRING', label: 'I’m hiring professionals', sub: 'Find and book people for shifts, projects, or events.' },
+  { value: 'HIRING', label: 'My organization wants to book professionals', sub: 'Find and book professionals for services, consulting, or events.' },
   { value: 'CLIENT', label: 'I’m looking for care', sub: 'For me or someone I care for.' },
   { value: 'UNSURE', label: 'Not sure', sub: 'Tell us a little and we’ll place you.' },
 ]

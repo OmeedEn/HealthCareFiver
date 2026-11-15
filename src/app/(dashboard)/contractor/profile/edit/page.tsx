@@ -790,7 +790,7 @@ export default function ContractorProfileEditPage() {
             >
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <ToggleTile id="is_available" checked={formData.is_available} onChange={handleChange} title="Accepting new clients" description="Show up in searches." />
-                <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Get matched with work outside your city." />
+                <ToggleTile id="willing_to_travel" checked={formData.willing_to_travel} onChange={handleChange} title="Willing to travel" description="Serve clients outside your city, e.g. home visits or on-site events." />
                 {formData.willing_to_travel && (
                   <div className="md:col-span-2">
                     <FieldLabel htmlFor="travel_radius_miles">Travel radius (miles)</FieldLabel>

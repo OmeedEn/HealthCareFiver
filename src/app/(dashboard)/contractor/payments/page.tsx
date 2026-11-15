@@ -256,14 +256,13 @@ export default function ContractorPaymentsPage() {
                 No payments yet
               </h3>
               <p className="mt-1 max-w-sm text-sm text-[#5f5d57]">
-                Once you complete contracts, your payments and payouts will show
-                up here.
+                Your payments and payouts will show up here.
               </p>
               <Link
-                href="/contractor/jobs"
+                href="/contractor/listings"
                 className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#2f3cf5] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2330c8]"
               >
-                Browse jobs
+                Your listings
               </Link>
             </div>
           ) : (

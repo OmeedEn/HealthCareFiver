@@ -33,7 +33,7 @@ export function HeroSearch() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder='Try "ICU nurse", "CNA night shift", or "respiratory therapist"'
+          placeholder='Try "nutrition coaching", "personal training", or "CPR class"'
           className="h-full flex-1 bg-transparent text-base text-ink placeholder:text-ink-faint outline-none"
           autoComplete="off"
         />

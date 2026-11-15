@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { currentUser } from '@/lib/auth/roles'
 import { canGoLive } from '@/lib/auth/can-go-live'
+import { STAFFING_POSTS_ENABLED } from '@/lib/onboarding/organization'
 
 const applySchema = z.object({
   jobId: z.string().uuid(),
@@ -54,6 +55,10 @@ const AGREEMENT_REQUIRED = {
 export async function applyToJob(
   input: ApplyToJobInput
 ): Promise<ApplyToJobResult> {
+  // Staffing posts are a separate product, off until its legal review.
+  if (!STAFFING_POSTS_ENABLED) {
+    return { ok: false, reason: 'closed', message: 'Staffing posts aren’t available yet.' }
+  }
   // currentUser() enforces AAL2 (MFA).
   const user = await currentUser()
   if (!user || user.role !== 'contractor') {
