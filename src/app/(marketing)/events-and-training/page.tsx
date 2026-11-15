@@ -12,7 +12,7 @@ export default function EventsAndTrainingPage() {
     <>
       <PageIntro
         kicker="Events & training"
-        title="Learn from verified health professionals"
+        title="Learn from reviewed health professionals"
         description="Live webinars, hands-on workshops, CEU and CME courses, and certification cohorts — created and taught by professionals on Sanus."
         primary={{ label: 'Browse events', href: '/events' }}
         secondary={{ label: 'Host an event', href: '/signup/offer' }}

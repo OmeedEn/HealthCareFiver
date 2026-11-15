@@ -32,7 +32,8 @@ interface PaymentHistoryProps {
 const statusConfig: Record<string, { label: string; className: string }> = {
   pending: { label: 'Pending', className: 'bg-yellow-100 text-yellow-800' },
   processing: { label: 'Processing', className: 'bg-blue-100 text-blue-800' },
-  in_escrow: { label: 'In Escrow', className: 'bg-purple-100 text-purple-800' },
+  // DB enum 'in_escrow' = charged, payout not yet recorded; not escrow.
+  in_escrow: { label: 'Awaiting payout', className: 'bg-purple-100 text-purple-800' },
   released: { label: 'Released', className: 'bg-green-100 text-green-800' },
   failed: { label: 'Failed', className: 'bg-red-100 text-red-800' },
   disputed: { label: 'Disputed', className: 'bg-orange-100 text-orange-800' },

@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { mfaGate } from '@/lib/auth/mfa'
 import { isDemoMode } from '@/lib/demo/data'
 import { BOOKING_TERMS_VERSION } from '@/lib/legal'
-import { isStripeConfigured } from '@/lib/stripe/connect'
+import { bookingPaymentsEnabled } from './fees'
 import { orgVerifyHref, safeNextPath } from '@/lib/onboarding/org-verify-later'
 import { orgMustVerify } from '@/lib/onboarding/org-verify-later-server'
 import { createBookingCheckout, tryBookingRefund } from './payments'
@@ -189,7 +189,7 @@ export async function sendBookingMessage(bookingId: string, body: string): Promi
 /** Customer: open Stripe Checkout to pay for an accepted booking. */
 export async function payForBooking(bookingId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (!uuid.safeParse(bookingId).success) return { ok: false, error: 'Invalid request.' }
-  if (!isStripeConfigured()) return { ok: false, error: 'Payments open soon. We’ll let you know when you can pay.' }
+  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Sanus aren’t open yet. We’ll let you know when you can pay.' }
   const supabase = await session()
   if (!supabase) return SESSION_EXPIRED as { ok: false; error: string }
   const {

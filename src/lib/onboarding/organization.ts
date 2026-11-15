@@ -118,7 +118,7 @@ export const ATTEST_AUTHORIZED_LABEL =
   "I'm authorized to represent this organization, and the information I provided is accurate."
 export const ATTEST_CHECKS_LABEL =
   'I authorize Sanus to verify this information and run exclusion screenings.'
-export const REVIEW_NOTE = 'We review every application within 24-48 hours.'
+export const REVIEW_NOTE = 'Our team reviews every application and will email you when it’s done.'
 
 /**
  * Uploads. The registration screen stores 'business_registration' (or

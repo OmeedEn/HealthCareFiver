@@ -195,7 +195,7 @@ export async function sendProviderApprovalEmail(
       </ol>
       ${insuranceBlock}
       ${ctaButton(goLiveUrl, 'Finish going live')}
-      <p style="color:#5f5d57;font-size:13px;">Free to join. A small service fee applies to each booking.</p>
+      <p style="color:#5f5d57;font-size:13px;">Free to join. No Sanus service fee has been set.</p>
     `),
   })
 }

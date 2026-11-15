@@ -8,6 +8,7 @@ import { isDemoMode, DEMO_PAYMENTS, DEMO_CONTRACTOR } from '@/lib/demo/data'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { PAYMENTS_NOT_OPEN } from '@/lib/fees'
 import {
   DollarSign,
   Clock,
@@ -116,8 +117,10 @@ function PaymentStatusBadge({ status }: { status: string }) {
       </Badge>
     )
   }
+  // DB status 'in_escrow' = charge succeeded, payout not yet recorded. It is
+  // not an escrow arrangement, so never show the raw enum as "In Escrow".
   if (normalized === 'in_escrow') {
-    return <Badge variant="outline">{label}</Badge>
+    return <Badge variant="outline">Awaiting payout</Badge>
   }
   if (normalized === 'pending' || normalized === 'processing') {
     return <Badge variant="secondary">{label}</Badge>
@@ -183,9 +186,18 @@ export default function FacilityPaymentsPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#1a1a17]">Payments</h1>
         <p className="text-[#5f5d57]">
-          Track facility spend, escrow, and payouts to your contractors.
+          Track facility spend and payouts to your contractors.
         </p>
       </div>
+
+      <Card>
+        <CardContent className="py-4">
+          <p className="text-sm text-[#5f5d57]">
+            {PAYMENTS_NOT_OPEN} Any earlier payments are listed below as
+            recorded.
+          </p>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -195,9 +207,9 @@ export default function FacilityPaymentsPage() {
           icon={DollarSign}
         />
         <StatCard
-          title="In Escrow"
+          title="Awaiting payout"
           value={formatCurrency(summary.inEscrow)}
-          description="Held until contract release"
+          description="Payment received; payout not yet recorded"
           icon={Lock}
         />
         <StatCard

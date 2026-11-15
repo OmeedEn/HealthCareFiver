@@ -23,7 +23,7 @@ const publicSans = Public_Sans({
 export const metadata: Metadata = {
   title: "Sanus — Health expertise, on demand",
   description:
-    "Find and hire verified health professionals — clinical care, consulting, coaching, legal, and continuing education. For individuals, businesses, and healthcare organizations.",
+    "Find and hire reviewed health professionals — clinical care, consulting, coaching, legal, and continuing education. For individuals, businesses, and healthcare organizations.",
 };
 
 export default function RootLayout({

@@ -5,7 +5,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { BadgeCheck, Receipt, UserPlus } from 'lucide-react'
+import { Receipt, UserPlus } from 'lucide-react'
+import { FEE_DISCLOSURE, PAYMENTS_NOT_OPEN, PRICING_HEADLINE } from '@/lib/fees'
 
 // Professionals no longer pay a subscription. This page (kept at /membership so
 // old links work) just explains how Sanus pricing works.
@@ -13,17 +14,12 @@ const POINTS = [
   {
     icon: UserPlus,
     title: 'Free to join',
-    body: 'Creating your account, credential verification, and going live cost nothing. There is no monthly plan.',
+    body: 'Creating your account, credential review, and going live cost nothing. There is no monthly plan.',
   },
   {
     icon: Receipt,
-    title: 'A small service fee per booking',
-    body: 'Sanus charges a small service fee on each booking. You’ll see the exact amount before you publish a service, consulting offer, or event.',
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Enhanced Verified badge (coming later)',
-    body: 'An optional badge with an added background check will be available later. It is never required to join, go live, or get booked.',
+    title: 'No service fee set',
+    body: `${PAYMENTS_NOT_OPEN} ${FEE_DISCLOSURE}`,
   },
 ] as const
 
@@ -35,7 +31,7 @@ export default function PricingPage() {
           How Sanus pricing works
         </h1>
         <p className="mt-1 text-[#5f5d57]">
-          Free to join. A small service fee applies to each booking.
+          {PRICING_HEADLINE} {PAYMENTS_NOT_OPEN}
         </p>
       </div>
 
@@ -61,7 +57,7 @@ export default function PricingPage() {
       </Card>
 
       <p className="text-sm text-[#5f5d57]">
-        Payouts are handled securely through Stripe. Set them up on your{' '}
+        Payout setup is handled through Stripe. Set it up on your{' '}
         <Link
           href="/contractor/payments"
           className="font-medium text-[#1a1a17] underline underline-offset-2"

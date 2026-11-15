@@ -280,7 +280,7 @@ export function ProfessionalOnboardingFlow({
         <CheckRow id="attest_accurate" checked={attest} onChange={setAttest} label={PRO_COPY.attestAccurate} />
         <CheckRow id="authorize_checks" checked={authorize} onChange={setAuthorize} label={PRO_COPY.authorizeChecks} />
         <p className="text-xs text-[#5f5d57]">
-          We review every application within 24-48 hours. Anything you skipped waits in your dashboard.
+          Our team reviews every application and will email you when it’s done. Anything you skipped waits in your dashboard.
         </p>
       </div>
     ),

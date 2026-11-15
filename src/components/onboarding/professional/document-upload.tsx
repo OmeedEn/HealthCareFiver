@@ -158,7 +158,7 @@ export function DocumentUpload({
       )}
 
       <p className="flex items-center gap-1.5 text-xs text-[#706d65]">
-        <Lock className="size-3.5" aria-hidden /> Private and encrypted. PDF or photo, up to 10 MB.
+        <Lock className="size-3.5" aria-hidden /> Stored privately. PDF or photo, up to 10 MB.
       </p>
     </div>
   )
