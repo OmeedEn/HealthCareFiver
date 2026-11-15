@@ -17,5 +17,5 @@ export function authCallbackUrl(
   const origin = (
     process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
   ).replace(/\/$/, '')
-  return `${origin}/callback?next=${next}`
+  return `${origin}/callback?next=${encodeURIComponent(next)}`
 }
