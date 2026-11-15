@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,11 @@ interface MessageInputProps {
   /** Show the photo / voice / video controls. */
   allowAttachments?: boolean
   placeholder?: string
+  /**
+   * No-patient-information notice above the box. 'client' (default) adds the
+   * 911 / 988 line; 'general' is for staff-side composers.
+   */
+  safetyNotice?: 'client' | 'general'
 }
 
 /** Blob URL for a local file, revoked when the file changes or on unmount. */
@@ -189,7 +195,9 @@ export function MessageInput({
   onSend,
   allowAttachments = false,
   placeholder = 'Type a message...',
+  safetyNotice = 'client',
 }: MessageInputProps) {
+  const noticeId = useId()
   const [content, setContent] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [sending, setSending] = useState(false)
@@ -258,7 +266,8 @@ export function MessageInput({
       {file && !voice.recording && (
         <PendingPreview file={file} onRemove={() => setFile(null)} />
       )}
-      <div className="flex items-end gap-2 border-t p-4">
+      <NoPhiNotice id={noticeId} audience={safetyNotice} variant="compact" className="border-t px-4 pt-3" />
+      <div className="flex items-end gap-2 p-4 pt-2">
         {allowAttachments && (
           <div className="flex shrink-0 items-center gap-0.5 pb-1">
             <input
@@ -335,6 +344,8 @@ export function MessageInput({
               }
             }}
             placeholder={placeholder}
+            aria-label="Message"
+            aria-describedby={noticeId}
             className="min-h-10 max-h-32 resize-none"
             rows={1}
             disabled={sending}

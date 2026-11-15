@@ -123,6 +123,7 @@ export function TextAreaField({
   maxLength,
   counter,
   rows = 3,
+  describedBy,
 }: {
   id: string
   label: string
@@ -134,6 +135,8 @@ export function TextAreaField({
   maxLength?: number
   counter?: boolean
   rows?: number
+  /** Extra aria-describedby ids, e.g. a NoPhiNotice above the field. */
+  describedBy?: string
 }) {
   return (
     <div className="space-y-1.5">
@@ -149,7 +152,7 @@ export function TextAreaField({
         maxLength={maxLength}
         rows={rows}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? `${id}-err` : undefined}
+        aria-describedby={[describedBy, error ? `${id}-err` : null].filter(Boolean).join(' ') || undefined}
         className="bg-white"
       />
       <div className="flex items-start justify-between gap-3">

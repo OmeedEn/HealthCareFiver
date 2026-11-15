@@ -16,6 +16,7 @@ import {
   CLIENT_NOTE_MAX,
 } from '@/lib/onboarding/client-interests'
 import type { ClientFinishItem } from '@/lib/onboarding/checklist-client'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { saveClientFinishItem } from './actions'
 
 const LANGUAGES = [
@@ -114,21 +115,25 @@ export function ClientFinishFlow({
     goals: {
       id: 'goals',
       title: 'What are your goals?',
-      sub: 'A few words is plenty. Please don’t include medical details.',
+      sub: 'A few words is plenty.',
       canContinue: nonEmpty,
       save,
       fields: ['value'],
       render: ({ errors }) => (
-        <TextAreaField
-          id="value"
-          label="Your goals"
-          value={value}
-          onChange={setValue}
-          maxLength={CLIENT_GOALS_MAX}
-          counter
-          placeholder="e.g. get stronger, sleep better, eat healthier"
-          error={err(errors)}
-        />
+        <>
+          <NoPhiNotice id="value-phi" />
+          <TextAreaField
+            id="value"
+            label="Your goals"
+            value={value}
+            onChange={setValue}
+            maxLength={CLIENT_GOALS_MAX}
+            counter
+            placeholder="e.g. get stronger, sleep better, eat healthier"
+            error={err(errors)}
+            describedBy="value-phi"
+          />
+        </>
       ),
     },
     language: {
@@ -181,21 +186,24 @@ export function ClientFinishFlow({
     note: {
       id: 'note',
       title: 'Anything else we should know?',
-      sub: 'Please don’t include medical details.',
       canContinue: nonEmpty,
       save,
       fields: ['value'],
       render: ({ errors }) => (
-        <TextAreaField
-          id="value"
-          label="Anything else"
-          value={value}
-          onChange={setValue}
-          maxLength={CLIENT_NOTE_MAX}
-          counter
-          placeholder="e.g. evenings work best, I prefer a female provider"
-          error={err(errors)}
-        />
+        <>
+          <NoPhiNotice id="value-phi" />
+          <TextAreaField
+            id="value"
+            label="Anything else"
+            value={value}
+            onChange={setValue}
+            maxLength={CLIENT_NOTE_MAX}
+            counter
+            placeholder="e.g. evenings work best, I prefer a female provider"
+            error={err(errors)}
+            describedBy="value-phi"
+          />
+        </>
       ),
     },
     phone: {

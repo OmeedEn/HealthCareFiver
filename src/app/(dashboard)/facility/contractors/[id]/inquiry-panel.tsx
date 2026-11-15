@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { HIRING_TIMELINES, LOOKING_FOR_ENGAGEMENTS } from '@/lib/onboarding/organization'
 import { INQUIRY_KIND_LABEL, type InquiryKind } from '@/lib/org/inquiries'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { sendOrgInquiry } from './inquiry-actions'
 
 export interface LatestInquiry {
@@ -132,9 +133,10 @@ export function InquiryPanel({
               </select>
             </label>
           </div>
+          <NoPhiNotice id="inquiry-message-phi" audience="general" />
           <label className="block text-sm">
             <span className="font-medium text-[#1a1a17]">Message <span className="font-normal text-[#706d65]">(optional)</span></span>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={3} className="mt-1 w-full rounded-lg border border-input px-3 py-2" />
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={3} aria-describedby="inquiry-message-phi" className="mt-1 w-full rounded-lg border border-input px-3 py-2" />
           </label>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setKind(null)}>Cancel</Button>

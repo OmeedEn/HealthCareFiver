@@ -8,6 +8,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { QuestionFlow, type Screen } from '@/components/onboarding/question-flow'
 import { CheckRow, TextAreaField, TextField, Toggle } from '@/app/onboarding/professional/ui'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { localInputToIso } from '@/app/onboarding/organization/listing-draft'
 import { BOOKING_TERMS_PATH, BOOKING_TERMS_VERSION } from '@/lib/legal'
 import { bookingVerifyHref, requestBooking } from '@/lib/bookings/actions'
@@ -141,7 +142,10 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
       optional: !quote,
       validate: () => need(!quote || !!note.trim(), 'note', 'Tell them what you need so they can quote'),
       render: ({ errors }) => (
-        <TextAreaField id="booking-note" label="Note" value={note} onChange={setNote} maxLength={2000} counter rows={4} error={errors.note} />
+        <>
+          <NoPhiNotice id="booking-note-phi" />
+          <TextAreaField id="booking-note" label="Note" value={note} onChange={setNote} maxLength={2000} counter rows={4} error={errors.note} describedBy="booking-note-phi" />
+        </>
       ),
     },
     {
@@ -178,6 +182,7 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
             )}
             <Row label="Price" value={total} />
           </dl>
+          <NoPhiNotice />
           <CheckRow
             id="booking-terms"
             checked={agreed}

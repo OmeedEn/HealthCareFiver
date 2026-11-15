@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 
 export function ReportBugButton() {
   const [open, setOpen] = useState(false)
@@ -33,7 +34,8 @@ export function ReportBugButton() {
           title: form.get('title'),
           description: form.get('description'),
           severity: form.get('severity'),
-          pageUrl: window.location.href,
+          // Path only: query strings can carry search terms or health topics.
+          pageUrl: window.location.pathname,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -61,19 +63,21 @@ export function ReportBugButton() {
         <DialogHeader>
           <DialogTitle>Report a bug</DialogTitle>
           <DialogDescription>
-            Tell us what went wrong. Please don&apos;t include patient health information.
+            Tell us what went wrong.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <NoPhiNotice id="bug-report-phi" audience="general" />
           <div className="space-y-1.5">
             <Label htmlFor="bug-title">What happened?</Label>
-            <Input id="bug-title" name="title" required maxLength={200} placeholder="e.g. Upload button does nothing" />
+            <Input id="bug-title" name="title" aria-describedby="bug-report-phi" required maxLength={200} placeholder="e.g. Upload button does nothing" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="bug-description">Details (optional)</Label>
             <Textarea
               id="bug-description"
               name="description"
+              aria-describedby="bug-report-phi"
               maxLength={5000}
               rows={4}
               placeholder="What were you trying to do, and what did you expect?"

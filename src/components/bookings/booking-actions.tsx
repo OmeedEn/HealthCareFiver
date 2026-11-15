@@ -5,6 +5,7 @@ import { CreditCard, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { TextAreaField, TextField } from '@/app/onboarding/professional/ui'
+import { NoPhiNotice } from '@/components/safety/no-phi-notice'
 import { isoToLocalInput, localInputToIso } from '@/app/onboarding/organization/listing-draft'
 import { customerBookingAction, payForBooking, respondToBooking, sendBookingMessage, type BookingActionResult } from '@/lib/bookings/actions'
 import { money, needsPayment, type BookingRow } from '@/lib/bookings/types'
@@ -110,8 +111,10 @@ export function OrgBookingActions({ booking: b }: { booking: BookingRow }) {
                 The customer paid {money(b.amount_paid_cents)}. Cancelling refunds them in full, and there’s no payout for this booking.
               </p>
             )}
+            <NoPhiNotice id="org-note-phi" audience="general" />
             <TextAreaField
               id="org-note"
+              describedBy="org-note-phi"
               label={mode === 'decline' || mode === 'cancel' ? 'Reason (optional)' : 'Note to the customer (optional)'}
               value={note}
               onChange={setNote}
@@ -217,8 +220,9 @@ export function BookingMessageForm({ bookingId }: { bookingId: string }) {
         if (await run('send', () => sendBookingMessage(bookingId, body), 'Message sent.')) setBody('')
       }}
     >
-      <div className="flex-1">
-        <TextAreaField id="booking-message" label="Message" value={body} onChange={setBody} maxLength={4000} rows={2} placeholder="Write a message…" />
+      <div className="flex-1 space-y-2">
+        <NoPhiNotice id="booking-message-phi" variant="compact" />
+        <TextAreaField id="booking-message" label="Message" value={body} onChange={setBody} maxLength={4000} rows={2} placeholder="Write a message…" describedBy="booking-message-phi" />
       </div>
       <Button type="submit" disabled={!!busy || !body.trim()} className="mb-6 h-11 bg-[#2f3cf5] px-4 text-white hover:bg-[#2330c8]" aria-label="Send message">
         {busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
