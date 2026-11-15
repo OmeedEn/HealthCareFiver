@@ -129,7 +129,7 @@ export default function OrganizationAgreementPage() {
   return (
     <LegalPage
       title="Organization Agreement"
-      lastUpdated="October 5, 2026"
+      lastUpdated="[Draft — pending legal review; not yet effective] (last edited October 5, 2026)"
       intro={
         <p>
           This Agreement explains how organizations work with Sanus: Sanus connects you with

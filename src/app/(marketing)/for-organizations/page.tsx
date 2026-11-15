@@ -10,7 +10,7 @@ import {
 export const metadata: Metadata = {
   title: 'For organizations — Sanus',
   description:
-    'Hospitals, clinics, practices, and employers find and engage verified health professionals directly — no agency fees.',
+    'Hospitals, clinics, practices, and employers find and engage reviewed health professionals directly — no agency fees.',
 }
 
 export default function ForOrganizationsPage() {

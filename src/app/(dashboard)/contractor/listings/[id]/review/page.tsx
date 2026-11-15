@@ -146,8 +146,8 @@ export default async function ReviewListingPage({
         ) : (
           <>
             <p className="text-sm text-[#5f5d57]">
-              Our team reviews every listing before it goes live — usually
-              within 24–48 hours.
+              Our team reviews every listing before it goes live. Its status
+              shows on your Listings page.
             </p>
             {waitsForMalpractice && gate.kind === 'ok' && (
               <div className="flex items-start gap-2 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-3 text-sm text-[#8a5a00]">

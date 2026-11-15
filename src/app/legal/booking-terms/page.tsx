@@ -112,7 +112,7 @@ export default function BookingTermsPage() {
   return (
     <LegalPage
       title="Booking Terms"
-      lastUpdated="October 15, 2026"
+      lastUpdated="[Draft — pending legal review; not yet effective] (last edited October 15, 2026)"
       intro={
         <p>
           These terms apply each time you request a service or register for an event from an

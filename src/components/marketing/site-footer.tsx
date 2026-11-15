@@ -83,7 +83,6 @@ export function SiteFooter() {
               title="Platform"
               links={[
                 { label: 'Trust & safety', href: '/how-it-works#trust' },
-                { label: 'HIPAA safeguards', href: '/how-it-works#trust' },
                 { label: 'About Sanus', href: '/' },
                 { label: 'Sign in', href: '/login' },
                 { label: 'Terms of Service', href: '/terms' },

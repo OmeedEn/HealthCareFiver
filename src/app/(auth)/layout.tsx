@@ -43,7 +43,7 @@ export default function AuthLayout({
             <Feature
               icon={BadgeCheck}
               title="Reviewed before booking"
-              description="Professionals are verified by our team before they can be booked"
+              description="Professionals are reviewed by our team before they can be booked"
             />
             <Feature
               icon={Layers}
@@ -57,8 +57,8 @@ export default function AuthLayout({
             />
             <Feature
               icon={ShieldCheck}
-              title="Secure payments"
-              description="Payments are processed by Stripe — we never store your card details"
+              title="Payments"
+              description="Paid booking through Sanus isn’t open yet. Card payments, when they open, are handled by Stripe"
             />
           </div>
         </div>
@@ -71,8 +71,8 @@ export default function AuthLayout({
             <div>
               <p className="text-sm font-bold">Built for trust from day one</p>
               <p className="mt-1 text-sm leading-relaxed text-[#c9cdfb]">
-                Health information is handled with HIPAA safeguards, and you
-                stay in control of who you work with and what you share.
+                You choose who you work with and what you share. Please keep
+                medical records and other patient information out of Sanus.
               </p>
             </div>
           </div>

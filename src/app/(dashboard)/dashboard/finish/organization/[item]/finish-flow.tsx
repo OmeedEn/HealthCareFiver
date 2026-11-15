@@ -71,7 +71,7 @@ export function OrgFinishFlow({
       id: item,
       title,
       sub,
-      whyWeAsk: 'Private and encrypted. Only our review team sees it.',
+      whyWeAsk: 'Stored privately. Only our review team sees it.',
       canContinue: () => mine.length > 0,
       save: () => markOrgAnswered([item]),
       render: () => (

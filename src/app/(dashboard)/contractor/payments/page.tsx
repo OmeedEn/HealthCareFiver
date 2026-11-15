@@ -12,6 +12,7 @@ import {
   PAYOUTS_LOCKED_MESSAGE,
   isApprovedStatus,
 } from '@/lib/listings/status'
+import { PAYMENTS_NOT_OPEN } from '@/lib/fees'
 import {
   DollarSign,
   Clock,
@@ -97,8 +98,10 @@ function PaymentStatusBadge({ status }: { status: string }) {
       </Badge>
     )
   }
+  // DB status 'in_escrow' = charge succeeded, payout not yet recorded. It is
+  // not an escrow arrangement, so never show the raw enum as "In Escrow".
   if (normalized === 'in_escrow') {
-    return <Badge variant="outline">{label}</Badge>
+    return <Badge variant="outline">Awaiting payout</Badge>
   }
   if (normalized === 'pending' || normalized === 'processing') {
     return <Badge variant="secondary">{label}</Badge>
@@ -190,9 +193,18 @@ export default function ContractorPaymentsPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#1a1a17]">Payments</h1>
         <p className="text-[#5f5d57]">
-          Track your earnings, escrow balance, and payout history.
+          Track your earnings and payout history.
         </p>
       </div>
+
+      <Card>
+        <CardContent className="py-4">
+          <p className="text-sm text-[#5f5d57]">
+            {PAYMENTS_NOT_OPEN} Any earlier payments are listed below as
+            recorded.
+          </p>
+        </CardContent>
+      </Card>
 
       {isOnboarded || payoutsUnlocked ? (
         <StripeConnectButton isOnboarded={isOnboarded} />
@@ -205,8 +217,8 @@ export default function ContractorPaymentsPage() {
                 Payouts unlock after approval
               </p>
               <p className="text-sm text-[#5f5d57]">
-                {PAYOUTS_LOCKED_MESSAGE} We review applications within 24–48
-                hours and will email you.
+                {PAYOUTS_LOCKED_MESSAGE} We&apos;ll email you when your
+                review is complete.
               </p>
             </div>
           </CardContent>
@@ -221,9 +233,9 @@ export default function ContractorPaymentsPage() {
           icon={DollarSign}
         />
         <StatCard
-          title="In Escrow"
+          title="Awaiting payout"
           value={formatCurrency(summary.inEscrow)}
-          description="Held until contract release"
+          description="Payment received; payout not yet recorded"
           icon={Lock}
         />
         <StatCard

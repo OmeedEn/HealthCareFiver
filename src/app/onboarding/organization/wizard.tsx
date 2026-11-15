@@ -103,7 +103,7 @@ export function OrgOnboardingWizard({
     canContinue: () => attest.authorized && attest.checks,
     save: async () => {
       const res = await submitOrgApplication({ attest_authorized: attest.authorized, attest_checks: attest.checks })
-      if (res.ok) toast.success('Application submitted. We’ll email you within 24-48 hours.')
+      if (res.ok) toast.success('Application submitted. We’ll email you when the review is complete.')
       return res
     },
     render: ({ errors }) => (

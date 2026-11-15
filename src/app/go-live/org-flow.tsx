@@ -25,9 +25,9 @@ import type { GoLiveStep } from './pro-flow'
 
 const AGREEMENT_SUMMARY = [
   'Sanus is a marketplace that connects you with professionals. It isn’t the employer or a staffing agency; you arrange pay, hiring, and compliance directly.',
-  'Keep your organization’s information accurate. Sanus verifies it and runs exclusion screenings.',
+  'Keep your organization’s information accurate. Sanus reviews it, including an exclusion-list check.',
   'Every listing, event, and post is reviewed before it goes live. Listings must be truthful.',
-  'Paid services and events need payouts through Stripe Connect. A small service fee applies to each paid booking.',
+  'Paid services and events need payout setup through Stripe Connect. No Sanus service fee has been set; the agreement’s fee terms are still pending.',
   'Don’t post protected health information in listings, posts, or messages.',
 ]
 
@@ -180,7 +180,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
       id: 'go_live_payouts',
       step: 1,
       title: 'Set up payouts',
-      sub: 'Get paid for bookings of your services and events, straight to your bank. A short, secure setup on Stripe, then you’re back here.',
+      sub: 'Get paid for bookings of your services and events, straight to your bank. A short setup on Stripe, then you’re back here.',
       continueLabel: plan.hasConnectAccount ? 'Continue Stripe setup' : 'Set up payouts with Stripe',
       save: async () => ({ ok: false, error: await startStripeConnect('go-live') }),
       skippable: true,

@@ -638,8 +638,8 @@ function CredentialUploadForm() {
                 },
                 {
                   step: 2,
-                  title: 'We verify',
-                  body: 'Our team reviews within 24–48 business hours.',
+                  title: 'We review',
+                  body: 'Our team reviews your document. Its status shows on your Credentials page.',
                 },
                 {
                   step: 3,

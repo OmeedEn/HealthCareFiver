@@ -481,7 +481,7 @@ export default function ContractorAgreementPage() {
   return (
     <LegalPage
       title="Independent Contractor and Platform Agreement"
-      lastUpdated="October 1, 2026"
+      lastUpdated="[Draft — pending legal review; not yet effective] (last edited October 1, 2026)"
       intro={
         <p>
           This Agreement explains how professionals work with Sanus: you are

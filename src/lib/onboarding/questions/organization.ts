@@ -81,7 +81,7 @@ export const ORG_QUESTIONS = {
     id: 'registration_doc',
     text: 'Upload a document that shows your organization is registered',
     sub: 'A facility license, business license, or Secretary of State registration.',
-    whyWeAsk: 'Private and encrypted. Only our review team sees it.',
+    whyWeAsk: 'Stored privately. Only our review team sees it.',
     skippable: true,
   },
   /** 8 */

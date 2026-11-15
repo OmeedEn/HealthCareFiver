@@ -68,7 +68,7 @@ export const PRO_COPY = {
     consultant: 'Upload your resume or CV',
     educator: 'Upload your resume or CV',
   } satisfies Record<ProfessionalBranch, string>,
-  uploadSub: 'Private and encrypted. Only our verification team can see it.',
+  uploadSub: 'Stored privately. Only our review team can see it.',
   governmentId: 'Upload a photo of your government ID',
   governmentIdWhy: 'Only used to confirm you are you.',
   disclosures: 'Do any of these apply to you?',

@@ -782,13 +782,13 @@ const VERIFICATION_BANNER: Record<
 > = {
   not_submitted: {
     title: 'Get verified to go live',
-    body: 'Upload your license or certification and a government ID. Our team reviews within 24–48 hours.',
+    body: 'Upload your license or certification and a government ID. Our team will review them and email you.',
     cta: { label: 'Upload documents', href: '/contractor/credentials/upload' },
     className: 'border-[#c9cdfb] bg-[#eceefe]',
     iconClassName: 'text-[#2330c8]',
   },
   pending_review: {
-    title: "Your application is under review. We'll email you within 24-48 hours.",
+    title: "Your application is under review. We'll email you when the review is complete.",
     className: 'border-[#ecd3a3] bg-[#fbf0dc]',
     iconClassName: 'text-[#8a5a00]',
   },
@@ -1807,8 +1807,8 @@ function ClassificationBanner({
       <div className="text-sm text-[#1a1a17]">
         <p className="font-semibold">
           Thanks, {firstName}. We&apos;re reviewing your answers and will place
-          you in the right category within 24-48 hours. We may ask for a few
-          more details.
+          you in the right category, and we&apos;ll email you when that&apos;s
+          done. We may ask for a few more details.
         </p>
         <p className="mt-1">
           Until then you can browse, save, and book as a client. Messaging

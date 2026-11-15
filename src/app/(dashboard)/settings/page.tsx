@@ -345,7 +345,7 @@ export default function SettingsPage() {
 
   async function handleAccountDelete() {
     const confirmed = window.confirm(
-      'This permanently deletes your Sanus account and all related data. This cannot be undone. Continue?',
+      'This deletes your Sanus account. Some records may be kept where we need them, for example records involving other people or for legal, tax, or safety reasons. This cannot be undone. Continue?',
     )
     if (!confirmed) return
 
@@ -737,8 +737,9 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <p className="mt-3 text-xs text-[#5f5d57]">
-                  Full session management is coming soon. Until then, you can
-                  sign out from any session by signing out and back in.
+                  Session management isn&apos;t available yet. If you think
+                  someone else has access to your account, change your
+                  password and sign out.
                 </p>
               </CardContent>
             </Card>
@@ -758,9 +759,11 @@ export default function SettingsPage() {
                       Delete account
                     </p>
                     <p className="text-sm text-red-700/80">
-                      Permanently deletes your account and all data we hold
-                      about you, including contracts, payments history,
-                      messages, and reviews. This cannot be undone.
+                      Deletes your account and signs you out. Some records may
+                      be kept where we need them, for example records involving
+                      other people (such as bookings, payments, messages, or
+                      reviews) or records we must keep for legal, tax, or
+                      safety reasons. This cannot be undone.
                     </p>
                   </div>
                   <Button
