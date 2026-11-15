@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { MapPin, ShieldCheck, Star, Tag } from 'lucide-react'
 import { CLIENT_INTEREST_LABELS } from '@/lib/onboarding/client-interests'
 import { FORMAT_LABELS, type MatchedProvider } from '@/lib/find-care/match-shared'
+import { INSURED_BADGE_LABEL, INSURED_BADGE_TITLE } from '@/lib/eligibility/rules'
 
 const AVATAR_PALETTE = [
   'bg-rose-100 text-rose-700',
@@ -50,9 +51,9 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
               {p.credential}
             </span>
             {p.insured && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#eceefe] px-2 py-0.5 text-xs font-semibold text-[#2330c8]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#eceefe] px-2 py-0.5 text-xs font-semibold text-[#2330c8]" title={INSURED_BADGE_TITLE}>
                 <ShieldCheck className="size-3" aria-hidden />
-                Insured
+                {INSURED_BADGE_LABEL}
               </span>
             )}
           </div>

@@ -4,6 +4,8 @@ import { refresh } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/lib/admin/guard'
 import { audit } from '@/lib/audit/log'
+import { checkOrgListing } from '@/lib/eligibility/server'
+import { reasonsMessage } from '@/lib/eligibility/rules'
 
 type Decision = 'publish' | 'request_changes' | 'unpublish'
 
@@ -24,8 +26,10 @@ export async function reviewOrgListing(id: string, decision: Decision, formData:
   if (loadError || !listing) throw new Error('Listing not found')
 
   if (decision === 'publish') {
-    const { data: ok } = await db.rpc('org_can_publish', { p_org_id: listing.facility_id })
-    if (!ok) throw new Error('This organization isn’t approved or hasn’t accepted the agreement.')
+    // Shared eligibility rules: org approved + agreement, listing was
+    // submitted (never straight from draft), no unsupported high-risk service.
+    const check = await checkOrgListing(db, id, 'publish')
+    if (check.outcome !== 'eligible') throw new Error(`Can’t publish: ${reasonsMessage(check.reasons)}`)
   }
 
   const { error } = await db
