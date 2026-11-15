@@ -24,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { INSURED_BADGE_LABEL, INSURED_BADGE_TITLE } from '@/lib/eligibility/rules'
 
 /* ────────────────────── Constants ────────────────────── */
 
@@ -163,9 +164,9 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
               {provider.credential}
             </span>
             {provider.insured && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#eceefe] px-2.5 py-0.5 text-xs font-semibold text-[#2330c8]">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#eceefe] px-2.5 py-0.5 text-xs font-semibold text-[#2330c8]" title={INSURED_BADGE_TITLE}>
                 <ShieldCheck className="h-3 w-3" aria-hidden="true" />
-                Insured
+                {INSURED_BADGE_LABEL}
               </span>
             )}
           </div>

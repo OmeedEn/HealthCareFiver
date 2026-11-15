@@ -47,6 +47,7 @@ import { formatRateAmount, formatRateUnit, type ProfessionalRate } from '@/lib/r
 import { MessageButton } from './message-button'
 import { BookingRequestButton, PRIMARY_CTA } from './booking-request'
 import { PhotoGallery } from './photo-gallery'
+import { INSURED_BADGE_LABEL, INSURED_BADGE_TITLE } from '@/lib/eligibility/rules'
 
 type Props = { params: Promise<{ id: string }> }
 
@@ -238,9 +239,9 @@ export default async function ProProfilePage({ params }: Props) {
               )}
               <RatingInline rating={p.average_rating} count={p.total_reviews} />
               {p.insured && (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5" title={INSURED_BADGE_TITLE}>
                   <ShieldCheck className="size-4 text-[#2330c8]" aria-hidden="true" />
-                  Insured
+                  {INSURED_BADGE_LABEL}
                 </span>
               )}
               {p.yearsOfExperience != null && p.yearsOfExperience > 0 && (

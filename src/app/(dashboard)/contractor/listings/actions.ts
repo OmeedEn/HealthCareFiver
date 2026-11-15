@@ -9,6 +9,8 @@ import { createClient } from '@/lib/supabase/server'
 import { currentUser, requireRole, type SessionUser } from '@/lib/auth/roles'
 import { isDemoMode } from '@/lib/demo/data'
 import { getOwnListing, getProviderState } from '@/lib/listings/data'
+import { checkOffering } from '@/lib/eligibility/server'
+import { reasonsMessage } from '@/lib/eligibility/rules'
 import {
   LISTING_STEP_KEYS,
   emptyListing,
@@ -266,6 +268,13 @@ export async function submitListingForReview(
       href: '/go-live',
       hrefLabel: 'Review the agreement',
     }
+  }
+
+  // Shared eligibility rules (also catches an expired license/certification
+  // the daily compliance cron hasn't turned into a hold yet).
+  const check = await checkOffering(createAdminClient(), id, 'submit')
+  if (check.outcome !== 'eligible') {
+    return { ok: false, error: reasonsMessage(check.reasons) }
   }
 
   const { data, error } = await supabase

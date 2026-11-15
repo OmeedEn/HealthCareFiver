@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { audit } from '@/lib/audit/log'
 import { isUuid, requireAdminApi } from '@/app/api/admin/_lib/guard'
+import { checkOffering } from '@/lib/eligibility/server'
+import { reasonsMessage } from '@/lib/eligibility/rules'
 
 type Action = 'publish' | 'request_changes' | 'pause'
 
@@ -12,9 +14,11 @@ const STATUS_BY_ACTION: Record<Action, 'published' | 'rejected' | 'paused'> = {
 }
 
 /**
- * Listing review decision. Publishing is gated in the database
- * (can_publish_offering via trigger); a refusal comes back as a 409 with the
- * database's reason so the admin sees exactly why.
+ * Listing review decision. Publishing is gated by the shared eligibility
+ * rules (src/lib/eligibility) here and in the database (trigger); a refusal
+ * comes back as a 409 with the reason so the admin sees exactly why. Only a
+ * listing the provider submitted (pending_review / paused) can be published:
+ * approving a provider never publishes their drafts.
  * Body: { action: 'publish' | 'request_changes' | 'pause', notes? }.
  */
 export async function POST(
@@ -51,6 +55,16 @@ export async function POST(
     .maybeSingle()
   if (!offering) {
     return NextResponse.json({ error: 'Listing not found' }, { status: 404 })
+  }
+
+  if (action === 'publish') {
+    const check = await checkOffering(adminSupabase, offeringId, 'publish')
+    if (check.outcome !== 'eligible') {
+      return NextResponse.json(
+        { error: `Can’t publish this listing: ${reasonsMessage(check.reasons)}`, reasons: check.reasons },
+        { status: 409 }
+      )
+    }
   }
 
   const newStatus = STATUS_BY_ACTION[action]

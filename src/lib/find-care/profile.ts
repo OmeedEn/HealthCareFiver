@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { offeringIsHighRisk } from '@/lib/eligibility/rules'
 import {
   DEMO_AVAILABILITY,
   DEMO_CONTRACTOR,
@@ -393,12 +394,25 @@ export async function getPublicProfile(
       details ? loadPhotos(supabase, id) : Promise.resolve([]),
       details ? loadAvailability(supabase, id) : Promise.resolve(NO_AVAILABILITY),
     ])
-    // Mirrors SQL can_publish_offering(): published AND provider can go live
-    // AND (no malpractice needed OR insured).
+    // Shared eligibility rule (src/lib/eligibility, mirrored by the SQL
+    // public policy): published AND provider can go live AND (not high-risk
+    // OR reviewed coverage on file).
     const offerings = all
       .filter(
         (o) =>
-          o.status === 'published' && canGoLive && (!o.requires_malpractice || insured)
+          o.status === 'published' &&
+          canGoLive &&
+          (!offeringIsHighRisk(
+            {
+              kind: o.kind,
+              status: o.status,
+              format: o.format,
+              involvesMedicalProcedures: o.involves_medical_procedures,
+              handsOnCare: null,
+            },
+            category
+          ) ||
+            insured)
       )
       .map(toPublicListing)
     const unpublished = isOwner
