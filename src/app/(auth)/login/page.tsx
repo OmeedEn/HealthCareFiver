@@ -73,7 +73,7 @@ function LoginFormFallback() {
         Welcome back
       </h1>
       <p className="mt-1.5 text-sm text-[#5f5d57]">
-        Sign in to your Sanus account to continue
+        Sign in to your Ocora account to continue
       </p>
     </div>
   )
@@ -141,7 +141,7 @@ function LoginForm() {
     setUnconfirmedEmail(null)
 
     if (isDemoMode()) {
-      toast.success('Welcome to Sanus demo!')
+      toast.success('Welcome to Ocora demo!')
       router.push(redirectTo)
       return
     }
@@ -183,7 +183,7 @@ function LoginForm() {
         Welcome back
       </h1>
       <p className="mt-1.5 text-sm text-[#5f5d57]">
-        Sign in to your Sanus account to continue
+        Sign in to your Ocora account to continue
       </p>
 
       {unconfirmedEmail && (
@@ -231,7 +231,7 @@ function LoginForm() {
 
       {noGoogleAccount && (
         <div role="alert" className="mt-6 rounded-lg border border-[#ecd3a3] bg-[#fbf0dc] p-4 text-sm text-[#1a1a17]">
-          <p className="font-semibold">No Sanus account uses that Google account</p>
+          <p className="font-semibold">No Ocora account uses that Google account</p>
           <p className="mt-1 text-[#5f5d57]">
             Sign in with your email and password, or{' '}
             <Link href="/signup" className="font-semibold text-[#2f3cf5] hover:underline">

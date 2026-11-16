@@ -25,7 +25,7 @@ export default async function AdminLayout({
       <div className="border-b bg-white">
         <div className="mx-auto flex min-h-14 max-w-7xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-2 md:px-6">
           <Link href="/admin" className="text-lg font-semibold text-[#1a1a17]">
-            Sanus Admin
+            Ocora Admin
           </Link>
           <AdminNav badges={badges} />
           <div className="ml-auto flex items-center gap-3 text-xs text-[#5f5d57]">

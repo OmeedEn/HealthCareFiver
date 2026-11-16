@@ -26,7 +26,7 @@ function Header() {
       </h1>
       <p className="mt-1.5 text-sm text-[#5f5d57]">
         Open your authenticator app and enter the 6-digit code it shows for
-        Sanus.
+        Ocora.
       </p>
     </div>
   )
@@ -216,7 +216,7 @@ function LostAccessHelp({ hasBackup }: { hasBackup: boolean }) {
         <p>
           New phone? If your app syncs or backs up (1Password, Authy, Google
           Authenticator with your Google account, Microsoft Authenticator with
-          cloud backup), sign into the app on the new phone and your Sanus code
+          cloud backup), sign into the app on the new phone and your Ocora code
           will be there.
         </p>
         <p>

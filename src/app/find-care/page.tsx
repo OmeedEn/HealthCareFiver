@@ -16,9 +16,9 @@ async function isSignedIn(): Promise<boolean> {
 }
 
 export const metadata: Metadata = {
-  title: 'Find a health professional — Sanus',
+  title: 'Find a health professional — Ocora',
   description:
-    'Browse health professionals, and services and events from organizations, all reviewed and approved by Sanus.',
+    'Browse health professionals, and services and events from organizations, all reviewed and approved by Ocora.',
 }
 
 export default async function FindCarePage() {

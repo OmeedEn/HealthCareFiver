@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { PresenceHeartbeat } from '@/components/presence-heartbeat'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
 // Minimal, generic shell for post-signup onboarding flows (/onboarding/*):
 // logo header + a centered column. Individual pages choose their own width.
@@ -15,9 +15,9 @@ export default function OnboardingLayout({
       <header className="border-b border-[#e3dfd6] bg-white">
         <div className="mx-auto flex h-16 w-full max-w-3xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2">
-            <SanusMark className="h-9 w-9" />
+            <OcoraMark className="h-9 w-9" />
             <span className="text-xl font-black tracking-tight text-[#1a1a17]">
-              Sanus<span className="text-[#2f3cf5]">.</span>
+              Ocora<span className="text-[#2f3cf5]">.</span>
             </span>
           </Link>
           {/* Buyer browsing never requires finishing this flow: answers are
@@ -36,7 +36,7 @@ export default function OnboardingLayout({
       </main>
 
       <footer className="flex flex-col items-center justify-center gap-1.5 border-t border-[#e3dfd6] bg-white px-6 py-4 text-center text-xs text-[#706d65] sm:flex-row sm:gap-4">
-        <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
+        <span>&copy; {new Date().getFullYear()} Ocora. All rights reserved.</span>
         <span className="flex gap-4">
           <Link href="/terms" className="transition hover:text-[#1a1a17]">
             Terms of Service

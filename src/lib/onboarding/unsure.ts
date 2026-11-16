@@ -18,9 +18,9 @@ export const UNSURE_GOOGLE_ACCOUNT_PATH = '/onboarding/unsure'
 
 /** Screen 5's second checkbox (exact spec copy). */
 export const UNSURE_REVIEW_CONSENT_LABEL =
-  'I confirm this information is accurate and authorize Sanus to review it.'
+  'I confirm this information is accurate and authorize Ocora to review it.'
 export const UNSURE_REVIEW_CONSENT_ERROR =
-  'Please confirm your information is accurate and authorize Sanus to review it.'
+  'Please confirm your information is accurate and authorize Ocora to review it.'
 
 type TeamSize = (typeof UNSURE_TEAM_SIZES)[number]['value']
 type Credential = (typeof UNSURE_CREDENTIALS)[number]['value']

@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export type MfaGate = 'ok' | 'enroll' | 'verify'
 
 /**
- * Every Sanus account handles PHI or admin data, so every session must reach
+ * Every Ocora account handles PHI or admin data, so every session must reach
  * AAL2 (password + TOTP) before it can use the app. Once REQUIRE_MFA is on,
  * never add a per-user or per-route bypass.
  *

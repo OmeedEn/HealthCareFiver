@@ -2,7 +2,7 @@ import { Phone } from 'lucide-react'
 
 /** Exact copy from the Single-Question Onboarding spec (client flow, results, site footer). */
 export const EMERGENCY_TEXT =
-  "Sanus isn't for emergencies. If this is an emergency, call 911. If you're in a mental health crisis, call or text 988."
+  "Ocora isn't for emergencies. If this is an emergency, call 911. If you're in a mental health crisis, call or text 988."
 
 /**
  * The 911 / 988 line. `boxed` is the in-flow notice (client "How soon"
@@ -11,7 +11,7 @@ export const EMERGENCY_TEXT =
 export function EmergencyNotice({ variant = 'boxed' }: { variant?: 'boxed' | 'inline' }) {
   const body = (
     <>
-      Sanus isn&apos;t for emergencies. If this is an emergency, call{' '}
+      Ocora isn&apos;t for emergencies. If this is an emergency, call{' '}
       <a href="tel:911" className="font-semibold underline underline-offset-2">
         911
       </a>

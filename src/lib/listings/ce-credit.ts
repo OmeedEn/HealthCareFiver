@@ -46,7 +46,7 @@ export function ceuDetailsMissing(offersCeu: boolean | null | undefined, d: CeuD
 }
 
 /**
- * Public credit label for a listing. Only a claim Sanus has separately
+ * Public credit label for a listing. Only a claim Ocora has separately
  * reviewed and approved shows as offering credit; nothing is shown
  * publicly otherwise (no badge for "No", none for an unreviewed claim).
  */
@@ -61,7 +61,7 @@ export function publicCeuLabel(l: {
 /** Owner / admin label: what state the claim is in. */
 export function ownerCeuLabel(l: { kind: string; offers_ceu: boolean | null; ceu_claim_status?: string | null }): string | null {
   if (l.kind !== 'event' || l.offers_ceu !== true) return null
-  if (l.ceu_claim_status === 'approved') return 'CE credit approved by Sanus'
+  if (l.ceu_claim_status === 'approved') return 'CE credit approved by Ocora'
   if (l.ceu_claim_status === 'rejected') return 'CE credit claim not approved'
-  return 'CE credit claimed — pending Sanus review'
+  return 'CE credit claimed — pending Ocora review'
 }

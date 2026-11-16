@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ORG_INTENTS, type OrgIntent } from '@/lib/onboarding/organization'
 import { updateOrgIntents } from './intents-actions'
 
-/** "What do you want to do on Sanus?" — editable any time after onboarding. */
+/** "What do you want to do on Ocora?" — editable any time after onboarding. */
 export function OrgIntentsCard({ initial }: { initial: OrgIntent[] }) {
   const [value, setValue] = useState<OrgIntent[]>(initial)
   const [saving, setSaving] = useState(false)
@@ -25,7 +25,7 @@ export function OrgIntentsCard({ initial }: { initial: OrgIntent[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">What you want to do on Sanus</CardTitle>
+        <CardTitle className="text-base">What you want to do on Ocora</CardTitle>
         <CardDescription>Pick any. This shapes your dashboard and what we suggest.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">

@@ -12,7 +12,7 @@ import {
 import type { UploadedDoc } from '@/app/onboarding/professional/shared'
 import { FinishItemFlow, type FinishValues } from './flow'
 
-export const metadata: Metadata = { title: 'Finish your profile | Sanus' }
+export const metadata: Metadata = { title: 'Finish your profile | Ocora' }
 
 /**
  * One "Finish your profile" item as a single-question screen (same

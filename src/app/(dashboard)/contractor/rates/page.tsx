@@ -6,7 +6,7 @@ import { listOwnRates } from '@/lib/rates/data'
 import type { ProfessionalRate } from '@/lib/rates/types'
 import { RatesEditor } from './rates-editor'
 
-export const metadata: Metadata = { title: 'Rates — Sanus' }
+export const metadata: Metadata = { title: 'Rates — Ocora' }
 
 const DEMO_RATES: ProfessionalRate[] = [
   {

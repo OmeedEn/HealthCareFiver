@@ -6,7 +6,7 @@ import { DEMO_ORG_LISTINGS, DEMO_ORGS } from './demo'
 
 /**
  * Public, browse-safe organization data for /orgs/[id], Find care and
- * Events. Bookings go through Sanus, so nothing here lets people reach an
+ * Events. Bookings go through Ocora, so nothing here lets people reach an
  * organization directly: no phone, email, website, address, EIN, license
  * or verification internals. Columns are read through explicit allowlists,
  * and RLS already limits rows to approved organizations' published listings.
@@ -41,7 +41,7 @@ export type PublicOrgListing = {
   capacity: number | null
   offersCeu: boolean | null
   /**
-   * Separate Sanus review of the credit claim (org_listings.ceu_claim_status).
+   * Separate Ocora review of the credit claim (org_listings.ceu_claim_status).
    * Only 'approved' may be shown as offering credit (publicCeuLabel).
    */
   ceuClaimStatus: string | null
@@ -121,7 +121,7 @@ export type PublicOrgPage = {
   listings: PublicOrgListing[]
   /** The viewer is this organization (owner preview banner). */
   isOwner: boolean
-  /** Approved by Sanus (an owner can preview before approval). */
+  /** Approved by Ocora (an owner can preview before approval). */
   approved: boolean
 }
 

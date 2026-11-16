@@ -28,7 +28,7 @@ const HINT_MESSAGES: Record<string, string> = {
   terms_required: 'Please accept the booking terms.',
   note_too_long: 'Keep your note under 2,000 characters.',
   contact_info:
-    'For your protection, keep contact details on Sanus: remove phone numbers, email addresses, and links.',
+    'For your protection, keep contact details on Ocora: remove phone numbers, email addresses, and links.',
   already_requested: 'You already have an open request for this. You can follow it in My bookings.',
   too_many_open: 'You have a lot of open requests. Wait for some answers before sending more.',
   event_full: 'Not enough spots left for that many people.',
@@ -201,7 +201,7 @@ export async function sendBookingMessage(bookingId: string, body: string): Promi
 /** Customer: open Stripe Checkout to pay for an accepted booking. */
 export async function payForBooking(bookingId: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   if (!uuid.safeParse(bookingId).success) return { ok: false, error: 'Invalid request.' }
-  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Sanus aren’t open yet. We’ll let you know when you can pay.' }
+  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Ocora aren’t open yet. We’ll let you know when you can pay.' }
   const supabase = await session()
   if (!supabase) return SESSION_EXPIRED as { ok: false; error: string }
   const {

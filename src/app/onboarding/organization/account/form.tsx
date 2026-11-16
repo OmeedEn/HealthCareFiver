@@ -28,7 +28,7 @@ export function OrgAccountFlow({
   termsVersion: string
   orgTermsVersion: string
   source: OrgSignupPath | null
-  /** Came from the "What brings you to Sanus?" screen: the back arrow returns there. */
+  /** Came from the "What brings you to Ocora?" screen: the back arrow returns there. */
   fromPicker: boolean
 }) {
   const router = useRouter()

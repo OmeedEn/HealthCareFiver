@@ -159,7 +159,7 @@ export default async function ContractorDetailPage({
                       </span>
                     </div>
                   ) : (
-                    <span className="text-[#5f5d57]">New on Sanus — no reviews yet</span>
+                    <span className="text-[#5f5d57]">New on Ocora — no reviews yet</span>
                   )}
                   {locationStr && (
                     <div className="flex items-center gap-1 text-[#5f5d57]">
@@ -176,7 +176,7 @@ export default async function ContractorDetailPage({
                   {p.verified && (
                     <div className="flex items-center gap-1 text-[#2330c8]">
                       <BadgeCheck className="size-4" aria-hidden="true" />
-                      Approved by Sanus
+                      Approved by Ocora
                     </div>
                   )}
                   {p.insured && (

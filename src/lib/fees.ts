@@ -1,5 +1,5 @@
 /**
- * Sanus service fee on bookings.
+ * Ocora service fee on bookings.
  *
  * The fee percentage is NOT decided yet. It is configured with the server-only
  * env var PLATFORM_FEE_PERCENT (e.g. "12" or "12.5"). While it is unset — or
@@ -12,7 +12,7 @@
  */
 
 export const FEE_BEING_FINALIZED =
-  "Sanus service fee: none set. If a fee is introduced, you'll see the exact amount here before it applies to your listing."
+  "Ocora service fee: none set. If a fee is introduced, you'll see the exact amount here before it applies to your listing."
 
 /**
  * Single source of truth for public pricing/payment copy. No fee rate, payer,
@@ -22,10 +22,10 @@ export const FEE_BEING_FINALIZED =
 export const PRICING_HEADLINE = 'Free to join.'
 
 export const PAYMENTS_NOT_OPEN =
-  'Paid booking through Sanus isn’t open yet.'
+  'Paid booking through Ocora isn’t open yet.'
 
 export const FEE_DISCLOSURE =
-  'No Sanus service fee has been set. If one is introduced, you’ll see the exact amount and who pays it before you book or publish.'
+  'No Ocora service fee has been set. If one is introduced, you’ll see the exact amount and who pays it before you book or publish.'
 
 /** One-line summary for headers, emails, and API messages. */
 export const PRICING_SUMMARY = `${PRICING_HEADLINE} ${PAYMENTS_NOT_OPEN} ${FEE_DISCLOSURE}`

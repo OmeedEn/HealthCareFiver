@@ -65,7 +65,7 @@ export function MatchCard({ provider: p }: { provider: MatchedProvider }) {
                 <span className="font-semibold text-[#1a1a17]">{p.average_rating.toFixed(1)}</span>({p.total_reviews})
               </>
             ) : (
-              'New on Sanus'
+              'New on Ocora'
             )}
           </p>
         </div>

@@ -10,16 +10,16 @@ import { isStripeConfigured } from '@/lib/stripe/connect'
 import { StripeConnectButton } from '@/components/payments/stripe-connect-button'
 import { StripeDashboardButton } from './dashboard-button'
 
-export const metadata: Metadata = { title: 'Payouts — Sanus' }
+export const metadata: Metadata = { title: 'Payouts — Ocora' }
 
 type Props = { searchParams: Promise<{ onboarded?: string }> }
 
 type State = 'not_approved' | 'stripe_off' | 'not_started' | 'in_progress' | 'ready'
 
 /**
- * Organization payouts: connect a Stripe account so Sanus can send you the
+ * Organization payouts: connect a Stripe account so Ocora can send you the
  * money customers pay for your services and events (held until after each
- * booking, minus the Sanus fee). Stripe collects bank and identity details.
+ * booking, minus the Ocora fee). Stripe collects bank and identity details.
  */
 export default async function OrgPayoutsPage({ searchParams }: Props) {
   await connection()
@@ -86,7 +86,7 @@ export default async function OrgPayoutsPage({ searchParams }: Props) {
         ) : state === 'in_progress' ? (
           <Status icon={Clock} tone="amber" title="Finish setting up payouts" text="Stripe still needs a few details before it can send you money." />
         ) : state === 'not_approved' ? (
-          <Status icon={Lock} tone="gray" title="Available after approval" text="You can set up payouts once Sanus approves your organization." />
+          <Status icon={Lock} tone="gray" title="Available after approval" text="You can set up payouts once Ocora approves your organization." />
         ) : state === 'stripe_off' ? (
           <Status icon={Clock} tone="gray" title="Payouts are coming soon" text="We’re switching on payments. We’ll let you know when you can set up payouts." />
         ) : (
@@ -111,12 +111,12 @@ export default async function OrgPayoutsPage({ searchParams }: Props) {
         <h2 className="text-base font-semibold">How payment works</h2>
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[#5f5d57]">
           <li>A customer requests your service or event and you accept it (or they accept your quote).</li>
-          <li>They pay on Sanus. We hold the payment until the booking takes place.</li>
-          <li>After it happens, we send the payment to your bank through Stripe, minus the Sanus fee.</li>
+          <li>They pay on Ocora. We hold the payment until the booking takes place.</li>
+          <li>After it happens, we send the payment to your bank through Stripe, minus the Ocora fee.</li>
         </ol>
         <p className="mt-4 flex items-start gap-2 text-xs text-[#5f5d57]">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
-          Stripe collects your bank and identity details. Sanus never sees or stores them.
+          Stripe collects your bank and identity details. Ocora never sees or stores them.
         </p>
         <p className="mt-3 text-xs text-[#5f5d57]">
           Paid services and events need payouts set up before they can be submitted for review.{' '}

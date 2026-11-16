@@ -77,14 +77,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await connection()
   const { id } = await params
   const access = await load(id)
-  if (access.kind === 'missing') return { title: 'Profile not found — Sanus' }
+  if (access.kind === 'missing') return { title: 'Profile not found — Ocora' }
   if (access.kind === 'unpublished') {
-    return { title: 'Profile not published — Sanus', robots: { index: false, follow: false } }
+    return { title: 'Profile not published — Ocora', robots: { index: false, follow: false } }
   }
   const data = access.result
   const name = `${data.profile.first_name} ${data.profile.last_name}`.trim()
   return {
-    title: `${name} — Sanus`,
+    title: `${name} — Ocora`,
     description: data.profile.headline ?? undefined,
     // Owner previews of not-yet-public profiles must never be indexed.
     robots: data.isPublic ? undefined : { index: false, follow: false },
@@ -364,7 +364,7 @@ export default async function ProProfilePage({ params }: Props) {
               {reviews.length === 0 ? (
                 <Empty>
                   No reviews yet. Reviews appear here after completed work with clients
-                  and organizations on Sanus.
+                  and organizations on Ocora.
                 </Empty>
               ) : (
                 <ul className="space-y-5">
@@ -522,7 +522,7 @@ function CtaBlock({
           Message {who}
         </Link>
         <p className="pt-1 text-center text-xs text-[#5f5d57]">
-          New to Sanus?{' '}
+          New to Ocora?{' '}
           <Link href="/signup/looking" className="font-semibold text-[#2330c8] hover:underline">
             Create a free account
           </Link>
@@ -555,7 +555,7 @@ function CtaBlock({
 
 function RatingInline({ rating, count }: { rating: number; count: number }) {
   if (count <= 0) {
-    return <span className="text-[#5f5d57]">New on Sanus</span>
+    return <span className="text-[#5f5d57]">New on Ocora</span>
   }
   return (
     <span className="inline-flex items-center gap-1.5">

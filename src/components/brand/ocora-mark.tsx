@@ -1,14 +1,14 @@
 import { cn } from '@/lib/utils'
 
 /**
- * The Sanus mark: a rounded "plus" (care) with a small dot that echoes the
- * period in the "Sanus." wordmark. Decorative — pair it with visible text or
+ * The Ocora mark: a rounded "plus" (care) with a small dot that echoes the
+ * period in the "Ocora." wordmark. Decorative — pair it with visible text or
  * an aria-label on the surrounding link.
  *
  * tone="brand": blue tile, white plus (default, on paper backgrounds)
  * tone="ink":   ink tile, paper plus (footer / dark-on-light alternative)
  */
-export function SanusMark({
+export function OcoraMark({
   className,
   tone = 'brand',
 }: {

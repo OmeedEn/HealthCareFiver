@@ -33,9 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   await connection()
   const { id } = await params
   const { data } = await load(id)
-  if (!data) return { title: 'Organization not found — Sanus' }
+  if (!data) return { title: 'Organization not found — Ocora' }
   return {
-    title: `${data.org.name} — Sanus`,
+    title: `${data.org.name} — Ocora`,
     description: data.org.description ?? undefined,
   }
 }
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /**
  * Public organization page: who they are and their live services and
  * events. Deliberately no phone, email, website or address — booking and
- * contact happen through Sanus.
+ * contact happen through Ocora.
  */
 export default async function OrgPage({ params }: Props) {
   // Visibility depends on live approval state — render per request.
@@ -69,7 +69,7 @@ export default async function OrgPage({ params }: Props) {
             <p className="flex-1 font-medium">
               {approved
                 ? 'This is your public page. Only approved, live listings appear here.'
-                : 'Preview: your page goes public once Sanus approves your organization.'}
+                : 'Preview: your page goes public once Ocora approves your organization.'}
             </p>
             <Link href="/facility/listings" className="font-semibold underline">
               Manage services &amp; events
@@ -103,7 +103,7 @@ export default async function OrgPage({ params }: Props) {
                     </span>
                   </span>
                 ) : (
-                  <span className="text-sm text-[#5f5d57]">New on Sanus</span>
+                  <span className="text-sm text-[#5f5d57]">New on Ocora</span>
                 )}
               </div>
               {location && (
@@ -122,7 +122,7 @@ export default async function OrgPage({ params }: Props) {
 
         <p className="flex items-start gap-2 rounded-2xl border border-[#e3dfd6] bg-white p-4 text-sm text-[#5f5d57]">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
-          Book and pay through Sanus so your booking, payment, and messages stay protected in one place.
+          Book and pay through Ocora so your booking, payment, and messages stay protected in one place.
         </p>
       </main>
     </div>

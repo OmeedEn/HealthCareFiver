@@ -36,7 +36,7 @@ export function UnsureFinishFlow({
   prefill: { firstName: string; lastName: string }
   needsTerms: boolean
   termsVersion: string
-  /** Came from "What brings you to Sanus?" on /onboarding/professional: the back arrow returns there. */
+  /** Came from "What brings you to Ocora?" on /onboarding/professional: the back arrow returns there. */
   fromPicker?: boolean
 }) {
   const router = useRouter()

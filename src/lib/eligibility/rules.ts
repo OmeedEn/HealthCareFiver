@@ -11,7 +11,7 @@
  *
  * Outcomes:
  *   eligible       the action may proceed
- *   manual_review  no maintained ruleset covers it; Sanus must review before
+ *   manual_review  no maintained ruleset covers it; Ocora must review before
  *                  it proceeds (treated as "not allowed" by every gate)
  *   ineligible     refused; `reasons` says why
  *
@@ -372,7 +372,7 @@ export const REASON_MESSAGES: Record<EligibilityReason, string> = {
   application_pending: 'The application is still under review.',
   application_rejected: 'The application was not approved.',
   suspended: 'This account is suspended.',
-  compliance_hold: 'This account is on hold. Please contact Sanus support.',
+  compliance_hold: 'This account is on hold. Please contact Ocora support.',
   agreement_required: 'The provider agreement hasn’t been accepted yet.',
   credential_expired: 'A license, certification, or ID on file has expired.',
   org_not_approved: 'The organization hasn’t been approved yet.',
@@ -384,8 +384,8 @@ export const REASON_MESSAGES: Record<EligibilityReason, string> = {
   malpractice_coverage_required:
     'This listing involves hands-on or in-person care, home visits, prescribing, injectables, or IVs, so a reviewed malpractice insurance document is required first.',
   org_coverage_unsupported:
-    'In-person, hands-on, home-visit, and medical-procedure services from organizations can’t be booked on Sanus yet.',
-  clinical_ruleset_missing: 'Clinical requests are reviewed by Sanus before they go ahead.',
+    'In-person, hands-on, home-visit, and medical-procedure services from organizations can’t be booked on Ocora yet.',
+  clinical_ruleset_missing: 'Clinical requests are reviewed by Ocora before they go ahead.',
   client_location_unknown: 'We need the client’s state to check this request.',
   outside_licensed_states: 'This professional isn’t licensed for the client’s state.',
 }
@@ -395,9 +395,9 @@ export function reasonsMessage(reasons: EligibilityReason[]): string {
 }
 
 /**
- * Wording for the coverage badge. It says only what Sanus reviewed: a
+ * Wording for the coverage badge. It says only what Ocora reviewed: a
  * document is on file. Not carrier verification, adequacy, or claims review.
  */
 export const INSURED_BADGE_LABEL = 'Insurance document on file'
 export const INSURED_BADGE_TITLE =
-  'Sanus reviewed a malpractice insurance document within its listed dates. Sanus does not verify coverage with the carrier or judge whether coverage is adequate.'
+  'Ocora reviewed a malpractice insurance document within its listed dates. Ocora does not verify coverage with the carrier or judge whether coverage is adequate.'

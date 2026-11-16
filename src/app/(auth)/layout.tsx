@@ -6,7 +6,7 @@ import {
   Users,
   HeartHandshake,
 } from 'lucide-react'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
 export default function AuthLayout({
   children,
@@ -19,9 +19,9 @@ export default function AuthLayout({
       <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] flex-col justify-between bg-[#1a1a17] p-10 text-white">
         <div>
           <Link href="/" className="flex items-center gap-2.5">
-            <SanusMark className="h-11 w-11 shadow-lg shadow-[#2f3cf5]/30 rounded-[11px]" />
+            <OcoraMark className="h-11 w-11 shadow-lg shadow-[#2f3cf5]/30 rounded-[11px]" />
             <span className="text-2xl font-black tracking-tight">
-              Sanus<span className="text-[#b4bbff]">.</span>
+              Ocora<span className="text-[#b4bbff]">.</span>
             </span>
           </Link>
 
@@ -57,7 +57,7 @@ export default function AuthLayout({
             <Feature
               icon={ShieldCheck}
               title="Payments"
-              description="Paid booking through Sanus isn’t open yet. Card payments, when they open, are handled by Stripe"
+              description="Paid booking through Ocora isn’t open yet. Card payments, when they open, are handled by Stripe"
             />
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function AuthLayout({
               <p className="text-sm font-bold">Built for trust from day one</p>
               <p className="mt-1 text-sm leading-relaxed text-[#c9cdfb]">
                 You choose who you work with and what you share. Please keep
-                medical records and other patient information out of Sanus.
+                medical records and other patient information out of Ocora.
               </p>
             </div>
           </div>
@@ -83,9 +83,9 @@ export default function AuthLayout({
         {/* Mobile header */}
         <div className="flex items-center justify-between border-b border-[#e3dfd6] px-6 py-4 lg:hidden">
           <Link href="/" className="flex items-center gap-2">
-            <SanusMark className="h-9 w-9" />
+            <OcoraMark className="h-9 w-9" />
             <span className="text-xl font-black tracking-tight text-[#1a1a17]">
-              Sanus<span className="text-[#2f3cf5]">.</span>
+              Ocora<span className="text-[#2f3cf5]">.</span>
             </span>
           </Link>
         </div>
@@ -97,7 +97,7 @@ export default function AuthLayout({
 
         {/* Footer */}
         <div className="flex flex-col items-center justify-center gap-1.5 border-t border-[#e3dfd6] px-6 py-4 text-center text-xs text-[#706d65] sm:flex-row sm:gap-4">
-          <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} Ocora. All rights reserved.</span>
           <span className="flex gap-4">
             <Link href="/terms" className="transition hover:text-[#1a1a17]">
               Terms of Service

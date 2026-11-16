@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
 
 export const metadata: Metadata = {
-  title: 'Booking Terms (Draft) — Sanus',
-  description: 'Draft terms for booking services and events on Sanus. Pending legal review.',
+  title: 'Booking Terms (Draft) — Ocora',
+  description: 'Draft terms for booking services and events on Ocora. Pending legal review.',
 }
 
 const linkClass = 'text-[#2330c8] underline'
@@ -19,26 +19,26 @@ const sections: LegalSection[] = [
           When you request a service or register for an event, the organization offering it reviews
           your request. They can accept it, send you a quote, or decline. Nothing is booked, and you
           aren&apos;t charged, until the organization accepts (or you accept their quote) and you
-          complete payment on Sanus.
+          complete payment on Ocora.
         </p>
         <p>
-          The organization, not Sanus, provides the service or runs the event and is responsible for
-          it. Sanus provides the marketplace, verifies organizations before they can list, and holds
+          The organization, not Ocora, provides the service or runs the event and is responsible for
+          it. Ocora provides the marketplace, verifies organizations before they can list, and holds
           payment until after the booking takes place.
         </p>
       </>
     ),
   },
   {
-    id: 'on-sanus',
-    title: 'Keep booking, payment, and messages on Sanus',
+    id: 'on-ocora',
+    title: 'Keep booking, payment, and messages on Ocora',
     body: (
       <>
         <p>
-          Book, pay, and message through Sanus. That&apos;s what lets us protect you: your payment is
+          Book, pay, and message through Ocora. That&apos;s what lets us protect you: your payment is
           held until the booking happens, and there&apos;s a record if something goes wrong. Don&apos;t
           share phone numbers, email addresses, or links in booking notes or messages, and don&apos;t
-          arrange to pay outside Sanus.
+          arrange to pay outside Ocora.
         </p>
       </>
     ),
@@ -49,10 +49,10 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          You pay through Sanus after the organization accepts your booking (or you accept their
-          quote). You pay the price shown; there&apos;s no extra charge to you. Sanus holds your
+          You pay through Ocora after the organization accepts your booking (or you accept their
+          quote). You pay the price shown; there&apos;s no extra charge to you. Ocora holds your
           payment and releases it to the organization 48 hours after the booking takes place, minus
-          the Sanus service fee, which the organization pays.
+          the Ocora service fee, which the organization pays.
         </p>
         <p>
           If an accepted booking isn&apos;t paid by its start time, it&apos;s cancelled and the spot is
@@ -79,7 +79,7 @@ const sections: LegalSection[] = [
         <p>
           You can cancel a request, or a booking you haven&apos;t paid for, at any time from My
           bookings at no cost. Refunds go back to the card you paid with and can take 5–10 business
-          days to appear. If something went wrong with a booking, contact Sanus support within 48
+          days to appear. If something went wrong with a booking, contact Ocora support within 48
           hours of it; disputed payments are held until they&apos;re resolved.
         </p>
       </>
@@ -91,7 +91,7 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Only share the health information the organization needs to schedule and provide your
-        service. In an emergency, call 911. Bookings on Sanus aren&apos;t for urgent or emergency care.
+        service. In an emergency, call 911. Bookings on Ocora aren&apos;t for urgent or emergency care.
       </p>
     ),
   },
@@ -116,7 +116,7 @@ export default function BookingTermsPage() {
       intro={
         <p>
           These terms apply each time you request a service or register for an event from an
-          organization on Sanus.
+          organization on Ocora.
         </p>
       }
       sections={sections}

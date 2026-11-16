@@ -18,7 +18,7 @@ import {
 import { CLIENT_RESULTS_TITLE } from '@/lib/onboarding/questions/client'
 import { RequestHelpForm } from './request-help-form'
 
-export const metadata: Metadata = { title: 'Your matches — Sanus' }
+export const metadata: Metadata = { title: 'Your matches — Ocora' }
 export const dynamic = 'force-dynamic'
 
 /**
@@ -115,7 +115,7 @@ export default async function ClientMatchesPage() {
               : 'We only found a few matches so far'}
           </h2>
           <p className="mt-1 text-sm text-[#5f5d57]">
-            Sanus is still growing. Tell us you&apos;d like help and our team will look for someone who fits
+            Ocora is still growing. Tell us you&apos;d like help and our team will look for someone who fits
             what you&apos;re looking for.
           </p>
           <div className="mt-4">

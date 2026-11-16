@@ -6,19 +6,19 @@ import { ShieldAlert } from 'lucide-react'
  * readers hear it with the field.
  */
 export const NO_PHI_TEXT =
-  'Please do not submit medical records, diagnoses, test results, medications, insurance numbers, or other patient information. Sanus is a marketplace for wellness and health expertise, not an emergency or clinical-record service.'
+  'Please do not submit medical records, diagnoses, test results, medications, insurance numbers, or other patient information. Ocora is a marketplace for wellness and health expertise, not an emergency or clinical-record service.'
 
 /**
  * Client-facing emergency routing. Points people to public services only;
- * it must never suggest Sanus monitors, triages, dispatches, or responds.
+ * it must never suggest Ocora monitors, triages, dispatches, or responds.
  */
 export const EMERGENCY_ROUTING_TEXT =
-  'Sanus is not an emergency service and does not monitor messages for emergencies. If you or someone else is in immediate danger or has an emergency medical need, call 911. For suicidal thoughts or an emotional crisis in the U.S., call or text 988 (Suicide & Crisis Lifeline).'
+  'Ocora is not an emergency service and does not monitor messages for emergencies. If you or someone else is in immediate danger or has an emergency medical need, call 911. For suicidal thoughts or an emotional crisis in the U.S., call or text 988 (Suicide & Crisis Lifeline).'
 
 function EmergencyLine() {
   return (
     <>
-      Sanus is not an emergency service and does not monitor messages for emergencies. If you or someone else
+      Ocora is not an emergency service and does not monitor messages for emergencies. If you or someone else
       is in immediate danger or has an emergency medical need, call{' '}
       <a href="tel:911" className="font-semibold underline underline-offset-2">
         911

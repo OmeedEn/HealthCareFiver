@@ -8,7 +8,7 @@ import { getDemoListing } from '@/lib/listings/demo'
 import { rowToDraft } from '@/lib/listings/offering'
 import { getListingsContext } from '../../context'
 
-export const metadata: Metadata = { title: 'Edit listing — Sanus' }
+export const metadata: Metadata = { title: 'Edit listing — Ocora' }
 
 export default async function EditListingPage({
   params,

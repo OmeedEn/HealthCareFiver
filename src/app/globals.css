@@ -5,10 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Sanus design system — "minimal yet loud".
+ * Ocora design system — "minimal yet loud".
  *
  * Calm, monochrome paper-and-ink base with one confident accent
- * (Sanus ultramarine) spent sparingly. Raw tokens live on :root as
+ * (Ocora ultramarine) spent sparingly. Raw tokens live on :root as
  * --sanus-*; Tailwind utilities are exposed via @theme below:
  *
  *   bg-paper  bg-paper-sunken  bg-surface
@@ -32,7 +32,7 @@
   --font-heading: var(--font-archivo), "Archivo", system-ui, sans-serif;
   --font-display: var(--font-archivo), "Archivo", system-ui, sans-serif;
 
-  /* Sanus palette */
+  /* Ocora palette */
   --color-paper: var(--sanus-paper);
   --color-paper-sunken: var(--sanus-paper-sunken);
   --color-surface: var(--sanus-surface);
@@ -99,7 +99,7 @@
 }
 
 :root {
-  /* Raw Sanus tokens */
+  /* Raw Ocora tokens */
   --sanus-paper: #f6f4ef;
   --sanus-paper-sunken: #eeebe4;
   --sanus-surface: #ffffff;
@@ -124,7 +124,7 @@
   --sanus-shadow-lift: 0 1px 0 rgb(26 26 23 / 0.04), 0 8px 24px -12px rgb(26 26 23 / 0.18);
   --sanus-shadow-float: 0 2px 0 rgb(26 26 23 / 0.04), 0 24px 48px -20px rgb(26 26 23 / 0.28);
 
-  /* shadcn semantic tokens, mapped onto the Sanus palette */
+  /* shadcn semantic tokens, mapped onto the Ocora palette */
   --background: var(--sanus-paper);
   --foreground: var(--sanus-ink);
   --card: var(--sanus-surface);

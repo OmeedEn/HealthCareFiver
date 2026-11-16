@@ -9,7 +9,7 @@ import { listMyBookings, namesFor } from '@/lib/bookings/data'
 import { needsPayment, type BookingRow } from '@/lib/bookings/types'
 import { BookingGroup, BookingListItem } from '@/components/bookings/booking-list'
 
-export const metadata: Metadata = { title: 'My bookings — Sanus' }
+export const metadata: Metadata = { title: 'My bookings — Ocora' }
 
 /** Services and events you requested or booked, as a customer. */
 export default async function MyBookingsPage() {
@@ -36,7 +36,7 @@ export default async function MyBookingsPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#1a1a17]">My bookings</h1>
         <p className="text-sm text-[#5f5d57]">
-          Services you’ve requested and events you’ve registered for. Everything, including messages, stays on Sanus.
+          Services you’ve requested and events you’ve registered for. Everything, including messages, stays on Ocora.
         </p>
       </div>
 

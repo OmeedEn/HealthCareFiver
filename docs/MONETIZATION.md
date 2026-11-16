@@ -1,4 +1,4 @@
-# Sanus monetization brainstorm (Nov 2026)
+# Ocora monetization brainstorm (Nov 2026)
 
 **Today:** free to join, free to go live, no monthly plan. The only revenue
 built is a 10% fee taken from the organization's payout on org bookings
@@ -13,8 +13,8 @@ signups, (2) whether people can route around it, and (3) HIPAA/legal risk.
 
 | Phase | When | Model | Why |
 |---|---|---|---|
-| 1 | Now → first $50k GMV | **Take rate on bookings paid through Sanus**: 10% from the professional/org, 0–5% service fee on the customer | Free to list keeps supply growing. Fee only when money moves, so it's easy to explain. |
-| 2 | Once there's steady demand | **Sanus Pro subscription** for professionals ($29–59/mo): lower take rate (e.g. 5%), featured placement, analytics, custom booking page, more photos, priority verification | Lets high-volume pros pay a flat fee instead of a big %. Lowers the urge to take clients off the platform. |
+| 1 | Now → first $50k GMV | **Take rate on bookings paid through Ocora**: 10% from the professional/org, 0–5% service fee on the customer | Free to list keeps supply growing. Fee only when money moves, so it's easy to explain. |
+| 2 | Once there's steady demand | **Ocora Pro subscription** for professionals ($29–59/mo): lower take rate (e.g. 5%), featured placement, analytics, custom booking page, more photos, priority verification | Lets high-volume pros pay a flat fee instead of a big %. Lowers the urge to take clients off the platform. |
 | 3 | With orgs on board | **Organization plans** ($99–499/mo): team seats, staffing/urgent-need posts (after attorney review), applicant pipeline, bulk messaging | Orgs have budgets and expect SaaS pricing. |
 | 4 | Later | Events & CE ticketing fee, sponsored listings, verification-as-a-service | Add-ons once traffic exists. |
 
@@ -23,7 +23,7 @@ signups, (2) whether people can route around it, and (3) HIPAA/legal risk.
 **Take rate (commission).** Standard for marketplaces (Fiverr ~20%, Thumbtack
 lead fees, Zocdoc per-booking). Keep it low (8–12%) while the market is thin.
 Risk: pros take repeat clients off-platform. Counter with things that only
-work on Sanus: payments, reminders, reviews, superbills, rebooking, HIPAA
+work on Ocora: payments, reminders, reviews, superbills, rebooking, HIPAA
 messaging.
 
 **Customer service fee.** A small (3–5%) fee on the customer side covers card
@@ -44,7 +44,7 @@ labeled "Sponsored." Phase 4.
 on hires, team scheduling. Wait for the attorney review of staffing posts.
 
 **Verification as a service.** Sell credential/license checks to orgs hiring
-outside Sanus. Uses Medallion/Checkr costs we already have. Margin is thin;
+outside Ocora. Uses Medallion/Checkr costs we already have. Margin is thin;
 mostly a funnel.
 
 **Events & CE.** Ticket fee (e.g. 5% + $1) on paid events and trainings.
@@ -57,7 +57,7 @@ Low effort since events already exist.
   Prof. Code §650) and for anything billed to Medicare/Medicaid. A flat
   subscription or flat per-booking platform fee is usually safer for
   clinical professionals. Wellness/coaching/consulting is lower risk.
-- **Corporate practice of medicine:** Sanus must not look like it controls
+- **Corporate practice of medicine:** Ocora must not look like it controls
   clinical decisions or sets clinical prices.
 - No pricing, payment, or marketing data may go to vendors without a BAA
   (no Google Analytics; PostHog with BAA only).

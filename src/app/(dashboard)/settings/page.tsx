@@ -95,7 +95,7 @@ const preferenceRows: PreferenceRow[] = [
   {
     key: 'email_new_message',
     title: 'New messages',
-    description: 'Someone sends you a message on Sanus.',
+    description: 'Someone sends you a message on Ocora.',
     icon: MessageSquare,
   },
   {
@@ -356,7 +356,7 @@ export default function SettingsPage() {
 
   async function handleAccountDelete() {
     const confirmed = window.confirm(
-      'This deletes your Sanus account. Some records may be kept where we need them, for example records involving other people or for legal, tax, or safety reasons. This cannot be undone. Continue?',
+      'This deletes your Ocora account. Some records may be kept where we need them, for example records involving other people or for legal, tax, or safety reasons. This cannot be undone. Continue?',
     )
     if (!confirmed) return
 

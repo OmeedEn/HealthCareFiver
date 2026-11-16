@@ -42,7 +42,7 @@ function getApiKey(): string | null {
 }
 
 function getFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || 'Sanus <notifications@sanus.com>'
+  return process.env.RESEND_FROM_EMAIL || 'Ocora <notifications@sanus.com>'
 }
 
 // ---------------------------------------------------------------------------
@@ -120,11 +120,11 @@ function layout(body: string): string {
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1a1a17;font-size:15px;line-height:1.6;max-width:560px;">
       ${body}
-      <p style="margin-top:28px;">The Sanus Team</p>
+      <p style="margin-top:28px;">The Ocora Team</p>
     </div>`
 }
 
-export const APPROVAL_EMAIL_SUBJECT = "You're approved on Sanus"
+export const APPROVAL_EMAIL_SUBJECT = "You're approved on Ocora"
 
 /** Listing types that need a reviewed malpractice certificate. */
 const HIGH_RISK_LISTINGS_PHRASE =
@@ -157,7 +157,7 @@ export interface ApprovalEmailOptions {
 }
 
 /**
- * "You're approved on Sanus." — sent when an admin approves a provider's
+ * "You're approved on Ocora." — sent when an admin approves a provider's
  * verification review (via applyApproval in src/lib/compliance/transitions).
  * Links to /go-live, where they accept the contractor agreement and set up
  * payouts. When approved as Insurance pending, the email also gives the
@@ -185,9 +185,9 @@ export async function sendProviderApprovalEmail(
     to: provider.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Ocora.</h1>
       ${greeting(provider)}
-      <p>Congratulations — our team has reviewed and approved your credentials. Welcome to Sanus.</p>
+      <p>Congratulations — our team has reviewed and approved your credentials. Welcome to Ocora.</p>
       <p>Two quick steps to finish going live:</p>
       <ol style="padding-left:20px;">
         <li>Accept the Independent Contractor and Platform Agreement — required before your first listing is published.</li>
@@ -195,7 +195,7 @@ export async function sendProviderApprovalEmail(
       </ol>
       ${insuranceBlock}
       ${ctaButton(goLiveUrl, 'Finish going live')}
-      <p style="color:#5f5d57;font-size:13px;">Free to join. No Sanus service fee has been set.</p>
+      <p style="color:#5f5d57;font-size:13px;">Free to join. No Ocora service fee has been set.</p>
     `),
   })
 }
@@ -355,7 +355,7 @@ export async function sendVerificationActionEmail(
     const uploadUrl = `${normalizeAppUrl(appUrl)}/contractor/credentials/upload`
     return sendEmail({
       to: provider.email,
-      subject: 'Action needed: your Sanus application',
+      subject: 'Action needed: your Ocora application',
       html: layout(`
         <p>Hi ${firstName},</p>
         <p>We need a bit more information before we can approve your application.</p>
@@ -369,10 +369,10 @@ export async function sendVerificationActionEmail(
 
   return sendEmail({
     to: provider.email,
-    subject: 'Update on your Sanus application',
+    subject: 'Update on your Ocora application',
     html: layout(`
       <p>Hi ${firstName},</p>
-      <p>Thank you for applying to Sanus. We&#39;re unable to approve your application at this time.</p>
+      <p>Thank you for applying to Ocora. We&#39;re unable to approve your application at this time.</p>
       <p><strong>Message from our review team:</strong></p>
       <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid #cbc6ba;">${safeNotes}</blockquote>
       <p>If you have questions, just reply to this email.</p>
@@ -392,7 +392,7 @@ export interface OrgEmailContext {
 }
 
 /**
- * "You're approved on Sanus." for organizations — sent when an admin approves an
+ * "You're approved on Ocora." for organizations — sent when an admin approves an
  * organization (src/app/admin/organizations/actions.ts).
  */
 export async function sendOrgApprovalEmail(
@@ -405,9 +405,9 @@ export async function sendOrgApprovalEmail(
     to: org.email,
     subject: APPROVAL_EMAIL_SUBJECT,
     html: layout(`
-      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Sanus.</h1>
+      <h1 style="font-size:24px;font-weight:800;margin:0 0 16px;color:#1a1a17;">You&#39;re approved on Ocora.</h1>
       <p>Hi ${escapeHtml(org.contactName || 'there')},</p>
-      <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Sanus.</p>
+      <p>Our team has reviewed and approved <strong>${escapeHtml(org.orgName)}</strong>. Welcome to Ocora.</p>
       <p>You can now message professionals and send them inquiries. A few quick steps to finish going live: accept the Organization Agreement, set up payouts, and add your first service or event.</p>
       ${ctaButton(goLiveUrl, 'Finish going live')}
     `),
@@ -430,7 +430,7 @@ export async function sendOrgReviewActionEmail(
   if (action === 'needs_info') {
     return sendEmail({
       to: org.email,
-      subject: 'Action needed: your Sanus organization application',
+      subject: 'Action needed: your Ocora organization application',
       html: layout(`
         ${hi}
         <p>We need a bit more information before we can approve <strong>${orgName}</strong>.</p>
@@ -444,10 +444,10 @@ export async function sendOrgReviewActionEmail(
   if (action === 'suspended') {
     return sendEmail({
       to: org.email,
-      subject: 'Your Sanus organization account is suspended',
+      subject: 'Your Ocora organization account is suspended',
       html: layout(`
         ${hi}
-        <p><strong>${orgName}</strong> has been suspended on Sanus. Your services and events are hidden, and you can&#39;t message professionals or send inquiries for now.</p>
+        <p><strong>${orgName}</strong> has been suspended on Ocora. Your services and events are hidden, and you can&#39;t message professionals or send inquiries for now.</p>
         ${quote('#cbc6ba')}
         <p>Reply to this email to resolve it.</p>
       `),
@@ -456,10 +456,10 @@ export async function sendOrgReviewActionEmail(
 
   return sendEmail({
     to: org.email,
-    subject: 'Update on your Sanus organization application',
+    subject: 'Update on your Ocora organization application',
     html: layout(`
       ${hi}
-      <p>Thank you for applying to Sanus. We&#39;re unable to approve <strong>${orgName}</strong> at this time.</p>
+      <p>Thank you for applying to Ocora. We&#39;re unable to approve <strong>${orgName}</strong> at this time.</p>
       ${quote('#cbc6ba')}
       <p>If you have questions, just reply to this email.</p>
     `),
@@ -483,12 +483,12 @@ function staffNoteBlock(note: string | null | undefined): string {
       <blockquote style="margin:0;padding:12px 16px;background:#f6f4ef;border-left:3px solid #2f3cf5;">${escapeHtml(trimmed).replace(/\n/g, '<br />')}</blockquote>`
 }
 
-/** Subject for the staff-placement email ("Welcome to Sanus, [first name]. …"). */
+/** Subject for the staff-placement email ("Welcome to Ocora, [first name]. …"). */
 export function classificationAssignedSubject(firstName: string | null): string {
   const name = (firstName ?? '').trim()
   return name
-    ? `Welcome to Sanus, ${name}. Here's your next step.`
-    : "Welcome to Sanus. Here's your next step."
+    ? `Welcome to Ocora, ${name}. Here's your next step.`
+    : "Welcome to Ocora. Here's your next step."
 }
 
 /**
@@ -530,10 +530,10 @@ export async function sendClassificationRejectedEmail(
 ): Promise<SendEmailResponse> {
   return sendEmail({
     to: person.email,
-    subject: 'An update on your Sanus account',
+    subject: 'An update on your Ocora account',
     html: layout(`
       <p>Hi ${escapeHtml(person.firstName?.trim() || 'there')},</p>
-      <p>Thanks for signing up and telling us about what you do. We&#39;re not able to set you up to offer services on Sanus right now. Your account stays open, so you can still browse and book services as a client.</p>
+      <p>Thanks for signing up and telling us about what you do. We&#39;re not able to set you up to offer services on Ocora right now. Your account stays open, so you can still browse and book services as a client.</p>
       ${staffNoteBlock(note)}
       <p>Questions? Reply to this email.</p>
     `),
@@ -545,7 +545,7 @@ export async function sendClassificationRejectedEmail(
 // ---------------------------------------------------------------------------
 
 /**
- * "You have a new message from the Sanus team." Deliberately omits the
+ * "You have a new message from the Ocora team." Deliberately omits the
  * message text: it may contain PHI, so it's only readable after sign-in.
  */
 export async function sendSupportMessageEmail(
@@ -556,10 +556,10 @@ export async function sendSupportMessageEmail(
   const name = escapeHtml(firstName || 'there')
   return sendEmail({
     to,
-    subject: 'New message from the Sanus team',
+    subject: 'New message from the Ocora team',
     html: layout(`
       <p>Hi ${name},</p>
-      <p>You have a new message from the Sanus team. Sign in to read it and reply. You can send text, photos, voice messages or videos.</p>
+      <p>You have a new message from the Ocora team. Sign in to read it and reply. You can send text, photos, voice messages or videos.</p>
       ${ctaButton(threadUrl, 'View message')}
     `),
   })

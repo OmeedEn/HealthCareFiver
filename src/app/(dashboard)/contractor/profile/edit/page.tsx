@@ -507,7 +507,7 @@ export default function ContractorProfileEditPage() {
                     </div>
                   ))}
                   <p className="text-xs text-[#5f5d57]">
-                    Completing these doesn&apos;t approve or publish your profile. Sanus reviews every
+                    Completing these doesn&apos;t approve or publish your profile. Ocora reviews every
                     professional and listing. Unsaved changes count here but aren&apos;t saved until you
                     press Save.
                   </p>

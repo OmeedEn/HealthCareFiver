@@ -32,7 +32,7 @@ import { ProfessionalOnboardingFlow, type AccountStep, type InitialDisclosures }
 import type { UploadedDoc } from './shared'
 
 export const metadata: Metadata = {
-  title: 'Finish your application | Sanus',
+  title: 'Finish your application | Ocora',
 }
 
 const ONBOARDING_CREDENTIAL_TYPES = ['license', 'certification', 'resume', 'government_id']

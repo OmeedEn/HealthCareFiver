@@ -38,7 +38,7 @@ export function isConnectReturnTarget(value: unknown): value is ConnectReturnTar
 
 /**
  * A connected account is ready to be paid once Stripe has its details and
- * both payouts and the transfers capability are enabled. Sanus uses
+ * both payouts and the transfers capability are enabled. Ocora uses
  * destination charges (the platform processes the charge), so the account
  * only needs `transfers` — `charges_enabled` reflects `card_payments`, which
  * we never request, so it must not gate readiness.
@@ -54,7 +54,7 @@ export function isConnectAccountReady(account: Stripe.Account): boolean {
 /**
  * Creates an Express connected account. Express = Stripe-hosted onboarding
  * and a Stripe-hosted Express Dashboard; Stripe collects identity and bank
- * details (DOB, SSN digits, bank account) — they never touch Sanus.
+ * details (DOB, SSN digits, bank account) — they never touch Ocora.
  */
 export async function createConnectAccount(email: string, userId: string) {
   const account = await getStripe().accounts.create({

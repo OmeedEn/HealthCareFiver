@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * retheme.mjs — move hardcoded legacy (Fiverr-green / cool-grey) hex colours
- * onto the Sanus "paper & ink + ultramarine" palette defined in
+ * onto the Ocora "paper & ink + ultramarine" palette defined in
  * src/app/globals.css.
  *
  * Usage

@@ -187,7 +187,7 @@ async function loadPhotos(
 
 /** "Maria G." for people, the organization name for orgs. */
 function reviewerLabel(p: ProfileWithNames | undefined): string {
-  if (!p) return 'Sanus member'
+  if (!p) return 'Ocora member'
   const one = <T,>(v: T | T[] | null | undefined): T | null =>
     Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
   const org = one(p.facility_profiles)?.facility_name
@@ -197,7 +197,7 @@ function reviewerLabel(p: ProfileWithNames | undefined): string {
     const initial = person.last_name?.trim()[0]
     return initial ? `${person.first_name} ${initial.toUpperCase()}.` : person.first_name
   }
-  return 'Sanus member'
+  return 'Ocora member'
 }
 
 async function loadReviews(
@@ -441,7 +441,7 @@ export async function getPublicProfile(
 /**
  * What a viewer gets for a profile link:
  *  - 'public' / 'owner': the profile (same rule as discovery — getLiveProviders)
- *  - 'unpublished': the professional exists but isn't published on Sanus
+ *  - 'unpublished': the professional exists but isn't published on Ocora
  *    (pending review, agreement not accepted, on hold, inactive, or a hidden
  *    sample account). Callers show a gate, never "not found", and reveal no
  *    profile details or the specific reason.

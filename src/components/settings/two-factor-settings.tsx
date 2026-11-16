@@ -125,7 +125,7 @@ export function TwoFactorSettings() {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-[#1a1a17]">
-          Sanus asks for a 6-digit code from an authenticator app each time you
+          Ocora asks for a 6-digit code from an authenticator app each time you
           sign in. This is required for every account.
         </p>
 

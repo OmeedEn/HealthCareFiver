@@ -77,9 +77,9 @@ export const PRO_COPY = {
   disclosuresNone: 'None of these apply',
   disclosuresMore: 'Tell us a bit more',
   submit: 'Confirm and submit',
-  attestAccurate: 'I certify this information is accurate and will notify Sanus of any changes.',
+  attestAccurate: 'I certify this information is accurate and will notify Ocora of any changes.',
   authorizeChecks:
-    'I authorize Sanus to verify my credentials with licensing boards and run exclusion screenings.',
+    'I authorize Ocora to verify my credentials with licensing boards and run exclusion screenings.',
   submitButton: 'Submit my application',
 } as const
 

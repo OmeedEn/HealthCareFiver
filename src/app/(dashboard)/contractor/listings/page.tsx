@@ -15,7 +15,7 @@ import {
 } from '@/components/listings/publish-gate'
 import { getListingsContext } from './context'
 
-export const metadata: Metadata = { title: 'Listings — Sanus' }
+export const metadata: Metadata = { title: 'Listings — Ocora' }
 
 export default async function ListingsPage() {
   const ctx = await getListingsContext()

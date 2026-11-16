@@ -20,7 +20,7 @@ export type ProfileCardData = {
 }
 
 /**
- * Top of the professional dashboard: who you are on Sanus, where you stand
+ * Top of the professional dashboard: who you are on Ocora, where you stand
  * on each named readiness measure (src/lib/readiness — the same numbers as
  * the Finish your profile card and the profile editor), and the one obvious
  * way to change it.
@@ -96,7 +96,7 @@ export function ProfileCard({ data, items }: { data: ProfileCardData; items: Che
                 ))}
                 <p className="text-xs text-[#5f5d57]">
                   {data.verified
-                    ? 'Approved by Sanus. Listings are still reviewed one by one.'
+                    ? 'Approved by Ocora. Listings are still reviewed one by one.'
                     : 'Not approved yet. Completing steps doesn’t approve or publish your profile.'}
                   {next && (
                     <>

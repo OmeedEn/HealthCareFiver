@@ -7,7 +7,7 @@ import {
 } from '@/components/marketing/sections'
 
 export const metadata: Metadata = {
-  title: 'For professionals — Sanus',
+  title: 'For professionals — Ocora',
   description:
     'List services, consulting, and events from one reviewed profile. Free to join; payout setup through Stripe.',
 }

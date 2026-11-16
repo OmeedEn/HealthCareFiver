@@ -188,7 +188,7 @@ function ProviderCard({ provider }: { provider: PublicProvider }) {
                 </span>
               </>
             ) : (
-              <span className="text-sm text-[#5f5d57]">New on Sanus</span>
+              <span className="text-sm text-[#5f5d57]">New on Ocora</span>
             )}
           </div>
         </div>
@@ -610,7 +610,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
         ) : (
           <p className="mt-2 text-sm text-[#5f5d57]">
             Every professional listed here has been reviewed and approved by
-            Sanus before they can be booked.
+            Ocora before they can be booked.
           </p>
         )}
 
@@ -760,8 +760,8 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
                 </span>{' '}
                 professional{filteredProviders.length !== 1 ? 's' : ''}
                 {hasActiveQuery && providers.length > 0
-                  ? ` match your filters (of ${providers.length} on Sanus)`
-                  : ' on Sanus'}
+                  ? ` match your filters (of ${providers.length} on Ocora)`
+                  : ' on Ocora'}
               </p>
               <div className="relative">
                 <label htmlFor="find-care-sort" className="sr-only">
@@ -800,11 +800,11 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
                   <UserPlus className="h-7 w-7 text-[#2f3cf5]" aria-hidden="true" />
                 </div>
                 <h2 id="find-care-empty-title" className="mt-4 text-lg font-semibold text-[#1a1a17]">
-                  No professionals are published on Sanus yet
+                  No professionals are published on Ocora yet
                 </h2>
                 <p className="mt-2 max-w-md text-sm text-[#5f5d57]">
                   We&apos;re reviewing our first professionals. Profiles appear here only after
-                  Sanus approves them and they publish.
+                  Ocora approves them and they publish.
                   {signedIn
                     ? ' Check back soon — your account is ready when they are.'
                     : ' Create a free account and you’ll be ready when they are.'}
@@ -865,7 +865,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
                 </h2>
                 <p className="mt-1 max-w-md text-sm text-[#5f5d57]">
                   {providers.length} professional{providers.length !== 1 ? 's are' : ' is'} published
-                  on Sanus, but none match your current search
+                  on Ocora, but none match your current search
                   {stateFilter !== 'All States' ? ` in ${stateFilter}` : ''}. Try broadening or
                   resetting your filters.
                 </p>
@@ -888,7 +888,7 @@ function FindCarePageContent({ providers, orgListings = [], signedIn = false, is
       {!embedded && (
       <footer className="mt-16 border-t border-[#e3dfd6] bg-white py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 text-center text-sm text-[#5f5d57] sm:flex-row sm:gap-4 sm:px-6">
-          <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} Ocora. All rights reserved.</span>
           <span className="flex gap-4">
             <Link href="/terms" className="transition hover:text-[#1a1a17]">
               Terms of Service

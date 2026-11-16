@@ -1,5 +1,5 @@
 /**
- * Sanus fee on organization bookings: a percentage taken from the
+ * Ocora fee on organization bookings: a percentage taken from the
  * organization's payout (the customer pays the listed price).
  *
  * DEFAULT-OFF. No fee rate has been approved, so there is deliberately no

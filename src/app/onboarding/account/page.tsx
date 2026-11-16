@@ -13,7 +13,7 @@ import { applyProSignupAnswers } from '@/lib/onboarding/professional-answers'
 import { EMPTY_PRO_ANSWERS } from '@/lib/onboarding/questions/professional'
 import { ProfessionalOnboardingFlow } from '../professional/flow'
 
-export const metadata: Metadata = { title: 'Finish creating your account — Sanus' }
+export const metadata: Metadata = { title: 'Finish creating your account — Ocora' }
 
 /**
  * Landing page after "Continue with Google" on /signup/professional (via

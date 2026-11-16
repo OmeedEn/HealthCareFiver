@@ -69,7 +69,7 @@ export function ContractorProfileCard({ contractor, href, hasPublicRates = false
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          {/* Ratings come from visible reviews (trigger-maintained); none → "New on Sanus". */}
+          {/* Ratings come from visible reviews (trigger-maintained); none → "New on Ocora". */}
           {contractor.average_rating != null && reviewCount > 0 ? (
             <span className="flex items-center gap-1">
               <Star className="size-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
@@ -81,7 +81,7 @@ export function ContractorProfileCard({ contractor, href, hasPublicRates = false
               </span>
             </span>
           ) : (
-            <span>New on Sanus</span>
+            <span>New on Ocora</span>
           )}
           {(contractor.city || contractor.state) && (
             <span className="flex items-center gap-1">

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { CheckCircle2, Circle, ExternalLink, Lock } from 'lucide-react'
 import { CheckRow } from '@/app/onboarding/professional/ui'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
 /** Page frame for the go-live flow: logo, and a way out to the dashboard. */
 export function Shell({ children, exit = true }: { children: React.ReactNode; exit?: boolean }) {
@@ -9,9 +9,9 @@ export function Shell({ children, exit = true }: { children: React.ReactNode; ex
     <div className="min-h-screen bg-white px-4 py-6 sm:py-10">
       <div className="mx-auto flex w-full max-w-xl items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <SanusMark className="h-8 w-8" />
+          <OcoraMark className="h-8 w-8" />
           <span className="text-xl font-bold tracking-tight text-[#1a1a17]">
-            Sanus<span className="text-[#2f3cf5]">.</span>
+            Ocora<span className="text-[#2f3cf5]">.</span>
           </span>
         </Link>
         {exit && (
@@ -77,7 +77,7 @@ export function PayoutsBody({ returnedUnfinished, note }: { returnedUnfinished: 
     <>
       <p className="flex items-start gap-2 rounded-lg bg-[#f6f4ef] p-3 text-sm text-[#5f5d57]">
         <Lock className="mt-0.5 size-4 shrink-0 text-[#2f3cf5]" />
-        <span>Bank info, date of birth, and SSN digits are collected and handled by Stripe. Sanus never sees them.</span>
+        <span>Bank info, date of birth, and SSN digits are collected and handled by Stripe. Ocora never sees them.</span>
       </p>
       {returnedUnfinished && (
         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">

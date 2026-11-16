@@ -9,7 +9,7 @@ import { Receipt, UserPlus } from 'lucide-react'
 import { FEE_DISCLOSURE, PAYMENTS_NOT_OPEN, PRICING_HEADLINE } from '@/lib/fees'
 
 // Professionals no longer pay a subscription. This page (kept at /membership so
-// old links work) just explains how Sanus pricing works.
+// old links work) just explains how Ocora pricing works.
 const POINTS = [
   {
     icon: UserPlus,
@@ -28,7 +28,7 @@ export default function PricingPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="font-heading text-2xl font-bold text-[#1a1a17]">
-          How Sanus pricing works
+          How Ocora pricing works
         </h1>
         <p className="mt-1 text-[#5f5d57]">
           {PRICING_HEADLINE} {PAYMENTS_NOT_OPEN}

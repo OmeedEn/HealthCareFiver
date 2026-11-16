@@ -11,14 +11,14 @@ import { MessagesLink } from './messages-link'
 import { UserAvatar, UserMenu, useSignOut } from './user-menu'
 import { PUBLIC_NAV, accountNavFor, activeHref, userMenuFor } from './nav-config'
 import { useSessionUser, type SessionUser } from './use-session-user'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
-export function SanusLogo() {
+export function OcoraLogo() {
   return (
-    <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Sanus home">
-      <SanusMark className="h-9 w-9" />
+    <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Ocora home">
+      <OcoraMark className="h-9 w-9" />
       <span className="text-2xl font-bold tracking-tight text-[#1a1a17]">
-        Sanus<span className="text-[#2f3cf5]">.</span>
+        Ocora<span className="text-[#2f3cf5]">.</span>
       </span>
     </Link>
   )
@@ -59,7 +59,7 @@ function SignedOutActions() {
         href="/signup"
         className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white transition hover:bg-[#2330c8]"
       >
-        Join Sanus
+        Join Ocora
       </Link>
     </>
   )
@@ -186,7 +186,7 @@ function MobileMenu({
               onClick={close}
               className="inline-flex h-10 items-center justify-center rounded-lg bg-[#2f3cf5] px-5 text-sm font-semibold text-white hover:bg-[#2330c8]"
             >
-              Join Sanus
+              Join Ocora
             </Link>
             <Link
               href="/login"
@@ -228,7 +228,7 @@ export function TopNav({
   return (
     <header className="sticky top-0 z-40 border-b border-[#e3dfd6] bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-4 px-4 sm:px-6 lg:h-20">
-        <SanusLogo />
+        <OcoraLogo />
 
         <nav
           aria-label="Main"

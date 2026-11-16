@@ -138,7 +138,7 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
       step: 1,
       section,
       title: quote ? 'What do you need?' : 'Anything they should know?',
-      sub: 'Don’t include phone numbers, emails, or links. You can message them here on Sanus.',
+      sub: 'Don’t include phone numbers, emails, or links. You can message them here on Ocora.',
       optional: !quote,
       validate: () => need(!quote || !!note.trim(), 'note', 'Tell them what you need so they can quote'),
       render: ({ errors }) => (
@@ -187,7 +187,7 @@ function RequestDialog({ listing, onClose }: { listing: PublicOrgListing; onClos
             id="booking-terms"
             checked={agreed}
             onChange={setAgreed}
-            label="I agree to the Booking Terms and will keep booking, payment, and messages on Sanus."
+            label="I agree to the Booking Terms and will keep booking, payment, and messages on Ocora."
             error={errors.terms}
           />
           <p className="text-xs text-[#5f5d57]">

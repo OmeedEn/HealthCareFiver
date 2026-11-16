@@ -98,7 +98,7 @@ export default async function ContractorCredentialsPage() {
 
   // required_credentials is staffing-era seed data (per contractor_type) that
   // marks drug screens, immunizations and TB tests mandatory for RN/LPN/CNA.
-  // Sanus doesn't collect occupational-health records by default.
+  // Ocora doesn't collect occupational-health records by default.
   requiredCredentials = requiredCredentials.filter(
     (r) => !OCCUPATIONAL_HEALTH_CREDENTIAL_TYPES.has(r.credential_type)
   )

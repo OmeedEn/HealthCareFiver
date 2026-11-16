@@ -4,8 +4,8 @@ import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
 import { ORG_AGREEMENT_VERSION } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Organization Agreement (Draft) — Sanus',
-  description: 'Draft Organization Agreement for organizations on Sanus. Pending legal review.',
+  title: 'Organization Agreement (Draft) — Ocora',
+  description: 'Draft Organization Agreement for organizations on Ocora. Pending legal review.',
 }
 
 const linkClass = 'text-[#2330c8] underline'
@@ -17,13 +17,13 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          This Organization Agreement (the &ldquo;Agreement&rdquo;) is between [Sanus legal entity
-          name], a [state] [entity type] (&ldquo;Sanus&rdquo;), and the organization you represent
+          This Organization Agreement (the &ldquo;Agreement&rdquo;) is between [Ocora legal entity
+          name], a [state] [entity type] (&ldquo;Ocora&rdquo;), and the organization you represent
           (&ldquo;you&rdquo; or the &ldquo;Organization&rdquo;).
         </p>
         <p>
           You accept this Agreement on the Organization&apos;s behalf by checking the agreement box in
-          your Sanus account, and you confirm you&apos;re authorized to do so. It supplements our{' '}
+          your Ocora account, and you confirm you&apos;re authorized to do so. It supplements our{' '}
           <Link href="/terms" className={linkClass}>Terms of Service</Link> and{' '}
           <Link href="/privacy" className={linkClass}>Privacy Policy</Link>.
         </p>
@@ -32,11 +32,11 @@ const sections: LegalSection[] = [
   },
   {
     id: 'not-employer',
-    title: 'Sanus connects; it is not the employer or an agency',
+    title: 'Ocora connects; it is not the employer or an agency',
     body: (
       <>
         <p>
-          Sanus is a marketplace that connects organizations and professionals. Sanus is not the
+          Ocora is a marketplace that connects organizations and professionals. Ocora is not the
           employer of any professional, is not a staffing agency, employment agency, or nurse
           registry, and does not handle pay, scheduling, supervision, or employment for
           opportunities you post.
@@ -57,8 +57,8 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>The information you gave during signup and verification is accurate, and you&apos;ll keep it current.</li>
-        <li>You authorize Sanus to verify it and to run exclusion screenings (OIG, SAM.gov) on the Organization, now and periodically.</li>
-        <li>Sanus may suspend or remove the Organization if information is inaccurate or a screening finds an exclusion.</li>
+        <li>You authorize Ocora to verify it and to run exclusion screenings (OIG, SAM.gov) on the Organization, now and periodically.</li>
+        <li>Ocora may suspend or remove the Organization if information is inaccurate or a screening finds an exclusion.</li>
       </ul>
     ),
   },
@@ -80,8 +80,8 @@ const sections: LegalSection[] = [
     body: (
       <ul>
         <li>Inquiries and invitations must relate to a genuine opportunity and include the role, engagement type, and timeline.</li>
-        <li>Professionals may decline or turn off inquiries; respect that. Sanus limits how many invitations an organization can send per day.</li>
-        <li>Don&apos;t take relationships started on Sanus off the platform to avoid fees. [Non-circumvention terms — pending counsel.]</li>
+        <li>Professionals may decline or turn off inquiries; respect that. Ocora limits how many invitations an organization can send per day.</li>
+        <li>Don&apos;t take relationships started on Ocora off the platform to avoid fees. [Non-circumvention terms — pending counsel.]</li>
       </ul>
     ),
   },
@@ -132,7 +132,7 @@ export default function OrganizationAgreementPage() {
       lastUpdated="[Draft — pending legal review; not yet effective] (last edited October 5, 2026)"
       intro={
         <p>
-          This Agreement explains how organizations work with Sanus: Sanus connects you with
+          This Agreement explains how organizations work with Ocora: Ocora connects you with
           professionals and reviews what you publish, and you remain responsible for your own hiring,
           pay, and compliance.
         </p>

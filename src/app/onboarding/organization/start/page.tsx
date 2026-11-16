@@ -9,7 +9,7 @@ import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
 import { SeparateOrgSignIn } from './separate-sign-in'
 
-export const metadata: Metadata = { title: 'Add an organization — Sanus' }
+export const metadata: Metadata = { title: 'Add an organization — Ocora' }
 
 /**
  * Organization entry for an account that already exists. A signed-in buyer

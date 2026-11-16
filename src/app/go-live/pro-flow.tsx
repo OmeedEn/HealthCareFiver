@@ -13,10 +13,10 @@ import { acceptContractorAgreement, skipGoLiveScreen } from './actions'
 import { AgreementBody, DoneRow, PayoutsBody } from './ui'
 
 const AGREEMENT_SUMMARY = [
-  'You’re an independent professional, not a Sanus employee. You set your prices and choose your bookings.',
+  'You’re an independent professional, not a Ocora employee. You set your prices and choose your bookings.',
   'You’re responsible for your license or certification, scope of practice, and insurance.',
-  'No Sanus service fee has been set; the agreement’s fee terms are still pending. You’ll see the exact amount of any fee before it applies.',
-  'Payouts are set up through Stripe Connect. Paid booking through Sanus isn’t open yet.',
+  'No Ocora service fee has been set; the agreement’s fee terms are still pending. You’ll see the exact amount of any fee before it applies.',
+  'Payouts are set up through Stripe Connect. Paid booking through Ocora isn’t open yet.',
   'Protect client health information and follow HIPAA where it applies.',
 ]
 
@@ -126,7 +126,7 @@ export function ProGoLiveFlow(props: ProGoLiveProps) {
   screens.push({
     id: 'go_live_done',
     step: 1,
-    title: payoutsDone && listingSaved ? 'You’re live on Sanus.' : 'You’re ready to go live.',
+    title: payoutsDone && listingSaved ? 'You’re live on Ocora.' : 'You’re ready to go live.',
     sub: plan.firstName ? `Congratulations, ${plan.firstName}.` : 'Congratulations.',
     continueLabel: listingId ? 'Review and submit your listing' : 'Go to your dashboard',
     render: () => (

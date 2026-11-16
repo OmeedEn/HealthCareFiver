@@ -24,10 +24,10 @@ import { AgreementBody, DoneRow, PayoutsBody } from './ui'
 import type { GoLiveStep } from './pro-flow'
 
 const AGREEMENT_SUMMARY = [
-  'Sanus is a marketplace that connects you with professionals. It isn’t the employer or a staffing agency; you arrange pay, hiring, and compliance directly.',
-  'Keep your organization’s information accurate. Sanus reviews it, including an exclusion-list check.',
+  'Ocora is a marketplace that connects you with professionals. It isn’t the employer or a staffing agency; you arrange pay, hiring, and compliance directly.',
+  'Keep your organization’s information accurate. Ocora reviews it, including an exclusion-list check.',
   'Every listing, event, and post is reviewed before it goes live. Listings must be truthful.',
-  'Paid services and events need payout setup through Stripe Connect. No Sanus service fee has been set; the agreement’s fee terms are still pending.',
+  'Paid services and events need payout setup through Stripe Connect. No Ocora service fee has been set; the agreement’s fee terms are still pending.',
   'Don’t post protected health information in listings, posts, or messages.',
 ]
 
@@ -207,7 +207,7 @@ export function OrgGoLiveFlow(props: OrgGoLiveProps) {
   screens.push({
     id: 'go_live_done',
     step: 1,
-    title: payoutsDone && listingSaved ? 'You’re live on Sanus.' : 'You’re ready to go live.',
+    title: payoutsDone && listingSaved ? 'You’re live on Ocora.' : 'You’re ready to go live.',
     sub: plan.orgName ? `${plan.orgName} is approved.` : 'Your organization is approved.',
     continueLabel: listingSaved ? 'Go to Services & events' : 'Go to your dashboard',
     render: () => (
