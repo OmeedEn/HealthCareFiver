@@ -4,7 +4,7 @@ import { isDemoMode } from '@/lib/demo/data'
 import { getDemoProviders, getLiveProviders } from '@/lib/find-care/providers'
 import { ContractorDirectory } from './contractor-directory'
 
-export const metadata: Metadata = { title: 'Find professionals — Sanus' }
+export const metadata: Metadata = { title: 'Find professionals — Ocora' }
 
 /**
  * Organization directory. Lists exactly the professionals public discovery

@@ -20,7 +20,7 @@ function activeContextLabel(role: string, orgName: string | null): string {
     return orgName ? `Organization: ${orgName}` : 'Organization account'
   }
   if (role === 'client') return 'Buying for myself'
-  if (role === 'admin') return 'Sanus admin'
+  if (role === 'admin') return 'Ocora admin'
   return 'Offering expertise'
 }
 
@@ -71,7 +71,7 @@ export default async function DashboardLayout({
       userEmail = DEMO_FACILITY.email
       userId = DEMO_FACILITY.id
     } else if (role === 'admin') {
-      displayName = 'Sanus Admin'
+      displayName = 'Ocora Admin'
       userEmail = 'admin@sanus.com'
     } else {
       displayName = `${DEMO_CONTRACTOR.first_name} ${DEMO_CONTRACTOR.last_name}`

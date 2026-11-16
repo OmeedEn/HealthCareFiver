@@ -25,7 +25,7 @@ export function ClientAccountFlow({
   prefill: NamePrefill
   needsTerms: boolean
   termsVersion: string
-  /** Came from the "What brings you to Sanus?" screen: the back arrow returns there. */
+  /** Came from the "What brings you to Ocora?" screen: the back arrow returns there. */
   fromPicker: boolean
 }) {
   const router = useRouter()

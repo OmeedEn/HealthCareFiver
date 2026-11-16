@@ -4,7 +4,7 @@ import { refresh } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { intentsSchema } from '@/app/onboarding/organization/shared'
 
-/** Organizations can change what they want to do on Sanus at any time. */
+/** Organizations can change what they want to do on Ocora at any time. */
 export async function updateOrgIntents(input: unknown): Promise<{ ok: boolean; error?: string }> {
   const parsed = intentsSchema.safeParse(input)
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }

@@ -1287,7 +1287,7 @@ function ClassificationBanner({
         <div className="text-sm text-[#1a1a17]">
           <p className="font-semibold">Our team reviewed your answers</p>
           <p className="mt-1 text-[#5f5d57]">
-            You can keep using Sanus as a client to browse, save, and book.
+            You can keep using Ocora as a client to browse, save, and book.
             Questions? Email{' '}
             <a href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-[#2f3cf5] hover:underline">
               {SUPPORT_EMAIL}
@@ -1346,8 +1346,8 @@ function ClientDashboard({
         </h1>
         <p className="text-[#5f5d57]">
           {classification
-            ? 'Find health professionals on Sanus.'
-            : 'Find and connect with health professionals on Sanus.'}
+            ? 'Find health professionals on Ocora.'
+            : 'Find and connect with health professionals on Ocora.'}
         </p>
       </div>
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { AlertTriangle } from 'lucide-react'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
 export type LegalSection = {
   id: string
@@ -29,9 +29,9 @@ export function LegalPage({
       <header className="border-b border-[#e3dfd6] bg-white">
         <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
-            <SanusMark className="h-8 w-8" />
+            <OcoraMark className="h-8 w-8" />
             <span className="text-xl font-bold tracking-tight text-[#1a1a17]">
-              Sanus<span className="text-[#2f3cf5]">.</span>
+              Ocora<span className="text-[#2f3cf5]">.</span>
             </span>
           </Link>
           <nav className="flex gap-5 text-sm font-medium text-[#5f5d57]">
@@ -58,7 +58,7 @@ export function LegalPage({
             <p className="mt-1 text-sm leading-relaxed">
               This document is a working draft and has not been reviewed or
               approved by counsel. It is not final and may change materially
-              before Sanus launches publicly. Bracketed items are placeholders.
+              before Ocora launches publicly. Bracketed items are placeholders.
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function LegalPage({
 
       <footer className="border-t border-[#e3dfd6] bg-white py-8">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-2 px-4 text-sm text-[#5f5d57] sm:flex-row sm:gap-4 sm:px-6">
-          <span>&copy; {new Date().getFullYear()} Sanus. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} Ocora. All rights reserved.</span>
           <span className="flex gap-4">
             <Link href="/terms" className="transition hover:text-[#1a1a17]">
               Terms of Service

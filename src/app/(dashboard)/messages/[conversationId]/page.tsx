@@ -83,7 +83,7 @@ export default function ConversationPage() {
   // professionals; only staff threads stay open. Enforced by RLS too
   // (supabase/migrations/20261014000300_unsure_messaging_gate.sql).
   const [sendBlocked, setSendBlocked] = useState(false)
-  // Support thread with the Sanus team (admins). Shown as "Sanus Team" and
+  // Support thread with the Ocora team (admins). Shown as "Ocora Team" and
   // allows photo / voice / video attachments.
   const [isSupport, setIsSupport] = useState(false)
 
@@ -108,7 +108,7 @@ export default function ConversationPage() {
     if (convo?.is_support) {
       setIsSupport(true)
       setSendBlocked(false)
-      setOtherUser({ id: 'support', first_name: 'Sanus', last_name: 'Team', avatar_url: null })
+      setOtherUser({ id: 'support', first_name: 'Ocora', last_name: 'Team', avatar_url: null })
       await supabase
         .from('messages')
         .update({ is_read: true, read_at: new Date().toISOString() })
@@ -306,7 +306,7 @@ export default function ConversationPage() {
           <MessageThread
             messages={messages}
             currentUserId={currentUserId}
-            emptyText={isSupport ? 'Send the Sanus team a message.' : undefined}
+            emptyText={isSupport ? 'Send the Ocora team a message.' : undefined}
             otherUser={
               otherUser
                 ? {
@@ -329,7 +329,7 @@ export default function ConversationPage() {
             <MessageInput
               onSend={handleSend}
               allowAttachments={isSupport}
-              placeholder={isSupport ? 'Message the Sanus team...' : undefined}
+              placeholder={isSupport ? 'Message the Ocora team...' : undefined}
             />
           )}
         </>

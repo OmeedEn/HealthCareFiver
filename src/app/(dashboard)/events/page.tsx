@@ -7,7 +7,7 @@ import { EVENT_FORMATS, ORG_EVENT_TYPES, labelFor } from '@/lib/onboarding/organ
 import { OrgListingsPanel } from '@/app/find-care/org-listings-panel'
 import { DemoEvents } from './demo-events'
 
-export const metadata: Metadata = { title: 'Events & training — Sanus' }
+export const metadata: Metadata = { title: 'Events & training — Ocora' }
 
 /**
  * `?type=` filters from the marketing event links: an event type
@@ -29,7 +29,7 @@ function eventFilter(type: string | undefined): { label: string; test: (l: Publi
 /**
  * Upcoming events and trainings from verified organizations (published
  * org_listings). Signed in (the proxy enforces it): Register opens the
- * request flow through Sanus. Demo mode keeps the fictional sample events.
+ * request flow through Ocora. Demo mode keeps the fictional sample events.
  */
 export default async function EventsPage({
   searchParams,
@@ -49,7 +49,7 @@ export default async function EventsPage({
         <h1 className="font-heading text-2xl font-bold text-[#1a1a17]">Events &amp; training</h1>
         <p className="mt-1 text-[#5f5d57]">
           Webinars, workshops, courses, and certification prep from verified organizations. Continuing-education
-          credit is shown only where Sanus has reviewed the accreditation.
+          credit is shown only where Ocora has reviewed the accreditation.
         </p>
         {filter && (
           <p className="mt-2 text-sm text-[#5f5d57]">

@@ -97,7 +97,7 @@ async function notifyUser(db: Db, conversationId: string, userId: string, messag
     const { error } = await db.from('notifications').insert({
       user_id: userId,
       type: 'new_message',
-      title: 'New message from the Sanus team',
+      title: 'New message from the Ocora team',
       body: null,
       data: { href, conversation_id: conversationId },
     })

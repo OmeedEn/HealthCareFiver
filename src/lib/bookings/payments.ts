@@ -8,7 +8,7 @@ import { BOOKING_COLUMNS, bookingStart, needsPayment, type BookingRow } from './
 
 /**
  * Money for organization bookings ("separate charges and transfers"):
- * the customer pays Sanus through Stripe Checkout, Sanus holds it, and the
+ * the customer pays Ocora through Stripe Checkout, Ocora holds it, and the
  * daily cron transfers the price minus the fee to the organization 48 hours
  * after the booking. Every Stripe call uses an idempotency key derived from
  * the booking, so retries never double-charge, double-refund, or double-pay.
@@ -33,7 +33,7 @@ async function loadBooking(id: string): Promise<(BookingRow & { stripe_checkout_
  */
 export async function createBookingCheckout(bookingId: string, customerId: string, appUrl: string): Promise<CheckoutResult> {
   // Default-off: no checkout until Stripe AND an approved fee rate are set.
-  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Sanus aren’t open yet. We’ll let you know when you can pay.' }
+  if (!bookingPaymentsEnabled()) return { ok: false, error: 'Payments on Ocora aren’t open yet. We’ll let you know when you can pay.' }
   const b = await loadBooking(bookingId)
   if (!b || b.customer_id !== customerId) return { ok: false, error: 'We couldn’t find that booking.' }
   if (!needsPayment(b)) return { ok: false, error: 'This booking doesn’t need a payment right now. Refresh to see the latest.' }
@@ -77,7 +77,7 @@ export async function createBookingCheckout(bookingId: string, customerId: strin
     ],
     payment_intent_data: {
       transfer_group: b.id,
-      description: `Sanus booking: ${s.title}`,
+      description: `Ocora booking: ${s.title}`,
       metadata: { kind: ORG_BOOKING_CHECKOUT, bookingId: b.id },
     },
     metadata: { kind: ORG_BOOKING_CHECKOUT, bookingId: b.id },

@@ -9,7 +9,7 @@ import { canConvertNewProfessional } from '@/lib/onboarding/google-account'
 import { ORG_SIGNUP_SOURCE_COOKIE, parseOrgSignupSource } from '@/lib/onboarding/org-signup-source'
 import { OrgAccountFlow } from './form'
 
-export const metadata: Metadata = { title: 'Finish creating your organization account — Sanus' }
+export const metadata: Metadata = { title: 'Finish creating your organization account — Ocora' }
 
 /**
  * Landing page after "Continue with Google" on /signup/organization (via

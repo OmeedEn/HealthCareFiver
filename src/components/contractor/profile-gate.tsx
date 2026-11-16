@@ -3,7 +3,7 @@ import { EyeOff, SearchX } from 'lucide-react'
 
 /**
  * Shown instead of a generic "not found" when a profile link can't be opened.
- * 'unpublished': the professional exists but isn't published on Sanus right
+ * 'unpublished': the professional exists but isn't published on Ocora right
  * now (we never say why — review state is private). 'missing': stale link.
  */
 export function ProfileGate({
@@ -27,13 +27,13 @@ export function ProfileGate({
       </div>
       <h1 id="profile-gate-title" className="mt-4 text-lg font-semibold text-[#1a1a17]">
         {kind === 'unpublished'
-          ? 'This profile isn’t published on Sanus right now'
+          ? 'This profile isn’t published on Ocora right now'
           : 'This profile link is no longer valid'}
       </h1>
       <p className="mt-2 text-sm text-[#5f5d57]">
         {kind === 'unpublished'
-          ? 'Profiles become visible only after Sanus approves the professional and they publish. It can’t be viewed, contacted or booked until then.'
-          : 'The profile may have been removed, or the link is incomplete. Search again to find professionals who are published on Sanus.'}
+          ? 'Profiles become visible only after Ocora approves the professional and they publish. It can’t be viewed, contacted or booked until then.'
+          : 'The profile may have been removed, or the link is incomplete. Search again to find professionals who are published on Ocora.'}
       </p>
       <Link
         href={backHref}

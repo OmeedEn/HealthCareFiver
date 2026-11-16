@@ -73,7 +73,7 @@ export function TwoFactorNotice({ afterConfirm = false }: { afterConfirm?: boole
           {afterConfirm ? 'After you confirm your email, you' : 'Next, you'}
           &apos;ll set up two-factor authentication with an authenticator app
           (like Google Authenticator, 1Password, or Authy). It&apos;s required
-          for every account because Sanus handles health information.
+          for every account because Ocora handles health information.
         </p>
       </div>
     </div>

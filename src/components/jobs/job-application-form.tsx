@@ -102,7 +102,7 @@ export function JobApplicationForm({
         <DialogHeader>
           <DialogTitle>Apply for this Job</DialogTitle>
           <DialogDescription>
-            We&apos;ll send your Sanus profile. Add an optional note, your availability, and
+            We&apos;ll send your Ocora profile. Add an optional note, your availability, and
             answers to any screening questions.
           </DialogDescription>
         </DialogHeader>

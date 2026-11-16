@@ -21,7 +21,7 @@ import { OrgGoLiveFlow, type OrgGoLiveProps } from './org-flow'
 import { Shell } from './ui'
 
 export const metadata: Metadata = {
-  title: 'Go live — Sanus',
+  title: 'Go live — Ocora',
 }
 
 /*

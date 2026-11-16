@@ -214,7 +214,7 @@ const featuredEvents = [
   {
     title: 'Continuing-education courses',
     type: 'Continuing education',
-    detail: 'Teach live continuing-education sessions. Credit is listed only after Sanus reviews the accreditation.',
+    detail: 'Teach live continuing-education sessions. Credit is listed only after Ocora reviews the accreditation.',
     format: 'Virtual or in person',
     q: 'ceu_course',
   },
@@ -232,7 +232,7 @@ const featuredEvents = [
 const professionalPricingPoints = [
   'Free account, credential review, and profile',
   'List services, consulting, and events',
-  'No Sanus service fee has been set',
+  'No Ocora service fee has been set',
   'Payout setup through Stripe',
 ]
 
@@ -240,7 +240,7 @@ const trustItems = [
   {
     title: 'Approval before booking',
     description:
-      'Professionals are reviewed and approved by the Sanus team before they can be booked.',
+      'Professionals are reviewed and approved by the Ocora team before they can be booked.',
     icon: BadgeCheck,
   },
   {
@@ -257,18 +257,18 @@ const trustItems = [
   {
     title: 'Keep health details out',
     description:
-      'Don’t share medical records or other patient information in messages or requests. Sanus is not an emergency service.',
+      'Don’t share medical records or other patient information in messages or requests. Ocora is not an emergency service.',
     icon: Lock,
   },
   {
     title: 'Payments',
     description:
-      'Paid booking through Sanus isn’t open yet. Card payments, when they open, are handled by Stripe.',
+      'Paid booking through Ocora isn’t open yet. Card payments, when they open, are handled by Stripe.',
     icon: Wallet,
   },
   {
     title: 'Reviews tied to real work',
-    description: 'Reviews are linked to an engagement completed through Sanus.',
+    description: 'Reviews are linked to an engagement completed through Ocora.',
     icon: Star,
   },
   {
@@ -333,7 +333,7 @@ export function HeroSection() {
           <p className="max-w-[44ch] text-base leading-relaxed text-ink-muted sm:text-lg lg:col-span-4 lg:pb-2">
             Physicians and nurse practitioners, health coaches, healthcare
             attorneys, and nursing consultants. Individuals, businesses, and
-            healthcare organizations use Sanus to hire verified professionals,
+            healthcare organizations use Ocora to hire verified professionals,
             book services, and take continuing education.
           </p>
         </div>
@@ -463,11 +463,11 @@ export function StatsBar() {
     },
     {
       node: '$0',
-      label: 'to join. Payments run through Stripe — Sanus never stores card data',
+      label: 'to join. Payments run through Stripe — Ocora never stores card data',
     },
   ]
   return (
-    <section aria-label="Sanus at a glance" className="border-b border-line bg-paper">
+    <section aria-label="Ocora at a glance" className="border-b border-line bg-paper">
       <dl className={`${wrap} grid grid-cols-2 lg:grid-cols-4`}>
         {stats.map((s, i) => (
           <div
@@ -490,7 +490,7 @@ export function FeaturedExpertise() {
     <section className="bg-paper py-20 sm:py-28">
       <div className={wrap}>
         <SectionHead
-          title="Expertise you can find on Sanus"
+          title="Expertise you can find on Ocora"
           lede="Clinicians, coaches, consultants, and educators in one marketplace, each reviewed before they can be booked."
           action={
             <Link href="/find-care" className={textLink}>
@@ -569,11 +569,11 @@ export function BeyondClinicalSection() {
         </Reveal>
         <div className="mt-14 grid gap-10 border-t border-paper/20 pt-10 lg:grid-cols-12">
           <p className="max-w-[52ch] text-lg leading-relaxed text-paper/75 lg:col-span-6">
-            Sanus isn&apos;t only for patient-facing care. Healthcare
+            Ocora isn&apos;t only for patient-facing care. Healthcare
             attorneys, management consultants, legal nurse consultants,
             compliance specialists, medical billing experts, and healthcare IT
             advisors all have a home here. If your expertise touches
-            healthcare, you belong on Sanus.
+            healthcare, you belong on Ocora.
           </p>
           <ul className="flex flex-wrap content-start gap-2 lg:col-span-6">
             {[
@@ -612,7 +612,7 @@ export function HowItWorksSection() {
       steps: [
         'Search by specialty, service type, format, and price',
         'Review profiles, packages, and reviews from completed work',
-        'Request a booking directly through Sanus',
+        'Request a booking directly through Ocora',
         'Get the expertise you need — virtually or in person',
       ],
     },
@@ -642,7 +642,7 @@ export function HowItWorksSection() {
     <section id="how-it-works" className="bg-paper py-20 sm:py-28">
       <div className={wrap}>
         <SectionHead
-          title="How Sanus works"
+          title="How Ocora works"
           lede="Three audiences, one platform. Pick the path that matches you."
         />
         <div className="mt-14 grid gap-12 lg:grid-cols-3 lg:gap-10">
@@ -713,7 +713,7 @@ export function EventsSection() {
       <div className={wrap}>
         <SectionHead
           title="Events, training & continuing education"
-          lede="Live webinars, in-person workshops, continuing-education courses, and certification programs — created and taught by Sanus professionals. Here's what professionals can host."
+          lede="Live webinars, in-person workshops, continuing-education courses, and certification programs — created and taught by Ocora professionals. Here's what professionals can host."
         />
 
         {/* Filter links into the signed-in events catalogue (/events reads ?type=). */}
@@ -761,7 +761,7 @@ export function EventsSection() {
         </div>
 
         <p className="mt-4 text-sm text-ink-muted">
-          Example formats. Filtered event lists need a Sanus account; anyone can{' '}
+          Example formats. Filtered event lists need a Ocora account; anyone can{' '}
           <Link href="/find-care?tab=listings&kind=event" className="underline">
             browse all upcoming events
           </Link>
@@ -770,7 +770,7 @@ export function EventsSection() {
 
         <div className="mt-10">
           <Link href="/events-and-training/host" className={textLink}>
-            Are you a health professional? Host your event on Sanus
+            Are you a health professional? Host your event on Ocora
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
@@ -784,7 +784,7 @@ export function ProfessionalsSection() {
     <section id="professionals" className="bg-paper py-20 sm:py-28">
       <div className={`${wrap} grid gap-12 lg:grid-cols-12 lg:gap-10`}>
         <div className="lg:col-span-6">
-          <h2 className={h2Class}>How professionals grow on Sanus</h2>
+          <h2 className={h2Class}>How professionals grow on Ocora</h2>
           <p className="mt-6 max-w-[52ch] text-lg leading-relaxed text-ink-muted">
             Sell services, run consulting engagements, and host CEU courses
             from one verified profile. Build a practice that reaches
@@ -839,7 +839,7 @@ export function TrustSection() {
       <div className={wrap}>
         <SectionHead
           title="Trust & safety at every step"
-          lede="Professionals are reviewed and approved by the Sanus team before they can be booked."
+          lede="Professionals are reviewed and approved by the Ocora team before they can be booked."
         />
         <div className="mt-14 grid border-l border-t border-line sm:grid-cols-2 lg:grid-cols-4">
           {trustItems.map((card) => {
@@ -901,7 +901,7 @@ export function BottomCta() {
           <p className="max-w-[52ch] text-lg leading-relaxed text-white lg:col-span-5">
             Whether you&apos;re an individual seeking guidance, a business
             bringing in health expertise, a hospital or clinic engaging a
-            specialist, or a professional ready to grow your practice — Sanus
+            specialist, or a professional ready to grow your practice — Ocora
             is where you belong.
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:col-span-7">
@@ -1071,7 +1071,7 @@ export function PageIntro({
           <ol className="flex items-center gap-2 text-sm text-ink-muted">
             <li>
               <Link href="/" className="transition hover:text-ink">
-                Sanus
+                Ocora
               </Link>
             </li>
             <li aria-hidden="true" className="text-ink-faint">
@@ -1112,7 +1112,7 @@ export function PageIntro({
 const exploreLinks = [
   {
     title: 'Events & training',
-    body: 'Webinars, workshops, CEU and CME courses, and certification cohorts taught by Sanus professionals.',
+    body: 'Webinars, workshops, CEU and CME courses, and certification cohorts taught by Ocora professionals.',
     href: '/events-and-training',
   },
   {
@@ -1127,7 +1127,7 @@ const exploreLinks = [
   },
   {
     title: 'How it works',
-    body: 'How booking, professional review and approval, and payments work on Sanus.',
+    body: 'How booking, professional review and approval, and payments work on Ocora.',
     href: '/how-it-works',
   },
 ]
@@ -1137,7 +1137,7 @@ export function ExploreSection() {
   return (
     <section className="border-t border-line bg-paper py-20 sm:py-28">
       <div className={wrap}>
-        <SectionHead title="Explore Sanus" lede="Pick the path that matches you." />
+        <SectionHead title="Explore Ocora" lede="Pick the path that matches you." />
         <div className="mt-14 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-4">
           {exploreLinks.map((item) => (
             <Link

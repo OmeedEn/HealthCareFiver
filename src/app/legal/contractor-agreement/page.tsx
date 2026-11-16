@@ -4,9 +4,9 @@ import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
 import { CONTRACTOR_AGREEMENT_VERSION } from '@/lib/legal'
 
 export const metadata: Metadata = {
-  title: 'Independent Contractor and Platform Agreement (Draft) — Sanus',
+  title: 'Independent Contractor and Platform Agreement (Draft) — Ocora',
   description:
-    'Draft Independent Contractor and Platform Agreement for professionals on Sanus. Pending legal review.',
+    'Draft Independent Contractor and Platform Agreement for professionals on Ocora. Pending legal review.',
 }
 
 const linkClass = 'text-[#2330c8] underline'
@@ -19,15 +19,15 @@ const sections: LegalSection[] = [
       <>
         <p>
           This Independent Contractor and Platform Agreement (the
-          &ldquo;Agreement&rdquo;) is between [Sanus legal entity name], a
-          [state] [entity type] (&ldquo;Sanus,&rdquo; &ldquo;we,&rdquo;
+          &ldquo;Agreement&rdquo;) is between [Ocora legal entity name], a
+          [state] [entity type] (&ldquo;Ocora,&rdquo; &ldquo;we,&rdquo;
           &ldquo;us&rdquo;), and you, the individual professional or business
-          offering services through the Sanus platform (&ldquo;you&rdquo; or
+          offering services through the Ocora platform (&ldquo;you&rdquo; or
           &ldquo;Professional&rdquo;).
         </p>
         <p>
           You accept this Agreement by checking the agreement box and
-          confirming at the &ldquo;Go live&rdquo; step of your Sanus account.
+          confirming at the &ldquo;Go live&rdquo; step of your Ocora account.
           This Agreement supplements our{' '}
           <Link href="/terms" className={linkClass}>
             Terms of Service
@@ -50,7 +50,7 @@ const sections: LegalSection[] = [
         <p>
           You are an independent contractor. Nothing in this Agreement creates
           an employment, partnership, joint venture, agency, or franchise
-          relationship between you and Sanus.
+          relationship between you and Ocora.
         </p>
         <ul>
           <li>
@@ -63,16 +63,16 @@ const sections: LegalSection[] = [
             described below.
           </li>
           <li>
-            You are free to offer services outside Sanus, including to the
+            You are free to offer services outside Ocora, including to the
             same types of clients, subject to Section [non-circumvention].
           </li>
           <li>
             You are not entitled to wages, overtime, benefits, workers&rsquo;
-            compensation, or unemployment insurance from Sanus.
+            compensation, or unemployment insurance from Ocora.
           </li>
           <li>
             You are responsible for your own taxes, including income and
-            self-employment taxes. Sanus or its payment processor may issue tax
+            self-employment taxes. Ocora or its payment processor may issue tax
             forms (for example, Form 1099-K or 1099-NEC) as required by law.
           </li>
           <li>
@@ -90,7 +90,7 @@ const sections: LegalSection[] = [
       <>
         <p>
           You are solely responsible for the professional services you provide
-          and for your professional judgment. Sanus does not supervise,
+          and for your professional judgment. Ocora does not supervise,
           direct, or control your services and does not practice medicine or
           any other licensed profession.
         </p>
@@ -108,15 +108,15 @@ const sections: LegalSection[] = [
             informed consent, prescribing, and record-keeping rules).
           </li>
           <li>
-            You will tell Sanus within [5] business days if any license or
+            You will tell Ocora within [5] business days if any license or
             certification is suspended, restricted, revoked, placed on
             probation, or subject to an investigation or disciplinary action,
             or if any information you submitted for verification changes.
           </li>
           <li>
-            Sanus&rsquo;s credential review is a marketplace trust measure only.
+            Ocora&rsquo;s credential review is a marketplace trust measure only.
             It is not a guarantee of your qualifications, and it does not
-            shift responsibility for your services to Sanus.
+            shift responsibility for your services to Ocora.
           </li>
         </ul>
       </>
@@ -129,14 +129,14 @@ const sections: LegalSection[] = [
       <>
         <p>
           [Attorney to finalize.] Every listing (service, consulting offer,
-          or event) is reviewed by Sanus before it is published, and may be
-          reviewed again after you edit it. Sanus may decline, pause, or
+          or event) is reviewed by Ocora before it is published, and may be
+          reviewed again after you edit it. Ocora may decline, pause, or
           remove a listing that does not meet these rules:
         </p>
         <ul>
           <li>
             The listing must fall within the scope of practice of the license
-            or certification Sanus verified for you, in each state where the
+            or certification Ocora verified for you, in each state where the
             client will be located.
           </li>
           <li>
@@ -171,7 +171,7 @@ const sections: LegalSection[] = [
           $3,000,000 aggregate] or as required by law, whichever is greater.
         </p>
         <p>
-          You will provide proof of coverage on request and notify Sanus of
+          You will provide proof of coverage on request and notify Ocora of
           any lapse or cancellation within [5] business days. [Additional
           insured / general liability requirements — pending counsel.]
         </p>
@@ -182,7 +182,7 @@ const sections: LegalSection[] = [
           that involves in-person or hands-on care, home visits, prescribing,
           injectables, or IV therapy (&ldquo;Covered Services&rdquo;). A
           Covered Services listing will not be published or bookable until
-          Sanus has reviewed a current certificate of insurance. The
+          Ocora has reviewed a current certificate of insurance. The
           &ldquo;Insured&rdquo; badge appears on your profile only after that
           review.
         </p>
@@ -190,22 +190,22 @@ const sections: LegalSection[] = [
           <strong>Grace period.</strong> [Attorney to finalize.] If you
           indicated you will offer Covered Services but did not provide a
           certificate before approval, you have thirty (30) days from the date
-          Sanus approves your account to upload a certificate. During this
+          Ocora approves your account to upload a certificate. During this
           grace period you may go live and publish listings that are not
           Covered Services (for example, consulting, telehealth or virtual
           advisory, and educational listings); Covered Services listings stay
-          unpublished until the certificate is reviewed. Sanus will remind
+          unpublished until the certificate is reviewed. Ocora will remind
           you before the deadline.
         </p>
         <p>
           <strong>Pause rule.</strong> [Attorney to finalize.] If the grace
           period ends without a reviewed certificate, or if your coverage
-          later expires, lapses, or is cancelled, Sanus will pause and hide
+          later expires, lapses, or is cancelled, Ocora will pause and hide
           your Covered Services listings (and may cancel affected upcoming
           bookings [per the cancellation policy — pending counsel]) and
           remove the Insured badge. Your other listings are not affected. Paused
           listings are reactivated after you upload a current certificate and
-          Sanus reviews it.
+          Ocora reviews it.
         </p>
       </>
     ),
@@ -216,7 +216,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          [Attorney to finalize.] You authorize Sanus and its vendors to
+          [Attorney to finalize.] You authorize Ocora and its vendors to
           verify your credentials with licensing boards and certifying bodies
           and to screen you against federal and state exclusion and debarment
           lists (including the HHS-OIG List of Excluded Individuals/Entities,
@@ -225,19 +225,19 @@ const sections: LegalSection[] = [
         </p>
         <ul>
           <li>
-            Sanus tracks the expiration dates of your license or
+            Ocora tracks the expiration dates of your license or
             certification, malpractice insurance, and government ID, and will
             remind you approximately 60 and 30 days before each expires.
           </li>
           <li>
             If a license, certification, or government ID expires or is no
-            longer active and in good standing, Sanus will hide your profile
+            longer active and in good standing, Ocora will hide your profile
             and listings from search and stop new bookings until a current
             credential is verified.
           </li>
           <li>
             If screening shows you are excluded, debarred, or otherwise
-            ineligible, or contradicts information you provided, Sanus may
+            ineligible, or contradicts information you provided, Ocora may
             suspend or remove your account immediately.
           </li>
         </ul>
@@ -246,13 +246,13 @@ const sections: LegalSection[] = [
   },
   {
     id: 'self-disclosure',
-    title: 'Accuracy and duty to notify Sanus of changes',
+    title: 'Accuracy and duty to notify Ocora of changes',
     body: (
       <>
         <p>
           [Attorney to finalize.] You certify that the information you gave
-          Sanus, including your self-disclosure answers, is accurate and
-          complete. You will notify Sanus in writing within [5] business days
+          Ocora, including your self-disclosure answers, is accurate and
+          complete. You will notify Ocora in writing within [5] business days
           if:
         </p>
         <ul>
@@ -292,7 +292,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Joining Sanus is free. Sanus charges a service fee on each booking
+          Joining Ocora is free. Ocora charges a service fee on each booking
           made through the platform. The current fee is [X% of the booking
           amount / fee schedule], and you will see the exact amount before you
           publish an offering. We will give you at least [30] days&rsquo;
@@ -315,20 +315,20 @@ const sections: LegalSection[] = [
           </li>
           <li>
             Stripe collects and handles your identity and banking details (for
-            example, bank account, date of birth, and SSN digits). Sanus does
+            example, bank account, date of birth, and SSN digits). Ocora does
             not receive or store that information.
           </li>
           <li>
-            You authorize Sanus to deduct its service fee, and any refunds,
+            You authorize Ocora to deduct its service fee, and any refunds,
             chargebacks, or adjustments owed under our policies, from amounts
             paid to you.
           </li>
           <li>
-            Payout timing is governed by Stripe and by [Sanus payout schedule /
+            Payout timing is governed by Stripe and by [Ocora payout schedule /
             hold period — pending counsel].
           </li>
           <li>
-            Cancellations, no-shows, and refunds follow the [Sanus cancellation
+            Cancellations, no-shows, and refunds follow the [Ocora cancellation
             and refund policy].
           </li>
         </ul>
@@ -337,10 +337,10 @@ const sections: LegalSection[] = [
   },
   {
     id: 'non-circumvention',
-    title: 'Bookings made through Sanus',
+    title: 'Bookings made through Ocora',
     body: (
       <p>
-        For clients you first meet through Sanus, you agree not to move
+        For clients you first meet through Ocora, you agree not to move
         payment for services off the platform to avoid the service fee for
         [12] months after your first booking with that client. [Scope and
         enforceability of this clause — pending counsel.]
@@ -355,18 +355,18 @@ const sections: LegalSection[] = [
         <p>
           Where you are a covered entity or business associate under HIPAA,
           or otherwise create, receive, or maintain protected health
-          information (&ldquo;PHI&rdquo;) through Sanus, you are responsible
+          information (&ldquo;PHI&rdquo;) through Ocora, you are responsible
           for your own compliance with HIPAA and applicable state privacy laws.
         </p>
         <ul>
           <li>
-            Where required, you and Sanus will enter into a Business Associate
+            Where required, you and Ocora will enter into a Business Associate
             Agreement (&ldquo;BAA&rdquo;), which will govern PHI handled
             through the platform. [BAA form and trigger conditions — pending
             counsel.]
           </li>
           <li>
-            Use Sanus messaging, video, and documentation tools for client
+            Use Ocora messaging, video, and documentation tools for client
             communications involving PHI rather than unsecured channels.
           </li>
           <li>
@@ -375,7 +375,7 @@ const sections: LegalSection[] = [
           </li>
           <li>
             Report any suspected security incident or unauthorized disclosure
-            involving Sanus data to [security contact] within [24 hours].
+            involving Ocora data to [security contact] within [24 hours].
           </li>
         </ul>
       </>
@@ -405,7 +405,7 @@ const sections: LegalSection[] = [
             ratings.
           </li>
           <li>
-            Follow the Sanus{' '}
+            Follow the Ocora{' '}
             <Link href="/terms" className={linkClass}>
               Terms of Service
             </Link>{' '}
@@ -420,7 +420,7 @@ const sections: LegalSection[] = [
     title: 'Responsibility for claims',
     body: (
       <p>
-        You will defend, indemnify, and hold harmless Sanus and its officers,
+        You will defend, indemnify, and hold harmless Ocora and its officers,
         employees, and agents from claims arising out of your services, your
         breach of this Agreement, or your violation of law or the rights of a
         third party. [Limitation of liability and indemnity scope — pending
@@ -438,9 +438,9 @@ const sections: LegalSection[] = [
           either party.
         </p>
         <ul>
-          <li>You may end it at any time by closing your Sanus account.</li>
+          <li>You may end it at any time by closing your Ocora account.</li>
           <li>
-            Sanus may suspend or remove your profile or end this Agreement on
+            Ocora may suspend or remove your profile or end this Agreement on
             [notice period] notice, or immediately if you breach it, if your
             license or required credentials lapse or are restricted, if we
             receive credible reports of client harm, or if required by law.
@@ -484,9 +484,9 @@ export default function ContractorAgreementPage() {
       lastUpdated="[Draft — pending legal review; not yet effective] (last edited October 1, 2026)"
       intro={
         <p>
-          This Agreement explains how professionals work with Sanus: you are
+          This Agreement explains how professionals work with Ocora: you are
           an independent professional responsible for your own practice,
-          Sanus provides the marketplace and charges a small service fee on
+          Ocora provides the marketplace and charges a small service fee on
           each booking, and payments are handled by Stripe.
         </p>
       }

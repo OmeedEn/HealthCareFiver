@@ -5,10 +5,10 @@ import { getDemoProviders, getLiveProviders } from '@/lib/find-care/providers'
 import { getDemoOrgListings, getPublicOrgListings } from '@/lib/orgs/public'
 import { FindCareClient } from '@/app/find-care/find-care-client'
 
-export const metadata: Metadata = { title: 'Find professionals — Sanus' }
+export const metadata: Metadata = { title: 'Find professionals — Ocora' }
 
 /**
- * Browse mode: a professional using Sanus as a client. Same search as the
+ * Browse mode: a professional using Ocora as a client. Same search as the
  * public /find-care, inside the app. Your own profile is left out — you
  * can't book your own listings.
  */

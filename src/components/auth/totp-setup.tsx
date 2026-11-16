@@ -385,12 +385,12 @@ export function TotpEnrollment({
         </div>
       </li>
 
-      {/* Step 2 — add Sanus to the app */}
+      {/* Step 2 — add Ocora to the app */}
       <li className="flex gap-3">
         <span className={stepNumber}>2</span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-[#1a1a17]">
-            Add Sanus to the app
+            Add Ocora to the app
           </p>
 
           {startError ? (
@@ -417,7 +417,7 @@ export function TotpEnrollment({
               {/* Phones: one tap opens the authenticator app directly. */}
               <div className="sm:hidden">
                 <p className="mt-0.5 text-xs text-[#5f5d57]">
-                  Tap the button to add Sanus to your authenticator app on
+                  Tap the button to add Ocora to your authenticator app on
                   this phone, then come back here.
                 </p>
                 <a
@@ -481,7 +481,7 @@ export function TotpEnrollment({
             htmlFor={`totp-code-${kind}`}
             className="text-sm font-semibold text-[#1a1a17]"
           >
-            Enter the 6-digit code the app shows for Sanus
+            Enter the 6-digit code the app shows for Ocora
           </Label>
           <CodeInput
             id={`totp-code-${kind}`}

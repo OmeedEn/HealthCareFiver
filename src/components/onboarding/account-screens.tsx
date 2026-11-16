@@ -41,7 +41,7 @@ export function nameScreen({
     id,
     step,
     title: 'What’s your name?',
-    sub: 'This is how you’ll appear on Sanus.',
+    sub: 'This is how you’ll appear on Ocora.',
     fields: ['first_name', 'last_name'],
     canContinue: () => first.trim() !== '' && last.trim() !== '',
     render: ({ errors }) => (
@@ -69,7 +69,7 @@ export function nameScreen({
   }
 }
 
-/* ───────────── "What brings you to Sanus?" (lost signup path) ───────────── */
+/* ───────────── "What brings you to Ocora?" (lost signup path) ───────────── */
 
 export const PATH_PICKER_ID = 'account_path'
 
@@ -109,13 +109,13 @@ export function pathPickerScreen({
   return {
     id: PATH_PICKER_ID,
     step,
-    title: 'What brings you to Sanus?',
+    title: 'What brings you to Ocora?',
     sub: 'So we set up the right kind of account.',
     autoAdvance: true,
     canContinue: () => value === 'INDEPENDENT',
     render: ({ advance }) => (
       <IconChoices
-        legend="What brings you to Sanus?"
+        legend="What brings you to Ocora?"
         hideLegend
         options={PATH_OPTIONS}
         icons={PATH_ICONS}

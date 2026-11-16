@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service (Draft) — Sanus',
+  title: 'Terms of Service (Draft) — Ocora',
   description:
-    'Draft Terms of Service for the Sanus health expertise marketplace. Pending legal review.',
+    'Draft Terms of Service for the Ocora health expertise marketplace. Pending legal review.',
 }
 
 const sections: LegalSection[] = [
@@ -16,9 +16,9 @@ const sections: LegalSection[] = [
       <>
         <p>
           These Terms of Service (&ldquo;Terms&rdquo;) govern your access to
-          and use of the Sanus website, applications, and related services
-          (the &ldquo;Platform&rdquo;), operated by [Sanus legal entity name]
-          (&ldquo;Sanus,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;). By
+          and use of the Ocora website, applications, and related services
+          (the &ldquo;Platform&rdquo;), operated by [Ocora legal entity name]
+          (&ldquo;Ocora,&rdquo; &ldquo;we,&rdquo; &ldquo;us&rdquo;). By
           creating an account or using the Platform you agree to these Terms
           and to our <Link href="/privacy" className="text-[#2330c8] underline">Privacy Policy</Link>.
           If you do not agree, do not use the Platform.
@@ -32,30 +32,30 @@ const sections: LegalSection[] = [
   },
   {
     id: 'marketplace-role',
-    title: 'Sanus is a marketplace, not a provider of care',
+    title: 'Ocora is a marketplace, not a provider of care',
     body: (
       <>
         <p>
-          Sanus is an online marketplace that connects individuals,
+          Ocora is an online marketplace that connects individuals,
           businesses, and healthcare organizations (&ldquo;Clients&rdquo;)
           with independent health professionals, consultants, and educators
           (&ldquo;Professionals&rdquo;).
         </p>
         <ul>
           <li>
-            Sanus does not provide medical care, diagnosis, treatment, legal
+            Ocora does not provide medical care, diagnosis, treatment, legal
             advice, or any other professional service, and does not practice
             medicine or any licensed profession.
           </li>
           <li>
             Professionals are independent and are not employees, agents, or
-            contractors of Sanus. Each Professional is solely responsible for
+            contractors of Ocora. Each Professional is solely responsible for
             the services they provide, their professional judgment, and
             compliance with the laws and licensing rules that apply to them.
           </li>
           <li>
             Nothing on the Platform establishes a provider–patient
-            relationship between you and Sanus.
+            relationship between you and Ocora.
           </li>
         </ul>
         <p className="font-semibold">
@@ -71,10 +71,10 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          Professionals submit credentials and other information that Sanus
+          Professionals submit credentials and other information that Ocora
           reviews before a Professional can be booked. Depending on the type
           of professional, review may include license, identity, and
-          background checks performed by Sanus or third-party vendors.
+          background checks performed by Ocora or third-party vendors.
         </p>
         <p>
           Verification reflects information available at the time of review.
@@ -112,23 +112,23 @@ const sections: LegalSection[] = [
       <>
         <p>
           Payments on the Platform are processed by Stripe, Inc. and its
-          affiliates (&ldquo;Stripe&rdquo;). Sanus does not store full card
+          affiliates (&ldquo;Stripe&rdquo;). Ocora does not store full card
           numbers. By making or receiving payments you also agree to
           Stripe&apos;s applicable terms, including the Stripe Connected
           Account Agreement for Professionals.
         </p>
         <ul>
           <li>
-            Joining Sanus is free for Professionals. There is no subscription
+            Joining Ocora is free for Professionals. There is no subscription
             or monthly fee to be listed or bookable.
           </li>
           <li>
-            Professionals set their own rates. Sanus charges a small service
+            Professionals set their own rates. Ocora charges a small service
             fee on each booking. The exact amount is shown to Professionals
             before they publish an offering, and to Clients before they pay.
           </li>
           <li>
-            To be listed and bookable, a Professional must be verified by Sanus
+            To be listed and bookable, a Professional must be verified by Ocora
             and accept the independent contractor and platform agreement.
           </li>
           <li>
@@ -141,7 +141,7 @@ const sections: LegalSection[] = [
           <li>
             Professionals are responsible for their own taxes. Clients are
             responsible for confirming whether any service is eligible for
-            insurance reimbursement; Sanus does not bill insurance.
+            insurance reimbursement; Ocora does not bill insurance.
           </li>
         </ul>
       </>
@@ -161,7 +161,7 @@ const sections: LegalSection[] = [
           </li>
           <li>
             Circumvent the Platform to avoid fees for engagements that began
-            on Sanus.
+            on Ocora.
           </li>
           <li>
             Harass others, post unlawful content, or upload malware, or
@@ -181,8 +181,8 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Some services on the Platform may involve protected health
-        information (&ldquo;PHI&rdquo;). How Sanus collects, uses, and
-        safeguards health information — including when Sanus acts as a
+        information (&ldquo;PHI&rdquo;). How Ocora collects, uses, and
+        safeguards health information — including when Ocora acts as a
         business associate under HIPAA — is described in our{' '}
         <Link href="/privacy" className="text-[#2330c8] underline">
           Privacy Policy
@@ -198,10 +198,10 @@ const sections: LegalSection[] = [
     title: 'Reviews and user content',
     body: (
       <p>
-        You retain ownership of content you submit, and grant Sanus a
+        You retain ownership of content you submit, and grant Ocora a
         limited license to host and display it to operate the Platform.
         Reviews must reflect genuine experiences from a completed
-        engagement. Sanus may remove content that violates these Terms.
+        engagement. Ocora may remove content that violates these Terms.
       </p>
     ),
   },
@@ -210,7 +210,7 @@ const sections: LegalSection[] = [
     title: 'Suspension and termination',
     body: (
       <p>
-        You may close your account at any time. Sanus may suspend or
+        You may close your account at any time. Ocora may suspend or
         terminate accounts that violate these Terms, pose risk to other
         users, or where a Professional&apos;s verification lapses or is
         revoked. Certain records may be retained after closure as described
@@ -225,7 +225,7 @@ const sections: LegalSection[] = [
       <>
         <p>
           The Platform is provided &ldquo;as is&rdquo; and &ldquo;as
-          available.&rdquo; To the fullest extent permitted by law, Sanus
+          available.&rdquo; To the fullest extent permitted by law, Ocora
           disclaims all warranties, express or implied, and is not liable for
           the acts or omissions of Professionals or Clients.
         </p>
@@ -253,7 +253,7 @@ const sections: LegalSection[] = [
     title: 'Contact',
     body: (
       <p>
-        Questions about these Terms: [legal contact email], [Sanus legal
+        Questions about these Terms: [legal contact email], [Ocora legal
         entity name], [mailing address].
       </p>
     ),
@@ -267,7 +267,7 @@ export default function TermsPage() {
       lastUpdated="[Draft — not yet effective]"
       intro={
         <p>
-          Please read these Terms carefully. They explain Sanus&apos;s role as
+          Please read these Terms carefully. They explain Ocora&apos;s role as
           a marketplace, what we expect from Clients and Professionals, and
           how payments work.
         </p>

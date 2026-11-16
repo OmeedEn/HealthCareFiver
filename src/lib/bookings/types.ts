@@ -119,7 +119,7 @@ export function money(cents: number | null | undefined): string {
   return `$${(cents / 100).toFixed(2).replace(/\.00$/, '')}`
 }
 
-/** "Tue, Nov 5, 10:00 AM PST" in Pacific time (where Sanus launches). */
+/** "Tue, Nov 5, 10:00 AM PST" in Pacific time (where Ocora launches). */
 export function when(iso: string | null | undefined): string | null {
   if (!iso) return null
   const d = new Date(iso)

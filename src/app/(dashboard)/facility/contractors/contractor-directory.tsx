@@ -66,7 +66,7 @@ export function ContractorDirectory({
       <div>
         <h1 className="text-2xl font-bold text-[#1a1a17]">Find professionals</h1>
         <p className="text-[#5f5d57]">
-          Professionals approved by Sanus and published on the marketplace.
+          Professionals approved by Ocora and published on the marketplace.
         </p>
         {isDemo && (
           <p className="mt-2 inline-flex rounded-md bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
@@ -182,7 +182,7 @@ export function ContractorDirectory({
       <p className="text-sm text-[#5f5d57]" role="status" aria-live="polite" aria-atomic="true">
         <span className="font-semibold text-[#1a1a17]">{shown.length}</span> professional
         {shown.length === 1 ? '' : 's'}
-        {hasQuery && providers.length > 0 ? ` match (of ${providers.length} on Sanus)` : ' on Sanus'}
+        {hasQuery && providers.length > 0 ? ` match (of ${providers.length} on Ocora)` : ' on Ocora'}
       </p>
 
       {providers.length === 0 ? (
@@ -191,10 +191,10 @@ export function ContractorDirectory({
           className="rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-12 text-center"
         >
           <h2 className="text-lg font-semibold text-[#1a1a17]">
-            No professionals are published on Sanus yet
+            No professionals are published on Ocora yet
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
-            Profiles appear here only after Sanus approves the professional and they publish. Check
+            Profiles appear here only after Ocora approves the professional and they publish. Check
             back soon.
           </p>
         </section>
@@ -208,7 +208,7 @@ export function ContractorDirectory({
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
             {providers.length} professional{providers.length === 1 ? ' is' : 's are'} published on
-            Sanus, but none match your search{stateLabel ? ` in ${stateLabel}` : ''}.
+            Ocora, but none match your search{stateLabel ? ` in ${stateLabel}` : ''}.
           </p>
           <Button type="button" className="mt-4" onClick={clearFilters}>
             Reset filters

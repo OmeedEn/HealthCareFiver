@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { requireAdmin } from '@/lib/admin/guard'
 
 /**
- * Open the Sanus-team support thread with `userId` in the admin inbox.
+ * Open the Ocora-team support thread with `userId` in the admin inbox.
  * The thread itself is created on the first message (see
  * src/app/admin/messages/actions.ts), so opening it has no side effects.
  */

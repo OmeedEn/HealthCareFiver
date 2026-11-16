@@ -30,7 +30,7 @@ import { useClientSignup } from './client/flow'
 import { useUnsureSignup } from './unsure/flow'
 
 // /signup as one continuous single-question flow (Signup Routing +
-// Single-Question Onboarding specs): "What brings you to Sanus?", then the
+// Single-Question Onboarding specs): "What brings you to Ocora?", then the
 // matching door, then that path's own questions and the account, all under
 // one progress bar and without a page load. The two routing answers are kept
 // in this tab's sessionStorage like every other pre-account answer. The old
@@ -206,7 +206,7 @@ function SignupFlowRun({ start, onStartOver }: { start: SignupStart | null; onSt
 
   const doorScreen: Screen = {
     id: 'door',
-    title: 'What brings you to Sanus?',
+    title: 'What brings you to Ocora?',
     autoAdvance: true,
     canContinue: () => !!route.door,
     weight: 1,
@@ -214,7 +214,7 @@ function SignupFlowRun({ start, onStartOver }: { start: SignupStart | null; onSt
       <>
         <SignupScreenView screen="signup" />
         <IconChoices
-          legend="What brings you to Sanus?"
+          legend="What brings you to Ocora?"
           hideLegend
           options={DOOR_OPTIONS}
           icons={ICONS}

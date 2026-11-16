@@ -69,7 +69,7 @@ not allowed everywhere.
   `license_state` / `license_states` (plus `telehealth_states` for virtual
   services). Admin listing review is the manual review for publishing.
 - **Coverage badge:** reads "Insurance document on file", with a tooltip
-  saying Sanus doesn't verify with the carrier or judge whether the coverage
+  saying Ocora doesn't verify with the carrier or judge whether the coverage
   is adequate.
 
 ## Enforcement points

@@ -27,21 +27,21 @@ import { loadPartnerNames, withPartnerName } from '@/lib/messaging/partner-names
 function inboxCopy(role: string | null) {
   if (role === 'client') {
     return {
-      subtitle: 'Your conversations with professionals and the Sanus team',
+      subtitle: 'Your conversations with professionals and the Ocora team',
       empty: 'Find a professional and send them a message. Replies will appear here.',
       cta: { href: '/find-care', label: 'Find a professional' },
     }
   }
   if (role === 'facility' || role === 'staffing_agency') {
     return {
-      subtitle: 'Your conversations with professionals and the Sanus team',
+      subtitle: 'Your conversations with professionals and the Ocora team',
       empty: 'Browse professionals and message or invite them. New messages will appear here.',
       cta: { href: '/facility/contractors', label: 'Browse professionals' },
     }
   }
   return {
     subtitle: role
-      ? 'Your conversations with clients, organizations and the Sanus team'
+      ? 'Your conversations with clients, organizations and the Ocora team'
       : 'Your conversations',
     empty: 'Clients and organizations who message you will appear here. Add a service or event so they can find you.',
     cta: { href: '/contractor/listings', label: 'Your listings' },
@@ -137,7 +137,7 @@ export default function MessagesPage() {
             created_at: row.created_at as string,
             other_user: {
               id: 'support',
-              first_name: 'Sanus',
+              first_name: 'Ocora',
               last_name: 'Team',
               avatar_url: null,
               role: 'admin',
@@ -213,7 +213,7 @@ export default function MessagesPage() {
     }
   }, [currentUserId, fetchConversations])
 
-  // Open (or create) this user's support thread with the Sanus team.
+  // Open (or create) this user's support thread with the Ocora team.
   async function openSupportThread() {
     if (!currentUserId || openingSupport) return
     if (isDemo) {
@@ -241,7 +241,7 @@ export default function MessagesPage() {
       }
       router.push(`/messages/${id}`)
     } catch {
-      toast.error("Couldn't open a conversation with the Sanus team.")
+      toast.error("Couldn't open a conversation with the Ocora team.")
       setOpeningSupport(false)
     }
   }
@@ -278,7 +278,7 @@ export default function MessagesPage() {
           ) : (
             <MessageSquarePlusIcon className="size-4" data-icon="inline-start" />
           )}
-          Contact Sanus team
+          Contact Ocora team
         </Button>
       </div>
 

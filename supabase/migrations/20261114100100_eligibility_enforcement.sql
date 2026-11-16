@@ -238,7 +238,7 @@ BEGIN
   IF NOT is_privileged_writer() THEN
     IF TG_OP = 'INSERT' THEN
       IF NEW.review_notes IS NOT NULL OR NEW.reviewed_at IS NOT NULL OR NEW.reviewed_by IS NOT NULL THEN
-        RAISE EXCEPTION 'Only Sanus can review listings'
+        RAISE EXCEPTION 'Only Ocora can review listings'
           USING ERRCODE = '42501', HINT = 'review_fields_admin_only';
       END IF;
     ELSE
@@ -246,7 +246,7 @@ BEGIN
         OR NEW.reviewed_at IS DISTINCT FROM OLD.reviewed_at
         OR NEW.reviewed_by IS DISTINCT FROM OLD.reviewed_by
       THEN
-        RAISE EXCEPTION 'Only Sanus can review listings'
+        RAISE EXCEPTION 'Only Ocora can review listings'
           USING ERRCODE = '42501', HINT = 'review_fields_admin_only';
       END IF;
 
@@ -261,7 +261,7 @@ BEGIN
 
     IF TG_OP = 'INSERT' OR NEW.status IS DISTINCT FROM OLD.status THEN
       IF NEW.status NOT IN ('draft', 'pending_review') THEN
-        RAISE EXCEPTION 'Listings are published by Sanus after review'
+        RAISE EXCEPTION 'Listings are published by Ocora after review'
           USING ERRCODE = '42501', HINT = 'status_forbidden';
       END IF;
 
@@ -275,7 +275,7 @@ BEGIN
           RAISE EXCEPTION 'You can submit listings for review once your application is approved'
             USING ERRCODE = 'P0001', HINT = 'not_verified';
         ELSIF _hold IS NOT NULL THEN
-          RAISE EXCEPTION 'Your account is on hold. Please contact Sanus support.'
+          RAISE EXCEPTION 'Your account is on hold. Please contact Ocora support.'
             USING ERRCODE = 'P0001', HINT = 'compliance_hold';
         ELSIF _agreement IS NULL THEN
           RAISE EXCEPTION 'Accept the provider agreement before submitting your first listing'
@@ -297,7 +297,7 @@ BEGIN
         USING ERRCODE = 'P0001', HINT = 'not_submitted';
     END IF;
     IF NOT can_go_live(NEW.contractor_id) THEN
-      RAISE EXCEPTION 'This professional is not live on Sanus, so the listing cannot be published'
+      RAISE EXCEPTION 'This professional is not live on Ocora, so the listing cannot be published'
         USING ERRCODE = 'P0001', HINT = 'not_live';
     END IF;
     IF offering_is_high_risk(NEW.contractor_id, NEW.kind, NEW.format, NEW.involves_medical_procedures, NEW.hands_on_care)
@@ -399,7 +399,7 @@ BEGIN
     ELSIF OLD.status = 'in_review' AND NEW.status = 'draft' THEN
       NULL; -- withdraw
     ELSE
-      RAISE EXCEPTION 'Listings are published after review by the Sanus team.' USING ERRCODE = '42501';
+      RAISE EXCEPTION 'Listings are published after review by the Ocora team.' USING ERRCODE = '42501';
     END IF;
   ELSIF OLD.status <> 'draft' AND (
     NEW.title IS DISTINCT FROM OLD.title OR NEW.description IS DISTINCT FROM OLD.description OR
@@ -483,7 +483,7 @@ BEGIN
     RAISE EXCEPTION 'This listing isn''t available.' USING ERRCODE = 'P0001', HINT = 'listing_unavailable';
   END IF;
   IF org_listing_is_high_risk(l.kind, l.format, l.hands_on_care, l.involves_medical_procedures) THEN
-    RAISE EXCEPTION 'This service can''t be booked on Sanus yet.'
+    RAISE EXCEPTION 'This service can''t be booked on Ocora yet.'
       USING ERRCODE = 'P0001', HINT = 'org_coverage_unsupported';
   END IF;
   RETURN NEW;

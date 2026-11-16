@@ -20,7 +20,7 @@ export const EMPTY_LOOKING_FOR: LookingForData = {
   types: [], specialties: '', engagement_types: [], settings: [], timeline: '', license_states: [], min_years: '',
 }
 
-/** C. "Looking for" profile, so Sanus can suggest matching professionals. */
+/** C. "Looking for" profile, so Ocora can suggest matching professionals. */
 export function LookingForForm({
   initial = EMPTY_LOOKING_FOR,
   onSaved,

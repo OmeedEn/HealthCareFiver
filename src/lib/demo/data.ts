@@ -949,7 +949,7 @@ export const DEMO_EVENTS = [
     title: 'HIPAA Compliance for Independent Providers',
     type: 'webinar' as const,
     date: '2027-01-20T12:00:00Z',
-    instructor: 'Sanus Legal Team',
+    instructor: 'Ocora Legal Team',
     price: 0,
     memberPrice: 0,
     description:
@@ -971,7 +971,7 @@ export const DEMO_EVENTS = [
       { time: '1:15 PM', topic: 'Q&A Session' },
     ],
     instructorBio:
-      'The Sanus Legal Team comprises healthcare attorneys and compliance specialists dedicated to helping independent providers navigate the complex regulatory landscape of healthcare.',
+      'The Ocora Legal Team comprises healthcare attorneys and compliance specialists dedicated to helping independent providers navigate the complex regulatory landscape of healthcare.',
   },
 ]
 

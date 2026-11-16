@@ -8,7 +8,7 @@ import { listOrgBookings, namesFor } from '@/lib/bookings/data'
 import type { BookingRow } from '@/lib/bookings/types'
 import { BookingGroup, BookingListItem } from '@/components/bookings/booking-list'
 
-export const metadata: Metadata = { title: 'Bookings — Sanus' }
+export const metadata: Metadata = { title: 'Bookings — Ocora' }
 
 /** Organization inbox: booking requests and registrations for your listings. */
 export default async function OrgBookingsPage() {

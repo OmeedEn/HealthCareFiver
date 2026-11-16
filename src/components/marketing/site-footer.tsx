@@ -1,6 +1,6 @@
 import { EmergencyNotice } from '@/components/emergency-notice'
 import Link from 'next/link'
-import { SanusMark } from '@/components/brand/sanus-mark'
+import { OcoraMark } from '@/components/brand/ocora-mark'
 
 function FooterColumn({
   title,
@@ -35,10 +35,10 @@ export function SiteFooter() {
       <div className="mx-auto w-full max-w-[90rem] px-4 pb-10 pt-16 sm:px-6 sm:pt-20 lg:px-10">
         <div className="grid gap-12 border-t-2 border-ink pt-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-10">
           <div className="sm:col-span-2 lg:col-span-4">
-            <Link href="/" className="inline-flex items-center gap-2.5" aria-label="Sanus home">
-              <SanusMark className="size-8" tone="ink" />
+            <Link href="/" className="inline-flex items-center gap-2.5" aria-label="Ocora home">
+              <OcoraMark className="size-8" tone="ink" />
               <span className="font-display text-xl font-bold tracking-tight">
-                Sanus<span className="text-brand">.</span>
+                Ocora<span className="text-brand">.</span>
               </span>
             </Link>
             <p className="mt-4 max-w-[32ch] text-sm leading-relaxed text-ink-muted">
@@ -71,7 +71,7 @@ export function SiteFooter() {
             <FooterColumn
               title="For professionals"
               links={[
-                { label: 'Why Sanus', href: '/for-professionals' },
+                { label: 'Why Ocora', href: '/for-professionals' },
                 { label: 'List your services', href: '/signup/offer' },
                 { label: 'Host an event', href: '/events-and-training/host' },
                 { label: 'Professional pricing', href: '/for-professionals#pricing' },
@@ -82,7 +82,7 @@ export function SiteFooter() {
               title="Platform"
               links={[
                 { label: 'Trust & safety', href: '/how-it-works#trust' },
-                { label: 'About Sanus', href: '/' },
+                { label: 'About Ocora', href: '/' },
                 { label: 'Sign in', href: '/login' },
                 { label: 'Terms of Service', href: '/terms' },
                 { label: 'Privacy Policy', href: '/privacy' },
@@ -93,7 +93,7 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-col gap-3 border-t border-line pt-6 text-sm text-ink-muted sm:flex-row sm:items-start sm:justify-between">
           <EmergencyNotice variant="inline" />
-          <p className="shrink-0">&copy; {new Date().getFullYear()} Sanus. All rights reserved.</p>
+          <p className="shrink-0">&copy; {new Date().getFullYear()} Ocora. All rights reserved.</p>
         </div>
       </div>
     </footer>

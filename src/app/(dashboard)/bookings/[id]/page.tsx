@@ -15,7 +15,7 @@ import { labelFor, EVENT_FORMATS, LISTING_FORMATS, ORG_EVENT_TYPES } from '@/lib
 import { BookingStatusBadge } from '@/components/bookings/booking-list'
 import { BookingMessageForm, CustomerBookingActions, OrgBookingActions } from '@/components/bookings/booking-actions'
 
-export const metadata: Metadata = { title: 'Booking — Sanus' }
+export const metadata: Metadata = { title: 'Booking — Ocora' }
 
 type Props = {
   params: Promise<{ id: string }>
@@ -122,7 +122,7 @@ export default async function BookingPage({ params, searchParams }: Props) {
         </div>
         <p className="flex items-start gap-2 text-xs text-[#5f5d57]">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[#2f3cf5]" aria-hidden="true" />
-          Keep contact details off messages. Booking, payment, and messages stay on Sanus so you’re protected.
+          Keep contact details off messages. Booking, payment, and messages stay on Ocora so you’re protected.
         </p>
       </section>
     </div>
@@ -146,8 +146,8 @@ function NextStep({ booking: b, side }: { booking: BookingRow; side: 'customer' 
           quoted: 'Review the quote. If it works for you, accept it, then pay to confirm.',
           accepted: unpaid
             ? bookingPaymentsEnabled()
-              ? 'Accepted. Pay on Sanus to confirm your spot. The organization is paid after your booking.'
-              : 'Accepted. Payments on Sanus aren’t open yet; we’ll notify you when you can pay to confirm.'
+              ? 'Accepted. Pay on Ocora to confirm your spot. The organization is paid after your booking.'
+              : 'Accepted. Payments on Ocora aren’t open yet; we’ll notify you when you can pay to confirm.'
             : free
               ? 'You’re booked. There’s nothing to pay.'
               : 'You’re booked.',
@@ -220,9 +220,9 @@ function MoneyPanel({ booking: b, side }: { booking: BookingRow; side: 'customer
       const pct = b.fee_cents != null && paid ? Math.round((b.fee_cents / paid) * 1000) / 10 : bookingFeePercent()
       const total = paid ?? b.price_cents!
       if (fee != null && pct != null) {
-        lines.push(['Your payout', `${money(total - fee)} (${money(total)} minus the ${pct}% Sanus fee)`])
+        lines.push(['Your payout', `${money(total - fee)} (${money(total)} minus the ${pct}% Ocora fee)`])
       } else if (paid == null) {
-        lines.push(['Payment', 'Payments on Sanus aren’t open yet'])
+        lines.push(['Payment', 'Payments on Ocora aren’t open yet'])
       } else {
         lines.push(['Your payout', money(total)])
       }

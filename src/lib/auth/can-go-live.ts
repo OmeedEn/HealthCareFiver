@@ -126,7 +126,7 @@ export async function canGoLive(
     return {
       ok: false,
       reason: 'not_verified',
-      message: 'Your account is on hold. Please contact Sanus support.',
+      message: 'Your account is on hold. Please contact Ocora support.',
     }
   }
 

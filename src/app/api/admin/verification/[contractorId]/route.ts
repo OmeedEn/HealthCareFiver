@@ -196,8 +196,8 @@ export async function POST(
       if (error) return failed('Failed to suspend provider')
       notification = {
         type: 'verification_suspended',
-        title: 'Your Sanus account is suspended',
-        body: 'Your profile and listings are hidden while we review your account. Contact Sanus support if you have questions.',
+        title: 'Your Ocora account is suspended',
+        body: 'Your profile and listings are hidden while we review your account. Contact Ocora support if you have questions.',
         href: null,
       }
       break
@@ -241,7 +241,7 @@ export async function POST(
       }
       notification = {
         type: 'verification_reinstated',
-        title: 'Your Sanus account is active again',
+        title: 'Your Ocora account is active again',
         body: null,
         href: '/dashboard',
       }

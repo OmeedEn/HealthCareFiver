@@ -20,7 +20,7 @@ import {
 } from '@/components/listings/publish-gate'
 import { getListingsContext } from '../../context'
 
-export const metadata: Metadata = { title: 'Review and publish — Sanus' }
+export const metadata: Metadata = { title: 'Review and publish — Ocora' }
 
 type Owner = {
   name: string
@@ -212,7 +212,7 @@ function FeeCard({ listing }: { listing: ListingRow }) {
           </dd>
         </div>
         <div className="flex justify-between">
-          <dt className="text-[#5f5d57]">Sanus service fee ({pct}%)</dt>
+          <dt className="text-[#5f5d57]">Ocora service fee ({pct}%)</dt>
           <dd className="font-medium text-[#1a1a17]">−{formatCents(fee.feeCents)}</dd>
         </div>
         <div className="flex justify-between border-t border-[#eeebe4] pt-2">
@@ -224,7 +224,7 @@ function FeeCard({ listing }: { listing: ListingRow }) {
       </dl>
     ) : (
       <p className="text-sm text-[#5f5d57]">
-        Sanus service fee: {pct}% of each quote you send. You receive the rest.
+        Ocora service fee: {pct}% of each quote you send. You receive the rest.
       </p>
     )
   }

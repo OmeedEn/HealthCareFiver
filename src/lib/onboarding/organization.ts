@@ -117,7 +117,7 @@ export type OrgDisclosures = Partial<
 export const ATTEST_AUTHORIZED_LABEL =
   "I'm authorized to represent this organization, and the information I provided is accurate."
 export const ATTEST_CHECKS_LABEL =
-  'I authorize Sanus to verify this information and run exclusion screenings.'
+  'I authorize Ocora to verify this information and run exclusion screenings.'
 export const REVIEW_NOTE = 'Our team reviews every application and will email you when it’s done.'
 
 /**
@@ -196,7 +196,7 @@ export const STAFFING_POSTS_ENABLED = process.env.NEXT_PUBLIC_STAFFING_POSTS_ENA
 
 /** Shown on every staffing post and its form. */
 export const NOT_EMPLOYER_NOTICE =
-  'Sanus connects organizations and professionals. Sanus isn’t the employer or a staffing agency and doesn’t handle pay, scheduling, or employment — the organization and professional arrange those directly.'
+  'Ocora connects organizations and professionals. Ocora isn’t the employer or a staffing agency and doesn’t handle pay, scheduling, or employment — the organization and professional arrange those directly.'
 
 export const SERVICE_AUDIENCES = [
   { value: 'individuals', label: 'Individuals' },
@@ -217,7 +217,7 @@ export const EVENT_FORMATS = [
 ] as const
 
 export const REACH_VIA = [
-  { value: 'book', label: 'Book on Sanus' },
+  { value: 'book', label: 'Book on Ocora' },
   { value: 'inquiry', label: 'Send an inquiry' },
 ] as const
 

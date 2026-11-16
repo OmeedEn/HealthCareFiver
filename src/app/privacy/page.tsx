@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { LegalPage, type LegalSection } from '@/components/legal/legal-page'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy (Draft) — Sanus',
+  title: 'Privacy Policy (Draft) — Ocora',
   description:
-    'Draft Privacy Policy for the Sanus health expertise marketplace, including how health information is handled. Pending legal review.',
+    'Draft Privacy Policy for the Ocora health expertise marketplace, including how health information is handled. Pending legal review.',
 }
 
 const sections: LegalSection[] = [
@@ -15,14 +15,14 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          This Privacy Policy explains how [Sanus legal entity name]
-          (&ldquo;Sanus,&rdquo; &ldquo;we&rdquo;) collects, uses, shares, and
-          protects personal information when you use the Sanus marketplace
+          This Privacy Policy explains how [Ocora legal entity name]
+          (&ldquo;Ocora,&rdquo; &ldquo;we&rdquo;) collects, uses, shares, and
+          protects personal information when you use the Ocora marketplace
           (the &ldquo;Platform&rdquo;). It applies to Clients (individuals,
           businesses, and healthcare organizations) and Professionals.
         </p>
         <p>
-          Sanus is a marketplace and does not itself provide medical care.
+          Ocora is a marketplace and does not itself provide medical care.
           See our{' '}
           <Link href="/terms" className="text-[#2330c8] underline">
             Terms of Service
@@ -54,7 +54,7 @@ const sections: LegalSection[] = [
         <li>
           <strong>Transaction information:</strong> bookings, contracts,
           invoices, and payout records. Card and bank details are collected
-          and stored by Stripe, not by Sanus.
+          and stored by Stripe, not by Ocora.
         </li>
         <li>
           <strong>Communications:</strong> messages sent through the
@@ -101,8 +101,8 @@ const sections: LegalSection[] = [
     body: (
       <>
         <p>
-          When a Professional who is a HIPAA covered entity uses Sanus to
-          deliver services, Sanus may act as that Professional&apos;s
+          When a Professional who is a HIPAA covered entity uses Ocora to
+          deliver services, Ocora may act as that Professional&apos;s
           business associate and will handle PHI only as permitted by a
           business associate agreement (&ldquo;BAA&rdquo;) and HIPAA.
         </p>
@@ -131,8 +131,8 @@ const sections: LegalSection[] = [
           (such as licensed clinicians on the Platform) are responsible for
           providing their own Notice of Privacy Practices describing how they
           use and disclose your PHI and your rights under HIPAA. Ask your
-          Professional for a copy. Sanus&apos;s own Notice of Privacy
-          Practices, if required for any service Sanus offers directly, will
+          Professional for a copy. Ocora&apos;s own Notice of Privacy
+          Practices, if required for any service Ocora offers directly, will
           be published here: [to be determined by counsel].
         </p>
         <p>
@@ -276,7 +276,7 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Privacy questions or requests: [privacy contact email]. HIPAA privacy
-        officer: [name / contact]. Mailing address: [Sanus legal entity name,
+        officer: [name / contact]. Mailing address: [Ocora legal entity name,
         address].
       </p>
     ),

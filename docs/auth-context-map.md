@@ -109,7 +109,7 @@ model below.
 ### Active context indicator
 
 `src/app/(dashboard)/layout.tsx` shows "Acting as Offering expertise /
-Buying for myself / Organization: <name> / Sanus admin", derived server-side
+Buying for myself / Organization: <name> / Ocora admin", derived server-side
 from `profiles.role` and `facility_profiles.facility_name`. No nav-config or
 account-tabs edits.
 

@@ -182,12 +182,12 @@ export function buildProfessionalChecklist(input: ProfessionalChecklistInput): C
       // Approved: the go-live flow's first-listing screens.
       href: total > 0 ? '/contractor/listings' : approved ? `${GO_LIVE}?step=listing` : '/contractor/listings/new',
     })
-    // Sanus publishes each listing (admin review); nothing for the pro to do.
+    // Ocora publishes each listing (admin review); nothing for the pro to do.
     if (inReview > 0) {
       items.push({
         id: 'listing_review',
         group: 'needed_after_approval',
-        label: inReview === 1 ? 'Listing awaiting Sanus review' : `${inReview} listings awaiting Sanus review`,
+        label: inReview === 1 ? 'Listing awaiting Ocora review' : `${inReview} listings awaiting Ocora review`,
         hint: 'We review every listing before clients can see it. No action needed.',
         done: false,
         href: '/contractor/listings',

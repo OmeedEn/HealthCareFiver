@@ -17,7 +17,7 @@ import { OrgOnboardingWizard } from './wizard'
 import { EMPTY_ORG_ANSWERS, type OrgAnswers } from './org-screens'
 import { isOrgTypeAllowed, orgDoorFor, type OrgDoc, type YesNo } from './shared'
 
-export const metadata: Metadata = { title: 'Set up your organization | Sanus' }
+export const metadata: Metadata = { title: 'Set up your organization | Ocora' }
 
 const yesNo = (v: unknown): YesNo => (v === true ? 'yes' : v === false ? 'no' : '')
 const str = (v: unknown) => (typeof v === 'string' ? v : '')

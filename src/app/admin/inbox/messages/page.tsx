@@ -46,7 +46,7 @@ export default async function AdminMessagesPage() {
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-[#1a1a17]">Messages</h2>
           <p className="text-sm text-[#5f5d57]">
-            Message any user as the Sanus team. They can reply with text, photos, voice messages or video.
+            Message any user as the Ocora team. They can reply with text, photos, voice messages or video.
           </p>
         </div>
         <RecipientPicker recipients={recipients} now={now} />

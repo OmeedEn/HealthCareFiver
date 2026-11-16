@@ -291,7 +291,7 @@ export function eventScreens({ value, set, section, saveFields, finish, finishLa
           {value.offers_ceu === 'yes' && (
             <div className="space-y-3 rounded-lg border border-[#e3dfd6] p-3">
               <p className="text-xs text-[#5f5d57]">
-                Required before you submit for review. Sanus reviews credit claims separately: approving your
+                Required before you submit for review. Ocora reviews credit claims separately: approving your
                 organization or this listing doesn&apos;t approve the credit, and no credit is shown until it&apos;s reviewed.
               </p>
               <TextField id="evt-ceu-type" label="Credit type" value={value.ceu_credit_type} onChange={(x) => set('ceu_credit_type', x)} error={errors.ceu_credit_type} placeholder="e.g. ANCC contact hours, AMA PRA Category 1" />

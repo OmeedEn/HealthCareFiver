@@ -83,10 +83,10 @@ export function OrgListingsPanel({
       {listings.length === 0 ? (
         <section role="status" className="mt-4 rounded-2xl border border-dashed border-[#cbc6ba] bg-white px-6 py-14 text-center">
           <h3 className="text-lg font-semibold text-[#1a1a17]">
-            {onlyKind === 'event' ? 'No events are published on Sanus yet' : 'No services or events are published on Sanus yet'}
+            {onlyKind === 'event' ? 'No events are published on Ocora yet' : 'No services or events are published on Ocora yet'}
           </h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-[#5f5d57]">
-            Listings appear here only after Sanus approves the organization and the listing is published. Check back soon.
+            Listings appear here only after Ocora approves the organization and the listing is published. Check back soon.
           </p>
         </section>
       ) : shown.length === 0 ? (

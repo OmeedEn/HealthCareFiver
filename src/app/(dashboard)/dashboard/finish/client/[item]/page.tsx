@@ -7,7 +7,7 @@ import { isClientFinishItem } from '@/lib/onboarding/checklist-client'
 import { loadClientProfile } from '@/lib/onboarding/client-profile'
 import { ClientFinishFlow } from './finish-flow'
 
-export const metadata: Metadata = { title: 'Finish your profile — Sanus' }
+export const metadata: Metadata = { title: 'Finish your profile — Ocora' }
 
 /** A client's "Finish your profile" item, opened from the dashboard card. */
 export default async function ClientFinishItemPage({ params }: { params: Promise<{ item: string }> }) {

@@ -40,7 +40,7 @@ export function FinishProfileCard({
       </h2>
       {!groupLabels && (
         <p className="mt-1 text-xs text-[#5f5d57]">
-          Finishing these steps doesn&apos;t approve or publish your profile. Sanus reviews every account and listing.
+          Finishing these steps doesn&apos;t approve or publish your profile. Ocora reviews every account and listing.
         </p>
       )}
 

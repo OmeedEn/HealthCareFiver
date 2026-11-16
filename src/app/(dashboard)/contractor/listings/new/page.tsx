@@ -6,7 +6,7 @@ import { getOwnListing } from '@/lib/listings/data'
 import type { ListingRow, OfferingKind } from '@/lib/listings/offering'
 import { getListingsContext } from '../context'
 
-export const metadata: Metadata = { title: 'New listing — Sanus' }
+export const metadata: Metadata = { title: 'New listing — Ocora' }
 
 const KINDS: readonly OfferingKind[] = ['service', 'consulting', 'event']
 

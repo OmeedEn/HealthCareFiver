@@ -36,7 +36,7 @@ function WhyExplainer() {
         Why is this required?
       </p>
       <p className="mt-1 text-xs leading-relaxed text-[#5f5d57]">
-        Sanus handles health information, so every account uses two-step
+        Ocora handles health information, so every account uses two-step
         sign-in: your password plus a 6-digit code from an app on your phone.
         Even if someone learns your password, they can’t get in without your
         phone.
@@ -74,7 +74,7 @@ function EnrollForm() {
         </h1>
         <p className="mt-1.5 text-sm text-[#5f5d57]">
           Two-step sign-in is on. Next time you sign in, open your
-          authenticator app and enter the code it shows for Sanus.
+          authenticator app and enter the code it shows for Ocora.
         </p>
 
         <div className="mt-6 rounded-lg border border-[#e3dfd6] bg-[#f4f5fe] px-4 py-3">

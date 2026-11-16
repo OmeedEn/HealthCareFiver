@@ -181,7 +181,7 @@ export function checklistFor(ctx: ChecklistContext): ChecklistItemDef[] {
   if (ctx.isOther) {
     items.push({
       key: 'other_fit',
-      label: 'Fit decision: this profession belongs on Sanus',
+      label: 'Fit decision: this profession belongs on Ocora',
       help:
         'Read the typed profession. Decide whether we list it. Verify via the licensing board / certifying body if they hold one; otherwise LinkedIn + video call. Record how you verified in the note.',
     })

@@ -59,7 +59,7 @@ let documentResumeUsed = false
  * Should /signup pick up the answers stored in this tab? Only when this
  * page itself was reloaded (or reached with the browser's Back / Forward,
  * e.g. back from Google's sign-in screen), and only for the first signup
- * flow shown in this document. Every other arrival (a "Join Sanus" link,
+ * flow shown in this document. Every other arrival (a "Join Ocora" link,
  * a typed URL, a client-side navigation later on) starts fresh.
  *
  * Call once per mount and keep the result (a ref): it's consumed.

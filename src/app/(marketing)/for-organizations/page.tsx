@@ -8,7 +8,7 @@ import {
 } from '@/components/marketing/sections'
 
 export const metadata: Metadata = {
-  title: 'For organizations — Sanus',
+  title: 'For organizations — Ocora',
   description:
     'Hospitals, clinics, practices, and employers find and engage reviewed health professionals directly — no agency fees.',
 }

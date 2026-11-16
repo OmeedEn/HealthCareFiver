@@ -7,7 +7,7 @@ import { isOrgFinishItem } from '@/lib/onboarding/checklist-organization'
 import { orgDoorFor, type OrgDoc } from '@/app/onboarding/organization/shared'
 import { OrgFinishFlow, type OrgFinishValues } from './finish-flow'
 
-export const metadata: Metadata = { title: 'Finish your profile | Sanus' }
+export const metadata: Metadata = { title: 'Finish your profile | Ocora' }
 
 const str = (v: unknown) => (typeof v === 'string' ? v : '')
 

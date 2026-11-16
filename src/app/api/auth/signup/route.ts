@@ -214,7 +214,7 @@ const unsureSchema = z.object({
   first_name: firstName,
   last_name: lastName,
   answers: unsureAnswersSchema,
-  // "I confirm this information is accurate and authorize Sanus to review it."
+  // "I confirm this information is accurate and authorize Ocora to review it."
   review_consent: z.literal(true, { error: UNSURE_REVIEW_CONSENT_ERROR }),
 })
 

@@ -69,7 +69,7 @@ export function OrgListingCard({
     <article id={`listing-${l.id}`} className="flex scroll-mt-24 flex-col rounded-2xl border border-[#e3dfd6] bg-white p-5">
       <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#5f5d57]">
         <span className="rounded-md bg-[#eeebe4] px-2 py-0.5 text-[#3a3934]">{kindLine}</span>
-        {/* Only a credit claim Sanus reviewed separately; never for "No" or an unreviewed claim. */}
+        {/* Only a credit claim Ocora reviewed separately; never for "No" or an unreviewed claim. */}
         {publicCeuLabel(l) && (
           <span className="inline-flex items-center gap-1 rounded-md bg-[#eceefe] px-2 py-0.5 text-[#2330c8]">
             <Award className="size-3" aria-hidden="true" />
@@ -136,7 +136,7 @@ export function OrgListingCard({
 
 /**
  * Booking button. Logged out: sign up first. Signed in: request it through
- * Sanus (request → the organization accepts or quotes → pay).
+ * Ocora (request → the organization accepts or quotes → pay).
  */
 export function OrgListingCta({ listing, signedIn }: { listing: PublicOrgListing; signedIn: boolean }) {
   const quote = listing.kind === 'service' && (listing.contactForPricing || listing.reachVia === 'inquiry')

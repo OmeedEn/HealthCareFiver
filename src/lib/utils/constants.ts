@@ -56,7 +56,7 @@ export const CREDENTIAL_TYPE_LABELS: Record<string, string> = {
 }
 
 /**
- * Occupational-health records from the staffing-era schema. Sanus doesn't
+ * Occupational-health records from the staffing-era schema. Ocora doesn't
  * collect them by default (no reviewed service needs them), so they're not
  * offered for upload and not listed as required. Labels above stay so any
  * existing rows still display.

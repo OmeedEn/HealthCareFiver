@@ -4,8 +4,8 @@ import { redirect } from 'next/navigation'
 import { PageIntro } from '@/components/marketing/sections'
 
 export const metadata: Metadata = {
-  title: 'Host an event — Sanus',
-  description: 'Host a webinar, workshop, course, or training on Sanus as an individual educator or an organization.',
+  title: 'Host an event — Ocora',
+  description: 'Host a webinar, workshop, course, or training on Ocora as an individual educator or an organization.',
 }
 
 /**
@@ -31,7 +31,7 @@ export default async function HostEventPage() {
     <>
       <PageIntro
         kicker="Host an event"
-        title="Host an event or training on Sanus"
+        title="Host an event or training on Ocora"
         description="Webinars, workshops, courses, and certification prep. Every host is reviewed before their events can be published, and each event is reviewed before it goes live."
       />
       <section className="bg-paper py-12 sm:py-16">

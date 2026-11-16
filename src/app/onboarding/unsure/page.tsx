@@ -14,7 +14,7 @@ import {
 } from '@/lib/onboarding/unsure'
 import { UnsureFinishFlow } from './form'
 
-export const metadata: Metadata = { title: 'Finish creating your account — Sanus' }
+export const metadata: Metadata = { title: 'Finish creating your account — Ocora' }
 
 /**
  * Landing page after "Continue with Google" on /signup/unsure (via

@@ -13,7 +13,7 @@
 //
 // Percentages are floored, so 100% only appears when every item in that
 // measure is done. Completing a measure never means approved, published or
-// visible: Sanus review (and, for listings, listing review) decides that.
+// visible: Ocora review (and, for listings, listing review) decides that.
 
 import type { ChecklistGroup, ChecklistItem } from '@/lib/onboarding/checklist'
 
@@ -33,15 +33,15 @@ export const READINESS_MEASURES: Record<
     group: 'needed_for_approval',
     label: 'Required for review',
     required: true,
-    note: 'Sanus can review your application once these are done.',
-    completeNote: 'Ready for Sanus review. This is not an approval.',
+    note: 'Ocora can review your application once these are done.',
+    completeNote: 'Ready for Ocora review. This is not an approval.',
   },
   required_to_publish: {
     group: 'needed_after_approval',
     label: 'Required to publish',
     required: true,
-    note: 'Needed before anything can be published. Publishing also requires Sanus approval.',
-    completeNote: 'Done on your side. Visibility still depends on Sanus approval and listing review.',
+    note: 'Needed before anything can be published. Publishing also requires Ocora approval.',
+    completeNote: 'Done on your side. Visibility still depends on Ocora approval and listing review.',
   },
   optional_profile: {
     group: 'stand_out',

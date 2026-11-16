@@ -2,7 +2,7 @@
  * Navigation config shared by the top nav (every page) and the Account area.
  *
  * The app is split in two on purpose:
- * - Explore (top nav, public links): find a professional, events, who Sanus
+ * - Explore (top nav, public links): find a professional, events, who Ocora
  *   is for. Same for signed-in and signed-out visitors.
  * - Mine (avatar menu → Account): bookings, messages, the professional's or
  *   organization's own business pages, settings.
